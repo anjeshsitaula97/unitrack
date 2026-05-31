@@ -1,0 +1,90 @@
+{
+  "name": "unitrack",
+  "version": "0.1.0",
+  "private": true,
+  "rocketCritical": {
+    "dependencies": [
+      "next",
+      "react",
+      "react-dom",
+      "@tailwindcss/typography",
+      "recharts"
+    ],
+    "devDependencies": [
+      "typescript",
+      "@types/node",
+      "@types/react",
+      "@types/react-dom",
+      "@typescript-eslint/eslint-plugin",
+      "@typescript-eslint/parser",
+      "eslint-config-next",
+      "tailwindcss",
+      "autoprefixer",
+      "postcss",
+      "eslint",
+      "prettier"
+    ],
+    "scripts": [
+      "dev",
+      "build",
+      "start",
+      "lint",
+      "lint:fix",
+      "format",
+      "serve",
+      "type-check"
+    ],
+    "warning": "🚨 CRITICAL: DO NOT REMOVE OR MODIFY ABOVE DEPENDENCIES - Required for Next.js 15 TypeScript app functionality"
+  },
+  "scripts": {
+    "dev": "next dev -p 4028",
+    "build": "next build",
+    "start": "next dev -p 4028",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,md,json}\"",
+    "serve": "next start",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/plus-jakarta-sans": "^5.0.0",
+    "@heroicons/react": "^2.2.0",
+    "@prisma/client": "^5.22.0",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
+    "@vladmandic/face-api": "^1.7.15",
+    "bikram-sambat-js": "^1.0.3",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^1.7.0",
+    "next": "^16.2.6",
+    "puppeteer": "^25.1.0",
+    "react": "latest",
+    "react-dom": "latest",
+    "recharts": "^2.15.2",
+    "sonner": "^1.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/react": "19.0.3",
+    "@types/react-dom": "19.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.29.0",
+    "@typescript-eslint/parser": "^8.29.0",
+    "autoprefixer": "10.4.2",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "eslint": "^9",
+    "eslint-config-next": "^15.2.4",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.2.6",
+    "jose": "^6.2.2",
+    "postcss": "8.4.8",
+    "prettier": "^3.5.3",
+    "prisma": "^5.22.0",
+    "tailwindcss": "3.4.6",
+    "typescript": "^5",
+    "zod": "^4.3.6"
+  }
+}

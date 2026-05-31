@@ -1,0 +1,95 @@
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { cookies } from 'next/headers';
+import { verifyAuth } from '@/lib/session';
+
+async function getSession() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+  if (!token) return null;
+  try { return await verifyAuth(token); } catch { return null; }
+}
+
+export async function GET() {
+  try {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const employees = await db.user.findMany({
+      where: { NOT: { role: 'Admin' } },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        employeeId: true,
+        phone: true,
+        gender: true,
+        designationId: true,
+        departmentId: true,
+        hireDate: true,
+        employmentType: true,
+        basicSalary: true,
+        bankName: true,
+        bankAccount: true,
+        panNumber: true,
+        avatar: true,
+        createdAt: true,
+        branchId: true,
+        department: { select: { id: true, name: true } },
+        designation: { select: { id: true, title: true } },
+        branch: { select: { id: true, name: true } },
+      },
+    });
+    return NextResponse.json(employees);
+  } catch (error) {
+    console.error("Fetch Employees Error:", error);
+    return NextResponse.json({ error: "Failed to fetch employees" }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== 'Admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+
+    const employee = await db.user.update({
+      where: { id: body.userId },
+      data: {
+        employeeId: body.employeeId,
+        phone: body.phone,
+        alternatePhone: body.alternatePhone,
+        dateOfBirth: body.dateOfBirth,
+        gender: body.gender,
+        address: body.address,
+        city: body.city,
+        state: body.state,
+        zipCode: body.zipCode,
+        country: body.country,
+        emergencyContact: body.emergencyContact,
+        emergencyPhone: body.emergencyPhone,
+        bankName: body.bankName,
+        bankAccount: body.bankAccount,
+        bankIfsc: body.bankIfsc,
+        panNumber: body.panNumber,
+        basicSalary: body.basicSalary ? parseFloat(body.basicSalary) : null,
+        hireDate: body.hireDate,
+        employmentType: body.employmentType || 'Full-Time',
+        departmentId: body.departmentId || null,
+        designationId: body.designationId || null,
+        branchId: body.branchId || null,
+      },
+    });
+
+    return NextResponse.json(employee);
+  } catch (error) {
+    console.error("Create Employee Error:", error);
+    return NextResponse.json({ error: "Failed to create employee profile" }, { status: 500 });
+  }
+}

@@ -1,0 +1,1962 @@
+{
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.eslintrc.json": {
+    "mtime": 1777047513.2821455,
+    "ast_hash": "ebfedf9b5b4ee6881bfc36e2beb0699a",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\api_output.json": {
+    "mtime": 1777708086.3109999,
+    "ast_hash": "f5a4dfc548f33e26f74a26355838ac9b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\image-hosts.config.mjs": {
+    "mtime": 1780140746.4364877,
+    "ast_hash": "a1015e2064dd6430b022be42bc1c03fd",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\middleware.ts": {
+    "mtime": 1780080124.2439508,
+    "ast_hash": "4fea00e225ab66ce8720a1be8b7c3ed6",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\next-env.d.ts": {
+    "mtime": 1780221676.4354992,
+    "ast_hash": "2a74d3909800ca5467fa83b0ab4a4890",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\next.config.mjs": {
+    "mtime": 1777141305.0877037,
+    "ast_hash": "48f720258c00907caf4185eac2834a49",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\package.json": {
+    "mtime": 1780141512.0654356,
+    "ast_hash": "d18434c4fab09497d53051e8e850d1b1",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\postcss.config.js": {
+    "mtime": 1777047513.3436809,
+    "ast_hash": "ef6e40de3eeede34ff3cfe3949778384",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\prisma.config.ts": {
+    "mtime": 1777059411.6103594,
+    "ast_hash": "f6143a6083213d512c0beaa8d98daf63",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\react-doctor.config.json": {
+    "mtime": 1780076626.9618206,
+    "ast_hash": "dde0404232c9c9e2b3610b5693877ff5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\tailwind.config.js": {
+    "mtime": 1777047513.3528244,
+    "ast_hash": "33f09fa6c5af2b606e566433372ed058",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\tsconfig.json": {
+    "mtime": 1777141287.0754888,
+    "ast_hash": "bc53515ee682346dfee57a5f8db74188",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\enable-wal.js": {
+    "mtime": 1777118319.3168652,
+    "ast_hash": "c6307a96a1b204363148124a1020f143",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\image-hosts.config.mjs": {
+    "mtime": 1777047513.3178525,
+    "ast_hash": "a1015e2064dd6430b022be42bc1c03fd",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch_cleanup_users.ts": {
+    "mtime": 1777142039.2460084,
+    "ast_hash": "b41995d19987c7d5d607e3e7a25c3a01",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch_dump_users.ts": {
+    "mtime": 1777133925.3991544,
+    "ast_hash": "b8a70a1c6e73c43f893e5399aaf1549a",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch_seed_admin.ts": {
+    "mtime": 1777132863.9089963,
+    "ast_hash": "bc2139c0fd86b6a005bca1e0f5c9cf12",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch_test_delete.ts": {
+    "mtime": 1777142141.1738794,
+    "ast_hash": "9cb518dbeb3629d8538ddae930912999",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch_test_update.ts": {
+    "mtime": 1777142390.7408545,
+    "ast_hash": "f365bec7fb758e71a4d9e7f13feb6d5c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\check_api_access.ts": {
+    "mtime": 1777707906.3000462,
+    "ast_hash": "f4afdeebb50cfe4a42eb18f6544a3427",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\check_courses.js": {
+    "mtime": 1777919280.8385425,
+    "ast_hash": "17185a9466ff9f29621fe680b5e0c926",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\check_db.js": {
+    "mtime": 1777920952.9158783,
+    "ast_hash": "68b640c60920a3588fe69c12a165fd89",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\check_db.ts": {
+    "mtime": 1777920932.3790023,
+    "ast_hash": "a7e060da852b5918086494be8c272fa0",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\check_details_api.ts": {
+    "mtime": 1777708011.8413749,
+    "ast_hash": "162a848a373252486e39cb048c2bce5c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\check_logs.ts": {
+    "mtime": 1777706327.4885294,
+    "ast_hash": "5748378a4519d65fda299b9087b3521c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\check_univ_data.ts": {
+    "mtime": 1777996397.396861,
+    "ast_hash": "9145ed2e1901ad542c24e7beef79e1e4",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\check_users.ts": {
+    "mtime": 1777704874.6234386,
+    "ast_hash": "f7dd88994cd9bdc0f24983ddbb7567b7",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\count_records.js": {
+    "mtime": 1777921053.787608,
+    "ast_hash": "349a64c339d7924ab4e4016b5d987761",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\list_records.js": {
+    "mtime": 1777921103.2713428,
+    "ast_hash": "fc322e342c9589faa4f1e774b2a0c6ff",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\test_bs.js": {
+    "mtime": 1777359612.608291,
+    "ast_hash": "b06c53259463e539a5131e0923050802",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\scratch\\test_login.ts": {
+    "mtime": 1777705581.5630028,
+    "ast_hash": "55bf70e90022435a339ae89091bbfb1a",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\access\\components\\AccessContent.tsx": {
+    "mtime": 1780077255.6901913,
+    "ast_hash": "ff518cde05616750905d851a93dbb3e5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\analytics\\components\\AnalyticsContent.tsx": {
+    "mtime": 1777052080.8173752,
+    "ast_hash": "b91005225f51b129b50e600d61fd2f0f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\api-keys\\components\\ApiKeysContent.tsx": {
+    "mtime": 1780078107.0992672,
+    "ast_hash": "ee9fbc6e158ea76a7b2357f19a72df8b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\applications\\components\\ApplicationsContent.tsx": {
+    "mtime": 1780078130.7390559,
+    "ast_hash": "16a330f68917a1fe02e825df288e8bf8",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\automations\\components\\AutomationsContent.tsx": {
+    "mtime": 1780078107.1413908,
+    "ast_hash": "240bac2209dc00265016d95655550285",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\chat\\components\\ChatContent.tsx": {
+    "mtime": 1780078292.727179,
+    "ast_hash": "ecaa88f7fa0bf610a5a26cf545dcd3aa",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\courses\\components\\AddCourseContent.tsx": {
+    "mtime": 1780078107.1448355,
+    "ast_hash": "79cef27dec14bdf5c7521a18224693eb",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\courses\\components\\CoursesContent.tsx": {
+    "mtime": 1780078270.3494523,
+    "ast_hash": "bfd700a273819b20058ad2e211415919",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\dashboard\\components\\CoursesPerUniversityChart.tsx": {
+    "mtime": 1780078107.1473598,
+    "ast_hash": "d1ab3c397a354e74494cb9495e305f3e",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\dashboard\\components\\DashboardContent.tsx": {
+    "mtime": 1780074782.1991282,
+    "ast_hash": "b3a8e997999169a126c3cc15e95dbf54",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\dashboard\\components\\EnrollmentTrendChart.tsx": {
+    "mtime": 1780078107.1483538,
+    "ast_hash": "89a2f8d897af1f4247feddd61bcd5788",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\dashboard\\components\\FacultyDistributionChart.tsx": {
+    "mtime": 1780078107.1493547,
+    "ast_hash": "2691f7c8eef2642bb8a14a1a467496bf",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\dashboard\\components\\KPIBentoGrid.tsx": {
+    "mtime": 1780076721.4902084,
+    "ast_hash": "21fb0a32bf0ddcc25e3f323f7915d840",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\dashboard\\components\\RecentActivityFeed.tsx": {
+    "mtime": 1780078107.1503534,
+    "ast_hash": "b4f793e91615335ae5e7ce671639064c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\dashboard\\components\\RecentUniversitiesTable.tsx": {
+    "mtime": 1780078107.1503534,
+    "ast_hash": "792ec7d04296395ca0b27f35579143e5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\expenses\\components\\ExpensesContent.tsx": {
+    "mtime": 1780076721.5068038,
+    "ast_hash": "a5afd69bf382eabcfa41afcb0d67eae9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\featured\\components\\FeaturedContent.tsx": {
+    "mtime": 1780076721.5123172,
+    "ast_hash": "d61767f4ea7fedee8ed059c163da06d5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\hr\\attendance\\components\\AttendanceContent.tsx": {
+    "mtime": 1780078182.2481766,
+    "ast_hash": "e86d675b570147b0762d55bd966f0657",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\hr\\components\\HRDashboard.tsx": {
+    "mtime": 1780076721.5409193,
+    "ast_hash": "5e727b7854981ce922804a2dd55d93f1",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\hr\\departments\\components\\DepartmentsContent.tsx": {
+    "mtime": 1780078107.1528735,
+    "ast_hash": "d4649606ba6fd1ff56fc12934e9692e9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\hr\\designations\\components\\DesignationsContent.tsx": {
+    "mtime": 1780078107.1538687,
+    "ast_hash": "7dbf6e0755bd40a2244723e892808167",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\hr\\employees\\components\\EmployeesContent.tsx": {
+    "mtime": 1780080600.3948545,
+    "ast_hash": "91ac52847ccfa9d134cf7c6ab667fbc5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\hr\\employees\\[id]\\face-enrollment\\components\\FaceEnrollmentContent.tsx": {
+    "mtime": 1780076721.565521,
+    "ast_hash": "27e18dc56b4d24c3a8be26a3ee738b82",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\hr\\leave\\components\\LeaveContent.tsx": {
+    "mtime": 1780080600.3991697,
+    "ast_hash": "ec96620c32a71a672aa10c3108ca3340",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\hr\\payroll\\components\\PayrollContent.tsx": {
+    "mtime": 1780080600.3997412,
+    "ast_hash": "08b4a0b169ba71ed2116d6be7ff660ca",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\leads\\components\\LeadsContent.tsx": {
+    "mtime": 1780080600.400304,
+    "ast_hash": "e21e54eb24140911ad319b86b537cd0c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\learning-hub\\components\\LearningHubContent.tsx": {
+    "mtime": 1780076918.486123,
+    "ast_hash": "f10d2901aa5896899a3be1fdd72dc06d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\login\\components\\LoginForm.tsx": {
+    "mtime": 1780076721.644529,
+    "ast_hash": "09bf662c7ad39784e4849cf77aa1981b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\notifications\\components\\NotificationsContent.tsx": {
+    "mtime": 1780078107.1583908,
+    "ast_hash": "b9762147302ac3caee2752952a4969b4",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\payments\\components\\PaymentsContent.tsx": {
+    "mtime": 1780078107.1593897,
+    "ast_hash": "69018fb8549a91a95c3cba42cdbf0202",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\reports\\components\\ReportsContent.tsx": {
+    "mtime": 1780076721.6764143,
+    "ast_hash": "446cd2afb141f04a7246cfa8212724ce",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\search\\components\\SearchContent.tsx": {
+    "mtime": 1780077960.99515,
+    "ast_hash": "2cca9f52b7f1807c10e05b7e3b08d450",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\settings\\components\\SettingsContent.tsx": {
+    "mtime": 1780078107.1643896,
+    "ast_hash": "6e297b6de8f2d1d07dcd45d4fcca55b0",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\staff\\components\\StaffContent.tsx": {
+    "mtime": 1780080600.403055,
+    "ast_hash": "ee8021b38076699b1fab2062f18d78ad",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\staff-tasks\\components\\TasksContent.tsx": {
+    "mtime": 1780076721.7290955,
+    "ast_hash": "42d1633acc2e6aeb57c1945abbf40c07",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\students\\components\\StudentContent.tsx": {
+    "mtime": 1780078107.1669507,
+    "ast_hash": "f19b5b7c873c16504f0f57253143b443",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\support\\components\\SupportContent.tsx": {
+    "mtime": 1780078318.4710803,
+    "ast_hash": "bd0480957392a927559d1f2186da2925",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\tasks\\components\\VisaWorkflowDashboard.tsx": {
+    "mtime": 1780076721.7619433,
+    "ast_hash": "a6c6772e5262b4cd435b8d96b892d1b0",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\tasks\\components\\WorkflowContent.tsx": {
+    "mtime": 1780076721.7654622,
+    "ast_hash": "3661947518f92db919e626c70585552f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\tickets\\components\\TicketsContent.tsx": {
+    "mtime": 1780077830.328898,
+    "ast_hash": "5bb01301210f735c6b6232e61bcddeff",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\universities\\components\\AddUniversityContent.tsx": {
+    "mtime": 1780076721.776499,
+    "ast_hash": "2b34f98eb711416b4bfb943f4cd70a5b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\universities\\components\\UniversitiesContent.tsx": {
+    "mtime": 1780078292.7413974,
+    "ast_hash": "ecaa88f7fa0bf610a5a26cf545dcd3aa",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\universities\\components\\UniversityDetailContent.tsx": {
+    "mtime": 1780080600.4053247,
+    "ast_hash": "3d1e5052525f24b37b5b281286481e72",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\app\\universities\\components\\UniversityForm.tsx": {
+    "mtime": 1780076721.8267496,
+    "ast_hash": "ee4cea448982be25dad2754b2454c520",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\components\\AppLayout.tsx": {
+    "mtime": 1777192960.2740672,
+    "ast_hash": "448086f99cef572417090ced64d0412b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\components\\AppLayoutWrapper.tsx": {
+    "mtime": 1779979494.776853,
+    "ast_hash": "d178da6aec286de13a6e6267cc814a99",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\components\\Sidebar.tsx": {
+    "mtime": 1780080124.251243,
+    "ast_hash": "2ff415df1f01f8b93118c39477342bf3",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\components\\Topbar.tsx": {
+    "mtime": 1780078318.5140178,
+    "ast_hash": "8b9f63323e83f8d49d13256653a26234",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\components\\hr\\CameraCapture.tsx": {
+    "mtime": 1780078107.173949,
+    "ast_hash": "610a6eb7cdb798b7a22a87a95407bbb4",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\components\\hr\\FaceVerificationModal.tsx": {
+    "mtime": 1780078107.1749475,
+    "ast_hash": "f141fb532d6a4fb0632bbbb47e890e86",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\components\\ui\\AppIcon.tsx": {
+    "mtime": 1777047513.5089767,
+    "ast_hash": "0b8f4fb6ea36a0f503476384d9700935",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\components\\ui\\AppImage.tsx": {
+    "mtime": 1780073482.4863894,
+    "ast_hash": "74534c00f7aaa3ba80f35896a0544703",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\components\\ui\\AppLogo.tsx": {
+    "mtime": 1780074531.1403668,
+    "ast_hash": "22d42b298cd065d4e78e390a40dd63f1",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\activity.ts": {
+    "mtime": 1777706260.3790617,
+    "ast_hash": "5ed8d698ce571a98fc9927c913b08ac3",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\check-counts.ts": {
+    "mtime": 1777104593.746104,
+    "ast_hash": "8e916a6da8f15b910f50a4d33e212d8a",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\constants.ts": {
+    "mtime": 1777203576.374864,
+    "ast_hash": "c67d0a959af240c24c04f85d6da06297",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\crypto.ts": {
+    "mtime": 1780066138.6619825,
+    "ast_hash": "a78c0205b13ca37e0f27892b5cde5848",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\db.ts": {
+    "mtime": 1777116967.6449087,
+    "ast_hash": "6ff76c40fd988d819653718e70254bb9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\face.ts": {
+    "mtime": 1779998968.3565989,
+    "ast_hash": "52701ca21a652a333916ee6080bdfbac",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\forex.ts": {
+    "mtime": 1780073483.6131651,
+    "ast_hash": "e16c9e2b8e4dbc920b572fd5704aa78f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\json.ts": {
+    "mtime": 1777623551.2478187,
+    "ast_hash": "e3437622ba21f80dc0ffab2ecf156ecf",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\nepal-data.ts": {
+    "mtime": 1777312531.2091596,
+    "ast_hash": "8886116dcd10a44fd9b67903003b8856",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\notifications.ts": {
+    "mtime": 1777188655.9498422,
+    "ast_hash": "6bed838704037fca3243ab1cfe2c1c48",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\seed-admin.ts": {
+    "mtime": 1777145427.59318,
+    "ast_hash": "fe329ad8ddf430818f211396ed4681cb",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\seed-data.ts": {
+    "mtime": 1777538667.0308049,
+    "ast_hash": "040603c905d31a4bf4b3ac53ba167543",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\seed-featured.ts": {
+    "mtime": 1777104574.405388,
+    "ast_hash": "2f70319626926d40faa64ddf10a3a8a7",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\session.ts": {
+    "mtime": 1777102683.3959959,
+    "ast_hash": "3526d1de224f8000f0f0fcd9ec14ddce",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.backup_unused\\src\\lib\\data\\countries.ts": {
+    "mtime": 1772832435.0238838,
+    "ast_hash": "4b37fb3e6a8b2f6a7e0770b14cf5ec97",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.opencode\\opencode.json": {
+    "mtime": 1780226171.0783525,
+    "ast_hash": "f2ae21510d07365eb2bce8159272c7a0",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\.opencode\\plugins\\graphify.js": {
+    "mtime": 1780226171.0783525,
+    "ast_hash": "32b67963417a30cb80544e0b2a56a98d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\data\\nepal\\districts-by-province.json": {
+    "mtime": 1773687713.9040732,
+    "ast_hash": "c06f65afd1a196e21d4e27c54677df1b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\data\\nepal\\lsn-districts.json": {
+    "mtime": 1773687739.3154557,
+    "ast_hash": "3f6d28950bd080c82dea09dbdf683428",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\data\\nepal\\lsn-municipalities.json": {
+    "mtime": 1773687739.7730181,
+    "ast_hash": "295d579af76705609b26143452e85744",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\data\\nepal\\municipalities-by-district.json": {
+    "mtime": 1773687738.997071,
+    "ast_hash": "7e98034f9b04203adc1a17dd3d36abdc",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\data\\nepal\\provinces.json": {
+    "mtime": 1773687711.6047099,
+    "ast_hash": "08200104e2f6eb4082fdb4f238405404",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\prisma\\check-counts.ts": {
+    "mtime": 1777188359.7326925,
+    "ast_hash": "10938356a7721083c44f79231875dee0",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\prisma\\dump-roles.ts": {
+    "mtime": 1777188213.686424,
+    "ast_hash": "dfd5fafdb56a7117c66bc1738bb64e49",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\prisma\\seed-activities.ts": {
+    "mtime": 1780081635.912135,
+    "ast_hash": "8f56df6bd4e206894f04a55517baf2fc",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\prisma\\seed-notifications.ts": {
+    "mtime": 1780081635.9126558,
+    "ast_hash": "35bf023b5f6f884c3cbfc0f93aa3d08b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\prisma\\seed-roles.ts": {
+    "mtime": 1780081635.9082806,
+    "ast_hash": "35174b3d4ea1fc7836123096c2cbfc51",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\models\\face_landmark_68_model-weights_manifest.json": {
+    "mtime": 1779997377.668965,
+    "ast_hash": "5d083f3f330b61925025ec8d81361db7",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\models\\face_recognition_model-weights_manifest.json": {
+    "mtime": 1779997377.6709702,
+    "ast_hash": "1b056fd5dd4ddc1b83edc726a32c973e",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\models\\tiny_face_detector_model-weights_manifest.json": {
+    "mtime": 1779997377.6759646,
+    "ast_hash": "862f9faaeb421d87a569666df52b84d2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\scanner-agent\\index.js": {
+    "mtime": 1780166019.6633818,
+    "ast_hash": "c499394945878beb076b99d66d9c72c2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\scanner-agent\\package.json": {
+    "mtime": 1780165378.4767182,
+    "ast_hash": "e3d5736785dc5514fee570d992140fbc",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\scripts\\add-metadata.js": {
+    "mtime": 1780069527.6101842,
+    "ast_hash": "1ab8894d52a0de8bfd56b7f5d08375cd",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\scripts\\screenshots.mjs": {
+    "mtime": 1780064480.3180835,
+    "ast_hash": "b08c583a0fc5e59b06832985c73aeb94",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\proxy.ts": {
+    "mtime": 1779815288.4458838,
+    "ast_hash": "c65ae81f48979d3527088e48cf96a2c6",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\layout.tsx": {
+    "mtime": 1777047513.384014,
+    "ast_hash": "1ab7c5e368b6a025a05750cc83316c70",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\not-found.tsx": {
+    "mtime": 1780148738.2211094,
+    "ast_hash": "4c4565729edab349b537f5bd467cda7a",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\page.tsx": {
+    "mtime": 1780072937.9959922,
+    "ast_hash": "e6cd4e646e4aa3eff39e3a332b3ddc0f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\access\\page.tsx": {
+    "mtime": 1780069532.2045019,
+    "ast_hash": "838483fd0342b37fd353a812a2a3613c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\access\\components\\AccessContent.tsx": {
+    "mtime": 1780224074.2381096,
+    "ast_hash": "d3fa8b09dd959b8b3798e9de5ab7c6d5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\analytics\\page.tsx": {
+    "mtime": 1780069532.2074962,
+    "ast_hash": "f8e400252c33573287f6e5312fad00d0",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\analytics\\components\\AnalyticsContent.tsx": {
+    "mtime": 1777052080.8173752,
+    "ast_hash": "b91005225f51b129b50e600d61fd2f0f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\access\\route.ts": {
+    "mtime": 1777707262.9524007,
+    "ast_hash": "0cf7f27c28bf92028b0dbd8ee22d235a",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\access\\[id]\\route.ts": {
+    "mtime": 1777146876.6021202,
+    "ast_hash": "742996c319fd738733e72939130c2245",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\access\\[id]\\details\\route.ts": {
+    "mtime": 1777713986.0942392,
+    "ast_hash": "a0c1e9aba1d88929506e71d14cf6d500",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\activity\\route.ts": {
+    "mtime": 1777188418.635945,
+    "ast_hash": "4145a76fd1381248d43b1b735c8712c7",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\api-keys\\route.ts": {
+    "mtime": 1777059905.7942746,
+    "ast_hash": "14d8085713f1e68d12c725c264799450",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\api-keys\\[id]\\route.ts": {
+    "mtime": 1777544932.7062514,
+    "ast_hash": "6c3452ae794ede53b4d7503c4ccd9efe",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\applications\\route.ts": {
+    "mtime": 1780150533.3702855,
+    "ast_hash": "2d88b44e34272769fbd02949043a39cd",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\auth\\login\\route.ts": {
+    "mtime": 1780221667.5507886,
+    "ast_hash": "42c911b4892179f54028762811a1ddad",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\auth\\logout\\route.ts": {
+    "mtime": 1777104980.3931477,
+    "ast_hash": "33e17ecaef795f324f5ee53866ae190e",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\auth\\me\\route.ts": {
+    "mtime": 1777713970.3589702,
+    "ast_hash": "1a64e756c12bdd9c08f3ab098117921a",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\backup\\route.ts": {
+    "mtime": 1780066154.888692,
+    "ast_hash": "86a5c89d40be13acbf5f0da94e5e2698",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\branches\\route.ts": {
+    "mtime": 1779999649.166889,
+    "ast_hash": "0ac1dbe3cfebb30628440fc97685684e",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\branches\\[id]\\route.ts": {
+    "mtime": 1779999653.2593489,
+    "ast_hash": "336bb67db6a6e01b4cbad19de54125b4",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\chat\\messages\\route.ts": {
+    "mtime": 1779786386.201391,
+    "ast_hash": "f2d469607e66482fd5f9a9c924f3f557",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\chat\\rooms\\route.ts": {
+    "mtime": 1779786411.050607,
+    "ast_hash": "e4f024f82f5f63546d5f9c8032547973",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\chat\\rooms\\direct\\route.ts": {
+    "mtime": 1779993731.7569945,
+    "ast_hash": "12b8bbaa91b6827999252d554fe13c1b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\chat\\rooms\\[id]\\route.ts": {
+    "mtime": 1779993872.3382795,
+    "ast_hash": "c99a69ec9dd36bafca7ca4e664f12f0d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\chat\\users\\route.ts": {
+    "mtime": 1779993726.4776633,
+    "ast_hash": "4b287cb8596730bd5881ca132445d2a7",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\courses\\route.ts": {
+    "mtime": 1778783067.5170276,
+    "ast_hash": "1a43674a0b4dd436668df4341d7f6726",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\courses\\[id]\\route.ts": {
+    "mtime": 1778782603.1976185,
+    "ast_hash": "0fc5b9d8be43d2ee94ead3003472da89",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\dashboard\\charts\\route.ts": {
+    "mtime": 1777143947.9610465,
+    "ast_hash": "1d08f02751c0164760849b66a0568151",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\dashboard\\recent-universities\\route.ts": {
+    "mtime": 1777144035.488882,
+    "ast_hash": "3cca9efe82cd38633a4f59ed410a71a4",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\dashboard\\stats\\route.ts": {
+    "mtime": 1780150529.6863666,
+    "ast_hash": "ef3720cafd3e3c31db2138a00fd75181",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\degree-types\\route.ts": {
+    "mtime": 1778006095.5161188,
+    "ast_hash": "85d8c9812a1261ee926d8ebb29041fd6",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\documents\\route.ts": {
+    "mtime": 1780153212.7319984,
+    "ast_hash": "45caed0008483d8b3731cb066af96ab3",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\embassy\\route.ts": {
+    "mtime": 1777882878.3722937,
+    "ast_hash": "df1fe8197dfc7c1c6f0379f31a81d212",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\expenses\\route.ts": {
+    "mtime": 1780221664.6536374,
+    "ast_hash": "150cdd73634a74a5a128a3087f34111a",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\faculties\\route.ts": {
+    "mtime": 1778006087.90672,
+    "ast_hash": "be0af890616bbcc25c324c45f2d989da",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\featured\\route.ts": {
+    "mtime": 1777116949.7942991,
+    "ast_hash": "b2c7ab5e666eb040c065d3bbc0d8c79d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\files\\route.ts": {
+    "mtime": 1780153474.9921932,
+    "ast_hash": "4cd850afbc6dae63bffebe1b2999747d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\files\\folders\\route.ts": {
+    "mtime": 1780153471.8485925,
+    "ast_hash": "b829376de9d061d0ea25e3385b4687e2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\files\\upload\\route.ts": {
+    "mtime": 1780153478.07093,
+    "ast_hash": "e64ff1bb8b4ce5d5d9c6288e98f57da5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\attendance\\route.ts": {
+    "mtime": 1780056663.4885137,
+    "ast_hash": "6f8b36f9e2c2ca403f0826c759889b87",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\attendance\\summary\\route.ts": {
+    "mtime": 1779994930.5476797,
+    "ast_hash": "dfcaa84ba9f7bd90b157f3c7c8de869c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\attendance\\[id]\\route.ts": {
+    "mtime": 1779995063.2897527,
+    "ast_hash": "12fb92acd6d49b4fb0b92286e2e5f397",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\dashboard\\route.ts": {
+    "mtime": 1779994449.4494903,
+    "ast_hash": "064232417e9b8e019cfda292ce431f55",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\departments\\route.ts": {
+    "mtime": 1779994384.7260442,
+    "ast_hash": "5759bc2d76bb9c23c2c557a8ebf320fc",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\departments\\[id]\\route.ts": {
+    "mtime": 1780148752.918038,
+    "ast_hash": "f7a1b5fff570bf30e79bbefc392deacc",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\designations\\route.ts": {
+    "mtime": 1779994391.1568592,
+    "ast_hash": "952643e39faa3920192aea3680a68af3",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\designations\\[id]\\route.ts": {
+    "mtime": 1780148755.3379767,
+    "ast_hash": "8b9303d8af6403f922d6ef3b177eeba6",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\employees\\route.ts": {
+    "mtime": 1779999686.1657026,
+    "ast_hash": "8940bba2d616e2ce4584f7fa007b763b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\employees\\[id]\\route.ts": {
+    "mtime": 1779999678.8433237,
+    "ast_hash": "a9554ab040ec613a8e0753dc068a3eb7",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\leave\\balances\\route.ts": {
+    "mtime": 1779994433.5326898,
+    "ast_hash": "a5d6707508dfee12c0611aac9a0bbd31",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\leave\\requests\\route.ts": {
+    "mtime": 1779994427.031299,
+    "ast_hash": "542ad1435576cbfaaff859bcea25b1a5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\leave\\requests\\[id]\\route.ts": {
+    "mtime": 1779994431.0453024,
+    "ast_hash": "852a0b3c2fb0417e1f842ec254d191f1",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\leave\\types\\route.ts": {
+    "mtime": 1779994420.1077657,
+    "ast_hash": "56fdd3b18781ba796bc23290f53cddbb",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\leave\\types\\[id]\\route.ts": {
+    "mtime": 1780148753.3279786,
+    "ast_hash": "72a64d0c9dc67744a670bc58407abe7f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\payroll\\route.ts": {
+    "mtime": 1779994441.0514624,
+    "ast_hash": "81fd6cdfc30d2472d3ec86521fb3ab0f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\payroll\\[id]\\route.ts": {
+    "mtime": 1780148754.7021637,
+    "ast_hash": "33efa37e3ca535800e2a646fd8649fce",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\hr\\settings\\route.ts": {
+    "mtime": 1780075161.830189,
+    "ast_hash": "2f3976afac71b92641953db40ebdd45f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\intakes\\route.ts": {
+    "mtime": 1777139918.2165668,
+    "ast_hash": "80dfd8c5b3916d549ac3e8a8e9128d94",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\leads\\route.ts": {
+    "mtime": 1777540818.948597,
+    "ast_hash": "11655d0465ecde918b8aefe89b8e5f23",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\leads\\[id]\\route.ts": {
+    "mtime": 1780148753.9414136,
+    "ast_hash": "bc5669984145fbae256595eebcb7bbf6",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\learning-hub\\categories\\route.ts": {
+    "mtime": 1777909047.9883966,
+    "ast_hash": "91e91730f1ab59175936b0478319102d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\learning-hub\\countries\\route.ts": {
+    "mtime": 1777375000.9544005,
+    "ast_hash": "3e9b3762868a1996770bad6fd089022d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\learning-resources\\route.ts": {
+    "mtime": 1780150538.8902545,
+    "ast_hash": "f067d54621cfbd890102a9f1eb8f33f9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\nepal\\districts\\route.ts": {
+    "mtime": 1780081168.2391658,
+    "ast_hash": "eff04e6c8eb9575874bcdab5ff387eb2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\nepal\\municipalities\\route.ts": {
+    "mtime": 1780080928.5136476,
+    "ast_hash": "400e1a087a1442b2ce5ebe875f62b25d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\nepal\\provinces\\route.ts": {
+    "mtime": 1780173603.700318,
+    "ast_hash": "64ced789431a0dbbf2fdec9c06412ca4",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\nepal\\wards\\route.ts": {
+    "mtime": 1780173614.2747064,
+    "ast_hash": "c95e7b495aaa8a0c07d32fe8002d3bee",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\notifications\\route.ts": {
+    "mtime": 1777188665.118688,
+    "ast_hash": "f50ce1c5f7d69cce9efcfa248cf1fe69",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\partners\\route.ts": {
+    "mtime": 1777920525.2454455,
+    "ast_hash": "bc7cc0c2ee9262bd838d0a99d89df0cd",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\payments\\route.ts": {
+    "mtime": 1780150534.9595692,
+    "ast_hash": "dc9b31f1380af60e29e70339db573566",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\profile\\route.ts": {
+    "mtime": 1777631394.3662326,
+    "ast_hash": "caef376145e4d88bd838edbb8d8db68e",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\qualifications\\route.ts": {
+    "mtime": 1777317097.6922798,
+    "ast_hash": "5f68b3b9497ad19aa76f3cfb8878a120",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\qualifications\\[id]\\route.ts": {
+    "mtime": 1777317103.7778687,
+    "ast_hash": "cb6c001d667aad2eefdcfc964c10780f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\quick-filters\\route.ts": {
+    "mtime": 1777189578.533927,
+    "ast_hash": "4f2c52f1f8d21539ee871032c34dda40",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\reports\\route.ts": {
+    "mtime": 1777365756.1299758,
+    "ast_hash": "4e5cf10e73e94168327534ee4a932560",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\restore\\route.ts": {
+    "mtime": 1780066170.3282115,
+    "ast_hash": "2d85c3d3d2cd8563cf67c9e6c3f291c9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\roles\\route.ts": {
+    "mtime": 1777189409.3568258,
+    "ast_hash": "7d876575508b562792e2989e33c3c778",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\roles\\[id]\\route.ts": {
+    "mtime": 1777189402.3776581,
+    "ast_hash": "eb91e90bed7ead91f927df584150b63f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\search\\route.ts": {
+    "mtime": 1777554951.5586832,
+    "ast_hash": "1d8581e4b38bf5343dda207459fa05e8",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\settings\\email\\route.ts": {
+    "mtime": 1777630241.7885382,
+    "ast_hash": "a469d627478eae4fb57175faf6804b02",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\settings\\localization\\route.ts": {
+    "mtime": 1780075163.2793589,
+    "ast_hash": "72ca174beb95c54d4d06ba9da6e760fa",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\staff\\route.ts": {
+    "mtime": 1777188476.6539574,
+    "ast_hash": "6816c098aabbeca12861779789d77e8e",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\staff\\[id]\\route.ts": {
+    "mtime": 1777146936.6064558,
+    "ast_hash": "2858ac20f429f9a5e17a1c3b78447c7b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\students\\route.ts": {
+    "mtime": 1777546856.6005106,
+    "ast_hash": "7dfa1c5a49b31b068ac81247a09872f1",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\students\\[id]\\route.ts": {
+    "mtime": 1777546863.181767,
+    "ast_hash": "4cba5b9922bd2fe6364c5b01616030f8",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\students\\[id]\\documents\\route.ts": {
+    "mtime": 1777311929.74826,
+    "ast_hash": "ce6e2802ff93343b33749acdc376b0b3",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\tasks\\route.ts": {
+    "mtime": 1780150537.6546626,
+    "ast_hash": "8978374968e5a8173d893e89570b19fa",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\tickets\\route.ts": {
+    "mtime": 1780150536.2211587,
+    "ast_hash": "0a7bcad5799d2658b588aa0eaa3fe129",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\universities\\route.ts": {
+    "mtime": 1778768797.1087258,
+    "ast_hash": "5faff0d257904be40a45b7a180457c68",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\universities\\[id]\\route.ts": {
+    "mtime": 1780148900.7600384,
+    "ast_hash": "7a2e126de1aad76bda1b5740c93ae448",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\upload\\route.ts": {
+    "mtime": 1777402401.6040857,
+    "ast_hash": "68de84da7e88b551ca7620c2c0c22763",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\users\\route.ts": {
+    "mtime": 1777883851.8560283,
+    "ast_hash": "ce9ca37334e52100dd323c561c271598",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\visa-checklists\\route.ts": {
+    "mtime": 1777882865.8557663,
+    "ast_hash": "501753566c237142bd0ff132f2e0eb2b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\visa-types\\route.ts": {
+    "mtime": 1777879606.9682298,
+    "ast_hash": "8ebaff3d04bf732089c2f82127e6b094",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api\\workflow-stages\\route.ts": {
+    "mtime": 1777882890.7231412,
+    "ast_hash": "2cf7daedb0557c6640f81ce0138c0368",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api-keys\\page.tsx": {
+    "mtime": 1780072939.0747046,
+    "ast_hash": "25052f0c4d25a71ffa2018660c44b0b9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\api-keys\\components\\ApiKeysContent.tsx": {
+    "mtime": 1780148895.826844,
+    "ast_hash": "6bed99f535b5caadfc5c0a65cf4d2828",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\applications\\page.tsx": {
+    "mtime": 1780069532.2084773,
+    "ast_hash": "707310b683aaafebc7004a9ffefe2882",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\applications\\components\\ApplicationsContent.tsx": {
+    "mtime": 1780225528.7772088,
+    "ast_hash": "76c6eb52249d4b3bf0a8fb9a15df3c76",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\automations\\page.tsx": {
+    "mtime": 1780069532.2084773,
+    "ast_hash": "6f5d42c74f3502cab19937e05fb31498",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\automations\\components\\AutomationsContent.tsx": {
+    "mtime": 1780078107.1413908,
+    "ast_hash": "240bac2209dc00265016d95655550285",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\chat\\page.tsx": {
+    "mtime": 1780080124.2439508,
+    "ast_hash": "18bf16d1e500749c4e8ae6b792a0733e",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\chat\\components\\ChatContent.tsx": {
+    "mtime": 1780078292.727179,
+    "ast_hash": "ecaa88f7fa0bf610a5a26cf545dcd3aa",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\courses\\page.tsx": {
+    "mtime": 1780075859.0442572,
+    "ast_hash": "2b94532e5b6ee88af389f1f909714246",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\courses\\add\\page.tsx": {
+    "mtime": 1780069532.2084773,
+    "ast_hash": "e7d733e966760212c1ffa4441fa9cee2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\courses\\components\\AddCourseContent.tsx": {
+    "mtime": 1780225710.6734617,
+    "ast_hash": "07baf8199599faf335eeb153a6e0a7bb",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\courses\\components\\CoursesContent.tsx": {
+    "mtime": 1780225158.0402832,
+    "ast_hash": "1ef8e8a9fd96b7a15b337741ff80a90d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\courses\\edit\\[id]\\page.tsx": {
+    "mtime": 1780069532.2094743,
+    "ast_hash": "584700092487222df79769749917934f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\dashboard\\page.tsx": {
+    "mtime": 1780069532.2094743,
+    "ast_hash": "a59570b15b2c3eb8957256963ecb4ed2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\dashboard\\components\\CoursesPerUniversityChart.tsx": {
+    "mtime": 1780221682.692935,
+    "ast_hash": "0dcf8e07ed6eafc6a242edee9f1c80e8",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\dashboard\\components\\DashboardContent.tsx": {
+    "mtime": 1780074782.1991282,
+    "ast_hash": "b3a8e997999169a126c3cc15e95dbf54",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\dashboard\\components\\EnrollmentTrendChart.tsx": {
+    "mtime": 1780221681.8996418,
+    "ast_hash": "1cb804f4db0d8722893e6be1fd108821",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\dashboard\\components\\FacultyDistributionChart.tsx": {
+    "mtime": 1780221683.4232028,
+    "ast_hash": "ec2caa869f9874827f7fce95d8c8b19d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\dashboard\\components\\KPIBentoGrid.tsx": {
+    "mtime": 1780076721.4902084,
+    "ast_hash": "21fb0a32bf0ddcc25e3f323f7915d840",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\dashboard\\components\\RecentActivityFeed.tsx": {
+    "mtime": 1780078107.1503534,
+    "ast_hash": "b4f793e91615335ae5e7ce671639064c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\dashboard\\components\\RecentUniversitiesTable.tsx": {
+    "mtime": 1780148939.6469038,
+    "ast_hash": "907fb4a912ba0ff43c1cb93012eabc76",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\documents\\page.tsx": {
+    "mtime": 1780152769.9254732,
+    "ast_hash": "b3d49e452407036b4cee78624f4b1649",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\documents\\components\\DocumentScanner.tsx": {
+    "mtime": 1780224429.6019535,
+    "ast_hash": "79fe0be2d8b27ca21d0ac394f30f8dc2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\expenses\\page.tsx": {
+    "mtime": 1780069532.2094743,
+    "ast_hash": "25e4e56e9ecfeb6e342bd3ce33c8ea04",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\expenses\\components\\ExpensesContent.tsx": {
+    "mtime": 1780225131.5848176,
+    "ast_hash": "dc59d1b2c5d642a5f0f029c90563ec0d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\featured\\page.tsx": {
+    "mtime": 1780069532.2104743,
+    "ast_hash": "01303a9d316f3ff40378b04e47caa774",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\featured\\components\\FeaturedContent.tsx": {
+    "mtime": 1780076721.5123172,
+    "ast_hash": "d61767f4ea7fedee8ed059c163da06d5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\files\\page.tsx": {
+    "mtime": 1780153483.1710231,
+    "ast_hash": "56d9b2b0291ca5e447a6aedd1b068f5b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\files\\components\\FileManager.tsx": {
+    "mtime": 1780225356.7021217,
+    "ast_hash": "2bb31f6444d9a26b768f64e6e445203d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\page.tsx": {
+    "mtime": 1780069532.2124293,
+    "ast_hash": "4feaa43f3e86f15af85afd70158f7b28",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\attendance\\page.tsx": {
+    "mtime": 1780069532.2104743,
+    "ast_hash": "0b4a28093824f02bac9bbccd290c01a4",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\attendance\\components\\AttendanceContent.tsx": {
+    "mtime": 1780225708.8820808,
+    "ast_hash": "cd6ef111340ef5a1bf578d1ac73b6439",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\components\\HRDashboard.tsx": {
+    "mtime": 1780225359.5334604,
+    "ast_hash": "add8de1ef3d3d35183a24b927a1bd0e6",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\departments\\page.tsx": {
+    "mtime": 1780069532.2104743,
+    "ast_hash": "4c720e576b6da16b7a0cd56447940fd2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\departments\\components\\DepartmentsContent.tsx": {
+    "mtime": 1780225107.071957,
+    "ast_hash": "b98d1216407b2147c71e5414f2ef1fb3",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\designations\\page.tsx": {
+    "mtime": 1780069532.2104743,
+    "ast_hash": "5422229473c1b5c60686257978d99467",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\designations\\components\\DesignationsContent.tsx": {
+    "mtime": 1780225117.8830242,
+    "ast_hash": "52867e52c9e59ff6c03aaf6dba95438e",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\employees\\page.tsx": {
+    "mtime": 1780069532.2104743,
+    "ast_hash": "ad93e2b743a36545cd1f5918f9a7dad2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\employees\\components\\EmployeesContent.tsx": {
+    "mtime": 1780225506.151842,
+    "ast_hash": "617de6b714176bb91895dd988ad15dd1",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\employees\\[id]\\face-enrollment\\page.tsx": {
+    "mtime": 1780069532.2119231,
+    "ast_hash": "74fb384a500406a3ee34e9386765dbfc",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\employees\\[id]\\face-enrollment\\components\\FaceEnrollmentContent.tsx": {
+    "mtime": 1780224121.6914847,
+    "ast_hash": "829c6dc4c898485940c038852aa5bf4c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\leave\\page.tsx": {
+    "mtime": 1780069532.2119231,
+    "ast_hash": "359cceeae29ea6a23424390b41768e68",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\leave\\components\\LeaveContent.tsx": {
+    "mtime": 1780225707.1147895,
+    "ast_hash": "989b054f4e83e2803a11130a318690a1",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\payroll\\page.tsx": {
+    "mtime": 1780069532.2124293,
+    "ast_hash": "9e71bbf1730bb865ffbea600ff4c8db9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\hr\\payroll\\components\\PayrollContent.tsx": {
+    "mtime": 1780225708.2441547,
+    "ast_hash": "9bb301d356b3a5cd1354eb93b8e36be4",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\leads\\page.tsx": {
+    "mtime": 1780069532.2124293,
+    "ast_hash": "67581b2d312d896fa30d3e0ce9b87782",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\leads\\components\\LeadsContent.tsx": {
+    "mtime": 1780225710.0820503,
+    "ast_hash": "d48402d0cdab3990cf931e913f32ccc0",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\learning-hub\\page.tsx": {
+    "mtime": 1780069532.2124293,
+    "ast_hash": "e3e167c7a8292723db59937eedd05b46",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\learning-hub\\components\\LearningHubContent.tsx": {
+    "mtime": 1780225421.3375785,
+    "ast_hash": "d77f6924ac46fcc60702fcacb70b05b3",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\login\\loading.tsx": {
+    "mtime": 1780076721.6344864,
+    "ast_hash": "9933c95d49eca86f735e41e39def112d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\login\\page.tsx": {
+    "mtime": 1780069619.0309865,
+    "ast_hash": "29ccddd529ee4131d59b8b3b7bb44c81",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\login\\components\\LoginForm.tsx": {
+    "mtime": 1780220676.2885954,
+    "ast_hash": "99c34f6387f0fe8d7490979521f19827",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\notifications\\page.tsx": {
+    "mtime": 1780069598.655065,
+    "ast_hash": "a2dae7e43851216c44b31940d7d040b6",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\notifications\\components\\NotificationsContent.tsx": {
+    "mtime": 1780225449.7141173,
+    "ast_hash": "2995ecdef9e7105e2eaf0d297b6438e7",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\payments\\page.tsx": {
+    "mtime": 1780069532.2124293,
+    "ast_hash": "5411164b83a742acec93375d5039c2c6",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\payments\\components\\PaymentsContent.tsx": {
+    "mtime": 1780225438.3498967,
+    "ast_hash": "38d8c7a1f3321f6c9607f7cc838a3bbd",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\reports\\page.tsx": {
+    "mtime": 1780069532.213881,
+    "ast_hash": "9cf71c152b6b95248cfd07b1300f5800",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\reports\\components\\ReportsContent.tsx": {
+    "mtime": 1780223972.892898,
+    "ast_hash": "8ca7cf52180fb86c39cdd9ea94ccbc8b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\search\\page.tsx": {
+    "mtime": 1780069532.213881,
+    "ast_hash": "0bca8f4090a4b27fdf0fe1aaeb047b20",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\search\\components\\SearchContent.tsx": {
+    "mtime": 1780225191.7380817,
+    "ast_hash": "ecaf08e10a33e86a9382576ea5aa9a2e",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\settings\\page.tsx": {
+    "mtime": 1780069532.213881,
+    "ast_hash": "b125a63afab88c6cac88864ccbdae236",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\settings\\backups\\page.tsx": {
+    "mtime": 1780221601.17025,
+    "ast_hash": "dbbe940607510c2c5045cbaeac96eea5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\settings\\components\\SettingsContent.tsx": {
+    "mtime": 1780225293.447074,
+    "ast_hash": "da709802afccbef7a140eaf35b41d022",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\staff\\page.tsx": {
+    "mtime": 1780069532.213881,
+    "ast_hash": "931981318c4636738b631bd8c4ef447d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\staff\\components\\StaffContent.tsx": {
+    "mtime": 1780225337.0515866,
+    "ast_hash": "c0a51f3e990506eea216b38321a84b0f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\staff-tasks\\page.tsx": {
+    "mtime": 1780069532.213881,
+    "ast_hash": "cd39d3efc3b67a6e7f2276f8229b8f2c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\staff-tasks\\components\\TasksContent.tsx": {
+    "mtime": 1780225092.195177,
+    "ast_hash": "9da2ee249a0904ef36083eb0c8201a05",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\students\\page.tsx": {
+    "mtime": 1777311959.146886,
+    "ast_hash": "aaabe2cef5aa4a0e5e4412cce784e539",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\students\\components\\StudentContent.tsx": {
+    "mtime": 1780225235.7592328,
+    "ast_hash": "ddd359c81fa3a290bd4e0c468ee3a90f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\support\\page.tsx": {
+    "mtime": 1780069553.9658155,
+    "ast_hash": "a78da9621c5118e360a45462fa619619",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\support\\components\\SupportContent.tsx": {
+    "mtime": 1780078318.4710803,
+    "ast_hash": "bd0480957392a927559d1f2186da2925",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\tasks\\page.tsx": {
+    "mtime": 1780069532.2149644,
+    "ast_hash": "8923c42b5b85fb7827e71309f8aae917",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\tasks\\components\\VisaWorkflowDashboard.tsx": {
+    "mtime": 1780224479.8958685,
+    "ast_hash": "7173af39074d21f1e2738ee9fee3dce1",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\tasks\\components\\WorkflowContent.tsx": {
+    "mtime": 1780225157.5008636,
+    "ast_hash": "380697179b1e8e5a895b47ea9e97ecf7",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\tickets\\page.tsx": {
+    "mtime": 1780069532.2149644,
+    "ast_hash": "faeda771e877bc420014e398ce61ee2d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\tickets\\components\\TicketsContent.tsx": {
+    "mtime": 1780225369.2873836,
+    "ast_hash": "72c5079b098e02dae4ef28865421216b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\universities\\page.tsx": {
+    "mtime": 1780069532.2149644,
+    "ast_hash": "07e2d91d7fd1b64b62fe34999dc31754",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\universities\\add\\page.tsx": {
+    "mtime": 1780069532.2149644,
+    "ast_hash": "bc3dc3e285dbf60615dd7a2305d90e6d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\universities\\components\\AddUniversityContent.tsx": {
+    "mtime": 1780220212.1212106,
+    "ast_hash": "380c1250e59060a16ea9394b459988c3",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\universities\\components\\UniversitiesContent.tsx": {
+    "mtime": 1780221678.6563492,
+    "ast_hash": "c7381e7d4657b67889eb04230210c10b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\universities\\components\\UniversityDetailContent.tsx": {
+    "mtime": 1780225122.0940137,
+    "ast_hash": "b26b1860821fafec8756343e5933b90b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\universities\\components\\UniversityForm.tsx": {
+    "mtime": 1780225144.7906106,
+    "ast_hash": "6f4b5565b6a210e13cb291d8fa3b9149",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\universities\\[id]\\page.tsx": {
+    "mtime": 1780069532.2159686,
+    "ast_hash": "c750c46a0e7d7319baa2e986e47ab0e5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\app\\universities\\[id]\\edit\\page.tsx": {
+    "mtime": 1780069532.2149644,
+    "ast_hash": "bd0dbfcba7b2e1a781fbd004ff85bc49",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\components\\AppLayout.tsx": {
+    "mtime": 1777192960.2740672,
+    "ast_hash": "448086f99cef572417090ced64d0412b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\components\\AppLayoutWrapper.tsx": {
+    "mtime": 1780225238.703929,
+    "ast_hash": "20f24c6b45ab228b0bcb397a3e2babe9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\components\\Sidebar.tsx": {
+    "mtime": 1780225079.3333151,
+    "ast_hash": "e654d229643e07ef7feb1c53b3109620",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\components\\Topbar.tsx": {
+    "mtime": 1780225302.971123,
+    "ast_hash": "c56dc146a54c5f62f5c9d22a7017a0a2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\components\\hr\\CameraCapture.tsx": {
+    "mtime": 1780224204.7076685,
+    "ast_hash": "8dff52311fc7465c0ddd0e44f0f3f31d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\components\\hr\\FaceVerificationModal.tsx": {
+    "mtime": 1780225797.8687825,
+    "ast_hash": "e2a4c8912931071c1f33edc70fb89f98",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\components\\ui\\AppIcon.tsx": {
+    "mtime": 1777047513.5089767,
+    "ast_hash": "0b8f4fb6ea36a0f503476384d9700935",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\components\\ui\\AppImage.tsx": {
+    "mtime": 1780073482.4863894,
+    "ast_hash": "74534c00f7aaa3ba80f35896a0544703",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\components\\ui\\AppLogo.tsx": {
+    "mtime": 1780074531.1403668,
+    "ast_hash": "22d42b298cd065d4e78e390a40dd63f1",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\activity.ts": {
+    "mtime": 1777706260.3790617,
+    "ast_hash": "5ed8d698ce571a98fc9927c913b08ac3",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\check-counts.ts": {
+    "mtime": 1780150548.310709,
+    "ast_hash": "61f3a50f8432fdbc48eebe14968b3bf6",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\constants.ts": {
+    "mtime": 1777203576.374864,
+    "ast_hash": "c67d0a959af240c24c04f85d6da06297",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\crypto.ts": {
+    "mtime": 1780066138.6619825,
+    "ast_hash": "a78c0205b13ca37e0f27892b5cde5848",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\db.ts": {
+    "mtime": 1777116967.6449087,
+    "ast_hash": "6ff76c40fd988d819653718e70254bb9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\face.ts": {
+    "mtime": 1779998968.3565989,
+    "ast_hash": "52701ca21a652a333916ee6080bdfbac",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\forex.ts": {
+    "mtime": 1780073483.6131651,
+    "ast_hash": "e16c9e2b8e4dbc920b572fd5704aa78f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\json.ts": {
+    "mtime": 1777623551.2478187,
+    "ast_hash": "e3437622ba21f80dc0ffab2ecf156ecf",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\nepal-data.ts": {
+    "mtime": 1777312531.2091596,
+    "ast_hash": "8886116dcd10a44fd9b67903003b8856",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\notifications.ts": {
+    "mtime": 1777188655.9498422,
+    "ast_hash": "6bed838704037fca3243ab1cfe2c1c48",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\seed-admin.ts": {
+    "mtime": 1777145427.59318,
+    "ast_hash": "fe329ad8ddf430818f211396ed4681cb",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\seed-data.ts": {
+    "mtime": 1780150546.7177124,
+    "ast_hash": "975ca8c39e081619b614ececaa66b25d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\seed-featured.ts": {
+    "mtime": 1780224835.351463,
+    "ast_hash": "bbe91b82805129150a2a48dd152e216d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\session.ts": {
+    "mtime": 1777102683.3959959,
+    "ast_hash": "3526d1de224f8000f0f0fcd9ec14ddce",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\data\\countries.ts": {
+    "mtime": 1772832435.0238838,
+    "ast_hash": "4b37fb3e6a8b2f6a7e0770b14cf5ec97",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\data\\countries_nationalities.json": {
+    "mtime": 1773572494.0939481,
+    "ast_hash": "e257ce8bd4d6147a08a1d0dad997fc9f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\src\\lib\\data\\neb_grade12_institutes.json": {
+    "mtime": 1773261044.929759,
+    "ast_hash": "0cc293cc040f427d44550568de4f5401",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\dev-error.txt": {
+    "mtime": 1779979501.8985531,
+    "ast_hash": "9c642544305bd0c580dea5b28aa959a3",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\dev-output.txt": {
+    "mtime": 1779979501.9894075,
+    "ast_hash": "d9f1a7c281f2c182cd5c22388fad99b5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\filters_dump.txt": {
+    "mtime": 1777201149.052611,
+    "ast_hash": "ca2248cfc3ac9d4a7db5279648ba1df1",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\reactdoctor_issues.txt": {
+    "mtime": 1780080502.651311,
+    "ast_hash": "bd1d7a8789c11d5692996d86a7476322",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\reactdoctor_issues_remaining.txt": {
+    "mtime": 1780080685.1659992,
+    "ast_hash": "a7ee90da6333926bace45c02cf93db27",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\README.md": {
+    "mtime": 1777047513.3123085,
+    "ast_hash": "9033c26b1ce04b4f35aed1186a72e05a",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\remaining2.txt": {
+    "mtime": 1780081677.7497358,
+    "ast_hash": "4fea9c6f9f3e0e0d93821b7bd1472a08",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\ab55850e-5e45-4650-bcf7-ae47e90e8bb0.pdf": {
+    "mtime": 1780165802.9175768,
+    "ast_hash": "4a9e8ae233496c4edb2fb91f9fc4e0a2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\assets\\images\\app_logo.png": {
+    "mtime": 1777047513.3721178,
+    "ast_hash": "5c99f4d093df8592528d676a0c25fd67",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\assets\\images\\no_image.png": {
+    "mtime": 1777047513.3766584,
+    "ast_hash": "1a5d2f8e2ae237e2dd853bd7b3fa7287",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\access.png": {
+    "mtime": 1780064588.81962,
+    "ast_hash": "a7ae40149d8a58f5f6b18f1b5ea7eaec",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\analytics.png": {
+    "mtime": 1780064635.3169808,
+    "ast_hash": "ffcce3b5a742aafb03e746d2af53037c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\api-keys.png": {
+    "mtime": 1780064596.0129745,
+    "ast_hash": "bab5bc0d79468f36114a752e6b694827",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\applications.png": {
+    "mtime": 1780064577.8911827,
+    "ast_hash": "ddb20d60c6ecd39578a80c3b858adf13",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\automations.png": {
+    "mtime": 1780064617.4562752,
+    "ast_hash": "7f75124c6c78c7b6b3df75f2a5813f60",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\chat.png": {
+    "mtime": 1780064603.1948674,
+    "ast_hash": "19083140cd9d9ec897712e9890acc2fc",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\courses-add.png": {
+    "mtime": 1780064574.2304976,
+    "ast_hash": "a8538eff297626793738e6f79f377192",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\courses.png": {
+    "mtime": 1780064569.571525,
+    "ast_hash": "ac587e86fd698e45d63e12a1d74a149e",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\dashboard.png": {
+    "mtime": 1780064495.9871206,
+    "ast_hash": "d4a95edd888137c54f4c8b659179d441",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\expenses.png": {
+    "mtime": 1780064624.4585147,
+    "ast_hash": "026033800a04fd04292c3cc75aecff6d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\featured.png": {
+    "mtime": 1780064620.9276898,
+    "ast_hash": "7172d1f8c148ae63cc575bb87b9557e6",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\hr-attendance.png": {
+    "mtime": 1780064503.362031,
+    "ast_hash": "639bae6282a1bb2cb94d5d744f23fdd9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\hr-dashboard.png": {
+    "mtime": 1780064499.696534,
+    "ast_hash": "6f0104385cb89803728075afac9bf758",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\hr-departments.png": {
+    "mtime": 1780064517.0979512,
+    "ast_hash": "a7ceb6f5e0e1f1414dd1e4611261aa79",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\hr-designations.png": {
+    "mtime": 1780064520.6282556,
+    "ast_hash": "0533eef043334f86a7c70ab687e4464c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\hr-employees.png": {
+    "mtime": 1780064507.3959308,
+    "ast_hash": "6af95eb238969d229c33fe304dcd51be",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\hr-face-enrollment.png": {
+    "mtime": 1780064513.427041,
+    "ast_hash": "5cd9829c4b4332751c1122aa507658b5",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\hr-leave.png": {
+    "mtime": 1780064524.3041093,
+    "ast_hash": "0ddd9b242d0435d6ff3cda3c286d8977",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\hr-payroll.png": {
+    "mtime": 1780064527.9747012,
+    "ast_hash": "d2092fedf0214a843fa9a7b2ce0df798",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\leads.png": {
+    "mtime": 1780064585.2774222,
+    "ast_hash": "14bd25039b8c39c392c416889ef24ce4",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\learning-hub.png": {
+    "mtime": 1780064638.783131,
+    "ast_hash": "fd47fe1c49ec206af937118a5aa9ae00",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\login.png": {
+    "mtime": 1780064492.219529,
+    "ast_hash": "b7eeaeaf9f129beefd4a65022294c9af",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\notifications.png": {
+    "mtime": 1780064610.1807673,
+    "ast_hash": "3b6190a47deae51184fc601c6164fcfe",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\payments.png": {
+    "mtime": 1780064627.9624047,
+    "ast_hash": "947463a86a17bf8be910ce8c3baa973d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\reports.png": {
+    "mtime": 1780064599.5629714,
+    "ast_hash": "3caa9e31ed0a0bb90e6ab37da45c42c4",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\search.png": {
+    "mtime": 1780064631.8064253,
+    "ast_hash": "ef1f231929c23f4dbf98697e1b070bdc",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\settings-academics.png": {
+    "mtime": 1780064558.6391659,
+    "ast_hash": "48fe97a804bee51a9a57494930983e87",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\settings-branches.png": {
+    "mtime": 1780064536.098554,
+    "ast_hash": "7a9182a154a8643ae4f00cde72e753bc",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\settings-email.png": {
+    "mtime": 1780064544.131639,
+    "ast_hash": "6ec54cd0411073f9f264f488a52b506f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\settings-localization.png": {
+    "mtime": 1780064532.5688066,
+    "ast_hash": "eff44a1274904f7f8217ea71ba9c651c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\settings-partners.png": {
+    "mtime": 1780064555.133187,
+    "ast_hash": "61be66a480039fdbbdc161f71418e6aa",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\settings-qualifications.png": {
+    "mtime": 1780064551.4433026,
+    "ast_hash": "bf99e802d40102961dd7dff833ab2e8d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\settings-roles.png": {
+    "mtime": 1780064540.5942976,
+    "ast_hash": "161d739e353c51e0f7aeb8475f8f98b8",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\settings-security.png": {
+    "mtime": 1780064547.6710935,
+    "ast_hash": "89184ac1dc28aec734b4c8779e8ea1fb",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\staff.png": {
+    "mtime": 1780064592.3400166,
+    "ast_hash": "f32031e1feb0556484a5df0a40ae6171",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\students.png": {
+    "mtime": 1780064581.7511427,
+    "ast_hash": "7772ea08c54ceeaa845adfd4e625d7fe",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\tasks.png": {
+    "mtime": 1780064613.9177759,
+    "ast_hash": "36466c301e94432478f195325c3cce7f",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\tickets.png": {
+    "mtime": 1780064606.6852229,
+    "ast_hash": "1bc4cf0433b22de39a7915584008bafb",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\universities-add.png": {
+    "mtime": 1780064566.1300876,
+    "ast_hash": "83b1fc646b1ae10872beb7650d58072b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\screenshots\\universities.png": {
+    "mtime": 1780064562.3945377,
+    "ast_hash": "ca1aaaa844b376bafde052d012a55e79",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\03245e84-dca3-46fd-9eb7-3294bc4b4efc.jpg": {
+    "mtime": 1780071726.2897875,
+    "ast_hash": "f4a7e63ccba42bccae5937fdd004d58a",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\1c4a5ffb-1e3e-4acb-b4ba-d065e9017bb3.jpg": {
+    "mtime": 1780058638.040116,
+    "ast_hash": "b5a6027c1f985b236261760bf5cfa0c3",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\2f3ce5c1-2ed6-4d54-8f4a-99bb9b1f631d.jpg": {
+    "mtime": 1780056509.269208,
+    "ast_hash": "386df87f57daf1b6d12cb9f97bf34b26",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\5e71ad3b-38d3-4674-ac5a-46ec4d317cc9.jpg": {
+    "mtime": 1780058559.981965,
+    "ast_hash": "b8be1a64465768513117ea810a38534a",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\6f192de8-89f7-4a1e-bd1f-092d4bab83f0.jpg": {
+    "mtime": 1780058646.0507238,
+    "ast_hash": "6966103eaf13b4e3c943fdbf36264edc",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\77eb6d5e-9c2d-4479-b08d-d519989b095b.jpg": {
+    "mtime": 1780071473.0233686,
+    "ast_hash": "cc81a121b743096ddcd8c20543590013",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\85a18ac6-be31-4fdd-bfa0-c5e041e0c928.jpg": {
+    "mtime": 1779997229.3219304,
+    "ast_hash": "3373e94916067c4984897c1d4e8927e9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\ab830b5b-5a44-4cd9-9db3-636092927751.jpg": {
+    "mtime": 1779997274.0119784,
+    "ast_hash": "af5802bc00b2143c73754c8969437e1b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\ad28cff7-0e27-4bfb-ab3a-745418b6a928.jpg": {
+    "mtime": 1779999388.086276,
+    "ast_hash": "70a9dfd27045976c0c551636744b7e0b",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\c3921db5-6f6b-4aff-ab41-41f5406e061e.jpg": {
+    "mtime": 1780071467.7704563,
+    "ast_hash": "5c6bb249d847282dfa8ea663569aa536",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\cf3bf717-2449-4453-8d1d-434eb64e75d6.jpg": {
+    "mtime": 1780056514.0692961,
+    "ast_hash": "45ded26332b5c61f52b97789d24aa57c",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\d2d0cd5c-d4a7-435a-a25b-29f5c42711a6.jpg": {
+    "mtime": 1780141682.364365,
+    "ast_hash": "3c1cee4d12e9cecdd3dc592d8aceccc9",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\ded17908-ca58-450b-a759-c41b62357258.jpg": {
+    "mtime": 1780071717.7972124,
+    "ast_hash": "5578cd6d2b543d973857a00cda86b89d",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\e2b12a40-b095-4739-902e-8fcc2019b9e6.jpg": {
+    "mtime": 1780058650.4274905,
+    "ast_hash": "04c0c696a1f7d4c291e565f4792807a2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\efba40c8-c8d3-4c2f-a510-7c387e67372f.jpg": {
+    "mtime": 1779999378.0904462,
+    "ast_hash": "d779f1d8bd707304684f34b524496413",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\f2883044-0a1c-49bf-9b9c-4b65b7b82545.jpg": {
+    "mtime": 1779997219.4910402,
+    "ast_hash": "047ff7ada0d762adb3d716f5240a51e2",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\f3ac04e0-e8d1-402f-bd21-66a9badf589e.jpg": {
+    "mtime": 1779999362.838785,
+    "ast_hash": "2315bdf5dacbf806e6defcfb58912e83",
+    "semantic_hash": ""
+  },
+  "D:\\Coding\\Softwares\\Autocad_2025_English\\Softwares\\unitrack\\unitrack\\public\\uploads\\f6498bc2-0f9b-4586-af08-d8fdae10638d.jpg": {
+    "mtime": 1780152535.5016396,
+    "ast_hash": "ca8ca5b757db3d37aa5c59bc2edc49ba",
+    "semantic_hash": ""
+  }
+}
