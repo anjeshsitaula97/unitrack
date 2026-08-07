@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { createNotification } from "@/lib/notifications";
@@ -45,7 +46,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const numId = Number(id);
     const body = await req.json();
 
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
     const scalarFields: [string, string?][] = [
       ["name"],
       ["firstName"],
@@ -146,12 +147,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if ("documents" in body && body.documents) {
       updateData.documents = {
         deleteMany: {},
-        create: body.documents.map((doc: any) => ({
-          type: doc.type,
-          name: doc.name,
-          url: doc.url,
-          status: doc.status || "Uploaded",
-        })),
+        create: body.documents.map(
+          (doc: { type?: string; name: string; url: string; status?: string }) => ({
+            type: doc.type,
+            name: doc.name,
+            url: doc.url,
+            status: doc.status || "Uploaded",
+          })
+        ),
       };
     }
 
@@ -159,7 +162,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const student = await db.student.update({
       where: { id: numId },
-      data: updateData,
+      data: updateData as Prisma.StudentUpdateInput,
     });
 
     const changes = diffChanges(existing, student);
@@ -179,14 +182,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       if (existingUser) {
         await db.user.update({
           where: { id: existingUser.id },
-          data: { password: updateData.studentPassword },
+          data: { password: updateData.studentPassword as string },
         });
       } else {
         await db.user.create({
           data: {
             name: student.name,
             email: student.email,
-            password: updateData.studentPassword,
+            password: updateData.studentPassword as string,
             role: "Student",
             status: "Active",
             lastLogin: "Never",
@@ -198,7 +201,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if ("name" in updateData) {
       await createNotification({
         title: "Student Updated",
-        message: `Student "${updateData.name}" has been updated.`,
+        message: `Student "${updateData.name as string}" has been updated.`,
         type: "Info",
       });
     }

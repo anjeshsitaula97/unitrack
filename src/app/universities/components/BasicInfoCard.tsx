@@ -2,11 +2,12 @@
 
 import React from "react";
 import { Building2, AlertCircle } from "lucide-react";
+import type { UniversityFormData, FormValue } from "./UniversityForm";
 
 interface BasicInfoCardProps {
-  form: any;
+  form: UniversityFormData;
   errors: Record<string, string>;
-  update: (field: string, value: any) => void;
+  update: (field: string, value: FormValue) => void;
   COUNTRIES: { name: string; currency: string; currencySymbol?: string }[];
 }
 

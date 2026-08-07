@@ -10,7 +10,7 @@ async function getSession() {
   if (!token) return null;
   try {
     return await verifyAuth(token);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }

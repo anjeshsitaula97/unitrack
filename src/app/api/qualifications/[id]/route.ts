@@ -28,8 +28,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
 
     return NextResponse.json(qualification);
-  } catch (error: any) {
-    if (error?.code === "P2002") {
+  } catch (error) {
+    if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "Qualification name already exists" }, { status: 400 });
     }
     logError("Update qualification", error);
@@ -54,8 +54,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    if (error?.code === "P2003") {
+  } catch (error) {
+    if ((error as { code?: string }).code === "P2003") {
       return NextResponse.json(
         { error: "Cannot delete: qualification is in use by one or more students" },
         { status: 409 }

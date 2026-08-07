@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   BookOpen,
   Users,
-  Clock,
   Tag,
   CheckCircle,
   AlertCircle,
@@ -16,19 +15,54 @@ import {
   Filter,
   Info,
 } from "lucide-react";
-import { QUICK_FILTERS, REQUIREMENTS_LIST } from "@/lib/constants";
+import { REQUIREMENTS_LIST } from "@/lib/constants";
 import * as Icons from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { COUNTRIES } from "@/lib/data/countries";
 import { safeParseArray } from "@/lib/json";
 
+interface SelectOption {
+  id: number;
+  name: string;
+}
+
+interface UniversityOption extends SelectOption {
+  shortName?: string;
+  country: string;
+  logo?: string;
+}
+
+interface QuickFilterEntry {
+  id: number;
+  name: string;
+  icon: string;
+  label: string;
+}
+
+interface IntakeEntry {
+  name: string;
+  startDate: string;
+  openDate: string;
+  deadline: string;
+}
+
+interface EnglishTestEntry {
+  type: string;
+  overall: string;
+  reading: string;
+  writing: string;
+  listening: string;
+  speaking: string;
+}
+
 export default function AddCourseContent({ courseId }: { courseId?: string }) {
-  const [universities, setUniversities] = React.useState<any[]>([]);
-  const [faculties, setFaculties] = React.useState<any[]>([]);
-  const [degreeTypes, setDegreeTypes] = React.useState<any[]>([]);
-  const [intakes, setIntakes] = React.useState<any[]>([]);
-  const [quickFilters, setQuickFilters] = React.useState<any[]>([]);
+  const [universities, setUniversities] = React.useState<UniversityOption[]>([]);
+  const [faculties, setFaculties] = React.useState<SelectOption[]>([]);
+  const [degreeTypes, setDegreeTypes] = React.useState<SelectOption[]>([]);
+  const [intakes, setIntakes] = React.useState<SelectOption[]>([]);
+  const [quickFilters, setQuickFilters] = React.useState<QuickFilterEntry[]>([]);
   const [academicDocsList, setAcademicDocsList] = React.useState<
     { id: string; name: string }[] | undefined
   >(undefined);
@@ -44,7 +78,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
   const [form, setForm] = useState({
     name: "",
     university: "",
-    universityId: "",
+    universityId: "" as string | number,
     faculty: "",
     degreeType: "",
     level: "Undergraduate",
@@ -159,7 +193,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
           }));
         }
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to load form data");
     } finally {
       setIsLoading(false);
@@ -169,6 +203,8 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
   const loadInitialDataRef = useRef(loadInitialData);
   React.useEffect(() => {
     loadInitialDataRef.current = loadInitialData;
+  }, [loadInitialData]);
+  React.useEffect(() => {
     loadInitialDataRef.current();
   }, [courseId]);
 
@@ -202,7 +238,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
         const err = await res.json();
         toast.error(err.error || `Failed to add ${type}`);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Error adding item");
     }
   };
@@ -211,7 +247,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
   const [prereqInput, setPrereqInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const update = (field: string, value: string | string[]) => {
+  const update = (field: string, value: string | string[] | IntakeEntry[] | EnglishTestEntry[]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field])
       setErrors((prev) => {
@@ -276,7 +312,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
         const err = await res.json();
         toast.error(err.details || err.error || `Failed to ${courseId ? "update" : "add"} course`);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Network error. Please try again.");
     }
   };
@@ -316,7 +352,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
               setForm({
                 name: "",
                 university: "",
-                universityId: "",
+                universityId: "" as string | number,
                 faculty: "",
                 degreeType: "",
                 level: "Undergraduate",
@@ -943,7 +979,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                   ...form.intakesData,
                   { name: "", startDate: "", openDate: "", deadline: "" },
                 ];
-                update("intakesData", newList as any);
+                update("intakesData", newList);
               }}
               className="btn-secondary py-1.5 text-[11px] font-bold"
             >
@@ -964,7 +1000,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                     aria-label="Remove intake"
                     onClick={() => {
                       const newList = form.intakesData.filter((_, i) => i !== idx);
-                      update("intakesData", newList as any);
+                      update("intakesData", newList);
                     }}
                     className="absolute -top-2 -right-2 size-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 shadow-sm opacity-0 group-hover:opacity-100 transition-all z-10"
                   >
@@ -992,7 +1028,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                         onChange={(e) => {
                           const newList = [...form.intakesData];
                           newList[idx].name = e.target.value;
-                          update("intakesData", newList as any);
+                          update("intakesData", newList);
                         }}
                         aria-label="Intake name"
                         className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
@@ -1019,7 +1055,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                         onChange={(e) => {
                           const newList = [...form.intakesData];
                           newList[idx].startDate = e.target.value;
-                          update("intakesData", newList as any);
+                          update("intakesData", newList);
                         }}
                         aria-label="Intake start date"
                         className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
@@ -1039,7 +1075,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                         onChange={(e) => {
                           const newList = [...form.intakesData];
                           newList[idx].openDate = e.target.value;
-                          update("intakesData", newList as any);
+                          update("intakesData", newList);
                         }}
                         aria-label="Intake open date"
                         className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
@@ -1059,7 +1095,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                         onChange={(e) => {
                           const newList = [...form.intakesData];
                           newList[idx].deadline = e.target.value;
-                          update("intakesData", newList as any);
+                          update("intakesData", newList);
                         }}
                         aria-label="Intake deadline"
                         className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
@@ -1077,7 +1113,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 type="button"
                 onClick={() => {
                   const newList = [{ name: "", startDate: "", openDate: "", deadline: "" }];
-                  update("intakesData", newList as any);
+                  update("intakesData", newList);
                 }}
                 className="text-indigo-600 text-xs font-bold mt-2 hover:underline"
               >
@@ -1285,7 +1321,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                         speaking: "",
                       },
                     ];
-                    update("englishTestsData", newList as any);
+                    update("englishTestsData", newList);
                   }}
                   className="text-indigo-600 text-xs font-bold hover:underline flex items-center gap-1"
                 >
@@ -1305,7 +1341,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                         aria-label="Remove test"
                         onClick={() => {
                           const newList = form.englishTestsData.filter((_, i) => i !== idx);
-                          update("englishTestsData", newList as any);
+                          update("englishTestsData", newList);
                         }}
                         className="absolute -top-2 -right-2 size-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 shadow-sm opacity-0 group-hover:opacity-100 transition-all z-10"
                       >
@@ -1325,7 +1361,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                             onChange={(e) => {
                               const newList = [...form.englishTestsData];
                               newList[idx].type = e.target.value;
-                              update("englishTestsData", newList as any);
+                              update("englishTestsData", newList);
                             }}
                             aria-label="English test type"
                             className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
@@ -1361,7 +1397,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                             onChange={(e) => {
                               const newList = [...form.englishTestsData];
                               newList[idx].overall = e.target.value;
-                              update("englishTestsData", newList as any);
+                              update("englishTestsData", newList);
                             }}
                             placeholder={
                               test.type === "IELTS"
@@ -1399,7 +1435,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                             onChange={(e) => {
                               const newList = [...form.englishTestsData];
                               newList[idx].reading = e.target.value;
-                              update("englishTestsData", newList as any);
+                              update("englishTestsData", newList);
                             }}
                             placeholder={
                               test.type === "IELTS"
@@ -1434,7 +1470,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                             onChange={(e) => {
                               const newList = [...form.englishTestsData];
                               newList[idx].writing = e.target.value;
-                              update("englishTestsData", newList as any);
+                              update("englishTestsData", newList);
                             }}
                             placeholder={
                               test.type === "IELTS"
@@ -1469,7 +1505,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                             onChange={(e) => {
                               const newList = [...form.englishTestsData];
                               newList[idx].listening = e.target.value;
-                              update("englishTestsData", newList as any);
+                              update("englishTestsData", newList);
                             }}
                             placeholder={
                               test.type === "IELTS"
@@ -1504,7 +1540,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                             onChange={(e) => {
                               const newList = [...form.englishTestsData];
                               newList[idx].speaking = e.target.value;
-                              update("englishTestsData", newList as any);
+                              update("englishTestsData", newList);
                             }}
                             placeholder={
                               test.type === "IELTS"
@@ -1547,7 +1583,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                           speaking: "",
                         },
                       ];
-                      update("englishTestsData", newList as any);
+                      update("englishTestsData", newList);
                     }}
                     className="text-indigo-600 text-xs font-bold hover:underline"
                   >
@@ -1605,7 +1641,8 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
           <div className="max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-100 hover:scrollbar-thumb-purple-200">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {quickFilters.map((filter) => {
-                const IconComponent = (Icons as any)[filter.icon] || Icons.Filter;
+                const IconComponent =
+                  (Icons as unknown as Record<string, LucideIcon>)[filter.icon] || Icons.Filter;
                 const isSelected = form.quickFilters.includes(filter.label);
 
                 return (
@@ -1616,7 +1653,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                       const next = isSelected
                         ? form.quickFilters.filter((label) => label !== filter.label)
                         : [...form.quickFilters, filter.label];
-                      update("quickFilters", next as any);
+                      update("quickFilters", next);
                     }}
                     className={`
                       flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group
@@ -1668,7 +1705,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                     const next = isSelected
                       ? form.requirements.filter((r) => r !== name)
                       : [...form.requirements, name];
-                    update("requirements", next as any);
+                    update("requirements", next);
                   }}
                   className={`
                     flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer
@@ -1724,7 +1761,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                     const next = isSelected
                       ? form.requirements.filter((r) => r !== req)
                       : [...form.requirements, req];
-                    update("requirements", next as any);
+                    update("requirements", next);
                   }}
                   className={`
                     flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer

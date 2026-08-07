@@ -3,10 +3,11 @@
 import React from "react";
 import { CheckCircle, Info } from "lucide-react";
 import { REQUIREMENTS_LIST } from "@/lib/constants";
+import type { UniversityFormData, FormValue } from "./UniversityForm";
 
 interface RequirementsCardProps {
-  form: any;
-  update: (field: string, value: any) => void;
+  form: UniversityFormData;
+  update: (field: string, value: FormValue) => void;
 }
 
 export default function RequirementsCard({ form, update }: RequirementsCardProps) {

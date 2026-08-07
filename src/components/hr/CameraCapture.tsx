@@ -9,7 +9,7 @@ interface CameraCaptureProps {
   onClose: () => void;
 }
 
-export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
+export default function CameraCapture({ onCapture, onClose: _onClose }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);

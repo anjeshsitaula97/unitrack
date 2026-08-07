@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -52,7 +52,7 @@ const statusColors: Record<string, string> = {
   Pending: "bg-slate-50 text-slate-700 border-slate-100",
 };
 
-const statusIcons: Record<string, any> = {
+const statusIcons: Record<string, React.ReactNode> = {
   Submitted: <FileText size={14} />,
   Processing: <Timer size={14} />,
   Approved: <CheckCircle2 size={14} />,
@@ -102,7 +102,7 @@ export default function ApplicationsContent() {
         const data = await res.json();
         setApplications(Array.isArray(data) ? data : data.data);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to load applications");
     } finally {
       setIsLoading(false);
@@ -241,7 +241,7 @@ function ApplicationStatsCards({ applications }: { applications: Application[] |
           color: "text-red-600",
           bg: "bg-red-50",
         },
-      ].map((stat, idx) => (
+      ].map((stat, _idx) => (
         <div
           key={stat.label}
           className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm"

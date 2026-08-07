@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -77,7 +78,7 @@ export async function GET(req: Request) {
     const sort = searchParams.get("sort") || "date";
     const order = searchParams.get("order") || "desc";
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (date) {
       const [y, m, d] = date.split("-").map(Number);
@@ -85,15 +86,16 @@ export async function GET(req: Request) {
       const end = new Date(Date.UTC(y, m - 1, d, 23, 59, 59, 999));
       where.date = { gte: start, lte: end };
     } else if (fromDate || toDate) {
-      where.date = {};
+      const dateFilter: { gte?: Date; lte?: Date } = {};
       if (fromDate) {
         const [y, m, d] = fromDate.split("-").map(Number);
-        where.date.gte = new Date(Date.UTC(y, m - 1, d));
+        dateFilter.gte = new Date(Date.UTC(y, m - 1, d));
       }
       if (toDate) {
         const [y, m, d] = toDate.split("-").map(Number);
-        where.date.lte = new Date(Date.UTC(y, m - 1, d, 23, 59, 59, 999));
+        dateFilter.lte = new Date(Date.UTC(y, m - 1, d, 23, 59, 59, 999));
       }
+      where.date = dateFilter;
     }
 
     if (userId) where.userId = Number(userId);
@@ -104,13 +106,13 @@ export async function GET(req: Request) {
       };
     }
 
-    const orderBy: any = {};
+    const orderBy: Record<string, string> = {};
     const sortField = sort === "checkIn" || sort === "checkOut" ? sort : "date";
     orderBy[sortField] = order;
 
     const records = await db.attendance.findMany({
-      where,
-      orderBy,
+      where: where as Prisma.AttendanceWhereInput,
+      orderBy: orderBy as Prisma.AttendanceOrderByWithRelationInput,
       include: {
         user: { select: { id: true, name: true, email: true, employeeId: true, avatar: true } },
       },

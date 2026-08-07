@@ -16,7 +16,6 @@ import {
   Sparkles,
   Upload,
   Image as ImageIcon,
-  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 

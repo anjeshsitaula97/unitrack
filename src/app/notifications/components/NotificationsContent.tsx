@@ -29,7 +29,7 @@ const getIcon = (type: string) => {
 export default function NotificationsContent() {
   const [notifications, setNotifications] = useState<Notification[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
-  const [isMounted, setIsMounted] = useState(true);
+  const [isMounted] = useState(true);
 
   const fetchNotifications = async (silent = false) => {
     try {

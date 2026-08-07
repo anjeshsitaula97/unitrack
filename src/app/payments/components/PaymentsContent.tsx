@@ -1,25 +1,18 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
   CreditCard,
   Plus,
   Search,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
-  User,
   Calendar,
-  CheckCircle2,
   Clock,
-  AlertCircle,
   MoreVertical,
   ArrowUpRight,
   ArrowDownLeft,
   X,
   Wallet,
-  Building2,
   Banknote,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -41,6 +34,24 @@ interface Payment {
   proofUrl: string | null;
 }
 
+interface PaymentStudent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+interface PaymentFormData {
+  studentId: string;
+  amount: string;
+  currency: string;
+  status: string;
+  method: string;
+  date: string;
+  description: string;
+  proofUrl: string;
+}
+
 const statusColors: Record<string, string> = {
   Paid: "bg-emerald-50 text-emerald-700 border-emerald-100",
   Pending: "bg-amber-50 text-amber-700 border-amber-100",
@@ -50,7 +61,7 @@ const statusColors: Record<string, string> = {
 
 export default function PaymentsContent() {
   const [payments, setPayments] = useState<Payment[] | undefined>(undefined);
-  const [students, setStudents] = useState<any[] | undefined>(undefined);
+  const [students, setStudents] = useState<PaymentStudent[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +69,7 @@ export default function PaymentsContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<PaymentFormData>({
     studentId: "",
     amount: "",
     currency: "NPR",
@@ -80,7 +91,7 @@ export default function PaymentsContent() {
         const sData = await sRes.json();
         setStudents(sData.data || sData);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to load payments data");
     } finally {
       setIsLoading(false);
@@ -123,7 +134,7 @@ export default function PaymentsContent() {
           proofUrl: "",
         });
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to record payment");
     } finally {
       setIsSubmitting(false);
@@ -319,7 +330,7 @@ export default function PaymentsContent() {
   );
 }
 
-function PaymentStats({ payments }: { payments: any[] }) {
+function PaymentStats({ payments }: { payments: Payment[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4" suppressHydrationWarning>
       {[
@@ -385,9 +396,9 @@ function PaymentFormModal({
 }: {
   showModal: boolean;
   setShowModal: (v: boolean) => void;
-  formData: any;
-  setFormData: (v: any) => void;
-  students: any[] | undefined;
+  formData: PaymentFormData;
+  setFormData: (v: PaymentFormData) => void;
+  students: PaymentStudent[] | undefined;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   isSubmitting: boolean;
 }) {

@@ -11,12 +11,12 @@ function capitalize(str: string) {
 }
 
 const filePath = path.join(process.cwd(), "data", "nepal", "districts-by-province.json");
-let cachedData: any = null;
+let cachedData: Record<string, string[]> | null = null;
 try {
   if (fs.existsSync(filePath)) {
     cachedData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
   }
-} catch (e) {}
+} catch (_e) {}
 
 export async function GET(req: NextRequest) {
   try {
@@ -39,12 +39,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(list.map((d: string) => capitalize(d)));
     }
 
-    const result: any = {};
+    const result: Record<string, string[]> = {};
     Object.keys(data).forEach((k) => {
       result[capitalize(k)] = data[k].map((d: string) => capitalize(d));
     });
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch districts" }, { status: 500 });
   }
 }

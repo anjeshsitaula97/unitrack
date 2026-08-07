@@ -15,13 +15,14 @@ import {
   Loader2,
   Sun,
   Trash2,
+  type LucideIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SkeletonText } from "@/components/Skeleton";
 import { toast } from "sonner";
 import { safeJson } from "@/lib/fetch-client";
 
-const typeConfig: Record<string, { label: string; icon: any; color: string }> = {
+const typeConfig: Record<string, { label: string; icon: LucideIcon; color: string }> = {
   application: {
     label: "Application",
     icon: Briefcase,
@@ -42,17 +43,37 @@ const typeConfig: Record<string, { label: string; icon: any; color: string }> = 
   holiday: { label: "Holiday", icon: Sun, color: "bg-red-100 text-red-700 border-red-200" },
 };
 
+interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  start: string;
+  end: string;
+  url?: string;
+  type?: string;
+  color?: string;
+  status?: string;
+  note?: string;
+}
+
+interface Holiday {
+  id: string;
+  name: string;
+  date: string;
+  type?: string;
+}
+
 export default function CalendarContent() {
   const router = useRouter();
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [showHolidayModal, setShowHolidayModal] = useState(false);
-  const [holidays, setHolidays] = useState<any[]>([]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [holidayName, setHolidayName] = useState("");
   const [holidayDate, setHolidayDate] = useState("");
   const [holidaySubmitting, setHolidaySubmitting] = useState(false);
@@ -228,7 +249,7 @@ export default function CalendarContent() {
                       {dayEvts.slice(0, 3).map((e) => (
                         <div
                           key={e.id}
-                          className={`text-[10px] font-semibold px-1 py-0.5 rounded truncate ${typeConfig[e.type]?.color || "bg-slate-100 text-slate-600"}`}
+                          className={`text-[10px] font-semibold px-1 py-0.5 rounded truncate ${(e.type && typeConfig[e.type]?.color) || "bg-slate-100 text-slate-600"}`}
                         >
                           {e.title}
                         </div>
@@ -263,7 +284,7 @@ export default function CalendarContent() {
               ) : (
                 <div className="space-y-2">
                   {dayEvents.map((e) => {
-                    const config = typeConfig[e.type] || {
+                    const config = (e.type && typeConfig[e.type]) || {
                       label: "Event",
                       icon: CalendarDays,
                       color: "bg-slate-100 text-slate-600",

@@ -7,10 +7,27 @@ import StudentTopbar from "@/components/StudentTopbar";
 import { isSessionActive } from "@/lib/client-session";
 import { Loader2 } from "lucide-react";
 
+interface PortalStudent {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  nationality?: string | null;
+  studyLevel?: string | null;
+  interestedCountry?: string | null;
+  status?: string | null;
+  counselor?: string | null;
+  _count?: {
+    applications: number;
+    payments: number;
+    documents: number;
+  };
+}
+
 export default function StudentPortalLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [student, setStudent] = useState<any>(null);
-  const [sessionReady, setSessionReady] = useState<boolean>(isSessionActive());
+  const [student, setStudent] = useState<PortalStudent | null>(null);
+  const [sessionReady] = useState<boolean>(isSessionActive());
   const router = useRouter();
 
   useEffect(() => {

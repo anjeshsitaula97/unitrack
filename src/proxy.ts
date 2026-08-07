@@ -34,7 +34,7 @@ export async function proxy(request: NextRequest) {
       const { payload } = await jwtVerify(token, new TextEncoder().encode(getJwtSecretKey()));
       verified = true;
       role = payload.role as string | undefined;
-    } catch (error) {
+    } catch (_error) {
       verified = false;
     }
   }

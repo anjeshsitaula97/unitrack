@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  getPaginationParams,
-  buildSearchFilter,
-  paginatedResponse,
-  PaginatedResponse,
-} from "../api-utils";
+import { getPaginationParams, buildSearchFilter, paginatedResponse } from "../api-utils";
 
 describe("API Utils", () => {
   describe("getPaginationParams", () => {

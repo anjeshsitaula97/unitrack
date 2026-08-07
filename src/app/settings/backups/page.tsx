@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import AppLayoutWrapper from "@/components/AppLayoutWrapper";
@@ -10,13 +10,7 @@ import {
   Database,
   AlertTriangle,
   FileJson,
-  History,
-  CheckCircle2,
-  XCircle,
   Loader2,
-  ArrowRight,
-  ChevronDown,
-  ChevronUp,
   Settings2,
   FileText,
   Users,
@@ -133,6 +127,14 @@ const DATA_SECTIONS = [
   },
 ];
 
+interface BackupData {
+  encrypted?: boolean;
+  timestamp?: string;
+  password?: string;
+  selectedTables?: string[];
+  data?: Record<string, unknown[]>;
+}
+
 export default function BackupsPage() {
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -141,7 +143,7 @@ export default function BackupsPage() {
     DATA_SECTIONS.map((s) => s.id)
   );
 
-  const [uploadedBackup, setUploadedBackup] = useState<any>(null);
+  const [uploadedBackup, setUploadedBackup] = useState<BackupData | null>(null);
   const [selectedRestoreSections, setSelectedRestoreSections] = useState<string[]>([]);
   const [lastBackup, setLastBackup] = useState<string | null>(null);
   const [encryptBackup, setEncryptBackup] = useState(false);
@@ -205,7 +207,7 @@ export default function BackupsPage() {
       setShowBackupConfig(false);
       setBackupPassword("");
       setEncryptBackup(false);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to generate backup. Please try again.");
     } finally {
       setIsBackingUp(false);
@@ -234,19 +236,20 @@ export default function BackupsPage() {
         }
         setUploadedBackup(backupData);
         // Automatically select sections that exist in the backup
-        const availableSections = [];
+        const availableSections: string[] = [];
         for (const section of DATA_SECTIONS) {
           if (
-            section.tables.some(
-              (table) => backupData.data[table] && backupData.data[table].length > 0
-            )
+            section.tables.some((table) => {
+              const records = backupData.data?.[table];
+              return !!records && records.length > 0;
+            })
           ) {
             availableSections.push(section.id);
           }
         }
         setSelectedRestoreSections(availableSections);
-      } catch (error: any) {
-        toast.error(error.message || "Failed to parse backup file");
+      } catch (error: unknown) {
+        toast.error(error instanceof Error ? error.message : "Failed to parse backup file");
       }
     };
     reader.readAsText(file);
@@ -284,7 +287,7 @@ export default function BackupsPage() {
             return acc;
           }, []);
 
-      const body: any = { ...uploadedBackup };
+      const body: BackupData = { ...uploadedBackup };
       if (uploadedBackup.encrypted) {
         body.password = restorePassword;
       }
@@ -305,8 +308,8 @@ export default function BackupsPage() {
         const err = await response.json();
         throw new Error(err.error || "Restore failed");
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to restore data");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to restore data");
       setIsRestoring(false);
     }
   };
@@ -442,7 +445,7 @@ export default function BackupsPage() {
 }
 
 function BackupConfigPanel({
-  showBackupConfig,
+  showBackupConfig: _showBackupConfig,
   setShowBackupConfig,
   selectedBackupSections,
   setSelectedBackupSections,
@@ -453,7 +456,7 @@ function BackupConfigPanel({
   setBackupPassword,
   handleBackup,
   isBackingUp,
-  lastBackup,
+  lastBackup: _lastBackup,
 }: {
   showBackupConfig: boolean;
   setShowBackupConfig: (v: boolean) => void;
@@ -604,8 +607,8 @@ function RestoreConfigPanel({
   setShowRestoreConfirm,
   confirmRestore,
 }: {
-  uploadedBackup: any;
-  setUploadedBackup: (v: any) => void;
+  uploadedBackup: BackupData;
+  setUploadedBackup: (v: BackupData | null) => void;
   selectedRestoreSections: string[];
   setSelectedRestoreSections: (v: string[] | ((prev: string[]) => string[])) => void;
   toggleRestoreSection: (id: string) => void;
@@ -683,9 +686,10 @@ function RestoreConfigPanel({
         ) : (
           <div className="grid grid-cols-2 gap-3 mb-8">
             {DATA_SECTIONS.map((section) => {
-              const isAvailable = section.tables.some(
-                (table) => uploadedBackup.data[table] && uploadedBackup.data[table].length > 0
-              );
+              const isAvailable = section.tables.some((table) => {
+                const records = uploadedBackup.data?.[table];
+                return !!records && records.length > 0;
+              });
 
               return (
                 <button

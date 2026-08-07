@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db as prisma } from "@/lib/db";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/api-utils";
@@ -72,7 +73,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
     if (subtasks !== undefined) updateData.subtasks = JSON.stringify(subtasks);
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;
@@ -80,7 +81,7 @@ export async function PATCH(req: Request) {
     const existing = await prisma.workflowStage.findUnique({ where: { id: Number(id) } });
     const stage = await prisma.workflowStage.update({
       where: { id: Number(id) },
-      data: updateData,
+      data: updateData as Prisma.WorkflowStageUpdateInput,
     });
 
     const changes = diffChanges(existing, stage);

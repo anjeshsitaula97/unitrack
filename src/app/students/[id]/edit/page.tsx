@@ -5,13 +5,14 @@ import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import AppLayoutWrapper from "@/components/AppLayoutWrapper";
 import StudentForm from "@/app/students/components/StudentForm";
+import type { Student } from "@/app/students/components/StudentForm";
 import { toast } from "sonner";
 
 export default function EditStudentPage() {
   const router = useRouter();
   const params = useParams();
   const studentId = params.id as string;
-  const [student, setStudent] = useState<any>(null);
+  const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export default function EditStudentPage() {
         router.push("/students");
       })
       .finally(() => setLoading(false));
-  }, [studentId]);
+  }, [studentId, router]);
 
   if (loading) {
     return (

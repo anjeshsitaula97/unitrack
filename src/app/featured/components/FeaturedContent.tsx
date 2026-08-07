@@ -5,8 +5,33 @@ import Image from "next/image";
 import { Star, Building2, BookOpen, MapPin, Award, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+interface FeaturedUniversity {
+  id: string;
+  name: string;
+  logo?: string | null;
+  city?: string | null;
+  country: string;
+  ranking?: string | number | null;
+  founded?: string | number | null;
+}
+
+interface FeaturedCourse {
+  id: string;
+  name: string;
+  level: string;
+  university: { name: string };
+  duration: string;
+  enrolled: number;
+  capacity: number;
+  color?: string;
+  initials?: string;
+}
+
 export default function FeaturedContent() {
-  const [data, setData] = useState<{ universities: any[]; courses: any[] }>({
+  const [data, setData] = useState<{
+    universities: FeaturedUniversity[];
+    courses: FeaturedCourse[];
+  }>({
     universities: [],
     courses: [],
   });

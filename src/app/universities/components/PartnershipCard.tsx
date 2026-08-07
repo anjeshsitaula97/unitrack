@@ -3,11 +3,12 @@
 import React from "react";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import type { UniversityFormData, FormValue, Partner } from "./UniversityForm";
 
 interface PartnershipCardProps {
-  form: any;
-  update: (field: string, value: any) => void;
-  partners: any[];
+  form: UniversityFormData;
+  update: (field: string, value: FormValue) => void;
+  partners: Partner[];
   COUNTRIES: { name: string; currency: string; currencySymbol?: string }[];
 }
 

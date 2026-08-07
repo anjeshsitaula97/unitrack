@@ -8,18 +8,13 @@ import {
   Upload,
   Download,
   RotateCw,
-  Maximize2,
-  Minimize2,
-  Sun,
-  SunMoon,
   Loader2,
   CheckCircle,
   AlertCircle,
-  Image,
+  Image as ImageIcon,
   Sliders,
   Trash2,
   FileText,
-  Search,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -49,10 +44,19 @@ function formatDate(date: Date): string {
   });
 }
 
+interface ScannedDocument {
+  id: string;
+  filename: string;
+  createdAt: string;
+  dpi: number;
+  fileSize: number;
+  url: string;
+}
+
 export default function DocumentScanner() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const _previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const [cameraActive, setCameraActive] = useState(false);
@@ -60,12 +64,11 @@ export default function DocumentScanner() {
   const [dpi, setDpi] = useState(200);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<ScannedDocument[]>([]);
   const [isLoadingDocs, setIsLoadingDocs] = useState(true);
   const [showHistory, setShowHistory] = useState(true);
-  const [flashOn, setFlashOn] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [selectedDoc, setSelectedDoc] = useState<ScannedDocument | null>(null);
 
   const currentDpiConfig = DPI_OPTIONS.find((d) => d.value === dpi) || DPI_OPTIONS[2];
 
@@ -119,8 +122,8 @@ export default function DocumentScanner() {
       }
 
       setCameraActive(true);
-    } catch (err: any) {
-      const message = err?.message || "";
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "";
       if (message.includes("Permission") || message.includes("NotAllowed")) {
         setCameraError(
           "Camera access denied. Please allow camera permissions in your browser settings."
@@ -182,7 +185,7 @@ export default function DocumentScanner() {
 
       if (!uploadRes.ok) throw new Error("Upload failed");
 
-      const { url, size } = await uploadRes.json();
+      const { url, size: _size } = await uploadRes.json();
 
       const docRes = await fetch("/api/documents", {
         method: "POST",
@@ -200,7 +203,7 @@ export default function DocumentScanner() {
       setUploadedUrl(url);
       toast.success("Document scanned and uploaded successfully");
       fetchDocuments();
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to upload scanned document");
     } finally {
       setIsUploading(false);
@@ -219,7 +222,7 @@ export default function DocumentScanner() {
     }
   };
 
-  const dpiLabel = DPI_OPTIONS.find((d) => d.value === dpi)?.label || "Standard (200 DPI)";
+  const _dpiLabel = DPI_OPTIONS.find((d) => d.value === dpi)?.label || "Standard (200 DPI)";
 
   return (
     <div className="animate-fade-in">
@@ -379,7 +382,7 @@ export default function DocumentScanner() {
           {/* Preview info */}
           {capturedImage && (
             <div className="card px-5 py-3 flex items-center gap-4">
-              <Image size={20} className="text-indigo-600" />
+              <ImageIcon size={20} className="text-indigo-600" />
               <div className="text-xs text-slate-500">
                 <span className="font-semibold text-slate-700">Resolution:</span>{" "}
                 {currentDpiConfig.width} × {Math.round(currentDpiConfig.width * 1.414)}px

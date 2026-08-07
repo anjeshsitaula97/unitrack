@@ -5,11 +5,11 @@ import {
   ArrowUpDown,
   ExternalLink,
   Edit2,
-  Trash2,
   Loader2,
   Building2,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { safeJson } from "@/lib/fetch-client";
 import { getCountryFlag } from "@/lib/country-flags";
 
@@ -35,8 +35,19 @@ const tabs: { key: TabType; label: string }[] = [
   { key: "pending", label: "Pending" },
 ];
 
+interface UniversityRow {
+  id: string;
+  name: string;
+  status: string;
+  country: string;
+  website?: string | null;
+  addedDate: string;
+  completion: number;
+  assignees: string[];
+}
+
 export default function RecentUniversitiesTable() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<UniversityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [selected, setSelected] = useState<string[]>([]);
@@ -238,9 +249,11 @@ export default function RecentUniversitiesTable() {
                       <td className="py-2.5 pr-4">
                         <span className="text-[11px] font-medium text-indigo-600 inline-flex items-center gap-1">
                           {getCountryFlag(row.country) && (
-                            <img
+                            <Image
                               src={getCountryFlag(row.country)}
                               alt={`${row.country} flag`}
+                              width={24}
+                              height={24}
                               className="w-5 h-3.5 rounded-sm object-cover"
                             />
                           )}

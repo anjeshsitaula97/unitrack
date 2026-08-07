@@ -4,6 +4,57 @@ import { logError } from "@/lib/logger";
 import { getSession, apiError } from "@/lib/api-utils";
 import { createNotification } from "@/lib/notifications";
 import * as XLSX from "xlsx";
+import { Prisma } from "@prisma/client";
+
+interface CsvRow {
+  name?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string | number;
+  whatsappNumber?: string | number;
+  gender?: string;
+  nationality?: string;
+  passportNumber?: string | number;
+  studyLevel?: string;
+  interestedCountry?: string;
+  status?: string;
+  counselor?: string;
+  shortName?: string;
+  country?: string;
+  city?: string;
+  type?: string;
+  website?: string;
+  ranking?: string | number;
+  description?: string;
+  universityId?: string | number;
+  faculty?: string;
+  degreeType?: string;
+  initials?: string;
+  level?: string;
+  university?: string;
+  credits?: string | number;
+  duration?: string;
+  instructor?: string;
+  language?: string;
+  mode?: string;
+  tuitionFee?: string | number;
+  currency?: string;
+  source?: string;
+  studentEmail?: string;
+  courseId?: string | number;
+  amount?: string | number;
+  method?: string;
+  date?: string;
+  role?: string;
+  password?: string;
+  contactPerson?: string;
+  address?: string;
+  category?: string;
+  paidTo?: string;
+  billNo?: string | number;
+  [key: string]: string | number | undefined;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +74,7 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const workbook = XLSX.read(buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
-    const rows: any[] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    const rows: CsvRow[] = XLSX.utils.sheet_to_json<CsvRow>(workbook.Sheets[sheetName]);
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "File is empty" }, { status: 400 });
@@ -81,11 +132,12 @@ export async function POST(req: NextRequest) {
                 return db.user.update({ where: { email: row.email }, data: { password: hashed } });
               });
             imported++;
-          } catch (err: any) {
-            if (err.code === "P2002") {
+          } catch (err: unknown) {
+            const error = err as { code?: string; message?: string };
+            if (error.code === "P2002") {
               errors.push(`Row ${i + 2}: duplicate email "${rows[i].email}"`);
             } else {
-              errors.push(`Row ${i + 2}: ${err.message}`);
+              errors.push(`Row ${i + 2}: ${error.message}`);
             }
           }
         }
@@ -114,8 +166,8 @@ export async function POST(req: NextRequest) {
               },
             });
             imported++;
-          } catch (err: any) {
-            errors.push(`Row ${i + 2}: ${err.message}`);
+          } catch (err: unknown) {
+            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
           }
         }
         break;
@@ -132,13 +184,14 @@ export async function POST(req: NextRequest) {
             await db.course.create({
               data: {
                 name: row.name,
-                universityId: row.universityId,
+                universityId: row.universityId as number,
                 faculty: row.faculty || "General",
                 degreeType: row.degreeType || "None",
                 initials: row.initials || row.name?.substring(0, 2).toUpperCase() || "",
                 level: row.level || "Undergraduate",
-                university: row.university || "",
-                credits: parseInt(row.credits) || 0,
+                university:
+                  row.university as unknown as Prisma.UniversityCreateNestedOneWithoutCoursesInput,
+                credits: parseInt(String(row.credits)) || 0,
                 duration: row.duration || "0",
                 instructor: row.instructor || "TBA",
                 description: row.description || "",
@@ -149,11 +202,11 @@ export async function POST(req: NextRequest) {
                 mode: row.mode || "Online",
                 tuitionFee: row.tuitionFee?.toString() || "",
                 currency: row.currency || "",
-              },
+              } as unknown as Prisma.CourseCreateInput,
             });
             imported++;
-          } catch (err: any) {
-            errors.push(`Row ${i + 2}: ${err.message}`);
+          } catch (err: unknown) {
+            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
           }
         }
         break;
@@ -179,11 +232,12 @@ export async function POST(req: NextRequest) {
               },
             });
             imported++;
-          } catch (err: any) {
-            if (err.code === "P2002") {
+          } catch (err: unknown) {
+            const error = err as { code?: string; message?: string };
+            if (error.code === "P2002") {
               errors.push(`Row ${i + 2}: duplicate email "${rows[i].email}"`);
             } else {
-              errors.push(`Row ${i + 2}: ${err.message}`);
+              errors.push(`Row ${i + 2}: ${error.message}`);
             }
           }
         }
@@ -206,14 +260,14 @@ export async function POST(req: NextRequest) {
             await db.application.create({
               data: {
                 studentId: student.id,
-                universityId: row.universityId,
-                courseId: row.courseId,
+                universityId: row.universityId as number,
+                courseId: row.courseId as number,
                 status: row.status || "Submitted",
               },
             });
             imported++;
-          } catch (err: any) {
-            errors.push(`Row ${i + 2}: ${err.message}`);
+          } catch (err: unknown) {
+            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
           }
         }
         break;
@@ -235,7 +289,7 @@ export async function POST(req: NextRequest) {
             await db.payment.create({
               data: {
                 studentId: student.id,
-                amount: parseFloat(row.amount),
+                amount: parseFloat(String(row.amount)),
                 currency: row.currency || "USD",
                 status: row.status || "Pending",
                 method: row.method,
@@ -244,8 +298,8 @@ export async function POST(req: NextRequest) {
               },
             });
             imported++;
-          } catch (err: any) {
-            errors.push(`Row ${i + 2}: ${err.message}`);
+          } catch (err: unknown) {
+            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
           }
         }
         break;
@@ -272,10 +326,11 @@ export async function POST(req: NextRequest) {
               },
             });
             imported++;
-          } catch (err: any) {
-            if (err.code === "P2002")
+          } catch (err: unknown) {
+            const error = err as { code?: string; message?: string };
+            if (error.code === "P2002")
               errors.push(`Row ${i + 2}: duplicate email "${rows[i].email}"`);
-            else errors.push(`Row ${i + 2}: ${err.message}`);
+            else errors.push(`Row ${i + 2}: ${error.message}`);
           }
         }
         break;
@@ -300,8 +355,8 @@ export async function POST(req: NextRequest) {
               },
             });
             imported++;
-          } catch (err: any) {
-            errors.push(`Row ${i + 2}: ${err.message}`);
+          } catch (err: unknown) {
+            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
           }
         }
         break;
@@ -318,7 +373,7 @@ export async function POST(req: NextRequest) {
             await db.expense.create({
               data: {
                 category: row.category,
-                amount: parseFloat(row.amount),
+                amount: parseFloat(String(row.amount)),
                 currency: row.currency || "USD",
                 date: row.date ? new Date(row.date) : new Date(),
                 description: row.description,
@@ -328,8 +383,8 @@ export async function POST(req: NextRequest) {
               },
             });
             imported++;
-          } catch (err: any) {
-            errors.push(`Row ${i + 2}: ${err.message}`);
+          } catch (err: unknown) {
+            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
           }
         }
         break;
@@ -361,7 +416,7 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get("type") || "students";
     const format = searchParams.get("format") || "xlsx";
 
-    let data: any[] = [];
+    let data: unknown[] = [];
 
     switch (type) {
       case "students": {

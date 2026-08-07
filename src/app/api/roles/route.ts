@@ -10,7 +10,7 @@ async function getSession() {
   if (!token) return null;
   try {
     return await verifyAuth(token);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Create Role Error:", error);
-    if ((error as any).code === "P2002") {
+    if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "A role with this name already exists" }, { status: 400 });
     }
     return NextResponse.json({ error: "Failed to create role" }, { status: 500 });

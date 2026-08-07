@@ -37,7 +37,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     return NextResponse.json(userDetails);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to fetch user details:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

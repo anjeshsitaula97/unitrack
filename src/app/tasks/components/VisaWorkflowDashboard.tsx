@@ -69,7 +69,7 @@ interface WorkflowStage {
   subtasks: string;
 }
 
-const priorityColors: Record<string, string> = {
+const _priorityColors: Record<string, string> = {
   Low: "text-slate-400",
   Medium: "text-blue-500",
   High: "text-amber-500",
@@ -86,7 +86,7 @@ const deleteItem = async (endpoint: string, id: string, fetchFn: () => void) => 
       toast.success("Deleted successfully");
       fetchFn();
     }
-  } catch (err) {
+  } catch (_err) {
     toast.error("Failed to delete");
   }
 };
@@ -262,7 +262,7 @@ export default function VisaWorkflowDashboard({
         });
         fetchTasks();
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to create task");
     } finally {
       setIsSubmitting(false);
@@ -283,7 +283,7 @@ export default function VisaWorkflowDashboard({
         setShowEmbassyModal(false);
         fetchEmbassy();
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to save embassy details");
     } finally {
       setIsSubmitting(false);
@@ -316,7 +316,7 @@ export default function VisaWorkflowDashboard({
         const err = await res.json().catch(() => ({ error: "Unknown error" }));
         toast.error(err.error || "Failed to save checklist item");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error(isEdit ? "Failed to update checklist item" : "Failed to add checklist item");
     } finally {
       setIsSubmitting(false);
@@ -417,7 +417,7 @@ export default function VisaWorkflowDashboard({
         1: { cellWidth: "auto", cellPadding: 4 },
       },
       margin: { left: 14, right: 14 },
-      didDrawPage: (data: any) => {
+      didDrawPage: (_data) => {
         const pageCount = doc.getNumberOfPages();
         doc.setFontSize(8);
         doc.setTextColor(156, 163, 175);
@@ -447,7 +447,7 @@ export default function VisaWorkflowDashboard({
         setStageForm({ name: "", description: "", order: workflowStages.length + 2 });
         fetchStages();
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to add workflow stage");
     } finally {
       setIsSubmitting(false);
@@ -462,7 +462,7 @@ export default function VisaWorkflowDashboard({
         body: JSON.stringify({ id, status }),
       });
       fetchTasks();
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to update task status");
     }
   };
@@ -554,7 +554,7 @@ export default function VisaWorkflowDashboard({
           <button
             type="button"
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => setActiveTab(tab.id as "process" | "embassy" | "checklists" | "tasks")}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium text-sm transition-all ${
               activeTab === tab.id
                 ? "bg-white text-indigo-600 shadow-sm font-semibold"

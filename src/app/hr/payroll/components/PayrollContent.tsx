@@ -11,14 +11,74 @@ import {
   ArrowLeft,
   CheckCircle,
   FileText,
-  Printer,
   CreditCard,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
-const calcNet = (p: any) =>
+interface PayrollUser {
+  id: number;
+  name: string;
+  email: string;
+  employeeId: string | null;
+  basicSalary: number | null;
+  department: { name: string } | null;
+}
+
+interface PayrollItem {
+  id: number;
+  payrollId: number;
+  label: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+}
+
+interface PayrollRecord {
+  id: number;
+  userId: number;
+  month: number;
+  year: number;
+  basicSalary: number;
+  allowances: number;
+  deductions: number;
+  bonus: number;
+  netSalary: number;
+  status: string;
+  paidAt: string | null;
+  paymentMethod: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: PayrollUser;
+  items: PayrollItem[];
+}
+
+interface EmployeeOption {
+  id: number | string;
+  name: string;
+  email: string;
+  employeeId: string | null;
+  basicSalary: number | null;
+}
+
+interface PayrollFormItem {
+  label: string;
+  type: string;
+  amount: string;
+}
+
+interface PayrollForm {
+  userId: string;
+  basicSalary: string;
+  allowances: string;
+  deductions: string;
+  bonus: string;
+  items: PayrollFormItem[];
+}
+
+const calcNet = (p: PayrollRecord) =>
   (p.basicSalary || 0) + (p.allowances || 0) + (p.bonus || 0) - (p.deductions || 0);
 
 const months = [
@@ -37,15 +97,15 @@ const months = [
 ];
 
 export default function PayrollContent() {
-  const [payrolls, setPayrolls] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [payrolls, setPayrolls] = useState<PayrollRecord[]>([]);
+  const [employees, setEmployees] = useState<EmployeeOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [selectedPayroll, setSelectedPayroll] = useState<any>(null);
-  const [form, setForm] = useState<any>({
+  const [selectedPayroll, setSelectedPayroll] = useState<PayrollRecord | null>(null);
+  const [form, setForm] = useState<PayrollForm>({
     userId: "",
     basicSalary: "",
     allowances: "0",
@@ -75,6 +135,8 @@ export default function PayrollContent() {
   const fetchDataRef = useRef(fetchData);
   useEffect(() => {
     fetchDataRef.current = fetchData;
+  }, [fetchData]);
+  useEffect(() => {
     fetchDataRef.current();
   }, [month, year]);
 
@@ -114,7 +176,7 @@ export default function PayrollContent() {
     }
   };
 
-  const handleStatus = async (id: string, status: string, paymentMethod?: string) => {
+  const handleStatus = async (id: number, status: string, paymentMethod?: string) => {
     try {
       const res = await fetch(`/api/hr/payroll/${id}`, {
         method: "PUT",
@@ -143,14 +205,14 @@ export default function PayrollContent() {
     setForm({ ...form, items: [...form.items, { label: "", type: "Earnings", amount: "0" }] });
   };
 
-  const updateItem = (index: number, field: string, value: string) => {
+  const updateItem = (index: number, field: keyof PayrollFormItem, value: string) => {
     const items = [...form.items];
     items[index][field] = value;
     setForm({ ...form, items });
   };
 
   const removeItem = (index: number) => {
-    setForm({ ...form, items: form.items.filter((_: any, i: number) => i !== index) });
+    setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
   };
 
   const filtered = payrolls;
@@ -255,7 +317,7 @@ export default function PayrollContent() {
                   </td>
                 </tr>
               ) : (
-                paginated.map((p: any) => (
+                paginated.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-2">
@@ -376,7 +438,7 @@ function PayrollStats({
   totalNet,
   paidCount,
 }: {
-  payrolls: any[];
+  payrolls: PayrollRecord[];
   totalNet: number;
   paidCount: number;
 }) {
@@ -430,12 +492,12 @@ function PayrollFormModal({
 }: {
   showModal: boolean;
   setShowModal: (v: boolean) => void;
-  form: any;
-  setForm: (v: any) => void;
-  employees: any[];
+  form: PayrollForm;
+  setForm: (v: PayrollForm) => void;
+  employees: EmployeeOption[];
   handleEmployeeSelect: (userId: string) => void;
   addItem: () => void;
-  updateItem: (index: number, field: string, value: string) => void;
+  updateItem: (index: number, field: keyof PayrollFormItem, value: string) => void;
   removeItem: (index: number) => void;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   submitting: boolean;
@@ -471,7 +533,7 @@ function PayrollFormModal({
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
                 >
                   <option value="">Select employee…</option>
-                  {employees.map((e: any) => (
+                  {employees.map((e) => (
                     <option key={e.id} value={e.id}>
                       {e.name} ({e.employeeId || e.email})
                     </option>
@@ -553,7 +615,7 @@ function PayrollFormModal({
                     + Add Item
                   </button>
                 </div>
-                {form.items.map((item: any, i: number) => (
+                {form.items.map((item: PayrollFormItem, i: number) => (
                   <div
                     key={`${item.label}-${item.type}-${item.amount}-${i}`}
                     className="flex items-center gap-2 mb-2"
@@ -632,9 +694,9 @@ function PayslipDetailModal({
   handleStatus,
   submitting,
 }: {
-  selectedPayroll: any;
-  setSelectedPayroll: (v: any) => void;
-  handleStatus: (id: string, status: string, paymentMethod?: string) => Promise<void>;
+  selectedPayroll: PayrollRecord | null;
+  setSelectedPayroll: (v: PayrollRecord | null) => void;
+  handleStatus: (id: number, status: string, paymentMethod?: string) => Promise<void>;
   submitting: boolean;
 }) {
   return (

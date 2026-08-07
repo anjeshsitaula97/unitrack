@@ -63,15 +63,21 @@ const entityFields: Record<string, string[]> = {
 
 const chartTypes = ["Table", "Bar", "Pie", "Line"];
 
+interface SavedReport {
+  id: string;
+  name: string;
+  config: unknown;
+}
+
 export default function ReportBuilderContent() {
   const [entity, setEntity] = useState<string>("Student");
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [filters, setFilters] = useState<{ field: string; op: string; value: string }[]>([]);
   const [chartType, setChartType] = useState("Table");
-  const [reportData, setReportData] = useState<any[]>([]);
+  const [reportData, setReportData] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
   const [reportName, setReportName] = useState("");
-  const [savedReports, setSavedReports] = useState<any[]>([]);
+  const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
   const [showSaved, setShowSaved] = useState(false);
 
   const fetchSaved = async () => {
@@ -152,7 +158,7 @@ export default function ReportBuilderContent() {
     }
   };
 
-  const loadReport = async (report: any) => {
+  const loadReport = async (report: SavedReport) => {
     const cfg = typeof report.config === "string" ? JSON.parse(report.config) : report.config || {};
     setEntity(cfg.entity || "Student");
     setSelectedFields(cfg.fields || []);
@@ -191,7 +197,7 @@ export default function ReportBuilderContent() {
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 mb-6">
           <h3 className="font-bold text-slate-800 dark:text-white mb-3 text-sm">Saved Reports</h3>
           <div className="space-y-1">
-            {savedReports.map((r: any) => (
+            {savedReports.map((r: SavedReport) => (
               <div
                 key={r.id}
                 className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50"
@@ -406,12 +412,14 @@ export default function ReportBuilderContent() {
                           {selectedFields.map((f) => {
                             const val =
                               typeof row[f] === "object" ? JSON.stringify(row[f]) : row[f];
+                            const display =
+                              val === null || val === undefined ? "-" : String(val) || "-";
                             return (
                               <td
                                 key={f}
                                 className="px-4 py-2.5 text-slate-700 dark:text-slate-300"
                               >
-                                {val?.toString() || "-"}
+                                {display}
                               </td>
                             );
                           })}
@@ -468,11 +476,12 @@ export default function ReportBuilderContent() {
                                   style={{ height: `${Math.max(h, 2)}%` }}
                                 />
                                 <span className="text-[8px] text-slate-400 text-center truncate w-full">
-                                  {row[
-                                    selectedFields.find((f) => f !== numField) || selectedFields[0]
-                                  ]
-                                    ?.toString()
-                                    .substring(0, 6)}
+                                  {String(
+                                    row[
+                                      selectedFields.find((f) => f !== numField) ||
+                                        selectedFields[0]
+                                    ] ?? ""
+                                  ).substring(0, 6)}
                                 </span>
                               </div>
                             );
@@ -498,7 +507,7 @@ export default function ReportBuilderContent() {
                       <h3 className="font-bold text-slate-800 dark:text-white mb-4">Pie Chart</h3>
                       <div className="flex flex-wrap gap-4 justify-center">
                         {reportData.slice(0, 10).map((row, i) => {
-                          const pct = reportData.length > 1 ? 100 / reportData.length : 100;
+                          const _pct = reportData.length > 1 ? 100 / reportData.length : 100;
                           return (
                             <div key={i} className="flex items-center gap-2">
                               <div
@@ -506,11 +515,11 @@ export default function ReportBuilderContent() {
                                 style={{ backgroundColor: colors[i % 10] }}
                               />
                               <span className="text-xs text-slate-600 dark:text-slate-300">
-                                {row[
-                                  selectedFields.find((f) => f !== numField) || selectedFields[0]
-                                ]
-                                  ?.toString()
-                                  .substring(0, 12) || "N/A"}
+                                {String(
+                                  row[
+                                    selectedFields.find((f) => f !== numField) || selectedFields[0]
+                                  ] ?? ""
+                                ) || "N/A"}
                                 {` (${row[numField]})`}
                               </span>
                             </div>

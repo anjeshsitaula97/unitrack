@@ -10,7 +10,7 @@ async function getSession() {
   if (!token) return null;
   try {
     return await verifyAuth(token);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }
@@ -21,7 +21,7 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
     return NextResponse.json(countries);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch countries" }, { status: 500 });
   }
 }
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(newCountry, { status: 201 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to add country" }, { status: 500 });
   }
 }
@@ -75,7 +75,7 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to delete country" }, { status: 500 });
   }
 }

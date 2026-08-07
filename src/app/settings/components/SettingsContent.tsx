@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useRef } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -15,7 +15,6 @@ import {
   Check,
   X,
   ShieldCheck,
-  Key,
   MapPin,
   Mail,
   Phone,
@@ -69,6 +68,21 @@ type SettingsTab =
   | "modules"
   | "statuses";
 
+interface EmailSetting {
+  id: string;
+  type: string;
+  branchId?: string;
+  branch?: { name?: string } | null;
+  isActive: boolean;
+  smtpHost: string;
+  smtpPort: string;
+  smtpEncryption: string;
+  smtpUser: string;
+  smtpPass: string;
+  fromEmail: string;
+  fromName: string;
+}
+
 interface Role {
   id: string;
   name: string;
@@ -84,7 +98,7 @@ interface Permission {
   module: string;
 }
 
-const INITIAL_ROLES: Role[] = [
+const _INITIAL_ROLES: Role[] = [
   {
     id: "role-1",
     name: "Administrator",
@@ -544,7 +558,6 @@ function SettingsContentInternal() {
 
   // Qualifications states
   const [qualifications, setQualifications] = useState<{ id: string; name: string }[]>([]);
-  const [isLoadingQuals, setIsLoadingQuals] = useState(false);
   const [newQualName, setNewQualName] = useState("");
   const [editingQual, setEditingQual] = useState<{ id: string; name: string } | null>(null);
   const [deleteQualId, setDeleteQualId] = useState<string | null>(null);
@@ -580,8 +593,9 @@ function SettingsContentInternal() {
       if (Array.isArray(fData)) setFaculties(fData);
       if (Array.isArray(dData)) setDegreeTypes(dData);
       if (Array.isArray(aData)) setAcademicDocs(aData);
-    } catch (err: any) {
-      if (err?.name !== "AbortError") {
+    } catch (err: unknown) {
+      const isAbort = err instanceof DOMException && err.name === "AbortError";
+      if (!isAbort) {
         toast.error("Failed to load academic data");
       }
     } finally {
@@ -589,7 +603,7 @@ function SettingsContentInternal() {
     }
   };
 
-  const [emailSettings, setEmailSettings] = useState<any[] | undefined>(undefined);
+  const [emailSettings, setEmailSettings] = useState<EmailSetting[] | undefined>(undefined);
   const isLoadingEmail = useRef(true);
 
   const fetchEmailSettings = (signal?: AbortSignal) => {
@@ -682,7 +696,7 @@ function SettingsContentInternal() {
   };
 
   const [showAddEmail, setShowAddEmail] = useState(false);
-  const [editingEmail, setEditingEmail] = useState<any>(null);
+  const [editingEmail, setEditingEmail] = useState<EmailSetting | null>(null);
   const [newEmail, setNewEmail] = useState({
     type: "Global",
     branchId: "",
@@ -752,7 +766,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(result.error || "Failed to save settings");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Error saving settings");
     }
   };
@@ -767,12 +781,12 @@ function SettingsContentInternal() {
       } else {
         toast.error("Failed to delete");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Error deleting");
     }
   };
 
-  const fetchBranches = () => {
+  const _fetchBranches = () => {
     isLoadingBranches.current = true;
     fetch("/api/branches")
       .then(safeJson)
@@ -812,7 +826,7 @@ function SettingsContentInternal() {
       } else {
         toast.error("Failed to save settings");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to server");
     } finally {
       setIsSavingLoc(false);
@@ -996,7 +1010,7 @@ function SettingsContentInternal() {
       } else {
         toast.error("Failed to update profile");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to server");
     } finally {
       setIsSavingProfile(false);
@@ -1069,7 +1083,7 @@ function SettingsContentInternal() {
       } else {
         throw new Error();
       }
-    } catch (err) {
+    } catch (_err) {
       // Revert on error
       setRolePermissions((prev) => ({ ...prev, [roleId]: current }));
       toast.error("Failed to update permission");
@@ -1101,7 +1115,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to create role");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error creating role");
     }
   };
@@ -1117,7 +1131,7 @@ function SettingsContentInternal() {
         } else {
           toast.error(data.error || "Failed to delete role");
         }
-      } catch (err) {
+      } catch (_err) {
         toast.error("Error deleting role");
       }
     }
@@ -1127,7 +1141,6 @@ function SettingsContentInternal() {
   const handleUpdateRole = async () => {
     if (!editingRole || !editingRole.name) return;
 
-    console.log("Updating role:", editingRole);
     try {
       const res = await fetch(`/api/roles/${editingRole.id}`, {
         method: "PUT",
@@ -1145,7 +1158,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to update role");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error updating role");
     }
   };
@@ -1180,7 +1193,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to add branch");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error adding branch");
     }
   };
@@ -1201,7 +1214,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to update branch");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error updating branch");
     }
   };
@@ -1216,7 +1229,7 @@ function SettingsContentInternal() {
         } else {
           toast.error("Failed to delete branch");
         }
-      } catch (err) {
+      } catch (_err) {
         toast.error("Error deleting branch");
       }
     }
@@ -1238,7 +1251,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to add qualification");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error adding qualification");
     }
   };
@@ -1259,7 +1272,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to update qualification");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error updating qualification");
     }
   };
@@ -1274,7 +1287,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to delete qualification");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error deleting qualification");
     }
   };
@@ -1295,7 +1308,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to add faculty");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error adding faculty");
     }
   };
@@ -1316,7 +1329,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to update faculty");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error updating faculty");
     }
   };
@@ -1331,7 +1344,7 @@ function SettingsContentInternal() {
       } else {
         toast.error("Failed to delete faculty");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error deleting faculty");
     }
   };
@@ -1352,7 +1365,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to add degree type");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error adding degree type");
     }
   };
@@ -1373,7 +1386,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to update degree type");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error updating degree type");
     }
   };
@@ -1388,7 +1401,7 @@ function SettingsContentInternal() {
       } else {
         toast.error("Failed to delete degree type");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error deleting degree type");
     }
   };
@@ -1409,7 +1422,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to add academic document");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error adding academic document");
     }
   };
@@ -1432,7 +1445,7 @@ function SettingsContentInternal() {
       } else {
         toast.error(data.error || "Failed to update academic document");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error updating academic document");
     }
   };
@@ -1447,7 +1460,7 @@ function SettingsContentInternal() {
       } else {
         toast.error("Failed to delete academic document");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error deleting academic document");
     }
   };

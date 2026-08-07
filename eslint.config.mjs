@@ -1,6 +1,7 @@
 import { createRequire } from 'module';
 import prettier from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
+import unusedImports from 'eslint-plugin-unused-imports';
 
 const require = createRequire(import.meta.url);
 const nextCoreWebVitals = require('eslint-config-next/core-web-vitals');
@@ -11,7 +12,7 @@ export default [
   ...nextTypescript,
   prettier,
   {
-    plugins: { prettier: prettierPlugin },
+    plugins: { prettier: prettierPlugin, 'unused-imports': unusedImports },
     rules: {
       'prettier/prettier': [
         'error',
@@ -24,7 +25,9 @@ export default [
           trailingComma: 'es5',
         },
       ],
-      '@typescript-eslint/no-unused-vars': [
+      '@typescript-eslint/no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'warn',
+      'unused-imports/no-unused-vars': [
         'warn',
         {
           argsIgnorePattern: '^_',
@@ -34,6 +37,26 @@ export default [
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
+    },
+  },
+  {
+    files: [
+      'prisma/**/*.ts',
+      'src/lib/seed-*.ts',
+      'src/lib/seed-admin.ts',
+      'src/lib/seed-data.ts',
+      'src/lib/seed-featured.ts',
+      'src/lib/check-counts.ts',
+      'scripts/**/*.mjs',
+    ],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['src/app/layout.tsx'],
+    rules: {
+      '@next/next/no-page-custom-font': 'off',
     },
   },
   {

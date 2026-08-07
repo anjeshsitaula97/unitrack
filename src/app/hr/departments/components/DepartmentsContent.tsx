@@ -1,16 +1,39 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Building2, Loader2, X, Users, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
+interface DepartmentUser {
+  id: number;
+  name: string;
+  email: string;
+}
+
+interface Department {
+  id: number;
+  name: string;
+  description: string | null;
+  headId: number | null;
+  head: DepartmentUser | null;
+  _count: { members: number };
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface UserOption {
+  id: number;
+  name: string;
+  email: string;
+}
+
 export default function DepartmentsContent() {
-  const [departments, setDepartments] = useState<any[] | undefined>(undefined);
-  const [users, setUsers] = useState<any[] | undefined>(undefined);
+  const [departments, setDepartments] = useState<Department[] | undefined>(undefined);
+  const [users, setUsers] = useState<UserOption[] | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<Department | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", headId: "" });
 
@@ -22,7 +45,7 @@ export default function DepartmentsContent() {
       ]);
       if (deptRes.ok) setDepartments(await deptRes.json());
       if (userRes.ok) setUsers(await userRes.json());
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to load data");
     } finally {
       setLoading(false);
@@ -41,9 +64,13 @@ export default function DepartmentsContent() {
     setShowModal(true);
   };
 
-  const openEdit = (dept: any) => {
+  const openEdit = (dept: Department) => {
     setEditing(dept);
-    setForm({ name: dept.name, description: dept.description || "", headId: dept.headId || "" });
+    setForm({
+      name: dept.name,
+      description: dept.description || "",
+      headId: String(dept.headId || ""),
+    });
     setShowModal(true);
   };
 
@@ -66,14 +93,14 @@ export default function DepartmentsContent() {
         const d = await res.json();
         toast.error(d.error || "Failed to save");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to server");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (!confirm("Delete this department?")) return;
     try {
       const res = await fetch(`/api/hr/departments/${id}`, { method: "DELETE" });
@@ -84,7 +111,7 @@ export default function DepartmentsContent() {
         const d = await res.json();
         toast.error(d.error || "Failed to delete");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to server");
     }
   };
@@ -232,7 +259,7 @@ export default function DepartmentsContent() {
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
                 >
                   <option value="">No head</option>
-                  {(users ?? []).map((u: any) => (
+                  {(users ?? []).map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name} ({u.email})
                     </option>

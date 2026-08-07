@@ -6,17 +6,12 @@ import {
   Receipt,
   Plus,
   Search,
-  Filter,
   Loader2,
   TrendingDown,
   TrendingUp,
-  Calendar,
   X,
-  CreditCard,
-  Building2,
   DollarSign,
   Tag,
-  Trash2,
   FileText,
   Hash,
   Upload,
@@ -75,7 +70,7 @@ export default function ExpensesContent() {
     try {
       const res = await fetch("/api/expenses");
       if (res.ok) setExpenses(await res.json());
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to load expenses");
     } finally {
       setIsLoading(false);
@@ -120,7 +115,7 @@ export default function ExpensesContent() {
           screenshot: "",
         });
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to record expense");
     } finally {
       setIsSubmitting(false);

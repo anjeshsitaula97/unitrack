@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 import { cookies } from "next/headers";
@@ -10,7 +11,7 @@ async function getSession() {
   if (!token) return null;
   try {
     return await verifyAuth(token);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }
@@ -21,12 +22,12 @@ export async function GET(req: NextRequest) {
     const countryId = searchParams.get("countryId");
     const categoryId = searchParams.get("categoryId");
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (countryId) where.countryId = Number(countryId);
     if (categoryId) where.categoryId = Number(categoryId);
 
     const resources = await db.learningResource.findMany({
-      where,
+      where: where as Prisma.LearningResourceWhereInput,
       include: {
         country: true,
         category: true,
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(resources);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch resources" }, { status: 500 });
   }
 }
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(newResource, { status: 201 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to add resource" }, { status: 500 });
   }
 }
@@ -99,7 +100,7 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to delete resource" }, { status: 500 });
   }
 }
@@ -140,7 +141,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     return NextResponse.json(updatedResource);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to update resource" }, { status: 500 });
   }
 }

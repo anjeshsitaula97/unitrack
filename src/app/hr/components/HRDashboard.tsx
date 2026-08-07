@@ -13,8 +13,24 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+interface DashboardAttendance {
+  id: number;
+  status: string;
+  user: { id: number; name: string; avatar: string | null; employeeId: string | null };
+}
+
+interface HRDashboardData {
+  totalEmployees: number;
+  departments: number;
+  designations: number;
+  pendingLeaves: number;
+  todayPresent: number;
+  totalPayrolls: number;
+  recentAttendance: DashboardAttendance[];
+}
+
 export default function HRDashboard() {
-  const [data, setData] = useState<any>(undefined);
+  const [data, setData] = useState<HRDashboardData | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -99,7 +115,7 @@ export default function HRDashboard() {
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-            {cards.map((card, i) => (
+            {cards.map((card, _i) => (
               <Link
                 key={card.label}
                 href={card.link}
@@ -137,7 +153,7 @@ export default function HRDashboard() {
                   { label: "Attendance", href: "/hr/attendance", desc: "Track daily attendance" },
                   { label: "Leave Management", href: "/hr/leave", desc: "Handle leave requests" },
                   { label: "Payroll", href: "/hr/payroll", desc: "Process monthly salaries" },
-                ].map((link, i) => (
+                ].map((link, _i) => (
                   <Link
                     key={link.href}
                     href={link.href}
@@ -157,9 +173,9 @@ export default function HRDashboard() {
 
             <div className="card p-5">
               <h3 className="font-bold text-slate-800 mb-3">Recent Attendance</h3>
-              {data?.recentAttendance?.length > 0 ? (
+              {(data?.recentAttendance?.length ?? 0) > 0 ? (
                 <div className="space-y-2">
-                  {data.recentAttendance.map((a: any) => (
+                  {data!.recentAttendance.map((a) => (
                     <div key={a.id} className="flex items-center gap-3 p-2 rounded-lg bg-slate-50">
                       <div className="size-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500">
                         {a.user.name.substring(0, 2)}
@@ -188,7 +204,7 @@ export default function HRDashboard() {
                   <p className="text-sm text-slate-400">No attendance records today</p>
                 </div>
               )}
-              {data?.recentAttendance?.length > 0 && (
+              {(data?.recentAttendance?.length ?? 0) > 0 && (
                 <Link
                   href="/hr/attendance"
                   className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700"

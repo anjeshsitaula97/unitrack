@@ -10,7 +10,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(intakes);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch intakes" }, { status: 500 });
   }
 }

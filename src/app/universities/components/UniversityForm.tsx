@@ -1,21 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useReducer } from "react";
-import Image from "next/image";
-import {
-  ArrowLeft,
-  Building2,
-  Globe,
-  Award,
-  CheckCircle,
-  AlertCircle,
-  Upload,
-  Plus,
-  X,
-  Info,
-  Loader2,
-} from "lucide-react";
-import { REQUIREMENTS_LIST } from "@/lib/constants";
+import { CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -31,7 +17,7 @@ import RequirementsCard from "./RequirementsCard";
 import FormActions from "./FormActions";
 import { safeJson } from "@/lib/fetch-client";
 
-const ACCREDITATION_BODIES = [
+const _ACCREDITATION_BODIES = [
   "NECHE",
   "WSCUC",
   "HLC",
@@ -77,16 +63,51 @@ const INITIAL_FORM = {
   cities: [] as string[],
 };
 
-type PageAction =
-  | { type: "partnersLoaded"; partners: any[] }
+export interface Partner {
+  id: string;
+  name: string;
+}
+
+export type FormValue = string | boolean | string[] | null;
+
+export interface UniversityFormData {
+  name: string;
+  shortName: string;
+  country: string;
+  type: string;
+  accreditation: string[];
+  accredited: boolean;
+  website: string;
+  email: string;
+  phone: string;
+  address: string;
+  ranking: string;
+  foundedYear: string;
+  description: string;
+  status: string;
+  logo: string | null;
+  banner: string | null;
+  imagesList: string[];
+  requirements: string[];
+  partnerId: string;
+  partnershipAmount: string;
+  commissionType: string;
+  commissionValue: string;
+  commissionCurrency: string;
+  isPartnershipNA: boolean;
+  cities: string[];
+}
+
+export type PageAction =
+  | { type: "partnersLoaded"; partners: Partner[] }
   | { type: "universityLoaded"; form: typeof INITIAL_FORM }
   | { type: "loadError" }
-  | { type: "setField"; field: string; value: any }
+  | { type: "setField"; field: string; value: FormValue }
   | { type: "addGalleryImage"; image: string }
   | { type: "resetForm" };
 
 function pageReducer(
-  state: { form: typeof INITIAL_FORM; partners: any[]; isLoading: boolean },
+  state: { form: typeof INITIAL_FORM; partners: Partner[]; isLoading: boolean },
   action: PageAction
 ) {
   switch (action.type) {
@@ -120,7 +141,7 @@ export default function UniversityForm({ universityId }: UniversityFormProps) {
   const [accInput, setAccInput] = useState("");
   const [pageState, dispatch] = useReducer(pageReducer, {
     form: INITIAL_FORM,
-    partners: [] as any[],
+    partners: [],
     isLoading: !!universityId,
   });
   const { form, partners, isLoading } = pageState;
@@ -213,7 +234,7 @@ export default function UniversityForm({ universityId }: UniversityFormProps) {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const update = (field: string, value: any) => {
+  const update = (field: string, value: FormValue) => {
     dispatch({ type: "setField", field, value });
     if (errors[field])
       setErrors((prev) => {

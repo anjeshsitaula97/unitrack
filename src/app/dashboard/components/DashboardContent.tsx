@@ -144,7 +144,7 @@ function widgetSize(widget: { component: string }) {
 }
 
 export default function DashboardContent() {
-  const [userName, setUserName] = useState("Admin");
+  const [_userName, setUserName] = useState("Admin");
   const [userRole, setUserRole] = useState("Admin");
   const [widgets, setWidgets] = useState(defaultWidgets);
   const [kpis, setKpis] = useState<string[]>(DEFAULT_KPIS);

@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 
-    const { to, subject, body, studentId: rawStudentId, type } = await req.json();
+    const { to, subject, body, studentId: rawStudentId, type: _type } = await req.json();
     const studentId = rawStudentId ? Number(rawStudentId) : null;
 
     if (!to || !subject || !body) {
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) return apiError("Unauthorized", 401);

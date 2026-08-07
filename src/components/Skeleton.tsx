@@ -48,6 +48,6 @@ export function SkeletonText({ lines = 3 }: { lines?: number }) {
   );
 }
 
-function SkeletonAvatar() {
+function _SkeletonAvatar() {
   return <div className="size-8 rounded-full bg-slate-200 animate-pulse flex-shrink-0" />;
 }

@@ -10,7 +10,7 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
     return NextResponse.json(faculties);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch faculties" }, { status: 500 });
   }
 }
@@ -59,7 +59,7 @@ export async function PUT(req: NextRequest) {
       changes,
     });
     return NextResponse.json(updated);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to update faculty" }, { status: 500 });
   }
 }
@@ -82,7 +82,7 @@ export async function DELETE(req: NextRequest) {
       target: existing?.name || id,
     });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to delete faculty" }, { status: 500 });
   }
 }

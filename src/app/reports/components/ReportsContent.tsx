@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Download, FileText, Calendar, Filter, Loader2, Eye, X, ExternalLink } from "lucide-react";
+import { Download, FileText, Calendar, Filter, Loader2, Eye, X } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -42,12 +42,12 @@ export default function ReportsContent() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
-  const [previewData, setPreviewData] = useState<any[] | null>(null);
+  const [previewData, setPreviewData] = useState<Record<string, unknown>[] | null>(null);
   const [previewTitle, setPreviewTitle] = useState("");
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
 
-  const fetchReportData = async (reportId: string, title: string) => {
+  const fetchReportData = async (reportId: string, _title: string) => {
     const params = new URLSearchParams({ type: reportId });
     if (startDate) params.append("startDate", startDate);
     if (endDate) params.append("endDate", endDate);
@@ -75,14 +75,18 @@ export default function ReportsContent() {
           .getElementById("report-preview-area")
           ?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 100);
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to load report preview");
     } finally {
       setIsPreviewLoading(false);
     }
   };
 
-  const handleDownload = async (reportId: string, title: string, customData?: any[]) => {
+  const handleDownload = async (
+    reportId: string,
+    title: string,
+    customData?: Record<string, unknown>[]
+  ) => {
     setIsDownloading(reportId);
     toast.info(`Generating ${title}...`);
 
@@ -297,7 +301,7 @@ export default function ReportsContent() {
                     const rowKey = `row-${Object.values(row).join("-").slice(0, 30)}-${rowOffset}`;
                     return (
                       <tr key={rowKey} className="hover:bg-indigo-50/20 transition-colors">
-                        {Object.values(row).map((val: any, colOffset) => {
+                        {Object.values(row).map((val, colOffset) => {
                           const cellKey = `cell-${Object.keys(row)[colOffset] || colOffset}-${String(val).slice(0, 10)}`;
                           return (
                             <td

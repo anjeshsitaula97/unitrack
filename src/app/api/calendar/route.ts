@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    const events: any[] = [
+    const events: unknown[] = [
       ...applications.map((a) => ({
         id: `app-${a.id}`,
         title: `Application: ${a.student.name} - ${a.course.name}`,

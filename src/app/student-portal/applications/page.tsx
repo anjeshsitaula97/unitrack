@@ -1,10 +1,35 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FileText, Loader2, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
+import {
+  FileText,
+  Loader2,
+  CheckCircle,
+  Clock,
+  XCircle,
+  AlertCircle,
+  type LucideIcon,
+} from "lucide-react";
 import { safeJson } from "@/lib/fetch-client";
 
-const statusIcons: Record<string, any> = {
+interface ApplicationRow {
+  id: number;
+  status: string;
+  appliedDate: string;
+  course: {
+    name: string;
+    level: string | null;
+    duration: string | null;
+    tuitionFee: number | null;
+    currency: string | null;
+  };
+  university: {
+    name: string;
+    country: string;
+  };
+}
+
+const statusIcons: Record<string, LucideIcon> = {
   Submitted: Clock,
   UnderReview: AlertCircle,
   Accepted: CheckCircle,
@@ -21,7 +46,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function StudentApplications() {
-  const [applications, setApplications] = useState<any[]>([]);
+  const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -1,10 +1,26 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Download, Loader2, FileText, FileImage, FileSpreadsheet } from "lucide-react";
+import {
+  Download,
+  Loader2,
+  FileText,
+  FileImage,
+  FileSpreadsheet,
+  type LucideIcon,
+} from "lucide-react";
 import { safeJson } from "@/lib/fetch-client";
 
-const fileIcons: Record<string, any> = {
+interface StudentDocumentRow {
+  id: number;
+  name: string;
+  type: string | null;
+  status: string | null;
+  url: string;
+  uploadedAt: string;
+}
+
+const fileIcons: Record<string, LucideIcon> = {
   pdf: FileText,
   doc: FileText,
   docx: FileText,
@@ -21,7 +37,7 @@ function getIcon(url: string) {
 }
 
 export default function StudentDocuments() {
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<StudentDocumentRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

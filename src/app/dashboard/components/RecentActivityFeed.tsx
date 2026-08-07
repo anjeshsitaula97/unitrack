@@ -4,10 +4,21 @@ import React from "react";
 import { MoreHorizontal } from "lucide-react";
 import { safeJson } from "@/lib/fetch-client";
 
+interface Activity {
+  id: string | number;
+  actor: string;
+  actorColor: string;
+  actorInitials: string;
+  action: string;
+  target: string;
+  targetBy?: string;
+  time: string;
+}
+
 export default function RecentActivityFeed() {
-  const [activities, setActivities] = React.useState<any[]>([]);
+  const [activities, setActivities] = React.useState<Activity[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isMounted, setIsMounted] = React.useState(true);
+  const [isMounted] = React.useState(true);
 
   React.useEffect(() => {
     const ac = new AbortController();

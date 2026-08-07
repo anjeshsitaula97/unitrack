@@ -30,7 +30,119 @@ import { toast } from "sonner";
 import { ADToBS, BSToAD } from "bikram-sambat-js";
 import NEB_INSTITUTES from "@/lib/data/neb_grade12_institutes.json";
 
-interface Student {
+interface ChildEntry {
+  id: number;
+  name: string;
+  gender: string;
+}
+
+interface EducationEntry {
+  id: number;
+  qualification: string;
+  institution: string;
+  institutionAddress: string;
+  year: string;
+  score: string;
+  country: string;
+}
+
+interface WorkExperienceEntry {
+  id: number;
+  jobTitle: string;
+  company: string;
+  companyAddress: string;
+  startDate: string;
+  endDate: string;
+  currentlyWorking: boolean;
+}
+
+interface TrainingEntry {
+  id: number;
+  name: string;
+  provider: string;
+  date: string;
+}
+
+interface DocumentEntry {
+  id: string;
+  type: string;
+  name: string;
+  url: string;
+  status: string;
+}
+
+interface UserSummary {
+  id: number;
+  name: string;
+  role?: string;
+}
+
+interface PartnerSummary {
+  id: number;
+  name: string;
+  countries?: string;
+}
+
+interface StudentFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  admissionEmail: string;
+  studentPassword: string;
+  phone: string;
+  phonePrefix: string;
+  whatsappNumber: string;
+  gender: string;
+  dobAd: string;
+  dobBs: string;
+  nationality: string;
+  maritalStatus: string;
+  spouseName: string;
+  childrenDetails: ChildEntry[];
+  guardianName: string;
+  guardianPhone: string;
+  guardianEmail: string;
+  guardianRelation: string;
+  guardianAddress: string;
+  status: string;
+  permanentProvince: string;
+  permanentDistrict: string;
+  permanentMunicipality: string;
+  permanentWardNo: string;
+  permanentAddress: string;
+  temporaryProvince: string;
+  temporaryDistrict: string;
+  temporaryMunicipality: string;
+  temporaryWardNo: string;
+  temporaryAddress: string;
+  passportNumber: string;
+  passportNationality: string;
+  passportIssueDate: string;
+  passportExpiryDate: string;
+  passportIssuePlace: string;
+  education: EducationEntry[];
+  workExperience: WorkExperienceEntry[];
+  training: TrainingEntry[];
+  testType: string;
+  overallScore: string;
+  readingScore: string;
+  writingScore: string;
+  listeningScore: string;
+  speakingScore: string;
+  moi: string;
+  testDate: string;
+  testRegNumber: string;
+  studyLevel: string;
+  intakeTerm: string;
+  major: string;
+  interestedCountry: string;
+  partnerId: string;
+  targetUniversities: string;
+  counselor: string;
+  documents: DocumentEntry[];
+}
+
+export interface Student {
   id: string;
   name: string;
   firstName?: string;
@@ -46,7 +158,7 @@ interface Student {
   gender?: string;
   maritalStatus?: string;
   spouseName?: string;
-  childrenDetails?: any;
+  childrenDetails?: ChildEntry[] | string;
   guardianName?: string;
   guardianPhone?: string;
   guardianEmail?: string;
@@ -67,9 +179,9 @@ interface Student {
   passportIssueDate?: string;
   passportExpiryDate?: string;
   passportIssuePlace?: string;
-  education?: any;
-  workExperience?: any;
-  training?: any;
+  education?: EducationEntry[] | string;
+  workExperience?: WorkExperienceEntry[] | string;
+  training?: TrainingEntry[] | string;
   testType?: string;
   overallScore?: string;
   readingScore?: string;
@@ -89,7 +201,7 @@ interface Student {
   counselor?: string;
   branchId?: string;
   whatsappNumber?: string;
-  documents?: any[];
+  documents?: DocumentEntry[];
 }
 
 const STEPS = [
@@ -133,7 +245,7 @@ const fetchDistricts = async (province: string, setter: (val: string[]) => void)
     const res = await fetch(`/api/nepal/districts?province=${encodeURIComponent(province)}`);
     const data = await res.json();
     setter(data);
-  } catch (err) {}
+  } catch (_err) {}
 };
 
 const fetchMunicipalities = async (district: string, setter: (val: string[]) => void) => {
@@ -141,7 +253,7 @@ const fetchMunicipalities = async (district: string, setter: (val: string[]) => 
     const res = await fetch(`/api/nepal/municipalities?district=${encodeURIComponent(district)}`);
     const data = await res.json();
     setter(data);
-  } catch (err) {}
+  } catch (_err) {}
 };
 
 const fetchWards = async (
@@ -155,7 +267,7 @@ const fetchWards = async (
     );
     const data = await res.json();
     setter(data);
-  } catch (err) {}
+  } catch (_err) {}
 };
 
 export default function StudentForm({
@@ -170,10 +282,10 @@ export default function StudentForm({
   const [step, setStep] = useState(1);
   const totalSteps = 8;
   const [qualifications, setQualifications] = useState<{ id: string; name: string }[]>([]);
-  const [allUsers, setAllUsers] = useState<any[]>([]);
-  const [allPartners, setAllPartners] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<UserSummary[]>([]);
+  const [allPartners, setAllPartners] = useState<PartnerSummary[]>([]);
   const staffUsers = useMemo(
-    () => (allUsers || []).filter((u: any) => u.role !== "Student"),
+    () => (allUsers || []).filter((u) => u.role !== "Student"),
     [allUsers]
   );
   const [provinces, setProvinces] = useState<string[]>([]);
@@ -187,7 +299,7 @@ export default function StudentForm({
 
   const isEditing = !!initialStudent;
 
-  const [formData, setFormData] = useState<any>(() => ({
+  const [formData, setFormData] = useState<StudentFormData>(() => ({
     firstName: "",
     lastName: "",
     email: "",
@@ -419,7 +531,7 @@ export default function StudentForm({
         const data = await res.json();
         setAllUsers(data);
       }
-    } catch (err) {}
+    } catch (_err) {}
   };
 
   const fetchPartners = async () => {
@@ -429,7 +541,7 @@ export default function StudentForm({
         const data = await res.json();
         setAllPartners(data);
       }
-    } catch (err) {}
+    } catch (_err) {}
   };
 
   const fetchProvinces = async () => {
@@ -437,13 +549,13 @@ export default function StudentForm({
       const res = await fetch("/api/nepal/provinces");
       const data = await res.json();
       setProvinces(data);
-    } catch (err) {}
+    } catch (_err) {}
   };
 
   const fetchQualifications = async () => {
     try {
       const res = await fetch("/api/qualifications");
-      const data = await res.json();
+      const data = (await res.json()) as { id: string; name: string }[];
       if (Array.isArray(data)) {
         const order: Record<string, number> = {
           SEE: 1,
@@ -461,7 +573,7 @@ export default function StudentForm({
           PHD: 5,
           DOCTORATE: 5,
         };
-        const sorted = data.toSorted((a: any, b: any) => {
+        const sorted = data.toSorted((a, b) => {
           const getScore = (name: string) => {
             const n = name.toUpperCase();
             const entry = Object.entries(order).find(([key]) => n.includes(key));
@@ -471,7 +583,7 @@ export default function StudentForm({
         });
         setQualifications(sorted);
       }
-    } catch (err) {}
+    } catch (_err) {}
   };
 
   useEffect(() => {
@@ -510,7 +622,7 @@ export default function StudentForm({
         const error = await res.json();
         toast.error(error.error || "Operation failed");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to server");
     }
   };
@@ -530,9 +642,9 @@ export default function StudentForm({
         url: data.url,
         status: "Uploaded",
       };
-      setFormData((prev: any) => ({
+      setFormData((prev: StudentFormData) => ({
         ...prev,
-        documents: [...prev.documents.filter((d: any) => d.type !== type), newDoc],
+        documents: [...prev.documents.filter((d) => d.type !== type), newDoc],
       }));
       toast.success(`${type} uploaded successfully`);
     } catch {
@@ -544,16 +656,16 @@ export default function StudentForm({
 
   const handleAdDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const ad = e.target.value;
-    setFormData((prev: any) => ({ ...prev, dobAd: ad }));
+    setFormData((prev: StudentFormData) => ({ ...prev, dobAd: ad }));
     try {
       if (ad) {
         let bs = ADToBS(ad);
         if (bs && bs.includes("/")) {
           bs = bs.replace(/\//g, "-");
         }
-        setFormData((prev: any) => ({ ...prev, dobBs: bs }));
+        setFormData((prev: StudentFormData) => ({ ...prev, dobBs: bs }));
       }
-    } catch (err) {}
+    } catch (_err) {}
   };
 
   const handleBsDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -568,41 +680,41 @@ export default function StudentForm({
         bs = bs + "-";
       }
     }
-    setFormData((prev: any) => ({ ...prev, dobBs: bs }));
+    setFormData((prev: StudentFormData) => ({ ...prev, dobBs: bs }));
     try {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (bs && dateRegex.test(bs)) {
         const ad = BSToAD(bs);
-        setFormData((prev: any) => ({ ...prev, dobAd: ad }));
+        setFormData((prev: StudentFormData) => ({ ...prev, dobAd: ad }));
       }
-    } catch (err) {}
+    } catch (_err) {}
   };
 
   const addChild = () => {
-    setFormData((prev: any) => ({
+    setFormData((prev: StudentFormData) => ({
       ...prev,
       childrenDetails: [...prev.childrenDetails, { id: Date.now(), name: "", gender: "Male" }],
     }));
   };
 
   const removeChild = (id: number) => {
-    setFormData((prev: any) => ({
+    setFormData((prev: StudentFormData) => ({
       ...prev,
-      childrenDetails: prev.childrenDetails.filter((c: any) => c.id !== id),
+      childrenDetails: prev.childrenDetails.filter((c) => c.id !== id),
     }));
   };
 
   const updateChild = (id: number, field: string, value: string) => {
-    setFormData((prev: any) => ({
+    setFormData((prev: StudentFormData) => ({
       ...prev,
-      childrenDetails: prev.childrenDetails.map((c: any) =>
+      childrenDetails: prev.childrenDetails.map((c) =>
         c.id === id ? { ...c, [field]: value } : c
       ),
     }));
   };
 
   const addEducation = () => {
-    setFormData((prev: any) => ({
+    setFormData((prev: StudentFormData) => ({
       ...prev,
       education: [
         ...prev.education,
@@ -620,20 +732,20 @@ export default function StudentForm({
   };
 
   const removeEducation = (id: number) => {
-    setFormData((prev: any) => ({
+    setFormData((prev: StudentFormData) => ({
       ...prev,
-      education: prev.education.filter((e: any) => e.id !== id),
+      education: prev.education.filter((e) => e.id !== id),
     }));
   };
 
   const updateEducation = (id: number, field: string, value: string) => {
-    setFormData((prev: any) => ({
+    setFormData((prev: StudentFormData) => ({
       ...prev,
-      education: prev.education.map((e: any) => {
+      education: prev.education.map((e) => {
         if (e.id === id) {
           const updated = { ...e, [field]: value };
           if (field === "institution") {
-            const found = NEB_INSTITUTES.find((inst: any) => inst.name === value);
+            const found = NEB_INSTITUTES.find((inst) => inst.name === value);
             if (found) {
               updated.institutionAddress = found.address;
             }
@@ -646,7 +758,7 @@ export default function StudentForm({
   };
 
   const addWork = () => {
-    setFormData((prev: any) => ({
+    setFormData((prev: StudentFormData) => ({
       ...prev,
       workExperience: [
         ...prev.workExperience,
@@ -663,12 +775,10 @@ export default function StudentForm({
     }));
   };
 
-  const updateWork = (id: number, field: string, value: any) => {
-    setFormData((prev: any) => ({
+  const updateWork = (id: number, field: string, value: string | boolean) => {
+    setFormData((prev: StudentFormData) => ({
       ...prev,
-      workExperience: prev.workExperience.map((w: any) =>
-        w.id === id ? { ...w, [field]: value } : w
-      ),
+      workExperience: prev.workExperience.map((w) => (w.id === id ? { ...w, [field]: value } : w)),
     }));
   };
 
@@ -1204,7 +1314,7 @@ export default function StudentForm({
                                   </button>
                                 </div>
                                 <div className="grid grid-cols-1 gap-3">
-                                  {formData.childrenDetails.map((child: any) => (
+                                  {formData.childrenDetails.map((child) => (
                                     <div
                                       key={child.id}
                                       className="flex gap-3 items-end bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"
@@ -1527,7 +1637,7 @@ export default function StudentForm({
                             </button>
                           </div>
                           <div className="space-y-4">
-                            {formData.education.map((edu: any) => (
+                            {formData.education.map((edu) => (
                               <div
                                 key={edu.id}
                                 className="p-6 rounded-3xl bg-slate-50 border border-slate-100 relative group"
@@ -1568,7 +1678,7 @@ export default function StudentForm({
                                       edu.qualification.toLowerCase().includes("grade xii") ||
                                       edu.qualification.toLowerCase().includes("grade 12")) && (
                                       <datalist id={`colleges-${edu.id}`}>
-                                        {NEB_INSTITUTES.map((inst: any) => (
+                                        {NEB_INSTITUTES.map((inst) => (
                                           <option key={inst.name} value={inst.name}>
                                             {inst.address}
                                           </option>
@@ -1631,7 +1741,7 @@ export default function StudentForm({
                           </button>
                         </div>
                         <div className="space-y-4">
-                          {formData.workExperience.map((work: any) => (
+                          {formData.workExperience.map((work) => (
                             <div
                               key={work.id}
                               className="p-6 rounded-3xl bg-slate-50 border border-slate-100 relative group"
@@ -1805,9 +1915,7 @@ export default function StudentForm({
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {docTypes.map((type) => {
-                            const existingDoc = formData.documents.find(
-                              (d: any) => d.type === type
-                            );
+                            const existingDoc = formData.documents.find((d) => d.type === type);
                             return (
                               <div
                                 key={type}

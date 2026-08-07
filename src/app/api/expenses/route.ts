@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
 import { getSession, apiError } from "@/lib/api-utils";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) return apiError("Unauthorized", 401);
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
       orderBy: { date: "desc" },
     });
     return NextResponse.json(expenses);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch expenses" }, { status: 500 });
   }
 }
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(newExpense, { status: 201 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to record expense" }, { status: 500 });
   }
 }

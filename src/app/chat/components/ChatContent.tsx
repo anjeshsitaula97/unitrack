@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { Search, Send, MessageSquare, Plus, X, User } from "lucide-react";
+import { Search, Send, MessageSquare, Plus, X } from "lucide-react";
 import { safeJson } from "@/lib/fetch-client";
 
 interface ChatUser {

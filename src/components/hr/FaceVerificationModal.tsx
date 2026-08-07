@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useRef, useState, useEffect, useCallback, useReducer, useId } from "react";
 import Image from "next/image";
@@ -14,6 +14,17 @@ import {
   MOVEMENT_FRAMES,
   FALLBACK_FRAMES,
 } from "@/lib/face";
+
+interface FaceBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface FaceDetectionLike {
+  box: FaceBox;
+}
 
 interface FaceVerificationModalProps {
   action: "checkin" | "checkout";
@@ -144,7 +155,7 @@ export default function FaceVerificationModal({
     cancelAnimationFrame(animRef.current);
   }, []);
 
-  const drawOverlay = (detection: any | null, center?: { x: number; y: number }) => {
+  const drawOverlay = (detection: FaceDetectionLike | null, center?: { x: number; y: number }) => {
     const canvas = overlayRef.current;
     const video = videoRef.current;
     if (!canvas || !video) return;
@@ -177,7 +188,7 @@ export default function FaceVerificationModal({
     try {
       dispatch({ type: "FACE_INIT" });
       await loadModels();
-    } catch (err) {
+    } catch (_err) {
       dispatch({ type: "MODEL_ERROR" });
       return;
     }
@@ -292,7 +303,7 @@ export default function FaceVerificationModal({
 
   useEffect(() => {
     initFaceCaptureRef.current = initFaceCapture;
-  }, [initFaceCapture]);
+  });
 
   useEffect(() => {
     const getLocation = () => {

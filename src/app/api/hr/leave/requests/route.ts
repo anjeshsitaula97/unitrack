@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -23,12 +24,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (status) where.status = status;
     if (!["Admin", "Super Admin"].includes(session.role)) where.userId = session.id;
 
     const requests = await db.leaveRequest.findMany({
-      where,
+      where: where as Prisma.LeaveRequestWhereInput,
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { id: true, name: true, email: true, employeeId: true, avatar: true } },

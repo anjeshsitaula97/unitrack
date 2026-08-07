@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, ChevronRight, GraduationCap, Bell, Loader2 } from "lucide-react";
+import { Home, ChevronRight, GraduationCap, Bell } from "lucide-react";
 
 interface Notification {
   id: string;
@@ -21,12 +21,17 @@ const breadcrumbMap: Record<string, string[]> = {
   "/student-portal/messages": ["Messages"],
 };
 
+interface AppStudent {
+  id: number;
+  name?: string | null;
+}
+
 export default function StudentTopbar({
   sidebarCollapsed,
   student,
 }: {
   sidebarCollapsed: boolean;
-  student?: any;
+  student?: AppStudent | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -67,10 +72,10 @@ export default function StudentTopbar({
         if (data.type === "notifications" && data.notifications?.length > 0) {
           setNotifications((prev) => {
             const existing = prev || [];
-            const newIds = new Set(data.notifications.map((n: any) => n.id));
+            const newIds = new Set(data.notifications.map((n: Notification) => n.id));
             const merged = [
               ...data.notifications,
-              ...existing.filter((n: any) => !newIds.has(n.id)),
+              ...existing.filter((n: Notification) => !newIds.has(n.id)),
             ];
             return merged.slice(0, 50);
           });

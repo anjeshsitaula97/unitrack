@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
@@ -30,9 +30,7 @@ import {
   Calendar,
   Zap,
   Check,
-  AlertTriangle,
   DollarSign,
-  Globe,
   FileText,
   Sparkles,
   PartyPopper,
@@ -46,7 +44,7 @@ import { getLatestRates, convertToNPR, formatNPR } from "@/lib/forex";
 import { safeParseArray } from "@/lib/json";
 import { getCountryFlag } from "@/lib/country-flags";
 
-const formatIntake = (intakeStr: string | undefined) => {
+const formatIntake = (intakeStr: string | null | undefined) => {
   if (!intakeStr) return "TBA";
   try {
     if (intakeStr.startsWith("[")) {
@@ -66,7 +64,7 @@ const formatIntake = (intakeStr: string | undefined) => {
         return `${first.name}${intakes.length > 1 ? ` (+${intakes.length - 1})` : ""}`;
       }
     }
-  } catch (e) {
+  } catch (_e) {
     // Fallback to legacy string
   }
   return intakeStr;
@@ -83,7 +81,7 @@ const getIntakeStatus = (intake: { openDate: string; deadline: string }) => {
   return { label: "Open", className: "text-emerald-600 bg-emerald-50 ring-1 ring-emerald-500/20" };
 };
 
-const getAppStatus = (course: { applicationDeadline?: string; status?: string }) => {
+const getAppStatus = (course: { applicationDeadline?: string | Date | null; status?: string }) => {
   const openCls = "text-emerald-600 bg-emerald-50 ring-1 ring-emerald-500/20";
   const closedCls = "text-red-600 bg-red-50 ring-1 ring-red-500/20";
   if (course.applicationDeadline) {
@@ -121,41 +119,76 @@ const facultyColors: Record<string, string> = {
 };
 
 interface Course {
-  id: string;
+  id: string | number;
   name: string;
   university: string;
-  universityId: string;
+  universityId: string | number;
   faculty: string;
   degreeType: string;
   level: string;
   credits: number;
   duration: string;
-  enrolled: number;
+  enrolled?: number;
   status: string;
-  startDate: string;
-  color: string;
-  initials: string;
+  startDate?: string | null;
+  color?: string;
+  initials?: string;
   instructor: string;
   description: string;
   prerequisites: string[];
-  intake?: string;
-  percentageRequired?: string;
-  gpaRequired?: string;
-  tuitionFee?: string;
-  applicationFee?: string;
-  currency?: string;
+  intake?: string | null;
+  percentageRequired?: string | null;
+  gpaRequired?: string | null;
+  tuitionFee?: string | null;
+  applicationFee?: string | null;
+  currency?: string | null;
   quickFilters?: string[];
-  universityLogo?: string;
-  applicationDeadline?: string;
-  courseCode?: string;
-  country?: string;
+  universityLogo?: string | null;
+  applicationDeadline?: string | Date | null;
+  courseCode?: string | null;
+  country?: string | null;
+  englishOverallScore?: string | null;
+  englishLanguageType?: string | null;
+}
+
+interface Intake {
+  name: string;
+  openDate: string;
+  deadline: string;
+}
+
+interface QuickFilter {
+  label: string;
+}
+
+interface EducationEntry {
+  qualification: string;
+  score?: string;
+}
+
+interface Student {
+  id: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string | null;
+  education?: string | EducationEntry[] | null;
+  testType?: string | null;
+  overallScore?: string | null;
+}
+
+interface GuestDetails {
+  qualification: string;
+  score: string;
+  testType: string;
+  overallScore: string;
 }
 
 interface EnrollmentModalProps {
   course: Course;
   onClose: () => void;
-  quickFilters: any[];
-  students: any[];
+  quickFilters: QuickFilter[];
+  students: Student[];
 }
 
 function GuestCheckModal({
@@ -164,10 +197,10 @@ function GuestCheckModal({
   initialDetails,
 }: {
   onClose: () => void;
-  onSave: (details: any) => void;
-  initialDetails: any;
+  onSave: (details: GuestDetails) => void;
+  initialDetails: GuestDetails;
 }) {
-  const [details, setDetails] = useState(initialDetails);
+  const [details, setDetails] = useState<GuestDetails>(initialDetails);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -289,7 +322,12 @@ function GuestCheckModal({
   );
 }
 
-function EnrollmentModal({ course, onClose, quickFilters, students }: EnrollmentModalProps) {
+function EnrollmentModal({
+  course,
+  onClose,
+  quickFilters: _quickFilters,
+  students,
+}: EnrollmentModalProps) {
   const router = useRouter();
   const [step, setStep] = useState<"details" | "confirm" | "success">("details");
   const [studentName, setStudentName] = useState("");
@@ -297,19 +335,19 @@ function EnrollmentModal({ course, onClose, quickFilters, students }: Enrollment
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [refNo, setRefNo] = useState("");
 
-  const courseIntakes = useMemo(() => {
+  const courseIntakes = useMemo<Intake[]>(() => {
     try {
       if (course.intake && course.intake.startsWith("[")) {
         return JSON.parse(course.intake);
       }
-    } catch (e) {}
+    } catch (_e) {}
     return [];
   }, [course.intake]);
 
   const defaultIntake = useMemo(() => {
     if (courseIntakes.length > 0) {
       const now = new Date();
-      const open = courseIntakes.find((i: any) => {
+      const open = courseIntakes.find((i) => {
         const o = new Date(i.openDate);
         const d = new Date(i.deadline);
         return now >= o && now <= d;
@@ -503,7 +541,7 @@ function EnrollmentModal({ course, onClose, quickFilters, students }: Enrollment
                         onChange={(e) => setSelectedIntake(e.target.value)}
                         className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-300 transition-all cursor-pointer"
                       >
-                        {courseIntakes.map((intake: any, idx: number) => (
+                        {courseIntakes.map((intake, idx: number) => (
                           <option key={`intake-opt-${intake.name}-${idx}`} value={intake.name}>
                             {intake.name}
                           </option>
@@ -877,9 +915,9 @@ interface CourseCardProps {
   expanded: boolean;
   onToggle: () => void;
   onEnroll: (course: Course) => void;
-  onDelete: (id: string, name: string) => void;
+  onDelete: (id: string | number, name: string) => void;
   onPrerequisites: (course: Course) => void;
-  quickFilters: any[];
+  quickFilters: QuickFilter[];
   showInNPR: boolean;
   rates: Record<string, number>;
 }
@@ -951,9 +989,11 @@ function CourseCard({
             <p className="text-xs font-bold text-slate-500 truncate">{course.university}</p>
             <div className="flex items-center gap-1 mt-0.5 text-[10px] text-slate-400 font-bold">
               {getCountryFlag(course.country) && (
-                <img
+                <Image
                   src={getCountryFlag(course.country)}
                   alt=""
+                  width={24}
+                  height={24}
                   className="w-4 h-3 rounded-sm object-cover"
                 />
               )}
@@ -1159,7 +1199,7 @@ function CourseCard({
                       );
                     }
                   }
-                } catch (e) {}
+                } catch (_e) {}
                 return (
                   <div className="flex items-center gap-1.5">
                     <Calendar size={11} className="text-slate-400" />
@@ -1234,12 +1274,12 @@ function CourseCard({
   );
 }
 
-export default function CoursesContent({ initialData }: { initialData?: any[] }) {
+export default function CoursesContent({ initialData }: { initialData?: Course[] }) {
   const router = useRouter();
-  const [COURSES_DATA, setCoursesData] = useState<any[]>(initialData || []);
-  const [quickFilters] = useState<any[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [students, setStudents] = useState<any[]>([]);
+  const [COURSES_DATA, setCoursesData] = useState<Course[]>(initialData || []);
+  const [quickFilters] = useState<QuickFilter[]>([]);
+  const [expandedId, setExpandedId] = useState<string | number | null>(null);
+  const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string>("all");
   const [guestDetails, setGuestDetails] = useState({
     qualification: "",
@@ -1263,7 +1303,9 @@ export default function CoursesContent({ initialData }: { initialData?: any[] })
   const [perPage, setPerPage] = useState(10);
   const [enrollingCourse, setEnrollingCourse] = useState<Course | null>(null);
   const [prerequisiteCourse, setPrerequisiteCourse] = useState<Course | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string | number; name: string } | null>(
+    null
+  );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   useEffect(() => {
@@ -1275,11 +1317,11 @@ export default function CoursesContent({ initialData }: { initialData?: any[] })
       .catch(() => {});
   }, []);
 
-  const universities = Array.from(new Set(COURSES_DATA.map((c) => c.university))).sort();
+  const _universities = Array.from(new Set(COURSES_DATA.map((c) => c.university))).sort();
   const faculties = Array.from(new Set(COURSES_DATA.map((c) => c.faculty))).sort();
-  const degreeTypes = Array.from(new Set(COURSES_DATA.map((c) => c.degreeType))).sort();
+  const _degreeTypes = Array.from(new Set(COURSES_DATA.map((c) => c.degreeType))).sort();
   const countries = Array.from(new Set(COURSES_DATA.map((c) => c.country)))
-    .filter(Boolean)
+    .filter((c): c is string => !!c)
     .sort();
 
   const filtered = useMemo(() => {
@@ -1308,11 +1350,11 @@ export default function CoursesContent({ initialData }: { initialData?: any[] })
               ? JSON.parse(student.education)
               : student.education || [];
           const hasPlus2 = studentEdu.some(
-            (e: any) =>
+            (e: EducationEntry) =>
               e.qualification.toLowerCase().includes("+2") ||
               e.qualification.toLowerCase().includes("grade xii")
           );
-          const hasBachelor = studentEdu.some((e: any) =>
+          const hasBachelor = studentEdu.some((e: EducationEntry) =>
             e.qualification.toLowerCase().includes("bachelor")
           );
 
@@ -1326,11 +1368,13 @@ export default function CoursesContent({ initialData }: { initialData?: any[] })
               const relevantEdu =
                 c.level === "Undergraduate"
                   ? studentEdu.find(
-                      (e: any) =>
+                      (e: EducationEntry) =>
                         e.qualification.toLowerCase().includes("+2") ||
                         e.qualification.toLowerCase().includes("grade xii")
                     )
-                  : studentEdu.find((e: any) => e.qualification.toLowerCase().includes("bachelor"));
+                  : studentEdu.find((e: EducationEntry) =>
+                      e.qualification.toLowerCase().includes("bachelor")
+                    );
 
               const studentGpa = parseFloat(relevantEdu?.score || "0");
               if (isNaN(studentGpa) || studentGpa < reqGpa) return false;
@@ -1374,14 +1418,14 @@ export default function CoursesContent({ initialData }: { initialData?: any[] })
       data = data.filter((c) => !c.applicationFee || (parseFloat(c.applicationFee) || 0) <= 0);
     } else if (sortBy === "tuition-asc" || sortBy === "tuition-desc") {
       data.sort((a, b) => {
-        const av = parseFloat(a.tuitionFee) || 0;
-        const bv = parseFloat(b.tuitionFee) || 0;
+        const av = parseFloat(a.tuitionFee || "") || 0;
+        const bv = parseFloat(b.tuitionFee || "") || 0;
         return sortBy === "tuition-asc" ? av - bv : bv - av;
       });
     } else if (sortBy === "appfee-asc" || sortBy === "appfee-desc") {
       data.sort((a, b) => {
-        const av = parseFloat(a.applicationFee) || 0;
-        const bv = parseFloat(b.applicationFee) || 0;
+        const av = parseFloat(a.applicationFee || "") || 0;
+        const bv = parseFloat(b.applicationFee || "") || 0;
         return sortBy === "appfee-asc" ? av - bv : bv - av;
       });
     }
@@ -1404,7 +1448,7 @@ export default function CoursesContent({ initialData }: { initialData?: any[] })
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
-  const handleDelete = async (id: string, name: string) => {
+  const handleDelete = async (id: string | number, name: string) => {
     setDeleteConfirm({ id, name });
   };
 
@@ -1422,7 +1466,7 @@ export default function CoursesContent({ initialData }: { initialData?: any[] })
         const error = await res.json();
         toast.error(error.error || "Failed to delete course");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Network error. Failed to delete course.");
     } finally {
       setDeleteConfirm(null);
@@ -1855,9 +1899,11 @@ export default function CoursesContent({ initialData }: { initialData?: any[] })
                           </span>
                           <div className="flex items-center gap-1 mt-0.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                             {getCountryFlag(course.country) && (
-                              <img
+                              <Image
                                 src={getCountryFlag(course.country)}
                                 alt=""
+                                width={24}
+                                height={24}
                                 className="w-4 h-3 rounded-sm object-cover"
                               />
                             )}

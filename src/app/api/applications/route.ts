@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
 import { logActivity } from "@/lib/activity";
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
     const statusFilter = searchParams.get("status") || "";
     const universityId = searchParams.get("universityId") || "";
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (studentId) where.studentId = Number(studentId);
     if (statusFilter) where.status = statusFilter;
     if (universityId) where.universityId = Number(universityId);
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     const [applications, total] = await Promise.all([
       db.application.findMany({
-        where,
+        where: where as Prisma.ApplicationWhereInput,
         include: {
           student: { select: { firstName: true, lastName: true, email: true } },
           university: { select: { name: true, country: true } },
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
         skip: params.skip,
         take: params.perPage,
       }),
-      db.application.count({ where }),
+      db.application.count({ where: where as Prisma.ApplicationWhereInput }),
     ]);
 
     return NextResponse.json(paginatedResponse(applications, total, params));

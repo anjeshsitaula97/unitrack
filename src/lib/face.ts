@@ -49,7 +49,7 @@ export function compareDescriptors(desc1: number[], desc2: number[]): number {
   return faceapi.euclideanDistance(desc1, desc2);
 }
 
-function isMatch(desc1: number[], desc2: number[], threshold = 0.5): boolean {
+function _isMatch(desc1: number[], desc2: number[], threshold = 0.5): boolean {
   return compareDescriptors(desc1, desc2) <= threshold;
 }
 

@@ -267,6 +267,6 @@ export const COUNTRIES: CountryData[] = [
   { name: "Zimbabwe", code: "ZW", currency: "ZWL", currencySymbol: "$", phoneCode: "+263" },
 ];
 
-function getCountryData(countryName: string): CountryData | undefined {
+function _getCountryData(countryName: string): CountryData | undefined {
   return COUNTRIES.find((c) => c.name === countryName);
 }

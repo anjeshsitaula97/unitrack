@@ -12,8 +12,8 @@ export interface ForexResponse {
   status: {
     code: number;
   };
-  errors: any;
-  params: any;
+  errors: unknown;
+  params: unknown;
   data: {
     payload: Array<{
       date: string;

@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     const numericIds = ids.map(Number);
 
-    let data: any[] = [];
+    let data: unknown[] = [];
 
     if (type === "universities") {
       data = await db.university.findMany({

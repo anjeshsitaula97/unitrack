@@ -62,7 +62,7 @@ export async function GET() {
       path: "/",
     });
     return response;
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Invalid session" }, { status: 401 });
   }
 }

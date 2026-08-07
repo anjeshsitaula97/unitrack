@@ -36,8 +36,15 @@ const CustomTooltip = ({
   return null;
 };
 
+interface ChartEntry {
+  id: string | number;
+  university: string;
+  courses: number;
+  color: string;
+}
+
 export default function CoursesPerUniversityChart() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<ChartEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

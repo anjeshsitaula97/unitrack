@@ -9,8 +9,18 @@ interface ChangeDetail {
   to: string;
 }
 
+interface AuditLog {
+  id: string;
+  actorName?: string;
+  actorInitials?: string;
+  target?: string;
+  action?: string;
+  createdAt: string;
+  details?: string | null;
+}
+
 export default function AuditContent() {
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("");

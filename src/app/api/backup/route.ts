@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     const password = searchParams.get("password");
     const selectedTables = tablesParam ? tablesParam.split(",") : null;
 
-    const exportTable = async (tableName: string, fetchFn: () => Promise<any>) => {
+    const exportTable = async (tableName: string, fetchFn: () => Promise<unknown>) => {
       if (!selectedTables || selectedTables.includes(tableName)) {
         return await fetchFn();
       }

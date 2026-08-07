@@ -1,13 +1,11 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   Search,
   Plus,
-  MoreHorizontal,
   UserCheck,
-  Mail,
   ShieldAlert,
   X,
   Loader2,
@@ -22,10 +20,43 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+interface AccessUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  avatar?: string | null;
+  lastSeenAt?: string | null;
+  lastLogin?: string | null;
+  loginLogs?: { id: string; ipAddress?: string }[];
+}
+
+interface LoginLog {
+  id: string;
+  createdAt: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+interface ActivityLog {
+  id: string;
+  action: string;
+  target: string;
+  createdAt: string;
+}
+
+interface UserDetails {
+  subscriptionPackage?: string;
+  lastSeenAt?: string | null;
+  loginLogs?: LoginLog[];
+  activities?: ActivityLog[];
+}
+
 export default function AccessContent() {
   const [now] = useState(() => Date.now());
   const fiveMinCutoff = now - 5 * 60 * 1000;
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<AccessUser[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [roles, setRoles] = useState<string[]>([]);
 
@@ -33,7 +64,9 @@ export default function AccessContent() {
     const ac = new AbortController();
     fetch("/api/roles", { signal: ac.signal })
       .then((res) => (res.ok ? res.json() : []))
-      .then((data) => setRoles(Array.isArray(data) ? data.map((r: any) => r.name) : []))
+      .then((data) =>
+        setRoles(Array.isArray(data) ? data.map((r: { name: string }) => r.name) : [])
+      )
       .catch(() => {});
     fetch("/api/access", { signal: ac.signal })
       .then((res) => {
@@ -60,19 +93,19 @@ export default function AccessContent() {
 
   // Modal states
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [editingUser, setEditingUser] = useState<AccessUser | null>(null);
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("Editor");
   const [autoGeneratePassword, setAutoGeneratePassword] = useState(true);
   const [manualPassword, setManualPassword] = useState("");
   const [generateApiKey, setGenerateApiKey] = useState(false);
-  const [viewingUser, setViewingUser] = useState<any | null>(null);
-  const [userDetails, setUserDetails] = useState<any | null>(null);
+  const [viewingUser, setViewingUser] = useState<AccessUser | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [resetPassword, setResetPassword] = useState(false);
   const [manualResetPassword, setManualResetPassword] = useState("");
-  const [resetPwUser, setResetPwUser] = useState<any | null>(null);
+  const [resetPwUser, setResetPwUser] = useState<AccessUser | null>(null);
   const [resetPwValue, setResetPwValue] = useState("");
 
   const fetchUserDetails = async (id: string) => {
@@ -85,7 +118,7 @@ export default function AccessContent() {
       } else {
         toast.error("Failed to load user details");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to backend");
     } finally {
       setIsLoadingDetails(false);
@@ -97,7 +130,7 @@ export default function AccessContent() {
     if (!editingUser) return;
 
     try {
-      const body: any = {
+      const body: { role: string; status: string; password?: string } = {
         role: editingUser.role,
         status: editingUser.status,
       };
@@ -120,7 +153,7 @@ export default function AccessContent() {
       } else {
         toast.error("Failed to update user");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to backend");
     }
   };
@@ -139,7 +172,7 @@ export default function AccessContent() {
       } else {
         toast.error("Failed to delete user");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to backend");
     }
   };
@@ -217,7 +250,7 @@ export default function AccessContent() {
       } else {
         toast.error("Failed to send invitation");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to backend");
     }
   };
@@ -672,8 +705,8 @@ function EditUserModal({
   setManualResetPassword,
   roles,
 }: {
-  editingUser: any;
-  setEditingUser: (v: any) => void;
+  editingUser: AccessUser;
+  setEditingUser: (v: AccessUser | null) => void;
   handleUpdateUser: (e: React.FormEvent) => Promise<void>;
   resetPassword: boolean;
   setResetPassword: (v: boolean) => void;
@@ -842,8 +875,8 @@ function PasswordResetModal({
   setResetPwValue,
   handleResetPassword,
 }: {
-  resetPwUser: any;
-  setResetPwUser: (v: any) => void;
+  resetPwUser: AccessUser;
+  setResetPwUser: (v: AccessUser | null) => void;
   resetPwValue: string;
   setResetPwValue: (v: string) => void;
   handleResetPassword: (e: React.FormEvent) => Promise<void>;
@@ -932,10 +965,10 @@ function UserDetailsModal({
   isLoadingDetails,
   fiveMinCutoff,
 }: {
-  viewingUser: any;
-  setViewingUser: (v: any) => void;
-  userDetails: any;
-  setUserDetails: (v: any) => void;
+  viewingUser: AccessUser;
+  setViewingUser: (v: AccessUser | null) => void;
+  userDetails: UserDetails | null;
+  setUserDetails: (v: UserDetails | null) => void;
   isLoadingDetails: boolean;
   fiveMinCutoff: number;
 }) {
@@ -1029,8 +1062,8 @@ function UserDetailsModal({
                   </span>
                 </div>
                 <div className="space-y-3">
-                  {userDetails.loginLogs?.length > 0 ? (
-                    userDetails.loginLogs.map((log: any) => (
+                  {(userDetails.loginLogs?.length ?? 0) > 0 ? (
+                    userDetails.loginLogs?.map((log) => (
                       <div
                         key={log.id}
                         className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between group hover:border-indigo-100 hover:bg-white transition-all shadow-sm"
@@ -1079,8 +1112,8 @@ function UserDetailsModal({
                   </span>
                 </div>
                 <div className="space-y-3 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
-                  {userDetails.activities?.length > 0 ? (
-                    userDetails.activities.map((act: any) => (
+                  {(userDetails.activities?.length ?? 0) > 0 ? (
+                    userDetails.activities?.map((act) => (
                       <div key={act.id} className="relative pl-9 group">
                         <div
                           className={`absolute left-2.5 top-1.5 size-3 rounded-full border-2 border-white shadow-sm z-10 ${

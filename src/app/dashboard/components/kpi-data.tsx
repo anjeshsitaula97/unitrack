@@ -5,12 +5,24 @@ import {
   Users,
   Zap,
   TrendingUp,
-  TrendingDown,
-  AlertTriangle,
   UserCheck,
   FileText,
   ClipboardList,
 } from "lucide-react";
+
+export interface DashboardStats {
+  totalUniversities: number;
+  universitiesLastMonth: number;
+  countriesCount: number;
+  totalCourses: number;
+  coursesLastMonth: number;
+  totalEnrolled: number;
+  activeCourses: number;
+  totalLeads: number;
+  totalStudents: number;
+  totalApplications: number;
+  totalTasks: number;
+}
 
 export interface KpiDefinition {
   id: string;
@@ -18,12 +30,12 @@ export interface KpiDefinition {
   icon: React.ReactNode;
   gradient: string;
   category: string;
-  valueFn: (stats: any) => string;
-  changeFn: (stats: any) => {
+  valueFn: (stats: DashboardStats | null | undefined) => string;
+  changeFn: (stats: DashboardStats | null | undefined) => {
     change: string;
     type: "positive" | "negative" | "warning" | "neutral";
   };
-  subtitleFn?: (stats: any) => string;
+  subtitleFn?: (stats: DashboardStats | null | undefined) => string;
 }
 
 export const AVAILABLE_KPIS: KpiDefinition[] = [
@@ -60,8 +72,8 @@ export const AVAILABLE_KPIS: KpiDefinition[] = [
     gradient: "from-amber-400/20 via-orange-300/10 to-transparent",
     category: "academic",
     valueFn: (s) =>
-      s?.totalEnrolled >= 1000000
-        ? `${(s.totalEnrolled / 1000000).toFixed(2)}M`
+      (s?.totalEnrolled || 0) >= 1000000
+        ? `${((s?.totalEnrolled || 0) / 1000000).toFixed(2)}M`
         : s?.totalEnrolled?.toLocaleString() || "0",
     changeFn: () => ({ change: "Lifetime enrollment", type: "positive" as const }),
     subtitleFn: () => "Global reach",
@@ -75,12 +87,12 @@ export const AVAILABLE_KPIS: KpiDefinition[] = [
     valueFn: (s) => s?.activeCourses?.toLocaleString() || "0",
     changeFn: (s) => ({
       change:
-        s?.totalCourses > 0
-          ? `${((s.activeCourses / s.totalCourses) * 100).toFixed(1)}% of catalog`
+        (s?.totalCourses || 0) > 0
+          ? `${(((s?.activeCourses || 0) / (s?.totalCourses || 1)) * 100).toFixed(1)}% of catalog`
           : "0% of catalog",
       type: "neutral" as const,
     }),
-    subtitleFn: (s) => `${s?.totalCourses - s?.activeCourses || 0} non-active`,
+    subtitleFn: (s) => `${(s?.totalCourses || 0) - (s?.activeCourses || 0) || 0} non-active`,
   },
   {
     id: "kpi-growth",
@@ -89,8 +101,8 @@ export const AVAILABLE_KPIS: KpiDefinition[] = [
     gradient: "from-emerald-400/20 via-teal-300/10 to-transparent",
     category: "academic",
     valueFn: (s) =>
-      s?.totalUniversities > 0
-        ? `+${((s.universitiesLastMonth / (s.totalUniversities || 1)) * 100).toFixed(1)}%`
+      (s?.totalUniversities || 0) > 0
+        ? `+${(((s?.universitiesLastMonth || 0) / (s?.totalUniversities || 1)) * 100).toFixed(1)}%`
         : "0%",
     changeFn: () => ({ change: "New university listings", type: "positive" as const }),
     subtitleFn: () => "Expansion rate",

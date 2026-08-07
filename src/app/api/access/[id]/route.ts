@@ -5,7 +5,7 @@ import { createNotification } from "@/lib/notifications";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
-const ALLOWED_FIELDS = ["role", "status", "password"];
+const _ALLOWED_FIELDS = ["role", "status", "password"];
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -99,7 +99,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
   }
 }

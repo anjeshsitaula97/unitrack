@@ -16,15 +16,15 @@ async function getCourses() {
       include: { university: true },
     });
 
-    return courses.map((course: any) => ({
+    return courses.map((course) => ({
       ...course,
       university: course.university?.name || "Unknown",
       universityLogo: course.university?.logo || null,
       faculty: course.faculty || "General",
       degreeType: course.degreeType || "None",
-      prerequisites: safeParseArray(course.prerequisites),
-      quickFilters: safeParseArray(course.quickFilters),
-      requirements: safeParseArray(course.requirements),
+      prerequisites: safeParseArray<string>(course.prerequisites),
+      quickFilters: safeParseArray<string>(course.quickFilters),
+      requirements: safeParseArray<string>(course.requirements),
       startDate: course.startDate?.toISOString() || null,
       createdAt: course.createdAt.toISOString(),
       updatedAt: course.updatedAt.toISOString(),

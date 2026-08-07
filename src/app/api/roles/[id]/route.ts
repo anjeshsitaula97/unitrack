@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -10,7 +11,7 @@ async function getSession() {
   if (!token) return null;
   try {
     return await verifyAuth(token);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }
@@ -26,7 +27,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const body = await req.json();
     const { name, description, color, permissions } = body;
 
-    const data: any = {};
+    const data: Record<string, unknown> = {};
     if (name) data.name = name;
     if (description !== undefined) data.description = description;
     if (color) data.color = color;
@@ -36,7 +37,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     const role = await db.role.update({
       where: { id: Number(id) },
-      data,
+      data: data as Prisma.RoleUpdateInput,
     });
 
     await logActivity({

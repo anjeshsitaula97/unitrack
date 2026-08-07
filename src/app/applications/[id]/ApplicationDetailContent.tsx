@@ -14,13 +14,11 @@ import {
   Info,
   Loader2,
   Maximize2,
-  MoreVertical,
   Plus,
   Share2,
   Trash2,
   Upload,
   X,
-  AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -208,7 +206,6 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
   const [newStageDesc, setNewStageDesc] = useState("");
   const [addingStage, setAddingStage] = useState(false);
   const [addingSubtaskTo, setAddingSubtaskTo] = useState<string | null>(null);
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [subtaskInputs, setSubtaskInputs] = useState<Record<string, string>>({});
 
   // Notes state
@@ -258,7 +255,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
         if (acadDocsRes.ok) {
           const docsList = await acadDocsRes.json();
           if (!cancelled)
-            setAcademicDocNames(Array.isArray(docsList) ? docsList.map((d: any) => d.name) : []);
+            setAcademicDocNames(Array.isArray(docsList) ? docsList.map((d) => d.name) : []);
         }
         if (statusRes.ok) {
           const statusData = await statusRes.json();
@@ -400,7 +397,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
   const matchedDocReqs = useMemo(() => {
     return docReqs.map((req: string) => {
       const matched = docs.find(
-        (d: any) =>
+        (d) =>
           d.name?.toLowerCase().includes(req.toLowerCase()) ||
           d.academicDocument?.name?.toLowerCase().includes(req.toLowerCase())
       );
@@ -412,7 +409,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
   }, [docReqs, docs]);
 
   const requirementRows = useMemo(() => {
-    const rows = matchedDocReqs.map((r: any) => ({
+    const rows = matchedDocReqs.map((r) => ({
       name: r.name,
       status: !r.doc ? "Missing" : r.isApproved ? "Approved" : normalizeDocStatus(r.doc.status),
     }));
@@ -422,8 +419,8 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
     return rows;
   }, [matchedDocReqs, generalReqs]);
 
-  const allDocsComplete = docReqs.length > 0 && matchedDocReqs.every((d) => d.isApproved);
-  const missingDocsCount = matchedDocReqs.filter((d) => !d.isApproved).length;
+  const _allDocsComplete = docReqs.length > 0 && matchedDocReqs.every((d) => d.isApproved);
+  const _missingDocsCount = matchedDocReqs.filter((d) => !d.isApproved).length;
 
   const matchedPrereqs = useMemo(() => {
     return coursePrereqs.map((req) => {
@@ -564,7 +561,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
     }
   };
 
-  const handleReorderStages = async (dragIdx: number, dropIdx: number) => {
+  const _handleReorderStages = async (dragIdx: number, dropIdx: number) => {
     const reordered = [...wfStages];
     const [moved] = reordered.splice(dragIdx, 1);
     reordered.splice(dropIdx, 0, moved);

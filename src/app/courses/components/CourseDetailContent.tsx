@@ -1,34 +1,22 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  BookOpen,
-  GraduationCap,
-  Tag,
   Clock,
   Calendar,
-  DollarSign,
   Edit2,
-  Trash2,
   FileText,
-  CheckCircle,
-  X,
-  Globe,
   MapPin,
   Building2,
   Loader2,
   User,
-  Zap,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
-const formatIntake = (intakeStr: string | undefined) => {
+const _formatIntake = (intakeStr: string | undefined) => {
   if (!intakeStr) return "TBA";
   try {
     if (typeof intakeStr === "string" && intakeStr.startsWith("[")) {
@@ -38,7 +26,7 @@ const formatIntake = (intakeStr: string | undefined) => {
         return `${first.name}${intakes.length > 1 ? ` (+${intakes.length - 1})` : ""}`;
       }
     }
-  } catch (e) {}
+  } catch (_e) {}
   return intakeStr;
 };
 
@@ -368,7 +356,7 @@ export default function CourseDetailContent({ id }: { id: string }) {
             <h2 className="text-sm font-bold text-slate-900 mb-4">Available Intakes</h2>
             {intakes.length > 0 ? (
               <div className="space-y-2">
-                {intakes.map((intakeItem: any, idx: number) => {
+                {intakes.map((intakeItem, idx: number) => {
                   const status = getIntakeStatus(intakeItem);
                   return (
                     <div

@@ -9,23 +9,16 @@ import {
   Calendar,
   Award,
   BookOpen,
-  ChevronDown,
-  ChevronUp,
   ExternalLink,
   Mail,
   Phone,
-  ChevronLeft,
   Info,
   Search,
-  Filter,
   CheckCircle,
-  GraduationCap,
-  Tag,
   Clock,
   DollarSign,
   ArrowLeft,
   Users,
-  MoreHorizontal,
   Edit2,
   Trash2,
   X,
@@ -52,7 +45,7 @@ const formatIntake = (intakeStr: string | undefined) => {
         return `${first.name}${intakes.length > 1 ? ` (+${intakes.length - 1})` : ""}`;
       }
     }
-  } catch (e) {}
+  } catch (_e) {}
   return intakeStr;
 };
 
@@ -65,7 +58,7 @@ const formatCities = (cityStr: string | undefined) => {
         return cities.join(", ");
       }
     }
-  } catch (e) {}
+  } catch (_e) {}
   return cityStr;
 };
 
@@ -79,7 +72,7 @@ const formatEnglishTests = (testsStr: string | undefined) => {
         return `${first.type} ${first.overall}${tests.length > 1 ? ` (+${tests.length - 1})` : ""}`;
       }
     }
-  } catch (e) {}
+  } catch (_e) {}
   return testsStr || "IELTS 6.0";
 };
 
@@ -344,7 +337,7 @@ export default function UniversityDetailContent({ id }: { id: string }) {
                 </h3>
                 {university.requirements && university.requirements.length > 0 ? (
                   <ul className="space-y-4">
-                    {university.requirements.map((req, i) => (
+                    {university.requirements.map((req, _i) => (
                       <li key={req} className="flex items-start gap-3">
                         <div className="size-5 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <CheckCircle size={10} className="text-emerald-600" />
@@ -558,7 +551,7 @@ function AboutCard({ university }: { university: University }) {
             <div className="flex flex-wrap gap-1 mt-1">
               {Array.isArray(university.accreditation) ? (
                 university.accreditation.length > 0 ? (
-                  university.accreditation.map((acc, i) => (
+                  university.accreditation.map((acc, _i) => (
                     <span
                       key={acc}
                       className="px-2 py-0.5 bg-violet-50 text-violet-700 border border-violet-100 rounded text-[10px] font-bold"
@@ -946,7 +939,7 @@ function CourseCatalog({
                                 }
                               }
                             }
-                          } catch (e) {}
+                          } catch (_e) {}
                           return (
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
                               {formatIntake(course.intake)}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
 import { getPaginationParams, paginatedResponse, apiError, getSession } from "@/lib/api-utils";
@@ -14,7 +15,7 @@ export async function GET(req: NextRequest) {
     const statusFilter = searchParams.get("status") || "";
     const methodFilter = searchParams.get("method") || "";
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (studentId) where.studentId = Number(studentId);
     if (statusFilter) where.status = statusFilter;
     if (methodFilter) where.method = methodFilter;
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
 
     const [payments, total] = await Promise.all([
       db.payment.findMany({
-        where,
+        where: where as Prisma.PaymentWhereInput,
         include: {
           student: {
             select: { firstName: true, lastName: true, email: true },
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
         skip: params.skip,
         take: params.perPage,
       }),
-      db.payment.count({ where }),
+      db.payment.count({ where: where as Prisma.PaymentWhereInput }),
     ]);
 
     return NextResponse.json(paginatedResponse(payments, total, params));

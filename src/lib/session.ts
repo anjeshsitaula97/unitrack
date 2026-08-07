@@ -20,7 +20,7 @@ export const verifyAuth = async (token: string): Promise<SessionPayload> => {
   try {
     const verified = await jwtVerify(token, new TextEncoder().encode(getJwtSecretKey()));
     return verified.payload as unknown as SessionPayload;
-  } catch (err) {
+  } catch (_err) {
     throw new Error("Your token has expired.");
   }
 };

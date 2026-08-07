@@ -1,26 +1,23 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Send,
-  Settings,
-  Mail,
-  Loader2,
-  CheckCircle,
-  AlertTriangle,
-  Users,
-  Search,
-} from "lucide-react";
+import { Send, Settings, Mail, Loader2, AlertTriangle, Search } from "lucide-react";
 import { toast } from "sonner";
 import { api, safeJson } from "@/lib/fetch-client";
+
+interface Student {
+  id: string;
+  name: string;
+  email: string;
+}
 
 export default function EmailContent() {
   const [tab, setTab] = useState<"compose" | "settings">("compose");
   const [configured, setConfigured] = useState(false);
   const [checking, setChecking] = useState(true);
   const [studentSearch, setStudentSearch] = useState("");
-  const [students, setStudents] = useState<any[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   // Compose form
   const [to, setTo] = useState("");
@@ -67,7 +64,7 @@ export default function EmailContent() {
     return () => clearTimeout(timer);
   }, [studentSearch]);
 
-  const selectStudent = (s: any) => {
+  const selectStudent = (s: Student) => {
     setSelectedStudent(s);
     setTo(s.email);
     setStudentSearch("");

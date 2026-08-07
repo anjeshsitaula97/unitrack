@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
       target: doc.name,
     });
     return NextResponse.json(doc);
-  } catch (error: any) {
-    if (error?.code === "P2002") {
+  } catch (error: unknown) {
+    if ((error as { code?: string })?.code === "P2002") {
       return NextResponse.json({ error: "Document already exists" }, { status: 400 });
     }
     return NextResponse.json({ error: "Failed to create academic document" }, { status: 500 });
@@ -57,8 +57,8 @@ export async function PATCH(req: NextRequest) {
       changes,
     });
     return NextResponse.json(doc);
-  } catch (error: any) {
-    if (error?.code === "P2002") {
+  } catch (error: unknown) {
+    if ((error as { code?: string })?.code === "P2002") {
       return NextResponse.json({ error: "Document already exists" }, { status: 400 });
     }
     return NextResponse.json({ error: "Failed to update academic document" }, { status: 500 });
@@ -80,7 +80,7 @@ export async function DELETE(req: NextRequest) {
       target: existing?.name || id,
     });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to delete academic document" }, { status: 500 });
   }
 }

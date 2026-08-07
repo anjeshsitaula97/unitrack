@@ -34,7 +34,6 @@ interface Univ {
   commissionType?: string | null;
   commissionValue?: string | number | null;
   commissionCurrency?: string | null;
-  [key: string]: any;
 }
 
 interface Course {
@@ -44,10 +43,10 @@ interface Course {
   university?: string;
   universityLogo?: string | null;
   status?: string;
+  courseCode?: string | null;
   commissionType?: string | null;
   commissionValue?: string | number | null;
   commissionCurrency?: string | null;
-  [key: string]: any;
 }
 
 interface CommissionRow {
@@ -162,7 +161,7 @@ export default function CommissionContent() {
     [universities, courses]
   );
 
-  const percentageCount = useMemo(
+  const _percentageCount = useMemo(
     () => allCommissioned.filter((c) => c.type === "Percentage").length,
     [allCommissioned]
   );
@@ -505,9 +504,11 @@ export default function CommissionContent() {
                           <p className="text-sm font-bold text-slate-800">{row.name}</p>
                           <p className="flex items-center gap-1 mt-0.5 text-[10px] text-slate-400 font-bold">
                             {row.kind === "university" && getCountryFlag(row.country) && (
-                              <img
+                              <Image
                                 src={getCountryFlag(row.country)}
                                 alt=""
+                                width={24}
+                                height={24}
                                 className="w-4 h-3 rounded-sm object-cover"
                               />
                             )}
@@ -617,7 +618,7 @@ function CommissionModal({
     initial?.partnershipAmount ? String(initial.partnershipAmount) : ""
   );
 
-  const selectedUniv = universities.find((u) => u.id === univId);
+  const _selectedUniv = universities.find((u) => u.id === univId);
   const univCourses = useMemo(
     () => courses.filter((c) => c.universityId === univId),
     [courses, univId]

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { verifyAuth } from "@/lib/session";
+import { verifyAuth, type SessionPayload } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  let payload: any;
+  let payload: SessionPayload;
   try {
     payload = await verifyAuth(token);
   } catch {
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     async start(controller) {
       let lastCheck = new Date();
 
-      const sendEvent = (data: any) => {
+      const sendEvent = (data: unknown) => {
         try {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
         } catch {}

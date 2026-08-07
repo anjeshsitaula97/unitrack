@@ -528,9 +528,11 @@ export default function PartnershipContent() {
                             <p className="text-sm font-bold text-slate-800">{univ.name}</p>
                             <div className="flex items-center gap-1 mt-0.5 text-[10px] text-slate-400 font-bold">
                               {getCountryFlag(univ.country) && (
-                                <img
+                                <Image
                                   src={getCountryFlag(univ.country)}
                                   alt=""
+                                  width={24}
+                                  height={24}
                                   className="w-4 h-3 rounded-sm object-cover"
                                 />
                               )}

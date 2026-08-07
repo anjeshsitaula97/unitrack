@@ -8,20 +8,12 @@ import {
   Plus,
   Search,
   Loader2,
-  Calendar,
   X,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  MoreVertical,
-  User,
   Trash2,
   ChevronRight,
-  Layout,
   Globe,
   FileText,
   ChevronLeft,
-  Filter,
   Edit2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -52,14 +44,14 @@ interface VisaType {
   description: string | null;
 }
 
-const priorityColors: Record<string, string> = {
+const _priorityColors: Record<string, string> = {
   Low: "text-slate-400",
   Medium: "text-blue-500",
   High: "text-amber-500",
   Urgent: "text-red-500",
 };
 
-const statuses = ["Todo", "In Progress", "Review", "Done"];
+const _statuses = ["Todo", "In Progress", "Review", "Done"];
 
 const Breadcrumbs = ({
   view,
@@ -192,7 +184,7 @@ function WorkflowContentInner() {
     try {
       const res = await fetch("/api/learning-hub/countries");
       if (res.ok) setWorkflowCountries(await res.json());
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to load countries");
     } finally {
       isLoading.current = false;
@@ -258,7 +250,7 @@ function WorkflowContentInner() {
           toast.error(err.error || "Failed to add visa type");
         }
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to save visa type");
     } finally {
       setIsSubmitting(false);
@@ -276,7 +268,7 @@ function WorkflowContentInner() {
       } else {
         toast.error("Failed to delete visa type");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to delete visa type");
     }
   };
@@ -298,7 +290,7 @@ function WorkflowContentInner() {
           `/api/tasks?country=${encodeURIComponent(country!)}&visaType=${encodeURIComponent(visa!)}`
         );
         if (res.ok) setTasks(await res.json());
-      } catch (err) {
+      } catch (_err) {
         toast.error("Failed to load tasks");
       } finally {
         isLoading.current = false;
@@ -324,14 +316,14 @@ function WorkflowContentInner() {
         const err = await res.json();
         toast.error(err.error || "Failed to add country");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to add country");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const deleteWorkflowCountry = async (e: React.MouseEvent, id: string, name: string) => {
+  const _deleteWorkflowCountry = async (e: React.MouseEvent, id: string, name: string) => {
     e.stopPropagation();
     if (!confirm(`Are you sure you want to remove ${name} from workflow?`)) return;
     try {
@@ -340,12 +332,12 @@ function WorkflowContentInner() {
         toast.success(`${name} removed`);
         fetchWorkflowCountries();
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to remove country");
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const _handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.current.title) {
       toast.error("Title is required");
@@ -377,14 +369,14 @@ function WorkflowContentInner() {
           assignee: "",
         };
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to create task");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const updateStatus = async (id: string, status: string) => {
+  const _updateStatus = async (id: string, status: string) => {
     try {
       const res = await fetch("/api/tasks", {
         method: "PATCH",
@@ -395,12 +387,12 @@ function WorkflowContentInner() {
         fetchTasks();
         toast.success(`Moved to ${status}`);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to update status");
     }
   };
 
-  const deleteTask = async (id: string) => {
+  const _deleteTask = async (id: string) => {
     if (!confirm("Are you sure you want to delete this task?")) return;
     try {
       const res = await fetch(`/api/tasks?id=${id}`, { method: "DELETE" });
@@ -408,7 +400,7 @@ function WorkflowContentInner() {
         fetchTasks();
         toast.success("Task deleted");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to delete task");
     }
   };

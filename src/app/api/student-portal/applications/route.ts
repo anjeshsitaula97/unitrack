@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
 
@@ -11,11 +12,11 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") || "";
 
-    const where: any = { studentId };
+    const where: Record<string, unknown> = { studentId };
     if (status) where.status = status;
 
     const applications = await db.application.findMany({
-      where,
+      where: where as Prisma.ApplicationWhereInput,
       include: {
         university: { select: { name: true, country: true, logo: true } },
         course: {

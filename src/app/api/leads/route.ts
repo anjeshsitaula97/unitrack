@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { logActivity, getActorName } from "@/lib/activity";
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
     const sourceFilter = searchParams.get("source") || "";
     const counselorFilter = searchParams.get("counselor") || "";
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (params.search) {
       where.OR = [
@@ -37,12 +38,12 @@ export async function GET(req: NextRequest) {
 
     const [leads, total] = await Promise.all([
       prisma.lead.findMany({
-        where,
+        where: where as Prisma.LeadWhereInput,
         orderBy: { createdAt: "desc" },
         skip: params.skip,
         take: params.perPage,
       }),
-      prisma.lead.count({ where }),
+      prisma.lead.count({ where: where as Prisma.LeadWhereInput }),
     ]);
 
     return NextResponse.json(paginatedResponse(leads, total, params));
@@ -119,7 +120,7 @@ export async function POST(req: Request) {
     return NextResponse.json(lead);
   } catch (error) {
     console.error("Create Lead Error:", error);
-    if ((error as any).code === "P2002") {
+    if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "A lead with this email already exists" }, { status: 400 });
     }
     return apiError("Failed to create lead");

@@ -10,14 +10,14 @@ class FetchError extends Error {
   constructor(
     public status: number,
     message: string,
-    public data?: any
+    public data?: unknown
   ) {
     super(message);
     this.name = "FetchError";
   }
 }
 
-async function apiFetch<T = any>(url: string, options: FetchOptions = {}): Promise<T> {
+async function apiFetch<T = unknown>(url: string, options: FetchOptions = {}): Promise<T> {
   const { showError = true, showSuccess = false, successMessage, ...fetchOptions } = options;
 
   try {
@@ -51,7 +51,7 @@ async function apiFetch<T = any>(url: string, options: FetchOptions = {}): Promi
   }
 }
 
-export async function safeJson(res: Response): Promise<any> {
+export async function safeJson(res: Response) {
   const text = await res.text();
   try {
     return JSON.parse(text);
@@ -61,18 +61,18 @@ export async function safeJson(res: Response): Promise<any> {
 }
 
 export const api = {
-  get: <T = any>(url: string, options?: FetchOptions) =>
+  get: <T = unknown>(url: string, options?: FetchOptions) =>
     apiFetch<T>(url, { method: "GET", ...options }),
 
-  post: <T = any>(url: string, body?: any, options?: FetchOptions) =>
+  post: <T = unknown>(url: string, body?: unknown, options?: FetchOptions) =>
     apiFetch<T>(url, { method: "POST", body: body ? JSON.stringify(body) : undefined, ...options }),
 
-  put: <T = any>(url: string, body?: any, options?: FetchOptions) =>
+  put: <T = unknown>(url: string, body?: unknown, options?: FetchOptions) =>
     apiFetch<T>(url, { method: "PUT", body: body ? JSON.stringify(body) : undefined, ...options }),
 
-  delete: <T = any>(url: string, options?: FetchOptions) =>
+  delete: <T = unknown>(url: string, options?: FetchOptions) =>
     apiFetch<T>(url, { method: "DELETE", ...options }),
 
-  upload: <T = any>(url: string, formData: FormData, options?: FetchOptions) =>
+  upload: <T = unknown>(url: string, formData: FormData, options?: FetchOptions) =>
     apiFetch<T>(url, { method: "POST", body: formData, ...options }),
 };

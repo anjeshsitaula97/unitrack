@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Mail, Loader2, ArrowLeft, GraduationCap, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Mail, Loader2, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -31,8 +31,8 @@ export default function ForgotPasswordPage() {
 
       setStep("otp");
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsLoading(false);
     }
@@ -93,8 +93,8 @@ export default function ForgotPasswordPage() {
 
       // OTP verified — redirect to reset password with the token
       router.push(`/reset-password?token=${data.resetToken}`);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsLoading(false);
     }

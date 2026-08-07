@@ -1,31 +1,57 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import {
-  Plus,
-  CheckCircle,
-  XCircle,
-  CalendarClock,
-  Loader2,
-  X,
-  ArrowLeft,
-  Search,
-  Clock,
-  Users,
-  Filter,
-} from "lucide-react";
+import { Plus, CheckCircle, XCircle, Loader2, X, ArrowLeft, Clock } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
+interface LeaveUser {
+  id: number;
+  name: string;
+  email: string;
+  employeeId: string | null;
+  avatar: string | null;
+}
+
+interface LeaveTypeInfo {
+  id: number;
+  name: string;
+}
+
+interface LeaveRequestItem {
+  id: number;
+  userId: number;
+  leaveTypeId: number;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  status: string;
+  approvedBy: number | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: LeaveUser;
+  leaveType: LeaveTypeInfo;
+  approver: { id: number; name: string } | null;
+}
+
+interface LeaveType {
+  id: number;
+  name: string;
+  description: string | null;
+  daysPerYear: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function LeaveContent() {
-  const [requests, setRequests] = useState<any[]>([]);
-  const [types, setTypes] = useState<any[]>([]);
+  const [requests, setRequests] = useState<LeaveRequestItem[]>([]);
+  const [types, setTypes] = useState<LeaveType[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ leaveTypeId: "", startDate: "", endDate: "", reason: "" });
-  const [activeTab, setActiveTab] = useState<"requests" | "types">("requests");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -46,6 +72,8 @@ export default function LeaveContent() {
   const fetchDataRef = useRef(fetchData);
   useEffect(() => {
     fetchDataRef.current = fetchData;
+  }, [fetchData]);
+  useEffect(() => {
     fetchDataRef.current();
   }, [statusFilter]);
 
@@ -74,7 +102,7 @@ export default function LeaveContent() {
     }
   };
 
-  const handleStatus = async (id: string, status: string) => {
+  const handleStatus = async (id: number, status: string) => {
     try {
       const res = await fetch(`/api/hr/leave/requests/${id}`, {
         method: "PUT",
@@ -203,7 +231,7 @@ export default function LeaveContent() {
                   </td>
                 </tr>
               ) : (
-                requests.map((r: any) => (
+                requests.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50 transition-colors">
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-2">
@@ -305,7 +333,7 @@ export default function LeaveContent() {
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
                 >
                   <option value="">Select type…</option>
-                  {types.map((t: any) => (
+                  {types.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name} ({t.daysPerYear} days/yr)
                     </option>

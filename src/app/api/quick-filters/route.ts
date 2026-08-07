@@ -8,7 +8,7 @@ export async function GET() {
       orderBy: { label: "asc" },
     });
     return NextResponse.json(filters);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch filters" }, { status: 500 });
   }
 }
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(filter, { status: 201 });
   } catch (error) {
-    if ((error as any).code === "P2002") {
+    if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "Filter already exists" }, { status: 400 });
     }
     return NextResponse.json({ error: "Failed to create filter" }, { status: 500 });

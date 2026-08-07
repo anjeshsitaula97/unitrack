@@ -9,7 +9,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!session) return apiError("Unauthorized", 401);
 
     const { id } = await params;
-    const data = (await req.json()) as any;
+    const data = (await req.json()) as {
+      name: string;
+      url: string;
+      fileSize?: number;
+      fileType?: string;
+    };
 
     if (!data.name || !data.url) {
       return NextResponse.json({ error: "Document name and URL are required" }, { status: 400 });
@@ -40,7 +45,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  { params: _params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getSession();
     if (!session) return apiError("Unauthorized", 401);

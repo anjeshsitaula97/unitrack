@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
 
 export default function LandingPage() {
@@ -37,14 +38,6 @@ export default function LandingPage() {
 
   return (
     <>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&display=swap"
-        rel="stylesheet"
-      />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet"
-      />
       <style>{`
         body { font-family: 'Open Sans', sans-serif; }
         h1, h2, h3, h4 { font-family: 'Montserrat', sans-serif; }
@@ -193,10 +186,12 @@ export default function LandingPage() {
               <div className="relative w-full h-[280px] sm:h-[400px] md:h-[480px] lg:h-[540px] grid grid-cols-12 grid-rows-12 gap-2.5 sm:gap-4">
                 <motion.div
                   style={{ y: heroY1 }}
-                  className="col-span-8 row-span-7 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl group"
+                  className="relative col-span-8 row-span-7 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl group"
                 >
-                  <img
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  <Image
+                    fill
+                    sizes="(max-width: 1024px) 60vw, 45vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
                     src="/assets/images/hero_students_1.png"
                     alt="Students laughing in university lobby"
                     onError={(e) => {
@@ -206,10 +201,12 @@ export default function LandingPage() {
                 </motion.div>
                 <motion.div
                   style={{ y: heroY2 }}
-                  className="col-span-4 row-span-5 col-start-9 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl"
+                  className="relative col-span-4 row-span-5 col-start-9 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl"
                 >
-                  <img
-                    className="w-full h-full object-cover"
+                  <Image
+                    fill
+                    sizes="(max-width: 1024px) 30vw, 25vw"
+                    className="object-cover"
                     src="/assets/images/hero_campus_2.png"
                     alt="Student walking across European campus"
                     onError={(e) => {
@@ -219,10 +216,12 @@ export default function LandingPage() {
                 </motion.div>
                 <motion.div
                   style={{ y: heroY3 }}
-                  className="col-span-5 row-span-5 row-start-8 col-start-2 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl"
+                  className="relative col-span-5 row-span-5 row-start-8 col-start-2 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl"
                 >
-                  <img
-                    className="w-full h-full object-cover"
+                  <Image
+                    fill
+                    sizes="(max-width: 1024px) 40vw, 30vw"
+                    className="object-cover"
                     src="/assets/images/hero_study_3.png"
                     alt="Student desk with laptop and travel brochures"
                     onError={(e) => {
@@ -232,10 +231,12 @@ export default function LandingPage() {
                 </motion.div>
                 <motion.div
                   style={{ y: heroY4 }}
-                  className="col-span-6 row-span-4 row-start-6 col-start-7 rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg border-4 sm:border-8 border-white"
+                  className="relative col-span-6 row-span-4 row-start-6 col-start-7 rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg border-4 sm:border-8 border-white"
                 >
-                  <img
-                    className="w-full h-full object-cover"
+                  <Image
+                    fill
+                    sizes="(max-width: 1024px) 50vw, 40vw"
+                    className="object-cover"
                     src="/assets/images/hero_grad_4.png"
                     alt="Student holding acceptance letter"
                     onError={(e) => {
@@ -293,9 +294,11 @@ export default function LandingPage() {
             <div className="order-2 lg:order-1 relative">
               <div className="grid grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-4 sm:space-y-6 pt-6 sm:pt-12">
-                  <div className="bg-white p-2 rounded-3xl shadow-xl">
-                    <img
-                      className="rounded-2xl w-full aspect-square object-cover"
+                  <div className="relative bg-white p-2 rounded-3xl shadow-xl">
+                    <Image
+                      fill
+                      sizes="(max-width: 1024px) 45vw, 25vw"
+                      className="rounded-2xl object-cover"
                       src="/assets/images/hero_study_3.png"
                       alt="Student checking phone with acceptance"
                       onError={(e) => {
@@ -311,9 +314,11 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="space-y-4 sm:space-y-6">
-                  <div className="bg-white p-2 rounded-3xl shadow-xl overflow-hidden aspect-[4/5]">
-                    <img
-                      className="w-full h-full object-cover"
+                  <div className="relative bg-white p-2 rounded-3xl shadow-xl overflow-hidden aspect-[4/5]">
+                    <Image
+                      fill
+                      sizes="(max-width: 1024px) 40vw, 25vw"
+                      className="object-cover"
                       src="/assets/images/hero_students_1.png"
                       alt="Student in library"
                       onError={(e) => {
@@ -457,9 +462,11 @@ export default function LandingPage() {
                 process was so smooth.&quot;
               </p>
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0055c3] overflow-hidden flex-shrink-0">
-                  <img
-                    className="w-full h-full object-cover"
+                <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0055c3] overflow-hidden flex-shrink-0">
+                  <Image
+                    fill
+                    sizes="48px"
+                    className="object-cover"
                     src="/assets/images/hero_grad_4.png"
                     alt="Arabelle"
                     onError={(e) => {
@@ -488,9 +495,11 @@ export default function LandingPage() {
                 without any stress.&quot;
               </p>
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0055c3] overflow-hidden flex-shrink-0">
-                  <img
-                    className="w-full h-full object-cover"
+                <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0055c3] overflow-hidden flex-shrink-0">
+                  <Image
+                    fill
+                    sizes="48px"
+                    className="object-cover"
                     src="/assets/images/hero_students_1.png"
                     alt="Krupali"
                     onError={(e) => {
@@ -567,8 +576,10 @@ export default function LandingPage() {
                 >
                   <div>
                     <div className="relative h-44 sm:h-48">
-                      <img
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      <Image
+                        fill
+                        sizes="(max-width: 1024px) 90vw, 25vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                         src={school.img}
                         alt={school.name}
                         onError={(e) => {

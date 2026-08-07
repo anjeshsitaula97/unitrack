@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Course } from "@prisma/client";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { softDeleteUniversity } from "@/lib/trash";
@@ -55,8 +56,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     };
 
     // Group courses by faculty
-    const groupedCourses: Record<string, any[]> = {};
-    university.courses.forEach((course: any) => {
+    const groupedCourses: Record<string, Course[]> = {};
+    university.courses.forEach((course) => {
       const faculty = course.faculty || "General";
       if (!groupedCourses[faculty]) {
         groupedCourses[faculty] = [];
@@ -104,13 +105,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   }
 }
 
-const parseSafeInt = (val: any) => {
+const parseSafeInt = (val: string | number | null | undefined) => {
   if (val === undefined || val === null || val === "") return null;
   const parsed = parseInt(val.toString());
   return isNaN(parsed) ? null : parsed;
 };
 
-const parseSafeFloat = (val: any) => {
+const parseSafeFloat = (val: string | number | null | undefined) => {
   if (val === undefined || val === null || val === "") return null;
   const parsed = parseFloat(val.toString());
   return isNaN(parsed) ? null : parsed;

@@ -45,8 +45,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       changes: diffChanges(existing, leaveType),
     });
     return NextResponse.json(leaveType);
-  } catch (error: any) {
-    if (error.code === "P2002") {
+  } catch (error: unknown) {
+    const err = error as { code?: string };
+    if (err.code === "P2002") {
       return NextResponse.json(
         { error: "A leave type with this name already exists" },
         { status: 400 }

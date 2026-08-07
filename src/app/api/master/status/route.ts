@@ -21,7 +21,7 @@ export async function GET() {
     } catch {}
 
     return NextResponse.json({ configured: true, connected, url: MASTER_API_URL });
-  } catch (error) {
+  } catch (_error) {
     return apiError("Failed to check Master API status");
   }
 }

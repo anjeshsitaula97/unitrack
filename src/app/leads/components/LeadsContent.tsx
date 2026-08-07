@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -12,18 +12,16 @@ import {
   Mail,
   Phone,
   Calendar,
-  User,
   Info,
   Loader2,
   UserCheck,
-  ClipboardList,
   Clock,
   LayoutGrid,
   Table,
   Columns3,
-  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
+import Image from "next/image";
 import { safeJson } from "@/lib/fetch-client";
 import { getCountryFlag } from "@/lib/country-flags";
 
@@ -102,17 +100,40 @@ const leadKanbanStatuses = [
   },
 ];
 
+interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  status: string;
+  counselor?: string;
+  assignedDate?: string;
+  phone?: string;
+  nextFollowUp: string;
+  interestedCountry?: string;
+  source?: string;
+  createdAt: string;
+}
+
+interface LeadUser {
+  role?: string;
+}
+
+interface LeadStaff {
+  id: string;
+  name: string;
+}
+
 export default function LeadsContent() {
   const router = useRouter();
-  const [leads, setLeads] = useState<any[]>([]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [currentUser, setCurrentUser] = useState<LeadUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [staffFilter, setStaffFilter] = useState("all");
-  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<LeadStaff[]>([]);
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage] = useState(10);
   const [viewMode, setViewMode] = useState<"grid" | "table" | "kanban">("grid");
 
   const fetchData = useCallback(async () => {
@@ -138,7 +159,7 @@ export default function LeadsContent() {
       if (usersRes.ok) {
         setAllUsers(usersData);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to server");
     } finally {
       setIsLoading(false);
@@ -164,7 +185,7 @@ export default function LeadsContent() {
       } else {
         toast.error(data.error || "Failed to delete");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to server");
     }
   };
@@ -183,7 +204,7 @@ export default function LeadsContent() {
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
   const totalPages = Math.ceil(filtered.length / perPage);
 
-  const isAdmin = ["Admin", "Super Admin"].includes(currentUser?.role);
+  const isAdmin = ["Admin", "Super Admin"].includes(currentUser?.role ?? "");
 
   return (
     <div className="animate-fade-in relative block">
@@ -460,9 +481,11 @@ export default function LeadsContent() {
                   {lead.interestedCountry && (
                     <div className="flex items-center gap-2 text-xs text-slate-500">
                       {getCountryFlag(lead.interestedCountry) && (
-                        <img
+                        <Image
                           src={getCountryFlag(lead.interestedCountry)}
                           alt=""
+                          width={24}
+                          height={24}
                           className="w-5 h-3.5 rounded-sm object-cover"
                         />
                       )}
@@ -585,9 +608,11 @@ export default function LeadsContent() {
                           {lead.interestedCountry && (
                             <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
                               {getCountryFlag(lead.interestedCountry) && (
-                                <img
+                                <Image
                                   src={getCountryFlag(lead.interestedCountry)}
                                   alt=""
+                                  width={24}
+                                  height={24}
                                   className="w-5 h-3.5 rounded-sm object-cover"
                                 />
                               )}

@@ -18,7 +18,7 @@ export async function GET() {
 
     if (!student) return apiError("Student not found", 404);
 
-    const { studentPassword, ...safeStudent } = student;
+    const { studentPassword: _studentPassword, ...safeStudent } = student;
     return NextResponse.json(safeStudent);
   } catch (error) {
     console.error("Student fetch error:", error);

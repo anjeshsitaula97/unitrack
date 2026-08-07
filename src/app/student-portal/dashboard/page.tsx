@@ -12,15 +12,55 @@ import {
   Circle,
   Clock,
   Globe,
-  ChevronRight,
 } from "lucide-react";
 import { safeJson } from "@/lib/fetch-client";
 
+interface PortalStudent {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  nationality?: string | null;
+  studyLevel?: string | null;
+  interestedCountry?: string | null;
+  status?: string | null;
+  counselor?: string | null;
+  _count?: {
+    applications: number;
+    payments: number;
+    documents: number;
+  };
+}
+
+interface VisaTask {
+  id: number;
+  title: string;
+  status: string;
+  dueDate: string | null;
+}
+
+interface VisaStage {
+  id: number;
+  name: string;
+  progress: number;
+  isActive: boolean;
+  tasks: VisaTask[];
+}
+
+interface VisaTimeline {
+  stages: VisaStage[];
+  summary: {
+    completedStages: number;
+    totalStages: number;
+    overallProgress: number;
+  };
+}
+
 export default function StudentDashboard() {
   const router = useRouter();
-  const [student, setStudent] = useState<any>(null);
+  const [student, setStudent] = useState<PortalStudent | null>(null);
   const [loading, setLoading] = useState(true);
-  const [timeline, setTimeline] = useState<any>(null);
+  const [timeline, setTimeline] = useState<VisaTimeline | null>(null);
   const [loadingTimeline, setLoadingTimeline] = useState(false);
 
   useEffect(() => {
@@ -52,7 +92,7 @@ export default function StudentDashboard() {
   }
 
   useEffect(() => {
-    if (!interestedCountry) return;
+    if (!interestedCountry || !student) return;
     fetch(
       `/api/visa-timeline?country=${encodeURIComponent(interestedCountry)}&studentId=${student.id}`
     )
@@ -60,7 +100,7 @@ export default function StudentDashboard() {
       .then((d) => setTimeline(d))
       .catch(() => {})
       .finally(() => setLoadingTimeline(false));
-  }, [interestedCountry, student?.id]);
+  }, [interestedCountry, student?.id, student]);
 
   if (loading) {
     return (
@@ -69,6 +109,9 @@ export default function StudentDashboard() {
       </div>
     );
   }
+
+  const timelineStages = timeline?.stages ?? [];
+  const timelineSummary = timeline?.summary;
 
   const links = [
     {
@@ -133,7 +176,7 @@ export default function StudentDashboard() {
           <div className="bg-white rounded-2xl border border-slate-100 p-8 flex items-center justify-center">
             <Loader2 className="animate-spin text-indigo-400" size={24} />
           </div>
-        ) : timeline?.stages?.length > 0 ? (
+        ) : timelineStages.length > 0 ? (
           <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -142,11 +185,10 @@ export default function StudentDashboard() {
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-slate-500">
-                  {timeline.summary?.completedStages || 0}/{timeline.summary?.totalStages || 0}{" "}
-                  stages
+                  {timelineSummary?.completedStages || 0}/{timelineSummary?.totalStages || 0} stages
                 </span>
                 <span className="text-indigo-600 font-bold">
-                  {timeline.summary?.overallProgress || 0}%
+                  {timelineSummary?.overallProgress || 0}%
                 </span>
               </div>
             </div>
@@ -154,11 +196,11 @@ export default function StudentDashboard() {
               <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-6">
                 <div
                   className="h-full bg-indigo-500 rounded-full transition-all"
-                  style={{ width: `${timeline.summary?.overallProgress || 0}%` }}
+                  style={{ width: `${timelineSummary?.overallProgress || 0}%` }}
                 />
               </div>
               <div className="space-y-0">
-                {timeline.stages.map((stage: any, index: number) => {
+                {timelineStages.map((stage, index: number) => {
                   const Icon =
                     stage.progress === 100 ? CheckCircle : stage.isActive ? Clock : Circle;
                   const color =
@@ -167,7 +209,7 @@ export default function StudentDashboard() {
                       : stage.isActive
                         ? "text-indigo-500"
                         : "text-slate-300";
-                  const isLast = index === timeline.stages.length - 1;
+                  const isLast = index === timelineStages.length - 1;
                   return (
                     <div key={stage.id} className="relative flex gap-4 pb-6">
                       {!isLast && (
@@ -209,7 +251,7 @@ export default function StudentDashboard() {
                         </div>
                         {stage.tasks?.length > 0 && (
                           <div className="space-y-1">
-                            {stage.tasks.map((task: any) => (
+                            {stage.tasks.map((task) => (
                               <div
                                 key={task.id}
                                 className="flex items-center justify-between py-1 px-3 rounded-lg bg-slate-50"

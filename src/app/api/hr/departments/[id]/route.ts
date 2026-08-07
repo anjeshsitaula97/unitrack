@@ -46,8 +46,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       changes: diffChanges(existing, dept),
     });
     return NextResponse.json(dept);
-  } catch (error: any) {
-    if (error.code === "P2002") {
+  } catch (error: unknown) {
+    const err = error as { code?: string };
+    if (err.code === "P2002") {
       return NextResponse.json(
         { error: "A department with this name already exists" },
         { status: 400 }

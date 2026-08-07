@@ -40,10 +40,42 @@ const ACCREDITATION_BODIES = [
   "CACUSS",
 ];
 
+interface Partner {
+  id: string;
+  name: string;
+}
+
+interface AddUniversityFormData {
+  name: string;
+  shortName: string;
+  country: string;
+  type: string;
+  accreditation: string;
+  accredited: boolean;
+  website: string;
+  email: string;
+  phone: string;
+  address: string;
+  ranking: string;
+  foundedYear: string;
+  description: string;
+  status: string;
+  logo: string | null;
+  banner: string | null;
+  imagesList: string[];
+  requirements: string[];
+  partnerId: string;
+  partnershipAmount: string;
+  commissionType: string;
+  commissionValue: string;
+  commissionCurrency: string;
+  isPartnershipNA: boolean;
+}
+
 export default function AddUniversityContent() {
-  const router = useRouter();
+  const _router = useRouter();
   const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<AddUniversityFormData>({
     name: "",
     shortName: "",
     country: "",
@@ -69,7 +101,7 @@ export default function AddUniversityContent() {
     commissionCurrency: "",
     isPartnershipNA: false,
   });
-  const [partners, setPartners] = useState<any[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const isLoadingPartners = useRef(true);
 
   React.useEffect(() => {
@@ -254,7 +286,7 @@ function BasicInfoSection({
   errors,
   update,
 }: {
-  form: any;
+  form: AddUniversityFormData;
   errors: Record<string, string>;
   update: (field: string, value: string | boolean | string[]) => void;
 }) {
@@ -422,7 +454,7 @@ function AccreditationSection({
   form,
   update,
 }: {
-  form: any;
+  form: AddUniversityFormData;
   update: (field: string, value: string | boolean | string[]) => void;
 }) {
   return (
@@ -497,7 +529,7 @@ function ContactSection({
   form,
   update,
 }: {
-  form: any;
+  form: AddUniversityFormData;
   update: (field: string, value: string | boolean | string[]) => void;
 }) {
   return (
@@ -593,9 +625,9 @@ function MediaSection({
   update,
   setForm,
 }: {
-  form: any;
+  form: AddUniversityFormData;
   update: (field: string, value: string | boolean | string[]) => void;
-  setForm: any;
+  setForm: React.Dispatch<React.SetStateAction<AddUniversityFormData>>;
 }) {
   return (
     <div className="card p-6">
@@ -743,9 +775,9 @@ function MediaSection({
                   files.forEach((file) => {
                     const reader = new FileReader();
                     reader.onloadend = () => {
-                      setForm((prev: any) => ({
+                      setForm((prev) => ({
                         ...prev,
-                        imagesList: [...(prev as any).imagesList, reader.result as string],
+                        imagesList: [...prev.imagesList, reader.result as string],
                       }));
                     };
                     reader.readAsDataURL(file);
@@ -765,9 +797,9 @@ function PartnershipSection({
   update,
   partners,
 }: {
-  form: any;
+  form: AddUniversityFormData;
   update: (field: string, value: string | boolean | string[]) => void;
-  partners: any[];
+  partners: Partner[];
 }) {
   return (
     <div className="card p-6">
@@ -933,7 +965,7 @@ function RequirementsSection({
   form,
   update,
 }: {
-  form: any;
+  form: AddUniversityFormData;
   update: (field: string, value: string | boolean | string[]) => void;
 }) {
   return (
@@ -956,7 +988,7 @@ function RequirementsSection({
                 const next = isSelected
                   ? form.requirements.filter((r: string) => r !== req)
                   : [...form.requirements, req];
-                update("requirements", next as any);
+                update("requirements", next);
               }}
               className={`
                 flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer

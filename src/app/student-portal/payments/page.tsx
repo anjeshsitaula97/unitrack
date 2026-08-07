@@ -1,8 +1,24 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CreditCard, Loader2, CheckCircle, Clock, XCircle } from "lucide-react";
+import { CreditCard, Loader2 } from "lucide-react";
 import { safeJson } from "@/lib/fetch-client";
+
+interface PaymentRow {
+  id: number;
+  amount: number;
+  currency: string;
+  status: string;
+  method: string | null;
+  date: string;
+  description: string | null;
+}
+
+interface PaymentSummary {
+  payments: PaymentRow[];
+  totalPaid: number;
+  pendingAmount: number;
+}
 
 const statusColors: Record<string, string> = {
   Paid: "text-emerald-600 bg-emerald-50",
@@ -13,7 +29,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function StudentPayments() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<PaymentSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,7 +80,7 @@ export default function StudentPayments() {
             </div>
           ) : (
             <div className="space-y-3">
-              {data?.payments?.map((p: any) => (
+              {data?.payments?.map((p) => (
                 <div
                   key={p.id}
                   className="bg-white rounded-2xl border border-slate-100 p-4 flex items-center justify-between"

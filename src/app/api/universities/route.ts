@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
 import { createNotification } from "@/lib/notifications";
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     const countryFilter = searchParams.get("country") || "";
     const typeFilter = searchParams.get("type") || "";
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (params.search) {
       where.OR = [
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
 
     const [universities, total] = await Promise.all([
       db.university.findMany({
-        where,
+        where: where as Prisma.UniversityWhereInput,
         include: {
           partner: true,
           _count: { select: { courses: true } },
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
         skip: params.skip,
         take: params.perPage,
       }),
-      db.university.count({ where }),
+      db.university.count({ where: where as Prisma.UniversityWhereInput }),
     ]);
 
     const transformed = universities.map((u) => ({

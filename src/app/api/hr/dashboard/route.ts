@@ -22,7 +22,7 @@ export async function GET() {
     const now = new Date();
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
-    const startOfMonth = new Date(year, month - 1, 1);
+    const _startOfMonth = new Date(year, month - 1, 1);
     const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
 
     const [

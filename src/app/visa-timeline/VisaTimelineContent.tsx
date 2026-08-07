@@ -15,7 +15,6 @@ import {
   Globe,
   FileText,
   Layout,
-  GitBranch,
 } from "lucide-react";
 import { safeJson } from "@/lib/fetch-client";
 
@@ -31,13 +30,43 @@ interface VisaType {
   description: string | null;
 }
 
-function getStageIcon(stage: any) {
+interface TimelineTask {
+  id: string;
+  title: string;
+  status?: string | null;
+  priority?: string | null;
+  dueDate?: string | null;
+}
+
+interface TimelineStage {
+  id: string;
+  name: string;
+  description?: string | null;
+  progress: number;
+  isActive: boolean;
+  completedTasks?: number;
+  totalTasks?: number;
+  tasks?: TimelineTask[];
+  applications?: unknown[];
+}
+
+interface TimelineData {
+  stages: TimelineStage[];
+  summary?: {
+    overallProgress?: number;
+    totalStages?: number;
+    completedStages?: number;
+  };
+  visaTasks?: unknown[];
+}
+
+function getStageIcon(stage: TimelineStage) {
   if (stage.progress === 100) return CheckCircle;
   if (stage.isActive) return Clock;
   return Circle;
 }
 
-function getStageColor(stage: any) {
+function getStageColor(stage: TimelineStage) {
   if (stage.progress === 100) return "text-emerald-500";
   if (stage.isActive) return "text-indigo-500";
   return "text-slate-300";
@@ -111,7 +140,7 @@ function VisaTimelineContentInner() {
     undefined
   );
   const [visaTypes, setVisaTypes] = useState<VisaType[] | undefined>(undefined);
-  const [timelineData, setTimelineData] = useState<any>(null);
+  const [timelineData, setTimelineData] = useState<TimelineData | null>(null);
   const [loadingCountries, setLoadingCountries] = useState(true);
   const [loadingTimeline, setLoadingTimeline] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -441,7 +470,7 @@ function VisaTimelineContentInner() {
               <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
                 <div className="xl:col-span-3">
                   <div className="relative">
-                    {timelineData.stages.map((stage: any, index: number) => {
+                    {timelineData.stages.map((stage, index: number) => {
                       const Icon = getStageIcon(stage);
                       const color = getStageColor(stage);
                       const isLast = index === timelineData.stages.length - 1;
@@ -494,9 +523,9 @@ function VisaTimelineContentInner() {
                               />
                             </div>
 
-                            {stage.tasks?.length > 0 && (
+                            {stage.tasks && stage.tasks.length > 0 && (
                               <div className="space-y-1.5">
-                                {stage.tasks.map((task: any) => (
+                                {stage.tasks.map((task) => (
                                   <div
                                     key={task.id}
                                     className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-slate-50 text-sm"
@@ -534,7 +563,7 @@ function VisaTimelineContentInner() {
                               </div>
                             )}
 
-                            {stage.applications?.length > 0 && (
+                            {stage.applications && stage.applications.length > 0 && (
                               <div className="mt-2 text-xs text-slate-400">
                                 {stage.applications.length} related application(s)
                               </div>

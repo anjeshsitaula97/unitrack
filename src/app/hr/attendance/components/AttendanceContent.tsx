@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import {
   Clock,
-  LogIn,
-  LogOut,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -23,6 +21,41 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 const FaceVerificationModal = lazy(() => import("@/components/hr/FaceVerificationModal"));
+
+interface AttendanceUser {
+  id: number;
+  name: string;
+  email: string;
+  employeeId: string | null;
+  avatar: string | null;
+}
+
+interface AttendanceRecord {
+  id: number;
+  userId: number;
+  date: string;
+  checkIn: string;
+  checkOut: string | null;
+  status: string;
+  notes: string | null;
+  checkInPhoto: string | null;
+  checkOutPhoto: string | null;
+  checkInLat: number | null;
+  checkInLng: number | null;
+  checkOutLat: number | null;
+  checkOutLng: number | null;
+  createdAt: string;
+  updatedAt: string;
+  user: AttendanceUser;
+}
+
+interface CurrentUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  avatar: string | null;
+}
 
 const SortHeader = ({
   field,
@@ -82,7 +115,7 @@ const QuickActionsPanel = ({
   checking,
   proceedWithAction,
 }: {
-  myStatus: any;
+  myStatus: AttendanceRecord | null;
   checking: boolean;
   proceedWithAction: (action: "checkin" | "checkout") => void;
 }) => (
@@ -113,7 +146,7 @@ const QuickActionsPanel = ({
           {myStatus.checkInPhoto && (
             <button
               type="button"
-              onClick={() => window.open(myStatus.checkInPhoto, "_blank")}
+              onClick={() => window.open(myStatus.checkInPhoto!, "_blank")}
               className="text-[10px] text-indigo-600 flex items-center gap-1 mt-1 hover:underline"
             >
               <Camera size={10} /> View photo
@@ -189,7 +222,7 @@ const QuickActionsPanel = ({
 );
 
 export default function AttendanceContent() {
-  const [records, setRecords] = useState<any[]>([]);
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [fromDate, setFromDate] = useState(new Date().toISOString().split("T")[0]);
   const [toDate, setToDate] = useState(new Date().toISOString().split("T")[0]);
@@ -198,8 +231,8 @@ export default function AttendanceContent() {
   const [sortField, setSortField] = useState("date");
   const [sortOrder, setSortOrder] = useState("desc");
   const [checking, setChecking] = useState(false);
-  const [myStatus, setMyStatus] = useState<any>(null);
-  const me = useRef<any>(null);
+  const [myStatus, setMyStatus] = useState<AttendanceRecord | null>(null);
+  const me = useRef<CurrentUser | null>(null);
   const [page, setPage] = useState(1);
   const perPage = 15;
   const [showVerification, setShowVerification] = useState(false);
@@ -226,14 +259,14 @@ export default function AttendanceContent() {
         fetch(`/api/hr/attendance?${query}`),
         fetch("/api/auth/me"),
       ]);
-      if (allRes.ok) setRecords(await allRes.json());
+      if (allRes.ok) setRecords((await allRes.json()) as AttendanceRecord[]);
       if (meRes.ok) {
-        const meData = await meRes.json();
+        const meData = (await meRes.json()) as CurrentUser;
         me.current = meData;
         const today = new Date().toISOString().split("T")[0];
         const myRes = await fetch(`/api/hr/attendance?date=${today}&userId=${meData.id}`);
         if (myRes.ok) {
-          const myData = await myRes.json();
+          const myData = (await myRes.json()) as AttendanceRecord[];
           setMyStatus(myData.length > 0 ? myData[0] : null);
         }
       }
@@ -248,6 +281,8 @@ export default function AttendanceContent() {
   const fetchDataRef = useRef(fetchData);
   useEffect(() => {
     fetchDataRef.current = fetchData;
+  }, [fetchData]);
+  useEffect(() => {
     fetchDataRef.current();
   }, [fromDate, toDate, statusFilter, searchQuery]);
 
@@ -275,7 +310,7 @@ export default function AttendanceContent() {
         toast.error("Face not enrolled. Please enroll your face first.", {
           action: {
             label: "Enroll",
-            onClick: () => window.open(`/hr/employees/${me.current.id}/face-enrollment`, "_blank"),
+            onClick: () => window.open(`/hr/employees/${me.current!.id}/face-enrollment`, "_blank"),
           },
         });
         setChecking(false);
@@ -328,7 +363,7 @@ export default function AttendanceContent() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (!confirm("Delete this attendance record?")) return;
     try {
       const res = await fetch(`/api/hr/attendance/${id}`, { method: "DELETE" });
@@ -466,7 +501,7 @@ export default function AttendanceContent() {
                     </td>
                   </tr>
                 ) : (
-                  paginated.map((r: any) => (
+                  paginated.map((r) => (
                     <tr key={r.id} className="hover:bg-slate-50 transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
@@ -551,7 +586,7 @@ export default function AttendanceContent() {
                           {r.checkInPhoto ? (
                             <button
                               type="button"
-                              onClick={() => window.open(r.checkInPhoto, "_blank")}
+                              onClick={() => window.open(r.checkInPhoto!, "_blank")}
                               className="p-1 text-emerald-500 hover:text-emerald-600"
                               title="View check-in photo"
                             >

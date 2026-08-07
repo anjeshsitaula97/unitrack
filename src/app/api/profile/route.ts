@@ -33,7 +33,7 @@ export async function GET() {
     }
 
     return NextResponse.json(user);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Invalid session" }, { status: 401 });
   }
 }

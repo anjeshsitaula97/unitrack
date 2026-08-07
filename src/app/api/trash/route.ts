@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
 import { purgeExpiredTrash } from "@/lib/trash";
@@ -15,17 +16,17 @@ export async function GET(req: NextRequest) {
     const typeFilter = searchParams.get("type") || "";
     const search = searchParams.get("search") || "";
 
-    const where: any = { restoredAt: null };
+    const where: Record<string, unknown> = { restoredAt: null };
     if (typeFilter) where.entityType = typeFilter;
     if (search) where.entityName = { contains: search, mode: "insensitive" };
 
     const items = await db.trashItem.findMany({
-      where,
+      where: where as Prisma.TrashItemWhereInput,
       orderBy: { deletedAt: "desc" },
       take: 200,
     });
 
-    const total = await db.trashItem.count({ where });
+    const total = await db.trashItem.count({ where: where as Prisma.TrashItemWhereInput });
 
     return NextResponse.json({ items, total });
   } catch (error) {

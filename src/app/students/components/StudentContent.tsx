@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -33,6 +33,7 @@ import {
   BookOpen,
   Briefcase,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   LazyMotion,
   m as motion,
@@ -43,6 +44,7 @@ import {
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { SkeletonCard, SkeletonTable } from "@/components/Skeleton";
 import { toast } from "sonner";
+import Image from "next/image";
 import { getCountryFlag } from "@/lib/country-flags";
 
 // Types
@@ -66,7 +68,7 @@ interface Student {
   gender?: string;
   photoUrl?: string;
   spouseName?: string;
-  childrenDetails?: any;
+  childrenDetails?: unknown;
   guardianName?: string;
   guardianPhone?: string;
   guardianEmail?: string;
@@ -91,9 +93,9 @@ interface Student {
   passportExpiryDate?: string;
   passportIssuePlace?: string;
 
-  education?: any;
-  workExperience?: any;
-  training?: any;
+  education?: EducationEntry[] | string;
+  workExperience?: unknown;
+  training?: unknown;
 
   testType?: string;
   overallScore?: string;
@@ -118,7 +120,45 @@ interface Student {
   _count?: {
     documents: number;
   };
-  documents?: any[];
+  documents?: DocumentEntry[];
+}
+
+interface EducationEntry {
+  qualification: string;
+  institution?: string;
+  institutionAddress?: string;
+  year?: string;
+  score: string;
+  country?: string;
+}
+
+interface DocumentEntry {
+  id: string;
+  type: string;
+  name: string;
+  url: string;
+  status?: string;
+}
+
+interface UserSummary {
+  id: number;
+  name: string;
+  role?: string;
+}
+
+interface BranchSummary {
+  id: number;
+  name: string;
+}
+
+interface ApplicationSummary {
+  id: string;
+  status: string;
+  course?: {
+    name?: string;
+    requirements?: unknown;
+    prerequisites?: unknown;
+  };
 }
 
 const capitalize = (str: string) => {
@@ -129,18 +169,18 @@ const capitalize = (str: string) => {
     .join(" ");
 };
 
-const parseList = (value: any): string[] => {
+const parseList = (value: unknown): string[] => {
   if (!value) return [];
   if (Array.isArray(value)) return value;
   try {
-    const parsed = JSON.parse(value);
+    const parsed = JSON.parse(String(value));
     return Array.isArray(parsed) ? parsed.map(String) : [String(value)];
   } catch {
     return [String(value)];
   }
 };
 
-const STATUS_META: Record<string, { icon: any; color: string; headerBg: string }> = {
+const STATUS_META: Record<string, { icon: LucideIcon; color: string; headerBg: string }> = {
   Approved: {
     icon: CheckCircle2,
     color: "text-[#006e2c]",
@@ -260,19 +300,19 @@ export default function StudentContent() {
   const [genderFilter, setGenderFilter] = useState("all");
   const [academicFilter, setAcademicFilter] = useState("all");
   const [englishFilter, setEnglishFilter] = useState("all");
-  const [branches, setBranches] = useState<any[] | undefined>(undefined);
+  const [branches, setBranches] = useState<BranchSummary[] | undefined>(undefined);
   const [branchFilter, setBranchFilter] = useState("all");
-  const [allUsers, setAllUsers] = useState<any[] | undefined>(undefined);
+  const [allUsers, setAllUsers] = useState<UserSummary[] | undefined>(undefined);
   const [staffFilter, setStaffFilter] = useState("all");
   const [provinces, setProvinces] = useState<string[]>([]);
   const [showAppsModal, setShowAppsModal] = useState(false);
-  const [appsForSelectedStudent, setAppsForSelectedStudent] = useState<any[]>([]);
+  const [appsForSelectedStudent, setAppsForSelectedStudent] = useState<ApplicationSummary[]>([]);
   const [loadingApps, setLoadingApps] = useState(false);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "table" | "kanban">("grid");
   const [deleteConfirm, setDeleteConfirm] = useState<Student | null>(null);
   const [showCredsModal, setShowCredsModal] = useState(false);
-  const [credsData, setCredsData] = useState<{
+  const [credsData] = useState<{
     email: string;
     password: string;
     name: string;
@@ -288,7 +328,7 @@ export default function StudentContent() {
         const data = await res.json();
         setAllUsers(data);
       }
-    } catch (err) {}
+    } catch (_err) {}
   };
 
   const fetchProvinces = async () => {
@@ -296,7 +336,7 @@ export default function StudentContent() {
       const res = await fetch("/api/nepal/provinces");
       const data = await res.json();
       setProvinces(data);
-    } catch (err) {}
+    } catch (_err) {}
   };
 
   const fetchBranches = async () => {
@@ -306,10 +346,10 @@ export default function StudentContent() {
         const data = await res.json();
         setBranches(data);
       }
-    } catch (err) {}
+    } catch (_err) {}
   };
 
-  const fetchStudentApps = async (studentId: string) => {
+  const _fetchStudentApps = async (studentId: string) => {
     try {
       setLoadingApps(true);
       const res = await fetch(`/api/applications?studentId=${studentId}`);
@@ -317,7 +357,7 @@ export default function StudentContent() {
         const data = await res.json();
         setAppsForSelectedStudent(data?.data || data || []);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to load applications");
     } finally {
       setLoadingApps(false);
@@ -325,8 +365,8 @@ export default function StudentContent() {
   };
 
   const appGroups = useMemo(() => {
-    const map = new Map<string, { app: any; req: string }[]>();
-    appsForSelectedStudent.forEach((app: any) => {
+    const map = new Map<string, { app: ApplicationSummary; req: string }[]>();
+    appsForSelectedStudent.forEach((app) => {
       const reqs =
         parseList(app.course?.requirements).length > 0
           ? parseList(app.course?.requirements)
@@ -361,7 +401,7 @@ export default function StudentContent() {
       } else if (Array.isArray(data)) {
         setStudents(data);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to fetch students");
     } finally {
       setIsLoading(false);
@@ -411,8 +451,11 @@ export default function StudentContent() {
       const matchesAcademic =
         academicFilter === "all" ||
         (() => {
-          const edu = typeof s.education === "string" ? JSON.parse(s.education) : s.education || [];
-          return edu.some((e: any) => {
+          const edu =
+            typeof s.education === "string"
+              ? (JSON.parse(s.education) as EducationEntry[])
+              : s.education || [];
+          return edu.some((e) => {
             const score = parseFloat(e.score);
             return !isNaN(score) && score >= 3.5;
           });
@@ -791,9 +834,11 @@ export default function StudentContent() {
                   {student.interestedCountry && (
                     <div className="flex items-center gap-2 text-xs text-slate-500">
                       {getCountryFlag(student.interestedCountry) && (
-                        <img
+                        <Image
                           src={getCountryFlag(student.interestedCountry)}
                           alt=""
+                          width={24}
+                          height={24}
                           className="w-5 h-3.5 rounded-sm object-cover"
                         />
                       )}
@@ -913,9 +958,11 @@ export default function StudentContent() {
                           {student.interestedCountry && (
                             <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
                               {getCountryFlag(student.interestedCountry) && (
-                                <img
+                                <Image
                                   src={getCountryFlag(student.interestedCountry)}
                                   alt=""
+                                  width={24}
+                                  height={24}
                                   className="w-5 h-3.5 rounded-sm object-cover"
                                 />
                               )}
@@ -1029,9 +1076,11 @@ export default function StudentContent() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         {getCountryFlag(student.interestedCountry || "") && (
-                          <img
+                          <Image
                             src={getCountryFlag(student.interestedCountry || "")}
                             alt=""
+                            width={24}
+                            height={24}
                             className="w-5 h-3.5 rounded-sm object-cover"
                           />
                         )}
@@ -1133,7 +1182,7 @@ export default function StudentContent() {
 
                 <div className="space-y-3">
                   {selectedStudent.documents && selectedStudent.documents.length > 0 ? (
-                    selectedStudent.documents.map((doc: any) => (
+                    selectedStudent.documents.map((doc) => (
                       <div
                         key={doc.id}
                         className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100"

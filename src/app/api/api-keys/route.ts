@@ -15,7 +15,7 @@ export async function GET() {
       select: { id: true, name: true, created: true, lastUsed: true, createdAt: true },
     });
     return NextResponse.json(keys);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch API keys" }, { status: 500 });
   }
 }

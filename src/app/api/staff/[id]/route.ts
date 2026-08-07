@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
@@ -11,7 +12,7 @@ async function getSession() {
   if (!token) return null;
   try {
     return await verifyAuth(token);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }
@@ -25,7 +26,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     const { id } = await params;
 
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     try {
       const body = await req.json();
       const { name, email, password, role, status } = body;
@@ -48,7 +49,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
       const user = await db.user.update({
         where: { id: Number(id) },
-        data: updateData,
+        data: updateData as Prisma.UserUpdateInput,
       });
 
       const changes = diffChanges(existingUser, user);
@@ -63,7 +64,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
       const { password: _, ...userWithoutPassword } = user;
       return NextResponse.json(userWithoutPassword);
-    } catch (error: any) {
+    } catch (_error: unknown) {
       return NextResponse.json(
         {
           error: "Failed to update staff",
@@ -71,7 +72,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         { status: 500 }
       );
     }
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -110,7 +111,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to delete staff" }, { status: 500 });
   }
 }

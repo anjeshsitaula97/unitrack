@@ -11,7 +11,7 @@ async function getSession() {
   if (!token) return null;
   try {
     return await verifyAuth(token);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }
@@ -23,7 +23,7 @@ export async function GET() {
       include: { _count: { select: { students: true } } },
     });
     return NextResponse.json(partners);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch partners" }, { status: 500 });
   }
 }

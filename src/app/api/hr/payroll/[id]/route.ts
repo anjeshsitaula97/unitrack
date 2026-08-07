@@ -67,7 +67,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     if (body.status === "Paid") {
-      const data: any = { status: "Paid", paidAt: new Date() };
+      const data: { status: string; paidAt: Date; paymentMethod?: string; notes?: string } = {
+        status: "Paid",
+        paidAt: new Date(),
+      };
       if (body.paymentMethod) data.paymentMethod = body.paymentMethod;
       if (body.notes !== undefined) data.notes = body.notes;
 

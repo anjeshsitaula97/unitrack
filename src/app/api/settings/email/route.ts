@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const session = await getSession();
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
@@ -148,7 +148,7 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to delete setting" }, { status: 500 });
   }
 }

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const country = searchParams.get("country") || "";
     const visaType = searchParams.get("visaType") || "";
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (studentId) where.studentId = Number(studentId);
     if (country) where.country = country;
     if (visaType) where.visaType = visaType;

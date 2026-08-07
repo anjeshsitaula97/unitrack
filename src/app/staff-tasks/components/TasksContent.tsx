@@ -8,7 +8,6 @@ import {
   Trash2,
   Edit2,
   User as UserIcon,
-  Calendar,
   CheckSquare,
   Search,
   Filter,
@@ -103,8 +102,7 @@ export default function TasksContent() {
       const isEdit = !!taskForm.id;
       const method = isEdit ? "PATCH" : "POST";
 
-      const payload = { ...taskForm };
-      if (!isEdit) delete (payload as any).id;
+      const payload = { ...taskForm, id: isEdit ? taskForm.id : undefined };
 
       const res = await fetch("/api/tasks", {
         method,
@@ -127,7 +125,7 @@ export default function TasksContent() {
         });
         fetchTasks();
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to save task");
     } finally {
       setIsSubmitting(false);
@@ -142,7 +140,7 @@ export default function TasksContent() {
         body: JSON.stringify({ id, status }),
       });
       fetchTasks();
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to update task status");
     }
   };
@@ -155,7 +153,7 @@ export default function TasksContent() {
         toast.success("Task deleted");
         fetchTasks();
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to delete task");
     }
   };

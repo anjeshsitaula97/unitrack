@@ -40,8 +40,14 @@ const CustomTooltip = ({
   return null;
 };
 
+interface PieEntry {
+  name: string;
+  value: number;
+  color: string;
+}
+
 export default function FacultyDistributionChart() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<PieEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 

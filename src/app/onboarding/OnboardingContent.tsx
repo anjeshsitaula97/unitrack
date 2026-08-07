@@ -17,6 +17,20 @@ import {
 import { toast } from "sonner";
 import { safeJson } from "@/lib/fetch-client";
 
+interface OnboardingStudent {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  nationality?: string | null;
+}
+
+interface OnboardingStep {
+  step: number;
+  completed: boolean;
+  data: Record<string, string>;
+}
+
 const stepMeta = [
   { label: "Personal Info", icon: User },
   { label: "Documents", icon: FileText },
@@ -33,12 +47,12 @@ const emptyStepData = (step: number) => ({
 });
 
 export default function OnboardingContent() {
-  const [students, setStudents] = useState<any[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [progress, setProgress] = useState<any[]>([]);
+  const [students, setStudents] = useState<OnboardingStudent[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<OnboardingStudent | null>(null);
+  const [progress, setProgress] = useState<OnboardingStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
-  const [stepData, setStepData] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(true);
+  const [stepData, setStepData] = useState<Record<string, Record<string, string>>>({});
+  const [_loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -57,13 +71,13 @@ export default function OnboardingContent() {
       const data = await safeJson(res);
       const steps = data?.length > 0 ? data : stepMeta.map((_, i) => emptyStepData(i + 1));
       setProgress(steps);
-      const sd: Record<string, any> = {};
-      steps.forEach((s: any) => {
+      const sd: Record<string, Record<string, string>> = {};
+      steps.forEach((s: OnboardingStep) => {
         sd[s.step] = s.data || {};
       });
       setStepData(sd);
-      setCurrentStep(steps.findIndex((s: any) => !s.completed));
-      if (currentStep === -1 || steps.every((s: any) => s.completed)) setCurrentStep(0);
+      setCurrentStep(steps.findIndex((s: OnboardingStep) => !s.completed));
+      if (currentStep === -1 || steps.every((s: OnboardingStep) => s.completed)) setCurrentStep(0);
     } catch {
       setProgress(stepMeta.map((_, i) => emptyStepData(i + 1)));
       setStepData({});
@@ -71,12 +85,12 @@ export default function OnboardingContent() {
     }
   };
 
-  const handleStudentSelect = (student: any) => {
+  const handleStudentSelect = (student: OnboardingStudent) => {
     setSelectedStudent(student);
     loadProgress(student.id);
   };
 
-  const updateStepData = (key: string, value: any) => {
+  const updateStepData = (key: string, value: string) => {
     setStepData((prev) => ({
       ...prev,
       [currentStep + 1]: { ...(prev[currentStep + 1] || {}), [key]: value },

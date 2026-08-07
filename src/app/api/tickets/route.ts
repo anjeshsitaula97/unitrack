@@ -10,12 +10,12 @@ async function getSession() {
   if (!token) return null;
   try {
     return await verifyAuth(token);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const tickets = await db.ticket.findMany({
       include: {
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(tickets);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch tickets" }, { status: 500 });
   }
 }
@@ -105,7 +105,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     return NextResponse.json(updatedTicket);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to update ticket" }, { status: 500 });
   }
 }
@@ -132,7 +132,7 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to delete ticket" }, { status: 500 });
   }
 }

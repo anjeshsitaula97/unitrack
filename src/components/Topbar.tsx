@@ -19,11 +19,22 @@ import { safeJson } from "@/lib/fetch-client";
 import { clearAuthCache } from "./AppLayoutWrapper";
 import { deactivateSession } from "@/lib/client-session";
 
+interface AppUser {
+  id: number;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  avatar?: string | null;
+  subscriptionPackage?: string | null;
+  subscriptionExpiry?: string | null;
+  isFirstLogin?: boolean | null;
+}
+
 interface TopbarProps {
   role: string;
   onRoleChange: (role: string) => void;
   sidebarCollapsed: boolean;
-  user?: any;
+  user?: AppUser | null;
 }
 
 interface Notification {
@@ -69,7 +80,12 @@ const breadcrumbMap: Record<string, string[]> = {
   "/bulk-import": ["Management", "Bulk Import/Export"],
 };
 
-export default function Topbar({ role, onRoleChange, sidebarCollapsed, user }: TopbarProps) {
+export default function Topbar({
+  role,
+  onRoleChange: _onRoleChange,
+  sidebarCollapsed,
+  user,
+}: TopbarProps) {
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
@@ -82,7 +98,7 @@ export default function Topbar({ role, onRoleChange, sidebarCollapsed, user }: T
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [notifications, setNotifications] = useState<Notification[] | undefined>(undefined);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isMounted, setIsMounted] = useState(true);
+  const [isMounted] = useState(true);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const fetchNotifications = async () => {
@@ -110,10 +126,10 @@ export default function Topbar({ role, onRoleChange, sidebarCollapsed, user }: T
         if (data.type === "notifications" && data.notifications?.length > 0) {
           setNotifications((prev) => {
             const existing = prev || [];
-            const newIds = new Set(data.notifications.map((n: any) => n.id));
+            const newIds = new Set(data.notifications.map((n: Notification) => n.id));
             const merged = [
               ...data.notifications,
-              ...existing.filter((n: any) => !newIds.has(n.id)),
+              ...existing.filter((n: Notification) => !newIds.has(n.id)),
             ];
             return merged.slice(0, 50);
           });

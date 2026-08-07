@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useMemo } from "react";
 import {
@@ -17,7 +17,6 @@ import {
   ChevronDown,
   ChevronUp,
   Globe,
-  MapPin,
   ExternalLink,
   Clock,
   BarChart3,
@@ -39,12 +38,8 @@ import {
   BookOpen,
   Puzzle,
   FolderOpen,
-  TrendingUp,
-  GraduationCap,
   CalendarDays,
   Eye,
-  RefreshCw,
-  Monitor,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -3113,7 +3108,7 @@ export default function SupportContent() {
               <div className="h-px bg-slate-100 my-6"></div>
               <h3 className="text-sm font-bold text-slate-700 mb-3">Related Articles</h3>
               <div className="flex flex-wrap gap-2">
-                {selectedArticle.relatedLinks.map((link, i) => (
+                {selectedArticle.relatedLinks.map((link, _i) => (
                   <button
                     type="button"
                     key={link.href}
@@ -3318,7 +3313,7 @@ export default function SupportContent() {
               </div>
 
               <div className="space-y-2">
-                {filteredFaqs.map((faq, idx) => {
+                {filteredFaqs.map((faq, _idx) => {
                   const realIdx = FAQS.indexOf(faq);
                   return (
                     <div

@@ -20,7 +20,7 @@ export async function createNotification(data: {
   }
 }
 
-async function createNotificationForAll(data: {
+async function _createNotificationForAll(data: {
   title: string;
   message: string;
   type?: "Info" | "Success" | "Warning" | "Error";

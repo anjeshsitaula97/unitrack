@@ -6,23 +6,31 @@ import {
   RotateCcw,
   Search,
   Loader2,
-  AlertTriangle,
   Building2,
   BookOpen,
   Users,
   GraduationCap,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
-const typeIcons: Record<string, any> = {
+const typeIcons: Record<string, LucideIcon> = {
   Student: GraduationCap,
   University: Building2,
   Course: BookOpen,
   Lead: Users,
 };
 
+interface TrashItem {
+  id: string;
+  entityType: string;
+  entityName: string;
+  expiresAt: string;
+  deletedAt: string;
+}
+
 export default function TrashContent() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<TrashItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState("");
@@ -55,6 +63,8 @@ export default function TrashContent() {
   const fetchTrashRef = useRef(fetchTrash);
   useEffect(() => {
     fetchTrashRef.current = fetchTrash;
+  });
+  useEffect(() => {
     fetchTrashRef.current();
   }, [typeFilter]);
 

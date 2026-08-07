@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(qualification);
   } catch (error) {
     logError("Create qualification", error);
-    if ((error as any).code === "P2002") {
+    if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "Qualification already exists" }, { status: 400 });
     }
     return NextResponse.json({ error: "Failed to create qualification" }, { status: 500 });

@@ -43,8 +43,13 @@ const CustomTooltip = ({
   return null;
 };
 
+interface TrendEntry {
+  name: string;
+  courses: number;
+}
+
 export default function EnrollmentTrendChart() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<TrendEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

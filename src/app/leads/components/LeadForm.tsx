@@ -27,15 +27,40 @@ interface LeadFormProps {
   leadId?: string;
 }
 
+interface LeadFormData {
+  id?: string;
+  name: string;
+  email: string;
+  phone: string;
+  source: string;
+  status: string;
+  notes: string;
+  uploadedBy: string;
+  uploaderNotes: string;
+  counselor: string;
+  counselorNotes: string;
+  assignedDate: string;
+  nextFollowUp: string;
+  interestedCountry: string;
+  maritalStatus: string;
+  childrenCount: number;
+  referenceName: string;
+}
+
+interface LeadUser {
+  name?: string;
+  role?: string;
+}
+
 export default function LeadForm({ leadId }: LeadFormProps) {
   const router = useRouter();
   const isEdit = !!leadId;
   const [loading, setLoading] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<LeadUser | null>(null);
+  const [_allUsers, setAllUsers] = useState<unknown[]>([]);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LeadFormData>({
     name: "",
     email: "",
     phone: "",
@@ -71,8 +96,8 @@ export default function LeadForm({ leadId }: LeadFormProps) {
           const res = await fetch("/api/leads");
           if (res.ok) {
             const data = await res.json();
-            const leads = Array.isArray(data) ? data : data.data || [];
-            const lead = leads.find((l: any) => l.id === leadId);
+            const leads = (Array.isArray(data) ? data : data.data || []) as LeadFormData[];
+            const lead = leads.find((l) => l.id === leadId);
             if (lead) {
               setFormData({
                 name: lead.name,
@@ -136,9 +161,9 @@ export default function LeadForm({ leadId }: LeadFormProps) {
     }
   };
 
-  const update = (field: string, value: any) =>
+  const update = (field: string, value: string | number) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
-  const isAdmin = ["Admin", "Super Admin"].includes(currentUser?.role);
+  const isAdmin = ["Admin", "Super Admin"].includes(currentUser?.role ?? "");
 
   if (loading) {
     return (

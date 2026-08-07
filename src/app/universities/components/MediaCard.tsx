@@ -3,12 +3,14 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { Upload, Building2, Globe, Plus, X, Loader2 } from "lucide-react";
+import { toast as sonnerToast } from "sonner";
+import type { UniversityFormData, FormValue, PageAction } from "./UniversityForm";
 
 interface MediaCardProps {
-  form: any;
-  update: (field: string, value: any) => void;
-  dispatch: React.Dispatch<any>;
-  toast: any;
+  form: UniversityFormData;
+  update: (field: string, value: FormValue) => void;
+  dispatch: React.Dispatch<PageAction>;
+  toast: typeof sonnerToast;
 }
 
 async function uploadFile(file: File): Promise<string> {

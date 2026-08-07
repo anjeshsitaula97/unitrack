@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Award, X } from "lucide-react";
+import type { UniversityFormData, FormValue } from "./UniversityForm";
 
 const ACCREDITATION_BODIES = [
   "NECHE",
@@ -22,8 +23,8 @@ const ACCREDITATION_BODIES = [
 ];
 
 interface AccreditationCardProps {
-  form: any;
-  update: (field: string, value: any) => void;
+  form: UniversityFormData;
+  update: (field: string, value: FormValue) => void;
   accInput: string;
   setAccInput: (value: string) => void;
 }

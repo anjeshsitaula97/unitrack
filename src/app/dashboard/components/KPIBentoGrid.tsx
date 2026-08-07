@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { Loader2, GripVertical, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
-import { KpiDefinition, AVAILABLE_KPIS } from "./kpi-data";
+import { KpiDefinition, AVAILABLE_KPIS, DashboardStats } from "./kpi-data";
 import { safeJson } from "@/lib/fetch-client";
 
 const kpiMap = new Map(AVAILABLE_KPIS.map((k) => [k.id, k]));
 
 interface KPICardProps {
   definition: KpiDefinition;
-  stats: any;
+  stats: DashboardStats | null;
   isDragging: boolean;
   onDragStart: (e: React.DragEvent, id: string) => void;
   onDragOver: (e: React.DragEvent, id: string) => void;
@@ -107,7 +107,7 @@ interface Props {
 }
 
 export default function KPIBentoGrid({ visibleKpis, onKpiChange }: Props) {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [dragId, setDragId] = useState<string | null>(null);
 
@@ -178,7 +178,7 @@ export default function KPIBentoGrid({ visibleKpis, onKpiChange }: Props) {
     );
   }
 
-  const cols =
+  const _cols =
     cards.length <= 3
       ? `sm:grid-cols-${cards.length}`
       : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-5";

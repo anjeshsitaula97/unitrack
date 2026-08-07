@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { MessageSquare, Send, Loader2, User, ChevronRight, Search, ArrowLeft } from "lucide-react";
+import { MessageSquare, Send, Loader2, ChevronRight, Search, ArrowLeft } from "lucide-react";
 import { safeJson } from "@/lib/fetch-client";
 
 interface Conversation {

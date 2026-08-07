@@ -68,8 +68,7 @@ function getFileIcon(fileType: string | null | undefined, name?: string) {
 }
 
 function addedByLabel(file: FileData, folderName?: string) {
-  const name =
-    (file as any).user?.name || (file as any).addedByName || folderName || file.name || "Unknown";
+  const name = file.user?.name || file.addedByName || folderName || file.name || "Unknown";
   return name;
 }
 
@@ -104,6 +103,8 @@ interface FileData {
   fileType: string;
   folderId?: string;
   userId?: string;
+  user?: { name?: string };
+  addedByName?: string;
   createdAt: string;
   __studentId?: string;
   uploadedAt?: string;
@@ -397,7 +398,7 @@ function ScanDialog({
       const data = await res.json();
       let list = data.scanners || [];
       if (!Array.isArray(list)) list = [list];
-      list = list.filter((s: any) => s && s.id && s.name);
+      list = list.filter((s: ScannerInfo) => s && s.id && s.name);
       setScanners(list);
       if (list.length > 0) {
         setSelectedScannerId(list[0].id);
@@ -434,8 +435,8 @@ function ScanDialog({
         await videoRef.current.play();
       }
       setCameraActive(true);
-    } catch (err: any) {
-      const msg = err?.message || "";
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
       if (msg.includes("Permission") || msg.includes("NotAllowed")) {
         setCameraError("Camera access denied. Please allow camera permissions.");
       } else if (msg.includes("NotFound")) {
@@ -501,8 +502,8 @@ function ScanDialog({
       } else {
         throw new Error("No scan data received");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Scanner device failed");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Scanner device failed");
     } finally {
       setScannerScanning(false);
     }
@@ -940,7 +941,7 @@ export default function FileManager() {
           const student = await res.json();
           setFiles(
             Array.isArray(student.documents)
-              ? student.documents.map((d: any) => ({ ...d, __studentId: studentId }))
+              ? student.documents.map((d: FileData) => ({ ...d, __studentId: studentId }))
               : []
           );
         }
@@ -1024,7 +1025,7 @@ export default function FileManager() {
     );
   };
 
-  const handleDeleteFile = async (file: any) => {
+  const handleDeleteFile = async (file: FileData) => {
     let url: string;
     if (file.__studentId) {
       url = `/api/students/${file.__studentId}/documents?documentId=${file.id}`;
@@ -1138,11 +1139,13 @@ export default function FileManager() {
 
   const openFolderRef = useRef(openFolder);
   useEffect(() => {
+    openFolderRef.current = openFolder;
+  });
+  useEffect(() => {
     const studentId = searchParams.get("studentId");
     if (!studentId || !folders) return;
     const match = folders.find((f) => f.id === `student_${studentId}`);
     if (match) {
-      openFolderRef.current = openFolder;
       openFolderRef.current(match);
     }
   }, [searchParams, folders]);
@@ -1344,9 +1347,9 @@ export default function FileManager() {
                               <span className="font-semibold text-[#191c1e] truncate block">
                                 {file.name}
                               </span>
-                              {(file as any).academicDocument?.name && (
+                              {file.academicDocument?.name && (
                                 <span className="text-[10px] text-[#0058be]">
-                                  {(file as any).academicDocument.name}
+                                  {file.academicDocument.name}
                                 </span>
                               )}
                             </div>

@@ -70,8 +70,9 @@ async function writeFileWithName(
     try {
       await writeFile(filePath, buffer, { flag: "wx" });
       return storedFileName;
-    } catch (err: any) {
-      if (err.code === "EEXIST") {
+    } catch (err: unknown) {
+      const error = err as { code?: string };
+      if (error.code === "EEXIST") {
         storedFileName = `${safeName} (${counter}).${fileExtension}`;
         filePath = join(baseDir, storedFileName);
         counter++;

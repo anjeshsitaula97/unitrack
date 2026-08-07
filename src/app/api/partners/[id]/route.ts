@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/api-utils";
@@ -10,7 +11,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json();
     const session = await getSession();
 
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
     for (const field of ["name", "contactPerson", "email", "phone", "address", "description"]) {
       if (field in body) updateData[field] = body[field] || null;
     }
@@ -22,7 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const partner = await db.partner.update({
       where: { id: Number(id) },
-      data: updateData,
+      data: updateData as Prisma.PartnerUpdateInput,
     });
 
     const changes = diffChanges(existing, partner);

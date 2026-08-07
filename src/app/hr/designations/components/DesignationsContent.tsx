@@ -5,11 +5,20 @@ import { Plus, Edit2, Trash2, Briefcase, Loader2, X, Users, ArrowLeft } from "lu
 import { toast } from "sonner";
 import Link from "next/link";
 
+interface Designation {
+  id: number;
+  title: string;
+  description: string | null;
+  _count: { members: number };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function DesignationsContent() {
-  const [items, setItems] = useState<any[] | undefined>(undefined);
+  const [items, setItems] = useState<Designation[] | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<Designation | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ title: "", description: "" });
 
@@ -35,7 +44,7 @@ export default function DesignationsContent() {
     setForm({ title: "", description: "" });
     setShowModal(true);
   };
-  const openEdit = (item: any) => {
+  const openEdit = (item: Designation) => {
     setEditing(item);
     setForm({ title: item.title, description: item.description || "" });
     setShowModal(true);
@@ -67,7 +76,7 @@ export default function DesignationsContent() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (!confirm("Delete this designation?")) return;
     try {
       const res = await fetch(`/api/hr/designations/${id}`, { method: "DELETE" });

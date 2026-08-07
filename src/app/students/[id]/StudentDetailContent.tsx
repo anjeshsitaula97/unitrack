@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -26,6 +26,7 @@ import {
   Mail,
   Briefcase,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { safeJson } from "@/lib/fetch-client";
 
@@ -37,18 +38,18 @@ const capitalize = (str: string) => {
     .join(" ");
 };
 
-const parseList = (value: any): string[] => {
+const parseList = (value: unknown): string[] => {
   if (!value) return [];
   if (Array.isArray(value)) return value;
   try {
-    const parsed = JSON.parse(value);
+    const parsed = JSON.parse(String(value));
     return Array.isArray(parsed) ? parsed.map(String) : [String(value)];
   } catch {
     return [String(value)];
   }
 };
 
-const STATUS_META: Record<string, { icon: any; color: string; headerBg: string }> = {
+const STATUS_META: Record<string, { icon: LucideIcon; color: string; headerBg: string }> = {
   Approved: {
     icon: CheckCircle2,
     color: "text-[#006e2c]",
@@ -91,15 +92,92 @@ const requirementIcon = (req: string) => {
   return FileText;
 };
 
+interface EducationEntry {
+  id?: number;
+  qualification: string;
+  institution?: string;
+  institutionAddress?: string;
+  year?: string;
+  score?: string;
+  country?: string;
+}
+
+interface DocumentEntry {
+  id: string;
+  type: string;
+  name: string;
+  url: string;
+  status?: string;
+}
+
+interface ApplicationSummary {
+  id: string;
+  status: string;
+  course?: {
+    name?: string;
+    requirements?: unknown;
+    prerequisites?: unknown;
+  };
+}
+
+interface StudentDetail {
+  id: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  phone?: string | null;
+  status: string;
+  dobAd?: string;
+  dobBs?: string;
+  gender?: string;
+  nationality?: string;
+  counselor?: string;
+  maritalStatus?: string;
+  spouseName?: string;
+  guardianName?: string;
+  guardianRelation?: string;
+  guardianPhone?: string;
+  guardianEmail?: string;
+  passportNumber?: string;
+  passportIssuePlace?: string;
+  passportIssueDate?: string;
+  passportExpiryDate?: string;
+  studyLevel?: string;
+  intakeTerm?: string;
+  major?: string;
+  testType?: string;
+  overallScore?: string;
+  moi?: string;
+  education?: EducationEntry[] | string;
+  admissionEmail?: string;
+  studentPassword?: string;
+  interestedCountry?: string;
+  targetUniversities?: string;
+  workExperience?: unknown;
+  documents?: DocumentEntry[];
+  whatsappNumber?: string;
+  permanentProvince?: string;
+  permanentDistrict?: string;
+  permanentMunicipality?: string;
+  permanentWardNo?: string;
+  permanentAddress?: string;
+  temporaryProvince?: string;
+  temporaryDistrict?: string;
+  temporaryMunicipality?: string;
+  temporaryWardNo?: string;
+  temporaryAddress?: string;
+}
+
 export default function StudentDetailContent({ id }: { id: string }) {
   const router = useRouter();
-  const [student, setStudent] = useState<any>(null);
+  const [student, setStudent] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailTab, setDetailTab] = useState("general");
   const [detailStatus, setDetailStatus] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [generatingCreds, setGeneratingCreds] = useState(false);
-  const [apps, setApps] = useState<any[]>([]);
+  const [apps, setApps] = useState<ApplicationSummary[]>([]);
   const [loadingApps, setLoadingApps] = useState(false);
 
   useEffect(() => {
@@ -159,7 +237,7 @@ export default function StudentDetailContent({ id }: { id: string }) {
     }
   };
 
-  const fetchApps = async () => {
+  const fetchApps = useCallback(async () => {
     setLoadingApps(true);
     try {
       const res = await fetch(`/api/applications?studentId=${id}`);
@@ -172,7 +250,7 @@ export default function StudentDetailContent({ id }: { id: string }) {
     } finally {
       setLoadingApps(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (detailTab === "applications" && apps.length === 0 && !loadingApps) {
@@ -180,11 +258,11 @@ export default function StudentDetailContent({ id }: { id: string }) {
         fetchApps();
       });
     }
-  }, [detailTab]);
+  }, [detailTab, apps.length, fetchApps, loadingApps]);
 
   const appGroups = useMemo(() => {
-    const map = new Map<string, { app: any; req: string }[]>();
-    apps.forEach((app: any) => {
+    const map = new Map<string, { app: ApplicationSummary; req: string }[]>();
+    apps.forEach((app) => {
       const reqs =
         parseList(app.course?.requirements).length > 0
           ? parseList(app.course?.requirements)
@@ -428,7 +506,7 @@ export default function StudentDetailContent({ id }: { id: string }) {
 
           {detailTab === "address" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {["Permanent", "Temporary"].map((type) => {
+              {(["Permanent", "Temporary"] as const).map((type) => {
                 const prefix = type === "Permanent" ? "permanent" : "temporary";
                 const fields = [
                   { label: "Province", key: `${prefix}Province` },
@@ -436,7 +514,7 @@ export default function StudentDetailContent({ id }: { id: string }) {
                   { label: "Municipality", key: `${prefix}Municipality` },
                   { label: "Ward", key: `${prefix}WardNo` },
                   { label: "Address", key: `${prefix}Address` },
-                ];
+                ] as const;
                 const hasAny = fields.some((f) => student[f.key]);
                 return (
                   <div key={type} className="p-4 bg-slate-50 rounded-xl">
@@ -515,7 +593,7 @@ export default function StudentDetailContent({ id }: { id: string }) {
                   try {
                     const edu =
                       typeof student.education === "string"
-                        ? JSON.parse(student.education)
+                        ? (JSON.parse(student.education) as EducationEntry[])
                         : student.education;
                     if (Array.isArray(edu) && edu.length > 0 && edu[0].qualification) {
                       return (
@@ -524,7 +602,7 @@ export default function StudentDetailContent({ id }: { id: string }) {
                             Education History
                           </p>
                           <div className="space-y-2">
-                            {edu.map((e: any, i: number) => (
+                            {edu.map((e, i: number) => (
                               <div
                                 key={i}
                                 className="p-3 bg-white border border-slate-100 rounded-xl text-sm"
@@ -699,7 +777,7 @@ export default function StudentDetailContent({ id }: { id: string }) {
             <div>
               {student.documents && student.documents.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {student.documents.map((doc: any) => (
+                  {student.documents.map((doc) => (
                     <div
                       key={doc.id}
                       className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100"

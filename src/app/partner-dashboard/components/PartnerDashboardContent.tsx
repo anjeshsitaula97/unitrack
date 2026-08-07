@@ -41,12 +41,41 @@ function commissionLabel(item: {
   return `${value}%`;
 }
 
+interface DashboardPartner {
+  id: string;
+  name: string;
+  contactPerson?: string | null;
+  email?: string | null;
+  _count?: { students?: number };
+}
+
+interface DashboardUniversity {
+  id: string;
+  name: string;
+  partnerId?: string | null;
+  country?: string | null;
+  partner?: { name?: string } | null;
+  commissionType?: string | null;
+  commissionValue?: string | number | null;
+  commissionCurrency?: string | null;
+}
+
+interface DashboardStudent {
+  id: string;
+  name: string;
+  email?: string | null;
+  partnerId?: string | null;
+  partner?: { name?: string } | null;
+  interestedCountry?: string | null;
+  status?: string | null;
+}
+
 export default function PartnerDashboardContent() {
   const [userName, setUserName] = useState("Partner");
-  const [userRole, setUserRole] = useState("B2B Partner");
-  const [partners, setPartners] = useState<any[]>([]);
-  const [universities, setUniversities] = useState<any[]>([]);
-  const [students, setStudents] = useState<any[]>([]);
+  const [_userRole, setUserRole] = useState("B2B Partner");
+  const [partners, setPartners] = useState<DashboardPartner[]>([]);
+  const [universities, setUniversities] = useState<DashboardUniversity[]>([]);
+  const [students, setStudents] = useState<DashboardStudent[]>([]);
   const [totalApplications, setTotalApplications] = useState(0);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
@@ -71,7 +100,11 @@ export default function PartnerDashboardContent() {
   useEffect(() => {
     let cancelled = false;
 
-    const normalizeList = (json: any): any[] => (Array.isArray(json) ? json : json?.data || []);
+    const normalizeList = <T,>(json: unknown): T[] => {
+      if (Array.isArray(json)) return json as T[];
+      const data = (json as { data?: unknown })?.data;
+      return Array.isArray(data) ? (data as T[]) : [];
+    };
 
     (async () => {
       setLoading(true);
@@ -97,8 +130,8 @@ export default function PartnerDashboardContent() {
         if (me?.name) setUserName(me.name.split(" ")[0]);
         if (me?.role) setUserRole(me.role);
         setPartners(Array.isArray(partnerList) ? partnerList : []);
-        setUniversities(normalizeList(univList));
-        setStudents(normalizeList(studentList));
+        setUniversities(normalizeList<DashboardUniversity>(univList));
+        setStudents(normalizeList<DashboardStudent>(studentList));
         setTotalApplications(
           typeof appList?.total === "number" ? appList.total : normalizeList(appList).length
         );

@@ -6,7 +6,7 @@ export function apiError(message: string, status: number = 500) {
   return NextResponse.json({ error: message }, { status });
 }
 
-function apiSuccess<T>(data: T, status: number = 200) {
+function _apiSuccess<T>(data: T, status: number = 200) {
   return NextResponse.json(data, { status });
 }
 
@@ -21,15 +21,15 @@ export async function getSession() {
   }
 }
 
-async function requireSession() {
+async function _requireSession() {
   const session = await getSession();
   if (!session) {
-    return { session: null as any, error: apiError("Unauthorized", 401) };
+    return { session: null, error: apiError("Unauthorized", 401) };
   }
   return { session, error: null };
 }
 
-function requireRole(session: any, roles: string[]) {
+function _requireRole(session: { role?: string } | null, roles: string[]): NextResponse | null {
   if (!session || !roles.includes(session.role as string)) {
     return apiError("Forbidden: insufficient permissions", 403);
   }

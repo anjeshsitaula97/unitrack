@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -23,12 +24,12 @@ export async function GET(req: Request) {
     const userId = searchParams.get("userId");
     const year = parseInt(searchParams.get("year") || String(new Date().getFullYear()));
 
-    const where: any = { year };
+    const where: Record<string, unknown> = { year };
     if (userId) where.userId = userId;
     if (!["Admin", "Super Admin"].includes(session.role) && !userId) where.userId = session.id;
 
     const balances = await db.leaveBalance.findMany({
-      where,
+      where: where as Prisma.LeaveBalanceWhereInput,
       include: {
         leaveType: { select: { id: true, name: true, daysPerYear: true } },
         user: { select: { id: true, name: true, employeeId: true } },

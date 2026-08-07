@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Seeding data...");
 
-  const [u1, u2] = await Promise.all([
+  const [_u1, _u2] = await Promise.all([
     prisma.university.create({
       data: {
         name: "Stanford University",

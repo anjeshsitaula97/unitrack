@@ -14,7 +14,6 @@ import {
   Users,
   BarChart3,
   Settings,
-  HelpCircle,
   ChevronLeft,
   ChevronRight,
   GraduationCap,
@@ -40,13 +39,11 @@ import {
   CalendarClock,
   DollarSign,
   UserCog,
-  Scan,
   Folder,
   Calendar,
   Route,
   Upload,
   Mail,
-  ArrowUpDown,
   GitCompare,
   ClipboardList,
   Activity,
@@ -57,6 +54,31 @@ import {
 import { useRouter } from "next/navigation";
 import { MODULES, getEnabledModuleIds } from "@/lib/modules";
 import { getRoleHome } from "@/lib/role-home";
+
+interface AppUser {
+  id: number;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  avatar?: string | null;
+  subscriptionPackage?: string | null;
+  subscriptionExpiry?: string | null;
+  isFirstLogin?: boolean | null;
+}
+
+interface DashboardStats {
+  totalUniversities: number;
+  universitiesLastMonth: number;
+  totalCourses: number;
+  coursesLastMonth: number;
+  totalEnrolled: number;
+  activeCourses: number;
+  countriesCount: number;
+  totalLeads: number;
+  totalStudents: number;
+  totalApplications: number;
+  totalTasks: number;
+}
 
 interface NavItem {
   id: string;
@@ -252,7 +274,7 @@ const navSections: NavSection[] = [
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
-  user?: any;
+  user?: AppUser | null;
 }
 
 export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
@@ -260,7 +282,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [unreadCount, setUnreadCount] = useState<number | undefined>(undefined);
-  const [stats, setStats] = useState<any>(undefined);
+  const [stats, setStats] = useState<DashboardStats | undefined>(undefined);
   const navRef = React.useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -269,7 +291,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
         const res = await fetch("/api/notifications");
         const data = await res.json();
         if (Array.isArray(data)) {
-          setUnreadCount(data.filter((n: any) => !n.read).length);
+          setUnreadCount(data.filter((n: { read: boolean }) => !n.read).length);
         }
       } catch (err) {
         console.error("Failed to fetch unread count:", err);
@@ -520,7 +542,7 @@ function NavSectionList({
   filteredSections: NavSection[];
   collapsed: boolean;
   pathname: string;
-  stats: any;
+  stats: DashboardStats | undefined;
   unreadCount: number | undefined;
   navRef: React.RefObject<HTMLElement | null>;
   handleScroll: () => void;
@@ -598,17 +620,17 @@ function NavSectionList({
                   (item.id === "nav-notifications"
                     ? (unreadCount ?? 0) > 0
                     : item.id === "nav-universities"
-                      ? stats?.totalUniversities > 0
+                      ? (stats?.totalUniversities || 0) > 0
                       : item.id === "nav-courses"
-                        ? stats?.totalCourses > 0
+                        ? (stats?.totalCourses || 0) > 0
                         : item.id === "nav-leads"
-                          ? stats?.totalLeads > 0
+                          ? (stats?.totalLeads || 0) > 0
                           : item.id === "nav-students"
-                            ? stats?.totalStudents > 0
+                            ? (stats?.totalStudents || 0) > 0
                             : item.id === "nav-applications"
-                              ? stats?.totalApplications > 0
+                              ? (stats?.totalApplications || 0) > 0
                               : item.id === "nav-staff-tasks"
-                                ? stats?.totalTasks > 0
+                                ? (stats?.totalTasks || 0) > 0
                                 : item.badge) && (
                     <span className="absolute top-1 right-1 size-2 bg-indigo-500 rounded-full" />
                   )}
@@ -645,7 +667,7 @@ function UserBottomSection({
   collapsed: boolean;
   onToggle: () => void;
   pathname: string;
-  user?: any;
+  user?: AppUser | null;
   userName: string;
   userRole: string;
   userInitials: string;

@@ -2,10 +2,11 @@
 
 import React from "react";
 import { Globe } from "lucide-react";
+import type { UniversityFormData, FormValue } from "./UniversityForm";
 
 interface ContactCardProps {
-  form: any;
-  update: (field: string, value: any) => void;
+  form: UniversityFormData;
+  update: (field: string, value: FormValue) => void;
 }
 
 export default function ContactCard({ form, update }: ContactCardProps) {

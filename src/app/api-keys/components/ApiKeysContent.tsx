@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { Key, Copy, Plus, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
@@ -9,8 +9,16 @@ const handleCopy = (token: string) => {
   toast.success("API key copied to clipboard");
 };
 
+interface ApiKey {
+  id: string;
+  name: string;
+  tokenHash: string;
+  created: string;
+  lastUsed: string | null;
+}
+
 export default function ApiKeysContent() {
-  const [keys, setKeys] = useState<any[]>([]);
+  const [keys, setKeys] = useState<ApiKey[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [showKey, setShowKey] = useState<string | null>(null);
 
@@ -51,7 +59,7 @@ export default function ApiKeysContent() {
       } else {
         toast.error("Failed to generate key");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to backend");
     }
   };
@@ -74,7 +82,7 @@ export default function ApiKeysContent() {
       } else {
         toast.error("Failed to revoke key");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to backend");
     }
   };

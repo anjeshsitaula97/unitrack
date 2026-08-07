@@ -24,6 +24,25 @@ import {
   FALLBACK_FRAMES,
 } from "@/lib/face";
 
+interface FaceBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface FaceDetectionLike {
+  box: FaceBox;
+}
+
+interface EmployeeProfile {
+  id: number;
+  name: string;
+  email: string;
+  employeeId: string | null;
+  faceDescriptor: string | null;
+}
+
 export default function FaceEnrollmentContent() {
   const params = useParams();
   const router = useRouter();
@@ -32,7 +51,7 @@ export default function FaceEnrollmentContent() {
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const stream = useRef<MediaStream | null>(null);
   const [loading, setLoading] = useState(true);
-  const [employee, setEmployee] = useState<any>(null);
+  const [employee, setEmployee] = useState<EmployeeProfile | null>(null);
   const [status, setStatus] = useState<"init" | "enrolling" | "success" | "error">("init");
   const [movementCount, setMovementCount] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -91,7 +110,7 @@ export default function FaceEnrollmentContent() {
     }
   };
 
-  const drawOverlay = (detection: any | null, center?: { x: number; y: number }) => {
+  const drawOverlay = (detection: FaceDetectionLike | null, center?: { x: number; y: number }) => {
     const canvas = overlayRef.current;
     const video = videoRef.current;
     if (!canvas || !video) return;

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 import { cookies } from "next/headers";
@@ -10,7 +11,7 @@ async function getSession() {
   if (!token) return null;
   try {
     return await verifyAuth(token);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }
@@ -21,12 +22,12 @@ export async function GET(req: NextRequest) {
     const country = searchParams.get("country");
     const visaType = searchParams.get("visaType");
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (country) where.country = country;
     if (visaType) where.visaType = visaType;
 
     const tasks = await db.task.findMany({
-      where,
+      where: where as Prisma.TaskWhereInput,
       include: {
         assignee: {
           select: { id: true, name: true, avatar: true },
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
       orderBy: { updatedAt: "desc" },
     });
     return NextResponse.json(tasks);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
   }
 }
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(newTask, { status: 201 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
   }
 }
@@ -107,7 +108,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     return NextResponse.json(updatedTask);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
   }
 }
@@ -134,7 +135,7 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to delete task" }, { status: 500 });
   }
 }

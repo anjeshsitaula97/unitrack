@@ -11,7 +11,7 @@ async function getSession() {
   if (!token) return null;
   try {
     return await verifyAuth(token);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }
@@ -22,7 +22,7 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
     return NextResponse.json(categories);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 });
   }
 }
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(newCategory, { status: 201 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to add category" }, { status: 500 });
   }
 }
@@ -76,7 +76,7 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to delete category" }, { status: 500 });
   }
 }
@@ -109,7 +109,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     return NextResponse.json(updatedCategory);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to update category" }, { status: 500 });
   }
 }

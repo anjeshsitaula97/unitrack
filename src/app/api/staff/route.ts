@@ -11,7 +11,7 @@ async function getSession() {
   if (!token) return null;
   try {
     return await verifyAuth(token);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     return NextResponse.json(userWithoutPassword);
   } catch (error) {
     console.error("Create Staff Error:", error);
-    if ((error as any).code === "P2002") {
+    if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "A user with this email already exists" }, { status: 400 });
     }
     return NextResponse.json({ error: "Failed to create staff" }, { status: 500 });

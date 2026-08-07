@@ -7,8 +7,19 @@ import { getRoleHome, isDashboardRoute } from "@/lib/role-home";
 import { isSessionActive } from "@/lib/client-session";
 import { Loader2 } from "lucide-react";
 
+interface AppUser {
+  id: number;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  avatar?: string | null;
+  subscriptionPackage?: string | null;
+  subscriptionExpiry?: string | null;
+  isFirstLogin?: boolean | null;
+}
+
 interface AuthState {
-  user: any;
+  user: AppUser;
   role: string;
 }
 
@@ -44,8 +55,8 @@ function startAuthLoad(): Promise<AuthState | null> {
 
 export default function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<string>(cached?.role || "");
-  const [user, setUser] = useState<any>(cached?.user ?? null);
-  const [sessionReady, setSessionReady] = useState<boolean>(isSessionActive());
+  const [user, setUser] = useState<AppUser | null>(cached?.user ?? null);
+  const [sessionReady] = useState<boolean>(isSessionActive());
   const router = useRouter();
   const pathname = usePathname();
 

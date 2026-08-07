@@ -15,11 +15,8 @@ import {
   Trash2,
   Globe,
   PlusCircle,
-  Settings,
-  PlusSquare,
   Library,
   ArrowLeft,
-  Check,
   Edit2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -48,6 +45,25 @@ interface Resource {
   thumbnail: string | null;
   fileSize: string | null;
   createdAt: string;
+}
+
+interface ResourceForm {
+  title: string;
+  description: string;
+  type: string;
+  categoryId: string;
+  countryId: string;
+  url: string;
+  fileSize: string;
+}
+
+interface CountryForm {
+  name: string;
+  code: string;
+}
+
+interface CategoryForm {
+  name: string;
 }
 
 export default function LearningHubContent() {
@@ -101,7 +117,7 @@ export default function LearningHubContent() {
       setResources(dataResources);
       setCountries(dataCountries);
       setCategories(dataCategories);
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to load hub data");
     } finally {
       setIsLoading(false);
@@ -163,7 +179,7 @@ export default function LearningHubContent() {
         setUploadType("link");
         fetchData();
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to add resource");
     } finally {
       setIsSubmitting(false);
@@ -185,7 +201,7 @@ export default function LearningHubContent() {
         fetchData();
         setCountryForm({ name: "", code: "" });
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to add country");
     } finally {
       setIsSubmitting(false);
@@ -207,7 +223,7 @@ export default function LearningHubContent() {
         fetchData();
         setCategoryForm({ name: "" });
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to add category");
     } finally {
       setIsSubmitting(false);
@@ -222,7 +238,7 @@ export default function LearningHubContent() {
         setResources((prev) => (prev ?? []).filter((r) => r.id !== id));
         toast.success("Resource removed");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to delete");
     }
   };
@@ -242,7 +258,7 @@ export default function LearningHubContent() {
         fetchData();
         setCategoryForm({ name: "" });
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to update category");
     } finally {
       setIsSubmitting(false);
@@ -263,7 +279,7 @@ export default function LearningHubContent() {
         if (selectedCategoryId === id) setSelectedCategoryId(null);
         toast.success("Category removed");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to delete category");
     }
   };
@@ -283,7 +299,7 @@ export default function LearningHubContent() {
         setEditingResource(null);
         fetchData();
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to update document");
     } finally {
       setIsSubmitting(false);
@@ -509,7 +525,7 @@ function CountriesView({
   setSelectedCategoryId,
   setView,
 }: {
-  countries: any[] | undefined;
+  countries: Country[] | undefined;
   setSelectedCountryId: (id: string) => void;
   setSelectedCategoryId: (id: string | null) => void;
   setView: (v: "countries" | "categories" | "resources") => void;
@@ -576,11 +592,11 @@ function CategoriesView({
 }: {
   setView: (v: "countries" | "categories" | "resources") => void;
   selectedCountryId: string | null;
-  countries: any[] | undefined;
-  categories: any[] | undefined;
+  countries: Country[] | undefined;
+  categories: Category[] | undefined;
   setSelectedCategoryId: (id: string | null) => void;
   setEditingCategoryId: (id: string | null) => void;
-  setCategoryForm: (v: any) => void;
+  setCategoryForm: (v: CategoryForm) => void;
   handleDeleteCategory: (id: string, name: string) => Promise<void>;
 }) {
   return (
@@ -669,14 +685,14 @@ function ResourcesView({
 }: {
   setView: (v: "countries" | "categories" | "resources") => void;
   selectedCategoryId: string | null;
-  categories: any[] | undefined;
+  categories: Category[] | undefined;
   searchQuery: string;
   setSearchQuery: (v: string) => void;
   setShowAddResourceModal: (v: boolean) => void;
   isLoading: boolean;
-  filteredResources: any[];
-  setEditingResource: (v: any) => void;
-  setResourceForm: (v: any) => void;
+  filteredResources: Resource[];
+  setEditingResource: (v: Resource | null) => void;
+  setResourceForm: (v: ResourceForm) => void;
   deleteResource: (id: string) => Promise<void>;
 }) {
   return (
@@ -797,7 +813,7 @@ function ResourcesView({
 }
 
 function AddResourceModal({
-  showAddResourceModal,
+  showAddResourceModal: _showAddResourceModal,
   setShowAddResourceModal,
   resourceForm,
   setResourceForm,
@@ -812,10 +828,10 @@ function AddResourceModal({
 }: {
   showAddResourceModal: boolean;
   setShowAddResourceModal: (v: boolean) => void;
-  resourceForm: any;
-  setResourceForm: (v: any) => void;
-  countries: any[] | undefined;
-  categories: any[] | undefined;
+  resourceForm: ResourceForm;
+  setResourceForm: (v: ResourceForm) => void;
+  countries: Country[] | undefined;
+  categories: Category[] | undefined;
   uploadType: "link" | "upload";
   setUploadType: (v: "link" | "upload") => void;
   selectedFile: File | null;
@@ -1021,7 +1037,7 @@ function AddResourceModal({
 }
 
 function AddCountryModal({
-  showAddCountryModal,
+  showAddCountryModal: _showAddCountryModal,
   setShowAddCountryModal,
   countryForm,
   setCountryForm,
@@ -1030,8 +1046,8 @@ function AddCountryModal({
 }: {
   showAddCountryModal: boolean;
   setShowAddCountryModal: (v: boolean) => void;
-  countryForm: any;
-  setCountryForm: (v: any) => void;
+  countryForm: CountryForm;
+  setCountryForm: (v: CountryForm) => void;
   handleAddCountry: (e: React.FormEvent) => Promise<void>;
   isSubmitting: boolean;
 }) {
@@ -1104,7 +1120,7 @@ function AddCountryModal({
 }
 
 function AddCategoryModal({
-  showAddCategoryModal,
+  showAddCategoryModal: _showAddCategoryModal,
   setShowAddCategoryModal,
   categoryForm,
   setCategoryForm,
@@ -1113,8 +1129,8 @@ function AddCategoryModal({
 }: {
   showAddCategoryModal: boolean;
   setShowAddCategoryModal: (v: boolean) => void;
-  categoryForm: any;
-  setCategoryForm: (v: any) => void;
+  categoryForm: CategoryForm;
+  setCategoryForm: (v: CategoryForm) => void;
   handleAddCategory: (e: React.FormEvent) => Promise<void>;
   isSubmitting: boolean;
 }) {
@@ -1174,7 +1190,7 @@ function AddCategoryModal({
 }
 
 function EditCategoryModal({
-  editingCategoryId,
+  editingCategoryId: _editingCategoryId,
   setEditingCategoryId,
   categoryForm,
   setCategoryForm,
@@ -1183,8 +1199,8 @@ function EditCategoryModal({
 }: {
   editingCategoryId: string | null;
   setEditingCategoryId: (id: string | null) => void;
-  categoryForm: any;
-  setCategoryForm: (v: any) => void;
+  categoryForm: CategoryForm;
+  setCategoryForm: (v: CategoryForm) => void;
   handleUpdateCategory: (e: React.FormEvent) => Promise<void>;
   isSubmitting: boolean;
 }) {
@@ -1252,7 +1268,7 @@ function EditCategoryModal({
 }
 
 function EditResourceModal({
-  editingResource,
+  editingResource: _editingResource,
   setEditingResource,
   resourceForm,
   setResourceForm,
@@ -1261,12 +1277,12 @@ function EditResourceModal({
   handleUpdateResource,
   isSubmitting,
 }: {
-  editingResource: any;
-  setEditingResource: (v: any) => void;
-  resourceForm: any;
-  setResourceForm: (v: any) => void;
-  countries: any[] | undefined;
-  categories: any[] | undefined;
+  editingResource: Resource | null;
+  setEditingResource: (v: Resource | null) => void;
+  resourceForm: ResourceForm;
+  setResourceForm: (v: ResourceForm) => void;
+  countries: Country[] | undefined;
+  categories: Category[] | undefined;
   handleUpdateResource: (e: React.FormEvent) => Promise<void>;
   isSubmitting: boolean;
 }) {

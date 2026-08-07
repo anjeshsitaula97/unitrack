@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
           const id = Number(rawId);
           switch (entity) {
             case "students":
-              await softDeleteStudent(id as any);
+              await softDeleteStudent(String(id));
               break;
             case "universities":
               await softDeleteUniversity(id);

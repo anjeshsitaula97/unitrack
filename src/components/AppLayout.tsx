@@ -7,11 +7,22 @@ import ErrorBoundary from "./ErrorBoundary";
 import GuidedTour from "./GuidedTour";
 import { Toaster } from "sonner";
 
+interface AppUser {
+  id: number;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  avatar?: string | null;
+  subscriptionPackage?: string | null;
+  subscriptionExpiry?: string | null;
+  isFirstLogin?: boolean | null;
+}
+
 interface AppLayoutProps {
   children: React.ReactNode;
   role: string;
   onRoleChange: (role: string) => void;
-  user?: any;
+  user?: AppUser | null;
 }
 
 export default function AppLayout({ children, role, onRoleChange, user }: AppLayoutProps) {

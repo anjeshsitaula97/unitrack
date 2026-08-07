@@ -37,7 +37,7 @@ export async function GET() {
         "Set-Cookie": `enabled_modules=${encodeURIComponent(result.enabledModules || "[]")}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400`,
       },
     });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch localization settings" }, { status: 500 });
   }
 }

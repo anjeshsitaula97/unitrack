@@ -4,7 +4,7 @@
  * If the input is already an array, it returns it directly.
  * If the input is a non-empty string that is not valid JSON, it returns it as a single-element array.
  */
-export function safeParseArray<T = any>(data: any, fallback: T[] = []): T[] {
+export function safeParseArray<T = string>(data: unknown, fallback: T[] = []): T[] {
   if (data === null || data === undefined) return fallback;
   if (Array.isArray(data)) return data;
   if (typeof data !== "string") return fallback;
@@ -12,9 +12,9 @@ export function safeParseArray<T = any>(data: any, fallback: T[] = []): T[] {
 
   try {
     const parsed = JSON.parse(data);
-    return Array.isArray(parsed) ? parsed : [parsed as any];
-  } catch (e) {
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch (_e) {
     // If it's not valid JSON, treat the whole string as a single item if it's not empty
-    return [data as any];
+    return [data] as T[];
   }
 }

@@ -9,7 +9,6 @@ import {
   CheckCircle,
   AlertTriangle,
   X,
-  ArrowUpDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -99,12 +98,18 @@ const templates: Record<string, string[]> = {
   expenses: ["category", "amount", "currency", "date", "description", "paidTo", "method", "billNo"],
 };
 
+interface ImportResult {
+  imported: number;
+  total: number;
+  errors?: string[];
+}
+
 export default function BulkImportContent() {
   const [activeTab, setActiveTab] = useState<"import" | "export">("import");
   const [importType, setImportType] = useState("students");
   const [file, setFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
   const [exportType, setExportType] = useState("students");
   const [exporting, setExporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -292,10 +297,10 @@ export default function BulkImportContent() {
 
           {result && (
             <div
-              className={`mt-4 p-4 rounded-xl ${result.errors?.length > 0 ? "bg-amber-50 border border-amber-200" : "bg-emerald-50 border border-emerald-200"}`}
+              className={`mt-4 p-4 rounded-xl ${(result.errors?.length ?? 0) > 0 ? "bg-amber-50 border border-amber-200" : "bg-emerald-50 border border-emerald-200"}`}
             >
               <div className="flex items-center gap-2 mb-2">
-                {result.errors?.length > 0 ? (
+                {(result.errors?.length ?? 0) > 0 ? (
                   <AlertTriangle size={18} className="text-amber-500" />
                 ) : (
                   <CheckCircle size={18} className="text-emerald-500" />
@@ -305,9 +310,9 @@ export default function BulkImportContent() {
               <p className="text-sm text-slate-600">
                 Imported: {result.imported} of {result.total} records
               </p>
-              {result.errors?.length > 0 && (
+              {(result.errors?.length ?? 0) > 0 && (
                 <div className="mt-2 max-h-32 overflow-y-auto">
-                  {result.errors.map((err: string, i: number) => (
+                  {result.errors?.map((err: string, i: number) => (
                     <p key={i} className="text-xs text-red-600">
                       {err}
                     </p>

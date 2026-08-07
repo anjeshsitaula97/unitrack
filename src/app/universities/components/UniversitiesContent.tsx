@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useMemo, useEffect, useSyncExternalStore } from "react";
 import Image from "next/image";
@@ -27,10 +27,6 @@ import {
   Loader2,
   LayoutGrid,
   List,
-  MapPin,
-  Tag,
-  Clock,
-  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -45,6 +41,29 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 type SortField = "name" | "country" | "type" | "courses" | "students" | "ranking" | "addedDate";
 type SortDir = "asc" | "desc";
+
+interface UniversityRow {
+  id: string;
+  name: string;
+  shortName?: string | null;
+  country: string;
+  city?: string | null;
+  type?: string | null;
+  ranking?: string | number | null;
+  founded?: string | null;
+  website?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  status: string;
+  accreditation?: string | string[] | null;
+  addedDate: string;
+  logo?: string | null;
+  color?: string | null;
+  initials?: string | null;
+  accredited?: boolean;
+  courses?: number;
+  students?: number;
+}
 
 const SortIcon = ({
   field,
@@ -63,7 +82,7 @@ const SortIcon = ({
   );
 };
 
-const formatCities = (cityStr: string | undefined) => {
+const formatCities = (cityStr: string | null | undefined) => {
   if (!cityStr) return "N/A";
   try {
     if (typeof cityStr === "string" && cityStr.startsWith("[")) {
@@ -73,11 +92,11 @@ const formatCities = (cityStr: string | undefined) => {
         return `${first}${cities.length > 1 ? ` (+${cities.length - 1})` : ""}`;
       }
     }
-  } catch (e) {}
+  } catch (_e) {}
   return cityStr;
 };
 
-const handleExport = (dataToExport: any[]) => {
+const handleExport = (dataToExport: UniversityRow[]) => {
   if (dataToExport.length === 0) {
     toast.error("No data to export");
     return;
@@ -112,7 +131,7 @@ const handleExport = (dataToExport: any[]) => {
 };
 
 export default function UniversitiesContent() {
-  const [UNIVERSITIES_DATA, setUniversitiesData] = useState<any[]>([]);
+  const [UNIVERSITIES_DATA, setUniversitiesData] = useState<UniversityRow[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
@@ -233,7 +252,7 @@ export default function UniversitiesContent() {
       } else {
         throw new Error("Failed to delete");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error(`Failed to delete "${name}"`);
     } finally {
       setDeletingId(null);
@@ -332,9 +351,9 @@ function UniversitiesHeader({
   countries,
   handleExport: exportFn,
 }: {
-  filtered: any[];
+  filtered: UniversityRow[];
   countries: string[];
-  handleExport: (data: any[]) => void;
+  handleExport: (data: UniversityRow[]) => void;
 }) {
   return (
     <div className="flex items-start justify-between mb-6">
@@ -407,7 +426,7 @@ function UniversitiesHeader({
   );
 }
 
-function UniversityStats({ universities }: { universities: any[] }) {
+function UniversityStats({ universities }: { universities: UniversityRow[] }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
       {[
@@ -422,7 +441,7 @@ function UniversityStats({ universities }: { universities: any[] }) {
         {
           id: "strip-active",
           label: "Active",
-          value: universities.filter((u: any) => u.status === "Active").length.toString(),
+          value: universities.filter((u) => u.status === "Active").length.toString(),
           icon: <Globe size={14} />,
           color: "text-emerald-600",
           bg: "bg-emerald-50",
@@ -430,7 +449,7 @@ function UniversityStats({ universities }: { universities: any[] }) {
         {
           id: "strip-pending",
           label: "Pending Review",
-          value: universities.filter((u: any) => u.status === "Pending").length.toString(),
+          value: universities.filter((u) => u.status === "Pending").length.toString(),
           icon: <AlertCircle size={14} />,
           color: "text-amber-600",
           bg: "bg-amber-50",
@@ -438,7 +457,7 @@ function UniversityStats({ universities }: { universities: any[] }) {
         {
           id: "strip-suspended",
           label: "Suspended",
-          value: universities.filter((u: any) => u.status === "Suspended").length.toString(),
+          value: universities.filter((u) => u.status === "Suspended").length.toString(),
           icon: <AlertCircle size={14} />,
           color: "text-red-600",
           bg: "bg-red-50",
@@ -634,7 +653,7 @@ function UniversityTable({
   handleDelete,
   onClearFilters,
 }: {
-  paginated: any[];
+  paginated: UniversityRow[];
   selected: string[];
   toggleAll: () => void;
   toggleRow: (id: string) => void;
@@ -725,7 +744,9 @@ function UniversityTable({
                     <div className="flex items-center gap-3">
                       <div
                         className="size-8 rounded-xl flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 overflow-hidden relative"
-                        style={{ backgroundColor: univ.logo ? "transparent" : univ.color }}
+                        style={{
+                          backgroundColor: univ.logo ? "transparent" : univ.color || undefined,
+                        }}
                       >
                         {univ.logo ? (
                           <Image
@@ -755,9 +776,11 @@ function UniversityTable({
                   <td className="p-3">
                     <div className="flex items-center gap-1.5">
                       {getCountryFlag(univ.country) && (
-                        <img
+                        <Image
                           src={getCountryFlag(univ.country)}
                           alt={`${univ.country} flag`}
+                          width={24}
+                          height={24}
                           className="w-5 h-3.5 rounded-sm object-cover"
                         />
                       )}
@@ -867,7 +890,7 @@ function UniversityGrid({
   setActiveDropdown,
   handleDelete,
 }: {
-  paginated: any[];
+  paginated: UniversityRow[];
   activeDropdown: string | null;
   setActiveDropdown: (v: string | null) => void;
   handleDelete: (id: string, name: string) => void;
@@ -890,13 +913,18 @@ function UniversityGrid({
               className="card overflow-hidden hover:shadow-md transition-all duration-200 group relative"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 via-teal-300/10 to-transparent pointer-events-none" />
-              <div className="h-1 w-full relative" style={{ backgroundColor: univ.color }} />
+              <div
+                className="h-1 w-full relative"
+                style={{ backgroundColor: univ.color || undefined }}
+              />
               <div className="p-4 relative">
                 <div className="flex items-start justify-between mb-5">
                   <div className="flex items-center gap-4 min-w-0">
                     <div
                       className="size-16 rounded-2xl flex items-center justify-center text-white text-base font-bold flex-shrink-0 shadow-sm border border-slate-50 overflow-hidden relative"
-                      style={{ backgroundColor: univ.logo ? "transparent" : univ.color }}
+                      style={{
+                        backgroundColor: univ.logo ? "transparent" : univ.color || undefined,
+                      }}
                     >
                       {univ.logo ? (
                         <Image
@@ -916,9 +944,11 @@ function UniversityGrid({
                       </h3>
                       <p className="text-sm text-slate-500 flex items-center gap-1.5 truncate">
                         {getCountryFlag(univ.country) && (
-                          <img
+                          <Image
                             src={getCountryFlag(univ.country)}
                             alt={`${univ.country} flag`}
+                            width={24}
+                            height={24}
                             className="w-5 h-3.5 rounded-sm object-cover"
                           />
                         )}
@@ -1023,7 +1053,7 @@ function UniversityPagination({
   setPerPage: (v: number) => void;
   page: number;
   setPage: (v: number) => void;
-  filtered: any[];
+  filtered: UniversityRow[];
   totalPages: number;
 }) {
   return (

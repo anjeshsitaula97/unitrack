@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { createNotification } from "@/lib/notifications";
 import { logActivity, getActorName } from "@/lib/activity";
-import {
-  getPaginationParams,
-  buildSearchFilter,
-  paginatedResponse,
-  apiError,
-  getSession,
-} from "@/lib/api-utils";
+import { getPaginationParams, paginatedResponse, apiError, getSession } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,7 +17,7 @@ export async function GET(req: NextRequest) {
     const countryFilter = searchParams.get("country") || "";
     const counselorFilter = searchParams.get("counselor") || "";
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (params.search) {
       where.OR = [
@@ -43,7 +38,7 @@ export async function GET(req: NextRequest) {
 
     const [students, total] = await Promise.all([
       db.student.findMany({
-        where,
+        where: where as Prisma.StudentWhereInput,
         include: {
           documents: true,
           partner: { select: { id: true, name: true, countries: true } },
@@ -53,7 +48,7 @@ export async function GET(req: NextRequest) {
         skip: params.skip,
         take: params.perPage,
       }),
-      db.student.count({ where }),
+      db.student.count({ where: where as Prisma.StudentWhereInput }),
     ]);
 
     return NextResponse.json(paginatedResponse(students, total, params));
@@ -165,12 +160,14 @@ export async function POST(req: NextRequest) {
         branchId: data.branchId,
         documents: data.documents
           ? {
-              create: data.documents.map((doc: any) => ({
-                type: doc.type,
-                name: doc.name,
-                url: doc.url,
-                status: doc.status || "Uploaded",
-              })),
+              create: data.documents.map(
+                (doc: { type: string; name: string; url: string; status?: string }) => ({
+                  type: doc.type,
+                  name: doc.name,
+                  url: doc.url,
+                  status: doc.status || "Uploaded",
+                })
+              ),
             }
           : undefined,
       },
@@ -208,7 +205,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ...student, generatedPassword: passwordToUse });
   } catch (error) {
     console.error(error);
-    if ((error as any).code === "P2002") {
+    if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "Email already exists" }, { status: 400 });
     }
     return apiError("Failed to create student");

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { safeParseArray } from "@/lib/json";
 import { logActivity } from "@/lib/activity";
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
     const facultyFilter = searchParams.get("faculty") || "";
     const degreeTypeFilter = searchParams.get("degreeType") || "";
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (params.search) {
       where.OR = [
@@ -40,16 +41,16 @@ export async function GET(req: NextRequest) {
 
     const [courses, total] = await Promise.all([
       db.course.findMany({
-        where,
+        where: where as Prisma.CourseWhereInput,
         orderBy: { name: "asc" },
         include: { university: true },
         skip: params.skip,
         take: params.perPage,
       }),
-      db.course.count({ where }),
+      db.course.count({ where: where as Prisma.CourseWhereInput }),
     ]);
 
-    const transformed = courses.map((course: any) => ({
+    const transformed = courses.map((course) => ({
       ...course,
       university: course.university?.name || "Unknown",
       universityLogo: course.university?.logo || null,

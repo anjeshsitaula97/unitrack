@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import {
@@ -9,15 +9,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
-  Mail,
   Briefcase,
   Building2,
   Loader2,
   X,
   ArrowLeft,
-  Phone,
-  DollarSign,
-  CreditCard,
   Calendar,
   Camera,
   CheckCircle,
@@ -25,19 +21,119 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 
+interface EmployeeUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  employeeId: string | null;
+  phone: string | null;
+  gender: string | null;
+  hireDate: string | null;
+  employmentType: string | null;
+  basicSalary: number | null;
+  bankName: string | null;
+  bankAccount: string | null;
+  panNumber: string | null;
+  emergencyContact?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  avatar: string | null;
+  departmentId: number | null;
+  designationId: number | null;
+  branchId: number | null;
+  faceDescriptor: string | null;
+  department: { id: number; name: string } | null;
+  designation: { id: number; title: string } | null;
+  branch: { id: number; name: string } | null;
+  createdAt: string;
+}
+
+interface DepartmentOption {
+  id: number;
+  name: string;
+  description: string | null;
+  headId: number | null;
+  head: { id: number; name: string; email: string } | null;
+  _count: { members: number };
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface DesignationOption {
+  id: number;
+  title: string;
+  description: string | null;
+  _count: { members: number };
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BranchOption {
+  id: number;
+  name: string;
+  location: string | null;
+  manager: string | null;
+  phone: string | null;
+  email: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface EmployeeForm {
+  userId?: string;
+  employeeId: string;
+  phone: string;
+  gender: string;
+  hireDate: string;
+  employmentType: string;
+  basicSalary: string;
+  departmentId: string;
+  designationId: string;
+  branchId: string;
+  bankName: string;
+  bankAccount: string;
+  panNumber: string;
+  emergencyContact: string;
+  address: string;
+  city: string;
+  state: string;
+}
+
 export default function EmployeesContent() {
-  const [employees, setEmployees] = useState<any[] | undefined>(undefined);
-  const [departments, setDepartments] = useState<any[] | undefined>(undefined);
-  const [designations, setDesignations] = useState<any[] | undefined>(undefined);
-  const [branches, setBranches] = useState<any[] | undefined>(undefined);
+  const [employees, setEmployees] = useState<EmployeeUser[] | undefined>(undefined);
+  const [departments, setDepartments] = useState<DepartmentOption[] | undefined>(undefined);
+  const [designations, setDesignations] = useState<DesignationOption[] | undefined>(undefined);
+  const [branches, setBranches] = useState<BranchOption[] | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const perPage = 10;
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<EmployeeUser | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState<any>({});
+  const [form, setForm] = useState<EmployeeForm>({
+    userId: "",
+    employeeId: "",
+    phone: "",
+    gender: "",
+    hireDate: "",
+    employmentType: "Full-Time",
+    basicSalary: "",
+    departmentId: "",
+    designationId: "",
+    branchId: "",
+    bankName: "",
+    bankAccount: "",
+    panNumber: "",
+    emergencyContact: "",
+    address: "",
+    city: "",
+    state: "",
+  });
 
   const fetchData = async () => {
     try {
@@ -88,7 +184,7 @@ export default function EmployeesContent() {
     setShowModal(true);
   };
 
-  const openEdit = (emp: any) => {
+  const openEdit = (emp: EmployeeUser) => {
     setEditing(emp);
     setForm({
       employeeId: emp.employeeId || "",
@@ -97,9 +193,9 @@ export default function EmployeesContent() {
       hireDate: emp.hireDate || "",
       employmentType: emp.employmentType || "Full-Time",
       basicSalary: emp.basicSalary?.toString() || "",
-      departmentId: emp.departmentId || "",
-      designationId: emp.designationId || "",
-      branchId: emp.branchId || "",
+      departmentId: String(emp.departmentId || ""),
+      designationId: String(emp.designationId || ""),
+      branchId: String(emp.branchId || ""),
       bankName: emp.bankName || "",
       bankAccount: emp.bankAccount || "",
       panNumber: emp.panNumber || "",
@@ -137,7 +233,7 @@ export default function EmployeesContent() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (!confirm("Remove this employee?")) return;
     try {
       const res = await fetch(`/api/hr/employees/${id}`, { method: "DELETE" });
@@ -162,7 +258,7 @@ export default function EmployeesContent() {
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
   const totalPages = Math.ceil(filtered.length / perPage);
 
-  const usersWoProfile = (employees?.length ?? 0) > 0 ? [] : null;
+  const _usersWoProfile = (employees?.length ?? 0) > 0 ? [] : null;
 
   return (
     <div className="animate-fade-in relative">
@@ -229,9 +325,9 @@ function EmployeeStatsCards({
   departments,
   designations,
 }: {
-  employees: any[] | undefined;
-  departments: any[] | undefined;
-  designations: any[] | undefined;
+  employees: EmployeeUser[] | undefined;
+  departments: DepartmentOption[] | undefined;
+  designations: DesignationOption[] | undefined;
 }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
@@ -264,7 +360,7 @@ function EmployeeStatsCards({
           bg: "bg-blue-50",
           icon: <Calendar size={14} />,
         },
-      ].map((s, i) => (
+      ].map((s, _i) => (
         <div key={s.label} className="card px-4 py-3 flex items-center gap-3">
           <div className={`size-8 rounded-lg ${s.bg} ${s.color} flex items-center justify-center`}>
             {s.icon}
@@ -294,11 +390,11 @@ function EmployeeTableCard({
   search: string;
   setSearch: (v: string) => void;
   setPage: React.Dispatch<React.SetStateAction<number>>;
-  paginated: any[];
-  openEdit: (emp: any) => void;
-  handleDelete: (id: string) => Promise<void>;
+  paginated: EmployeeUser[];
+  openEdit: (emp: EmployeeUser) => void;
+  handleDelete: (id: number) => Promise<void>;
   page: number;
-  filtered: any[];
+  filtered: EmployeeUser[];
   totalPages: number;
   perPage: number;
 }) {
@@ -483,16 +579,16 @@ function EmployeeFormModal({
   designations,
   branches,
 }: {
-  editing: any;
+  editing: EmployeeUser | null;
   submitting: boolean;
-  form: any;
+  form: EmployeeForm;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   setShowModal: (v: boolean) => void;
-  setForm: React.Dispatch<React.SetStateAction<any>>;
-  employees: any[] | undefined;
-  departments: any[] | undefined;
-  designations: any[] | undefined;
-  branches: any[] | undefined;
+  setForm: React.Dispatch<React.SetStateAction<EmployeeForm>>;
+  employees: EmployeeUser[] | undefined;
+  departments: DepartmentOption[] | undefined;
+  designations: DesignationOption[] | undefined;
+  branches: BranchOption[] | undefined;
 }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
@@ -527,7 +623,7 @@ function EmployeeFormModal({
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
               >
                 <option value="">Choose a user…</option>
-                {(employees ?? []).map((u: any) => (
+                {(employees ?? []).map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.name} ({u.email})
                   </option>
@@ -655,7 +751,7 @@ function EmployeeFormModal({
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
               >
                 <option value="">None</option>
-                {(departments ?? []).map((d: any) => (
+                {(departments ?? []).map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name}
                   </option>
@@ -676,7 +772,7 @@ function EmployeeFormModal({
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
               >
                 <option value="">None</option>
-                {(designations ?? []).map((d: any) => (
+                {(designations ?? []).map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.title}
                   </option>

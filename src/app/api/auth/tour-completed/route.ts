@@ -19,7 +19,7 @@ export async function PATCH() {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Invalid session" }, { status: 401 });
   }
 }

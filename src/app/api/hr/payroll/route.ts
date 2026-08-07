@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -24,11 +25,11 @@ export async function GET(req: Request) {
     const month = parseInt(searchParams.get("month") || String(new Date().getMonth() + 1));
     const year = parseInt(searchParams.get("year") || String(new Date().getFullYear()));
 
-    const where: any = { month, year };
+    const where: Record<string, unknown> = { month, year };
     if (!["Admin", "Super Admin"].includes(session.role)) where.userId = session.id;
 
     const records = await db.payroll.findMany({
-      where,
+      where: where as Prisma.PayrollWhereInput,
       orderBy: { createdAt: "desc" },
       include: {
         user: {
@@ -81,11 +82,13 @@ export async function POST(req: Request) {
         bonus: totalBonus,
         netSalary,
         items: {
-          create: (items || []).map((item: any) => ({
-            label: item.label,
-            type: item.type,
-            amount: parseFloat(item.amount) || 0,
-          })),
+          create: (items || []).map(
+            (item: { label: string; type: string; amount?: string | number }) => ({
+              label: item.label,
+              type: item.type,
+              amount: parseFloat(String(item.amount ?? "")) || 0,
+            })
+          ),
         },
       },
       include: {

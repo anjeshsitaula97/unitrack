@@ -37,7 +37,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(users);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
   }
 }
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(passwordToHash, 12);
 
-    const newUser = await (db.user as any).create({
+    const newUser = await db.user.create({
       data: {
         name: data.name,
         email: data.email,

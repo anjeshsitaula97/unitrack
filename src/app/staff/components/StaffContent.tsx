@@ -1,28 +1,24 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Search,
   Plus,
-  MoreHorizontal,
   Edit2,
   Trash2,
   ChevronLeft,
   ChevronRight,
   Users,
-  Mail,
   Shield,
   CheckCircle2,
-  XCircle,
   Loader2,
   X,
   UserPlus,
   ShieldCheck,
-  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 
-const roleConfig: Record<string, { label: string; className: string; icon: any }> = {
+const roleConfig: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
   Admin: {
     label: "Administrator",
     className: "bg-rose-50 text-rose-700",
@@ -47,20 +43,41 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   Suspended: { label: "Suspended", className: "bg-rose-50 text-rose-700" },
 };
 
+interface StaffMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+}
+
+interface RoleOption {
+  id: string;
+  name: string;
+}
+
+interface StaffFormData {
+  name: string;
+  email: string;
+  password?: string;
+  role: string;
+  status?: string;
+}
+
 export default function StaffContent() {
-  const [staff, setStaff] = useState<any[] | undefined>(undefined);
+  const [staff, setStaff] = useState<StaffMember[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage] = useState(10);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const editingStaffId = useRef<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [availableRoles, setAvailableRoles] = useState<any[] | undefined>(undefined);
-  const [formData, setFormData] = useState({
+  const [availableRoles, setAvailableRoles] = useState<RoleOption[] | undefined>(undefined);
+  const [formData, setFormData] = useState<StaffFormData>({
     name: "",
     email: "",
     password: "",
@@ -88,7 +105,7 @@ export default function StaffContent() {
       } else {
         toast.error(data.error || "Failed to load staff");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to server");
     } finally {
       setIsLoading(false);
@@ -120,7 +137,7 @@ export default function StaffContent() {
       } else {
         toast.error(data.error || "Failed to add staff");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to server");
     } finally {
       setIsSubmitting(false);
@@ -135,7 +152,7 @@ export default function StaffContent() {
     // Only include password if it's not empty
     const submissionData = { ...formData };
     if (!submissionData.password) {
-      delete (submissionData as any).password;
+      delete submissionData.password;
     }
 
     try {
@@ -154,14 +171,14 @@ export default function StaffContent() {
       } else {
         toast.error(data.error || "Failed to update staff");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to server");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const openEditModal = (user: any) => {
+  const openEditModal = (user: StaffMember) => {
     editingStaffId.current = user.id;
     setFormData({
       name: user.name,
@@ -183,7 +200,7 @@ export default function StaffContent() {
       } else {
         toast.error(data.error || "Failed to remove staff");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Error connecting to server");
     }
   };
@@ -260,7 +277,7 @@ export default function StaffContent() {
             bg: "bg-blue-50",
             icon: <Plus size={14} />,
           },
-        ].map((s, i) => (
+        ].map((s, _i) => (
           <div key={s.label} className="card px-4 py-3 flex items-center gap-3">
             <div
               className={`size-8 rounded-lg ${s.bg} ${s.color} flex items-center justify-center flex-shrink-0`}
@@ -427,7 +444,7 @@ export default function StaffContent() {
 }
 
 function AddStaffModal({
-  showAddModal,
+  showAddModal: _showAddModal,
   setShowAddModal,
   formData,
   setFormData,
@@ -437,10 +454,10 @@ function AddStaffModal({
 }: {
   showAddModal: boolean;
   setShowAddModal: (v: boolean) => void;
-  formData: any;
-  setFormData: (v: any) => void;
+  formData: StaffFormData;
+  setFormData: (v: StaffFormData) => void;
   handleAddStaff: (e: React.FormEvent) => Promise<void>;
-  availableRoles: any[] | undefined;
+  availableRoles: RoleOption[] | undefined;
   isSubmitting: boolean;
 }) {
   return (
@@ -549,7 +566,7 @@ function AddStaffModal({
 }
 
 function EditStaffModal({
-  showEditModal,
+  showEditModal: _showEditModal,
   setShowEditModal,
   formData,
   setFormData,
@@ -559,10 +576,10 @@ function EditStaffModal({
 }: {
   showEditModal: boolean;
   setShowEditModal: (v: boolean) => void;
-  formData: any;
-  setFormData: (v: any) => void;
+  formData: StaffFormData;
+  setFormData: (v: StaffFormData) => void;
   handleEditStaff: (e: React.FormEvent) => Promise<void>;
-  availableRoles: any[] | undefined;
+  availableRoles: RoleOption[] | undefined;
   isSubmitting: boolean;
 }) {
   return (

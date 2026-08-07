@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Search,
-  Users,
   Clock,
   GraduationCap,
   Tag,
@@ -28,6 +27,7 @@ import {
   Bookmark,
 } from "lucide-react";
 import * as Icons from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { REQUIREMENTS_LIST } from "@/lib/constants";
@@ -90,14 +90,74 @@ interface EnrollModalProps {
   onClose: () => void;
 }
 
+interface GuestDetails {
+  qualification: string;
+  score: string;
+  testType: string;
+  overallScore: string;
+}
+
+interface EducationEntry {
+  qualification: string;
+  score: string;
+}
+
+interface StudentSummary {
+  id: string;
+  name: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  education?: EducationEntry[] | string;
+  testType?: string;
+  overallScore?: string;
+}
+
+interface StudentProfile {
+  education?: EducationEntry[] | string;
+  testType?: string;
+  overallScore?: string;
+}
+
+interface UniversitySummary {
+  id: string;
+  name: string;
+  color?: string;
+  initials?: string;
+  city?: string;
+  country?: string;
+  website?: string;
+}
+
+interface QuickFilterEntry {
+  id: string | number;
+  label: string;
+  icon: string;
+}
+
+interface SavedFilterPreset {
+  id: string;
+  name: string;
+  categoryFilter: string;
+  levelFilter: string;
+  universityFilter: string;
+  countryFilter: string;
+  intakeFilter: string;
+  durationFilter: string;
+  priceRange: [number, number];
+  activeQuickFilters: string[];
+  activeRequirements: string[];
+  onlyAvailableFilter: boolean;
+}
+
 function GuestCheckModal({
   onClose,
   onSave,
   initialDetails,
 }: {
   onClose: () => void;
-  onSave: (details: any) => void;
-  initialDetails: any;
+  onSave: (details: GuestDetails) => void;
+  initialDetails: GuestDetails;
 }) {
   const [details, setDetails] = useState(initialDetails);
 
@@ -224,13 +284,13 @@ function GuestCheckModal({
 function EnrollModal({ course, onClose }: EnrollModalProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [students, setStudents] = useState<any[] | undefined>(undefined);
+  const [students, setStudents] = useState<StudentSummary[] | undefined>(undefined);
   const [selectedStudentId, setSelectedStudentId] = useState("");
-  const [selectedStudentProfile, setSelectedStudentProfile] = useState<any | null>(null);
+  const [selectedStudentProfile, setSelectedStudentProfile] = useState<StudentProfile | null>(null);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [searchStudent, setSearchStudent] = useState("");
+  const [searchStudent] = useState("");
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -283,20 +343,18 @@ function EnrollModal({ course, onClose }: EnrollModalProps) {
       typeof profile.education === "string"
         ? (() => {
             try {
-              return JSON.parse(profile.education);
+              return JSON.parse(profile.education) as EducationEntry[];
             } catch {
               return [];
             }
           })()
         : profile.education || [];
     const hasPlus2 = studentEdu.some(
-      (e: any) =>
+      (e) =>
         e.qualification?.toLowerCase().includes("+2") ||
         e.qualification?.toLowerCase().includes("grade xii")
     );
-    const hasBachelor = studentEdu.some((e: any) =>
-      e.qualification?.toLowerCase().includes("bachelor")
-    );
+    const hasBachelor = studentEdu.some((e) => e.qualification?.toLowerCase().includes("bachelor"));
 
     const checks: { label: string; pass: boolean; detail?: string }[] = [];
 
@@ -331,11 +389,11 @@ function EnrollModal({ course, onClose }: EnrollModalProps) {
         const relevantEdu =
           course.level === "Undergraduate"
             ? studentEdu.find(
-                (e: any) =>
+                (e) =>
                   e.qualification?.toLowerCase().includes("+2") ||
                   e.qualification?.toLowerCase().includes("grade xii")
               )
-            : studentEdu.find((e: any) => e.qualification?.toLowerCase().includes("bachelor"));
+            : studentEdu.find((e) => e.qualification?.toLowerCase().includes("bachelor"));
         const studentGpa = parseFloat(relevantEdu?.score || "0");
         const pass = !isNaN(studentGpa) && studentGpa >= reqGpa;
         checks.push({
@@ -635,7 +693,7 @@ function EnrollModal({ course, onClose }: EnrollModalProps) {
 export default function SearchContent() {
   const [query, setQuery] = useState("");
   const [courses, setCourses] = useState<Course[]>([]);
-  const [universitiesResults, setUniversitiesResults] = useState<any[]>([]);
+  const [universitiesResults, setUniversitiesResults] = useState<UniversitySummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
@@ -648,7 +706,7 @@ export default function SearchContent() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [enrollingCourse, setEnrollingCourse] = useState<Course | null>(null);
   const isLoading = useRef(true);
-  const [quickFilters, setQuickFilters] = useState<any[]>([]);
+  const [quickFilters, setQuickFilters] = useState<QuickFilterEntry[]>([]);
   const [filterOptions, setFilterOptions] = useState<{
     universities: string[];
     countries: string[];
@@ -657,9 +715,9 @@ export default function SearchContent() {
   const [activeQuickFilters, setActiveQuickFilters] = useState<string[]>([]);
   const [activeRequirements, setActiveRequirements] = useState<string[]>([]);
   const [onlyAvailableFilter, setOnlyAvailableFilter] = useState(false);
-  const [students, setStudents] = useState<any[] | undefined>(undefined);
+  const [students, setStudents] = useState<StudentSummary[] | undefined>(undefined);
   const [selectedStudentId, setSelectedStudentId] = useState("all");
-  const [guestDetails, setGuestDetails] = useState({
+  const [guestDetails, setGuestDetails] = useState<GuestDetails>({
     qualification: "",
     score: "",
     testType: "",
@@ -668,7 +726,7 @@ export default function SearchContent() {
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [showInNPR, setShowInNPR] = useState(false);
   const [rates, setRates] = useState<Record<string, number>>({ NPR: 1 });
-  const [savedFilters, setSavedFilters] = useState<any[]>(() => {
+  const [savedFilters, setSavedFilters] = useState<SavedFilterPreset[]>(() => {
     if (typeof window === "undefined") return [];
     try {
       const stored = localStorage.getItem("search-filter-presets:v1");
@@ -704,7 +762,7 @@ export default function SearchContent() {
     toast.success("Filter preset saved");
   };
 
-  const loadFilterPreset = (preset: any) => {
+  const loadFilterPreset = (preset: SavedFilterPreset) => {
     setCategoryFilter(preset.categoryFilter || "all");
     setLevelFilter(preset.levelFilter || "all");
     setUniversityFilter(preset.universityFilter || "all");
@@ -718,7 +776,7 @@ export default function SearchContent() {
     toast.success(`Loaded preset: ${preset.name}`);
   };
 
-  const deleteFilterPreset = (id: string) => {
+  const _deleteFilterPreset = (id: string) => {
     const updated = savedFilters.filter((f) => f.id !== id);
     setSavedFilters(updated);
     localStorage.setItem("search-filter-presets:v1", JSON.stringify(updated));
@@ -785,14 +843,14 @@ export default function SearchContent() {
           // 1. Level Check
           const studentEdu =
             typeof student.education === "string"
-              ? JSON.parse(student.education)
+              ? (JSON.parse(student.education) as EducationEntry[])
               : student.education || [];
           const hasPlus2 = studentEdu.some(
-            (e: any) =>
+            (e) =>
               e.qualification.toLowerCase().includes("+2") ||
               e.qualification.toLowerCase().includes("grade xii")
           );
-          const hasBachelor = studentEdu.some((e: any) =>
+          const hasBachelor = studentEdu.some((e) =>
             e.qualification.toLowerCase().includes("bachelor")
           );
 
@@ -806,11 +864,11 @@ export default function SearchContent() {
               const relevantEdu =
                 c.level === "Undergraduate"
                   ? studentEdu.find(
-                      (e: any) =>
+                      (e) =>
                         e.qualification.toLowerCase().includes("+2") ||
                         e.qualification.toLowerCase().includes("grade xii")
                     )
-                  : studentEdu.find((e: any) => e.qualification.toLowerCase().includes("bachelor"));
+                  : studentEdu.find((e) => e.qualification.toLowerCase().includes("bachelor"));
 
               const studentGpa = parseFloat(relevantEdu?.score || "0");
               if (isNaN(studentGpa) || studentGpa < reqGpa) return false;
@@ -1073,7 +1131,7 @@ export default function SearchContent() {
   );
 }
 
-function UniversityResultCard({ university }: { university: any }) {
+function UniversityResultCard({ university }: { university: UniversitySummary }) {
   return (
     <div className="card p-4 hover:shadow-md transition-all duration-200">
       <div className="flex items-center gap-3 mb-3">
@@ -1134,7 +1192,7 @@ function SearchResultCard({
   expanded: boolean;
   onToggle: () => void;
   onEnroll: () => void;
-  quickFilters: any[];
+  quickFilters: QuickFilterEntry[];
   showInNPR: boolean;
   rates: Record<string, number>;
 }) {
@@ -1288,7 +1346,7 @@ function SearchResultCard({
                 </span>
               </div>
               <div className="flex flex-wrap gap-1">
-                {course.prerequisites.map((p, i) => (
+                {course.prerequisites.map((p, _i) => (
                   <span
                     key={p}
                     className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-medium"
@@ -1419,7 +1477,7 @@ function SearchFiltersPanel({
   loading: boolean;
   query: string;
   setQuery: (v: string) => void;
-  quickFilters: any[];
+  quickFilters: QuickFilterEntry[];
   activeQuickFilters: string[];
   setActiveQuickFilters: (v: string[]) => void;
   showFilters: boolean;
@@ -1427,7 +1485,7 @@ function SearchFiltersPanel({
   selectedStudentId: string;
   setSelectedStudentId: (v: string) => void;
   setShowGuestModal: (v: boolean) => void;
-  students: any[] | undefined;
+  students: StudentSummary[] | undefined;
   categoryFilter: string;
   setCategoryFilter: (v: string) => void;
   levelFilter: string;
@@ -1449,19 +1507,19 @@ function SearchFiltersPanel({
   setActiveRequirements: (v: string[]) => void;
   hasSearch: boolean;
   filteredCourses: Course[];
-  universitiesResults: any[];
+  universitiesResults: UniversitySummary[];
   availableCategories: string[];
   availableUniversities: string[];
   availableCountries: string[];
   availableIntakes: string[];
   availableDurations: string[];
-  savedFilters: any[];
+  savedFilters: SavedFilterPreset[];
   filterPresetName: string;
   setFilterPresetName: (v: string) => void;
   showSaveFilter: boolean;
   setShowSaveFilter: (v: boolean) => void;
   saveFilterPreset: () => void;
-  loadFilterPreset: (preset: any) => void;
+  loadFilterPreset: (preset: SavedFilterPreset) => void;
 }) {
   return (
     <div className="card p-6 mb-5 relative overflow-hidden">
@@ -1501,7 +1559,8 @@ function SearchFiltersPanel({
         <div className="flex flex-wrap gap-2">
           <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-100 hover:scrollbar-thumb-purple-200">
             {quickFilters.map((filter) => {
-              const IconComponent = (Icons as any)[filter.icon] || Icons.Filter;
+              const IconComponent =
+                (Icons as unknown as Record<string, LucideIcon>)[filter.icon] || Icons.Filter;
               const isActive = activeQuickFilters.includes(filter.label);
 
               return (
@@ -1565,7 +1624,7 @@ function SearchFiltersPanel({
         <div className="flex items-center gap-2">
           {savedFilters.length > 0 && (
             <div className="flex items-center gap-1">
-              {savedFilters.slice(-3).map((preset: any) => (
+              {savedFilters.slice(-3).map((preset) => (
                 <button
                   type="button"
                   key={preset.id}
@@ -1853,7 +1912,7 @@ function SearchFiltersPanel({
   );
 }
 
-function CourseResultsSection({
+function _CourseResultsSection({
   hasSearch,
   loading,
   filteredCourses,
@@ -1868,11 +1927,11 @@ function CourseResultsSection({
   hasSearch: boolean;
   loading: boolean;
   filteredCourses: Course[];
-  universitiesResults: any[];
+  universitiesResults: UniversitySummary[];
   expandedId: string | null;
   setExpandedId: (v: string | null) => void;
   setEnrollingCourse: (v: Course | null) => void;
-  quickFilters: any[];
+  quickFilters: QuickFilterEntry[];
   showInNPR: boolean;
   rates: Record<string, number>;
 }) {

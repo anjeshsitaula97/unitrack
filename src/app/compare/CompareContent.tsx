@@ -1,21 +1,34 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Building2, BookOpen, Plus, X, Loader2, Check, Minus } from "lucide-react";
+import { Search, Building2, BookOpen, Plus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-function getFieldValue(item: any, field: string) {
+interface CompareItem {
+  id: string;
+  name: string;
+  _count?: { courses?: number };
+  courses?: number;
+  university?: { name: string } | string | null;
+  [key: string]: unknown;
+}
+
+function getFieldValue(item: CompareItem, field: string) {
   if (field === "courses") return item._count?.courses || item.courses || 0;
-  if (field === "university") return item.university?.name || item.university || "-";
-  return item[field] ?? "-";
+  if (field === "university") {
+    const u = item.university;
+    return u && typeof u === "object" ? u.name : u || "-";
+  }
+  const v = item[field];
+  return typeof v === "string" || typeof v === "number" ? v : "-";
 }
 
 export default function CompareContent() {
   const [type, setType] = useState<"universities" | "courses">("universities");
   const [search, setSearch] = useState("");
-  const [results, setResults] = useState<any[]>([]);
-  const [selected, setSelected] = useState<any[]>([]);
-  const [compareData, setCompareData] = useState<any[]>([]);
+  const [results, setResults] = useState<CompareItem[]>([]);
+  const [selected, setSelected] = useState<CompareItem[]>([]);
+  const [compareData, setCompareData] = useState<CompareItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -31,7 +44,7 @@ export default function CompareContent() {
 
   const displayResults = search.length < 2 ? [] : results;
 
-  const addToCompare = (item: any) => {
+  const addToCompare = (item: CompareItem) => {
     if (selected.length >= 4) {
       toast.error("Maximum 4 items to compare");
       return;
@@ -97,7 +110,7 @@ export default function CompareContent() {
             type="button"
             key={t}
             onClick={() => {
-              setType(t as any);
+              setType(t as "universities" | "courses");
               setSelected([]);
               setCompareData([]);
             }}
