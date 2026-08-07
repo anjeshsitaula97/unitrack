@@ -4,24 +4,34 @@ import { z } from "zod";
 import { signToken } from "@/lib/session";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { logError } from "@/lib/logger";
+import { normalizeEnabledModulesJson } from "@/lib/modules";
+import { logActivity } from "@/lib/activity";
 
 const prisma = db;
 
 const loginSchema = z.object({
-  email: z.email("Please enter a valid email address."),
+  email: z.string().email("Please enter a valid email address."),
   password: z.string().min(1, "Password is required."),
 });
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req);
+    const rl = await checkRateLimit(`login:${ip}`, 10, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const parsed = loginSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.errors[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const { email, password } = parsed.data;
@@ -31,19 +41,13 @@ export async function POST(req: Request) {
     });
 
     if (!user || !user.password) {
-      return NextResponse.json(
-        { error: "Invalid email or password." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      return NextResponse.json(
-        { error: "Invalid email or password." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
 
     // Set token
@@ -60,8 +64,7 @@ export async function POST(req: Request) {
       httpOnly: true,
       path: "/",
       secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24, // 24 hours
-      sameSite: "lax",
+      sameSite: "strict",
     });
 
     // Update last login & seen
@@ -84,17 +87,36 @@ export async function POST(req: Request) {
     await prisma.loginLog.create({
       data: {
         userId: user.id,
-        ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
+        ipAddress: getClientIp(req),
         userAgent: req.headers.get("user-agent") || "Unknown",
       },
     });
 
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    console.error("Login Route Error:", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred." },
-      { status: 500 }
+    await logActivity({
+      actorName: user.name,
+      userId: user.id,
+      action: "logged in",
+      target: user.email,
+    });
+
+    // Fetch enabled modules and set cookie
+    const settings = await prisma.systemSettings.findFirst();
+    const enabledModules = normalizeEnabledModulesJson(settings?.enabledModules);
+
+    const response = NextResponse.json(
+      { success: true, isFirstLogin: user.isFirstLogin },
+      { status: 200 }
     );
+    response.cookies.set("enabled_modules", enabledModules, {
+      httpOnly: true,
+      path: "/",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 86400,
+    });
+    return response;
+  } catch (error) {
+    logError("Login Route", error);
+    return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 });
   }
 }

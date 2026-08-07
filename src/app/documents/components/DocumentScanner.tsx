@@ -1,31 +1,51 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Camera, Scan, X, Upload, Download, RotateCw,
-  Maximize2, Minimize2, Sun, SunMoon, Loader2,
-  CheckCircle, AlertCircle, Image, Sliders, Trash2,
-  FileText, Search, ChevronDown, ChevronUp
-} from 'lucide-react';
-import { toast } from 'sonner';
-import NextImage from 'next/image';
+  Camera,
+  Scan,
+  X,
+  Upload,
+  Download,
+  RotateCw,
+  Maximize2,
+  Minimize2,
+  Sun,
+  SunMoon,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  Image,
+  Sliders,
+  Trash2,
+  FileText,
+  Search,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { toast } from "sonner";
+import NextImage from "next/image";
 
 const DPI_OPTIONS = [
-  { label: 'Screen (72 DPI)', value: 72, width: 1024 },
-  { label: 'Draft (150 DPI)', value: 150, width: 1600 },
-  { label: 'Standard (200 DPI)', value: 200, width: 2048 },
-  { label: 'High (300 DPI)', value: 300, width: 2560 },
+  { label: "Screen (72 DPI)", value: 72, width: 1024 },
+  { label: "Draft (150 DPI)", value: 150, width: 1600 },
+  { label: "Standard (200 DPI)", value: 200, width: 2048 },
+  { label: "High (300 DPI)", value: 300, width: 2560 },
 ];
 
 function formatSize(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
 function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -47,25 +67,20 @@ export default function DocumentScanner() {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
 
-  const currentDpiConfig = DPI_OPTIONS.find(d => d.value === dpi) || DPI_OPTIONS[2];
+  const currentDpiConfig = DPI_OPTIONS.find((d) => d.value === dpi) || DPI_OPTIONS[2];
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     setCameraActive(false);
     setCameraError(null);
   }, []);
 
-  useEffect(() => {
-    fetchDocuments();
-    return stopCamera;
-  }, [stopCamera]);
-
   const fetchDocuments = async () => {
     try {
-      const res = await fetch('/api/documents');
+      const res = await fetch("/api/documents");
       if (res.ok) {
         const data = await res.json();
         setDocuments(Array.isArray(data) ? data : []);
@@ -77,12 +92,19 @@ export default function DocumentScanner() {
     }
   };
 
+  const fetchDocumentsRef = useRef(fetchDocuments);
+  useEffect(() => {
+    fetchDocumentsRef.current = fetchDocuments;
+    fetchDocumentsRef.current();
+    return stopCamera;
+  }, [stopCamera]);
+
   const startCamera = async () => {
     setCameraError(null);
     try {
       const constraints: MediaStreamConstraints = {
         video: {
-          facingMode: 'environment',
+          facingMode: "environment",
           width: { ideal: currentDpiConfig.width },
           height: { ideal: Math.round(currentDpiConfig.width * 1.414) },
         },
@@ -98,13 +120,15 @@ export default function DocumentScanner() {
 
       setCameraActive(true);
     } catch (err: any) {
-      const message = err?.message || '';
-      if (message.includes('Permission') || message.includes('NotAllowed')) {
-        setCameraError('Camera access denied. Please allow camera permissions in your browser settings.');
-      } else if (message.includes('NotFound')) {
-        setCameraError('No camera found on this device.');
+      const message = err?.message || "";
+      if (message.includes("Permission") || message.includes("NotAllowed")) {
+        setCameraError(
+          "Camera access denied. Please allow camera permissions in your browser settings."
+        );
+      } else if (message.includes("NotFound")) {
+        setCameraError("No camera found on this device.");
       } else {
-        setCameraError('Could not access camera. Please ensure no other app is using it.');
+        setCameraError("Could not access camera. Please ensure no other app is using it.");
       }
     }
   };
@@ -121,13 +145,13 @@ export default function DocumentScanner() {
     canvas.width = targetWidth;
     canvas.height = targetHeight;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
 
     const quality = dpi >= 300 ? 0.95 : dpi >= 200 ? 0.9 : 0.8;
-    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+    const dataUrl = canvas.toDataURL("image/jpeg", quality);
 
     setCapturedImage(dataUrl);
     stopCamera();
@@ -149,20 +173,20 @@ export default function DocumentScanner() {
       const filename = `scan_${timestamp}.jpg`;
 
       const formData = new FormData();
-      formData.append('file', blob, filename);
+      formData.append("file", blob, filename);
 
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
-      if (!uploadRes.ok) throw new Error('Upload failed');
+      if (!uploadRes.ok) throw new Error("Upload failed");
 
       const { url, size } = await uploadRes.json();
 
-      const docRes = await fetch('/api/documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const docRes = await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url,
           filename,
@@ -171,13 +195,13 @@ export default function DocumentScanner() {
         }),
       });
 
-      if (!docRes.ok) throw new Error('Failed to save document');
+      if (!docRes.ok) throw new Error("Failed to save document");
 
       setUploadedUrl(url);
-      toast.success('Document scanned and uploaded successfully');
+      toast.success("Document scanned and uploaded successfully");
       fetchDocuments();
     } catch (err) {
-      toast.error('Failed to upload scanned document');
+      toast.error("Failed to upload scanned document");
     } finally {
       setIsUploading(false);
     }
@@ -185,17 +209,17 @@ export default function DocumentScanner() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/documents?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/documents?id=${id}`, { method: "DELETE" });
       if (res.ok) {
-        setDocuments(prev => prev.filter(d => d.id !== id));
-        toast.success('Document deleted');
+        setDocuments((prev) => prev.filter((d) => d.id !== id));
+        toast.success("Document deleted");
       }
     } catch {
-      toast.error('Failed to delete document');
+      toast.error("Failed to delete document");
     }
   };
 
-  const dpiLabel = DPI_OPTIONS.find(d => d.value === dpi)?.label || 'Standard (200 DPI)';
+  const dpiLabel = DPI_OPTIONS.find((d) => d.value === dpi)?.label || "Standard (200 DPI)";
 
   return (
     <div className="animate-fade-in">
@@ -218,12 +242,17 @@ export default function DocumentScanner() {
               <div className="flex items-center gap-2">
                 <Scan size={16} className="text-indigo-600" />
                 <span className="font-bold text-sm text-slate-700">
-                  {capturedImage ? 'Captured Document' : cameraActive ? 'Camera Preview' : 'Scanner'}
+                  {capturedImage
+                    ? "Captured Document"
+                    : cameraActive
+                      ? "Camera Preview"
+                      : "Scanner"}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 {cameraActive && (
-                  <button type="button"
+                  <button
+                    type="button"
                     onClick={stopCamera}
                     className="btn-secondary text-xs px-3 py-1.5"
                   >
@@ -251,10 +280,14 @@ export default function DocumentScanner() {
                   <Scan size={64} className="text-slate-600 mx-auto mb-4" />
                   <p className="text-white/80 font-bold text-lg mb-2">Document Scanner</p>
                   <p className="text-white/50 text-sm mb-6 max-w-sm mx-auto">
-                    Position your document in the frame and click Start Camera to begin.
-                    The scanned image will be uploaded directly (nothing is saved on your device).
+                    Position your document in the frame and click Start Camera to begin. The scanned
+                    image will be uploaded directly (nothing is saved on your device).
                   </p>
-                  <button type="button" onClick={startCamera} className="btn-primary text-base px-8 py-3">
+                  <button
+                    type="button"
+                    onClick={startCamera}
+                    className="btn-primary text-base px-8 py-3"
+                  >
                     <Camera size={18} />
                     Start Camera
                   </button>
@@ -267,7 +300,7 @@ export default function DocumentScanner() {
                 playsInline
                 muted
                 aria-label="Camera preview"
-                className={`w-full max-h-[500px] object-contain ${cameraActive ? 'block' : 'hidden'}`}
+                className={`w-full max-h-[500px] object-contain ${cameraActive ? "block" : "hidden"}`}
               />
 
               {capturedImage && (
@@ -306,7 +339,8 @@ export default function DocumentScanner() {
                       <RotateCw size={15} />
                       Recapture
                     </button>
-                    <button type="button"
+                    <button
+                      type="button"
                       onClick={handleUpload}
                       disabled={isUploading}
                       className="btn-primary"
@@ -316,7 +350,7 @@ export default function DocumentScanner() {
                       ) : (
                         <Upload size={15} />
                       )}
-                      {isUploading ? 'Uploading...' : 'Upload'}
+                      {isUploading ? "Uploading..." : "Upload"}
                     </button>
                   </>
                 )}
@@ -332,8 +366,10 @@ export default function DocumentScanner() {
                   aria-label="DPI setting"
                   className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
                 >
-                  {DPI_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  {DPI_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -345,7 +381,7 @@ export default function DocumentScanner() {
             <div className="card px-5 py-3 flex items-center gap-4">
               <Image size={20} className="text-indigo-600" />
               <div className="text-xs text-slate-500">
-                <span className="font-semibold text-slate-700">Resolution:</span>{' '}
+                <span className="font-semibold text-slate-700">Resolution:</span>{" "}
                 {currentDpiConfig.width} × {Math.round(currentDpiConfig.width * 1.414)}px
                 <span className="mx-2">·</span>
                 <span className="font-semibold text-slate-700">DPI:</span> {dpi}
@@ -365,7 +401,8 @@ export default function DocumentScanner() {
         {/* History Column */}
         <div className="space-y-4">
           <div className="card overflow-hidden">
-            <button type="button"
+            <button
+              type="button"
               onClick={() => setShowHistory(!showHistory)}
               className="w-full px-5 py-4 border-b border-slate-100 flex items-center justify-between"
             >
@@ -378,7 +415,11 @@ export default function DocumentScanner() {
                   </span>
                 )}
               </div>
-              {showHistory ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+              {showHistory ? (
+                <ChevronUp size={14} className="text-slate-400" />
+              ) : (
+                <ChevronDown size={14} className="text-slate-400" />
+              )}
             </button>
 
             {showHistory && (
@@ -394,22 +435,25 @@ export default function DocumentScanner() {
                   </div>
                 ) : (
                   documents.map((doc) => (
-                    <div
+                    <button
                       key={doc.id}
-                      role="button"
+                      type="button"
                       tabIndex={0}
-                      className={`w-full text-left px-5 py-3 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer ${selectedDoc?.id === doc.id ? 'bg-indigo-50/40' : ''}`}
+                      className={`w-full text-left px-5 py-3 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer ${selectedDoc?.id === doc.id ? "bg-indigo-50/40" : ""}`}
                       onClick={() => setSelectedDoc(selectedDoc?.id === doc.id ? null : doc)}
-                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setSelectedDoc(selectedDoc?.id === doc.id ? null : doc); }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ")
+                          setSelectedDoc(selectedDoc?.id === doc.id ? null : doc);
+                      }}
                     >
                       <div className="flex items-start justify-between">
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold text-slate-700 truncate">
                             {doc.filename}
                           </p>
-                           <p className="text-[10px] text-slate-400 mt-0.5" suppressHydrationWarning>
-                             {formatDate(new Date(doc.createdAt))}
-                           </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5" suppressHydrationWarning>
+                            {formatDate(new Date(doc.createdAt))}
+                          </p>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
                               {doc.dpi} DPI
@@ -419,9 +463,19 @@ export default function DocumentScanner() {
                             </span>
                           </div>
                         </div>
-                        <button type="button" aria-label="Delete document"
-                          onClick={(e) => { e.stopPropagation(); handleDelete(doc.id); }}
-                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); handleDelete(doc.id); } }}
+                        <button
+                          type="button"
+                          aria-label="Delete document"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(doc.id);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.stopPropagation();
+                              handleDelete(doc.id);
+                            }
+                          }}
                           className="p-1 rounded-lg hover:bg-red-100 transition-colors flex-shrink-0 cursor-pointer"
                         >
                           <Trash2 size={12} className="text-red-300 hover:text-red-500" />
@@ -431,7 +485,8 @@ export default function DocumentScanner() {
                       {selectedDoc?.id === doc.id && (
                         <div className="mt-3 pt-3 border-t border-slate-100">
                           <div className="relative w-full h-32 rounded-lg overflow-hidden bg-slate-100">
-                            <NextImage src={doc.url}
+                            <NextImage
+                              src={doc.url}
                               alt={doc.filename}
                               fill
                               className="object-contain"
@@ -451,7 +506,7 @@ export default function DocumentScanner() {
                           </div>
                         </div>
                       )}
-                    </div>
+                    </button>
                   ))
                 )}
               </div>

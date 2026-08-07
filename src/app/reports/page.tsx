@@ -1,10 +1,10 @@
-import React from 'react';
-import AppLayoutWrapper from '@/components/AppLayoutWrapper';
-import ReportsContent from './components/ReportsContent';
+import React from "react";
+import AppLayoutWrapper from "@/components/AppLayoutWrapper";
+import ReportsContent from "./components/ReportsContent";
 
 export const metadata = {
-  title: 'Reports | UniTrack',
-  description: 'UniTrack administration - Reports',
+  title: "Reports | UniTrack",
+  description: "UniTrack administration - Reports",
 };
 
 export default function ReportsPage() {

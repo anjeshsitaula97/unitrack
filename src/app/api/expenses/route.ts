@@ -1,43 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { logActivity } from '@/lib/activity';
-import { cookies } from 'next/headers';
-import { verifyAuth } from '@/lib/session';
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch (err) {
-    return null;
-  }
-}
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { logActivity } from "@/lib/activity";
+import { getSession, apiError } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) return apiError("Unauthorized", 401);
+
     const expenses = await db.expense.findMany({
-      orderBy: { date: 'desc' }
+      orderBy: { date: "desc" },
     });
     return NextResponse.json(expenses);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch expenses' }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch expenses" }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const [session, data] = await Promise.all([
-      getSession(),
-      req.json()
-    ]);
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const session = await getSession();
+    if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
+      return apiError("Unauthorized", 401);
 
-    const { category, amount, currency, date, description, paidTo, method, billNo, transactionNo, screenshot } = data;
+    const data = await req.json();
+
+    const {
+      category,
+      amount,
+      currency,
+      date,
+      description,
+      paidTo,
+      method,
+      billNo,
+      transactionNo,
+      screenshot,
+    } = data;
 
     if (!category || !amount) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const [newExpense, user] = await Promise.all([
@@ -45,27 +47,27 @@ export async function POST(req: NextRequest) {
         data: {
           category,
           amount: parseFloat(amount),
-          currency: currency || 'NPR',
+          currency: currency || "NPR",
           date: date ? new Date(date) : new Date(),
           description,
           paidTo,
           method,
           billNo,
           transactionNo,
-          screenshot
-        }
+          screenshot,
+        },
       }),
-      db.user.findUnique({ where: { id: session.id as string } })
+      db.user.findUnique({ where: { id: session.id } }),
     ]);
 
     await logActivity({
-      actorName: user?.name || 'System',
-      action: 'recorded an expense',
+      actorName: user?.name || "System",
+      action: "recorded an expense",
       target: `${newExpense.category} - ${newExpense.currency} ${newExpense.amount}`,
     });
 
     return NextResponse.json(newExpense, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to record expense' }, { status: 500 });
+    return NextResponse.json({ error: "Failed to record expense" }, { status: 500 });
   }
 }

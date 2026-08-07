@@ -1,12 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { logError } from "@/lib/logger";
+import { getSession, apiError } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) return apiError("Unauthorized", 401);
+
     const { searchParams } = new URL(req.url);
-    const type = searchParams.get('type');
-    const start = searchParams.get('startDate');
-    const end = searchParams.get('endDate');
+    const type = searchParams.get("type");
+    const start = searchParams.get("startDate");
+    const end = searchParams.get("endDate");
 
     // Build the Prisma 'where' clause for createdAt filtering
     const dateFilter: any = {};
@@ -24,84 +29,93 @@ export async function GET(req: NextRequest) {
     let data;
 
     switch (type) {
-      case 'universities':
+      case "universities":
         data = await db.university.findMany({
           where: dateFilter,
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: "desc" },
         });
         break;
-      case 'courses':
+      case "courses":
         data = await db.course.findMany({
           where: dateFilter,
           include: { university: { select: { name: true } } },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: "desc" },
         });
         // Flatten for excel
         data = data.map((c: any) => ({
           ...c,
-          universityName: c.university?.name || 'Unknown',
+          universityName: c.university?.name || "Unknown",
           prerequisites: undefined, // removing raw JSON from report
           university: undefined,
         }));
         break;
-      case 'users':
+      case "users":
         data = await db.user.findMany({
           where: dateFilter,
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+            createdAt: true,
+            lastLogin: true,
+          },
         });
         break;
-      case 'applications':
+      case "applications":
         data = await db.application.findMany({
           where: {
-            appliedDate: dateFilter.createdAt
+            appliedDate: dateFilter.createdAt,
           },
           include: {
             student: { select: { name: true, email: true } },
             university: { select: { name: true } },
-            course: { select: { name: true } }
+            course: { select: { name: true } },
           },
-          orderBy: { appliedDate: 'desc' }
+          orderBy: { appliedDate: "desc" },
         });
         data = data.map((a: any) => ({
-          'Application ID': a.id,
-          'Student Name': a.student?.name || 'N/A',
-          'Student Email': a.student?.email || 'N/A',
-          'University': a.university?.name || 'N/A',
-          'Course': a.course?.name || 'N/A',
-          'Status': a.status,
-          'Date Applied': a.appliedDate,
+          "Application ID": a.id,
+          "Student Name": a.student?.name || "N/A",
+          "Student Email": a.student?.email || "N/A",
+          University: a.university?.name || "N/A",
+          Course: a.course?.name || "N/A",
+          Status: a.status,
+          "Date Applied": a.appliedDate,
         }));
         break;
-      case 'payments':
+      case "payments":
         data = await db.payment.findMany({
           where: {
-            date: dateFilter.createdAt
+            date: dateFilter.createdAt,
           },
           include: {
-            student: { select: { name: true, email: true } }
+            student: { select: { name: true, email: true } },
           },
-          orderBy: { date: 'desc' }
+          orderBy: { date: "desc" },
         });
         data = data.map((p: any) => ({
-          'Payment ID': p.id,
-          'Student Name': p.student?.name || 'N/A',
-          'Student Email': p.student?.email || 'N/A',
-          'Amount': p.amount,
-          'Currency': p.currency,
-          'Method': p.method,
-          'Status': p.status,
-          'Transaction Date': p.date,
-          'Description': p.description,
-          'Proof Link': p.proofUrl || 'No attachment'
+          "Payment ID": p.id,
+          "Student Name": p.student?.name || "N/A",
+          "Student Email": p.student?.email || "N/A",
+          Amount: p.amount,
+          Currency: p.currency,
+          Method: p.method,
+          Status: p.status,
+          "Transaction Date": p.date,
+          Description: p.description,
+          "Proof Link": p.proofUrl || "No attachment",
         }));
         break;
       default:
-        return NextResponse.json({ error: 'Invalid report type' }, { status: 400 });
+        return NextResponse.json({ error: "Invalid report type" }, { status: 400 });
     }
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Failed to generate report' }, { status: 500 });
+    logError("Reports", error);
+    return NextResponse.json({ error: "Failed to generate report" }, { status: 500 });
   }
 }

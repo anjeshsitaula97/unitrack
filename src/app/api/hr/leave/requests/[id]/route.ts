@@ -1,32 +1,40 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { cookies } from 'next/headers';
-import { verifyAuth } from '@/lib/session';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { cookies } from "next/headers";
+import { verifyAuth } from "@/lib/session";
+import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
 async function getSession() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
+  const token = cookieStore.get("auth_token")?.value;
   if (!token) return null;
-  try { return await verifyAuth(token); } catch { return null; }
+  try {
+    return await verifyAuth(token);
+  } catch {
+    return null;
+  }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'Admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || !["Admin", "Super Admin"].includes(session.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
     const body = await req.json();
     const { status, notes } = body;
 
-    if (!status || !['Approved', 'Rejected'].includes(status)) {
-      return NextResponse.json({ error: "Status must be 'Approved' or 'Rejected'" }, { status: 400 });
+    if (!status || !["Approved", "Rejected"].includes(status)) {
+      return NextResponse.json(
+        { error: "Status must be 'Approved' or 'Rejected'" },
+        { status: 400 }
+      );
     }
 
     const existing = await db.leaveRequest.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: { leaveType: true },
     });
 
@@ -34,12 +42,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "Leave request not found" }, { status: 404 });
     }
 
-    if (existing.status !== 'Pending') {
+    if (existing.status !== "Pending") {
       return NextResponse.json({ error: "Leave request already processed" }, { status: 400 });
     }
 
     const leaveRequest = await db.leaveRequest.update({
-      where: { id },
+      where: { id: Number(id) },
       data: {
         status,
         approvedBy: session.id,
@@ -52,13 +60,27 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       },
     });
 
-    if (status === 'Approved') {
+    await logActivity({
+      actorName: await getActorName(session?.id),
+      userId: session?.id,
+      action: "updated a leave request",
+      target: leaveRequest.user?.name || String(existing.id),
+      changes: diffChanges(existing, leaveRequest, ["user", "leaveType", "approver"]),
+    });
+
+    if (status === "Approved") {
       const year = existing.startDate.getFullYear();
       const diffTime = Math.abs(existing.endDate.getTime() - existing.startDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
       const balance = await db.leaveBalance.findUnique({
-        where: { userId_leaveTypeId_year: { userId: existing.userId, leaveTypeId: existing.leaveTypeId, year } },
+        where: {
+          userId_leaveTypeId_year: {
+            userId: existing.userId,
+            leaveTypeId: existing.leaveTypeId,
+            year,
+          },
+        },
       });
 
       if (balance) {

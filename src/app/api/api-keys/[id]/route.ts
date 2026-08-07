@@ -1,18 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { getSession, apiError } from "@/lib/api-utils";
+import { logActivity, getActorName } from "@/lib/activity";
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await getSession();
+    if (!session || !["Admin", "Super Admin"].includes(session.role as string))
+      return apiError("Unauthorized", 401);
+
     const { id } = await params;
+    const existing = await db.apiKey.findUnique({ where: { id: Number(id) } });
+
     await db.apiKey.delete({
-      where: { id },
+      where: { id: Number(id) },
     });
+
+    await logActivity({
+      actorName: await getActorName(session?.id),
+      userId: session?.id,
+      action: "deleted an API key",
+      target: existing?.name || id,
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete API Key Error:', error);
-    return NextResponse.json({ error: 'Failed to delete API Key' }, { status: 500 });
+    console.error("Delete API Key Error:", error);
+    return NextResponse.json({ error: "Failed to delete API Key" }, { status: 500 });
   }
 }

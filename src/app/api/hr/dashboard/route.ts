@@ -1,19 +1,23 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { cookies } from 'next/headers';
-import { verifyAuth } from '@/lib/session';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { cookies } from "next/headers";
+import { verifyAuth } from "@/lib/session";
 
 async function getSession() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
+  const token = cookieStore.get("auth_token")?.value;
   if (!token) return null;
-  try { return await verifyAuth(token); } catch { return null; }
+  try {
+    return await verifyAuth(token);
+  } catch {
+    return null;
+  }
 }
 
 export async function GET() {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const now = new Date();
     const month = now.getMonth() + 1;
@@ -29,24 +33,27 @@ export async function GET() {
       todayAttendance,
       payrollThisMonth,
     ] = await Promise.all([
-      db.user.count({ where: { NOT: { role: 'Admin' } } }),
+      db.user.count({ where: { role: { notIn: ["Admin", "Student"] } } }),
       db.department.count(),
       db.designation.count(),
-      db.leaveRequest.count({ where: { status: 'Pending' } }),
+      db.leaveRequest.count({ where: { status: "Pending" } }),
       db.attendance.findMany({
         where: {
-          date: { gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()), lte: endOfMonth },
+          date: {
+            gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+            lte: endOfMonth,
+          },
         },
         include: { user: { select: { id: true, name: true, avatar: true, employeeId: true } } },
         take: 10,
       }),
-      db.payroll.count({ where: { month, year, status: { not: 'Draft' } } }),
+      db.payroll.count({ where: { month, year, status: { not: "Draft" } } }),
     ]);
 
     const todayPresent = await db.attendance.count({
       where: {
         date: { gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()), lte: endOfMonth },
-        status: 'Present',
+        status: "Present",
       },
     });
 

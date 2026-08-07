@@ -1,30 +1,35 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { cookies } from 'next/headers';
-import { verifyAuth } from '@/lib/session';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { cookies } from "next/headers";
+import { verifyAuth } from "@/lib/session";
+import { logActivity, getActorName } from "@/lib/activity";
 
 async function getSession() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
+  const token = cookieStore.get("auth_token")?.value;
   if (!token) return null;
-  try { return await verifyAuth(token); } catch { return null; }
+  try {
+    return await verifyAuth(token);
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(req: Request) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get('status');
+    const status = searchParams.get("status");
 
     const where: any = {};
     if (status) where.status = status;
-    if (session.role !== 'Admin') where.userId = session.id;
+    if (!["Admin", "Super Admin"].includes(session.role)) where.userId = session.id;
 
     const requests = await db.leaveRequest.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       include: {
         user: { select: { id: true, name: true, email: true, employeeId: true, avatar: true } },
         leaveType: { select: { id: true, name: true } },
@@ -41,7 +46,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const { leaveTypeId, startDate, endDate, reason } = body;
@@ -53,7 +58,7 @@ export async function POST(req: Request) {
     const leaveRequest = await db.leaveRequest.create({
       data: {
         userId: session.id,
-        leaveTypeId,
+        leaveTypeId: Number(leaveTypeId),
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         reason,
@@ -62,6 +67,12 @@ export async function POST(req: Request) {
         user: { select: { id: true, name: true } },
         leaveType: { select: { id: true, name: true } },
       },
+    });
+    await logActivity({
+      actorName: await getActorName(session?.id),
+      userId: session?.id,
+      action: "created a leave request",
+      target: leaveRequest.user?.name || String(leaveRequest.id),
     });
     return NextResponse.json(leaveRequest);
   } catch (error) {

@@ -1,89 +1,111 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { logActivity } from '@/lib/activity';
-import { cookies } from 'next/headers';
-import { verifyAuth } from '@/lib/session';
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch (err) {
-    return null;
-  }
-}
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { logError } from "@/lib/logger";
+import { logActivity } from "@/lib/activity";
+import { getPaginationParams, paginatedResponse, apiError, getSession } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const studentId = searchParams.get('studentId');
+    const params = getPaginationParams(searchParams);
+    const studentId = searchParams.get("studentId");
+    const statusFilter = searchParams.get("status") || "";
+    const universityId = searchParams.get("universityId") || "";
 
     const where: any = {};
-    if (studentId) {
-      where.studentId = studentId;
+    if (studentId) where.studentId = Number(studentId);
+    if (statusFilter) where.status = statusFilter;
+    if (universityId) where.universityId = Number(universityId);
+
+    if (params.search) {
+      where.student = {
+        OR: [
+          { firstName: { contains: params.search, mode: "insensitive" } },
+          { lastName: { contains: params.search, mode: "insensitive" } },
+          { email: { contains: params.search, mode: "insensitive" } },
+        ],
+      };
     }
 
-    const applications = await db.application.findMany({
-      where,
-      include: {
-        student: {
-          select: { firstName: true, lastName: true, email: true }
+    const [applications, total] = await Promise.all([
+      db.application.findMany({
+        where,
+        include: {
+          student: { select: { firstName: true, lastName: true, email: true } },
+          university: { select: { name: true, country: true } },
+          course: {
+            select: {
+              name: true,
+              level: true,
+              duration: true,
+              intake: true,
+              mode: true,
+              language: true,
+              academicRequirement: true,
+              percentageRequired: true,
+              gpaRequired: true,
+              englishLanguageType: true,
+              englishOverallScore: true,
+              englishReadingScore: true,
+              englishWritingScore: true,
+              englishListeningScore: true,
+              englishSpeakingScore: true,
+              prerequisites: true,
+              requirements: true,
+              tuitionFee: true,
+              currency: true,
+            },
+          },
         },
-        university: {
-          select: { name: true, country: true }
-        },
-        course: {
-          select: { name: true, level: true }
-        }
-      },
-      orderBy: { appliedDate: 'desc' }
-    });
+        orderBy: { appliedDate: "desc" },
+        skip: params.skip,
+        take: params.perPage,
+      }),
+      db.application.count({ where }),
+    ]);
 
-    return NextResponse.json(applications);
+    return NextResponse.json(paginatedResponse(applications, total, params));
   } catch (error) {
-    console.error('Failed to fetch applications:', error);
-    return NextResponse.json({ error: 'Failed to fetch applications' }, { status: 500 });
+    logError("Fetch applications", error);
+    return apiError("Failed to fetch applications");
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const data = await req.json();
-    const { studentId, universityId, courseId } = data;
+    const studentId = Number(data.studentId);
+    const { universityId, courseId } = data;
 
     if (!studentId || !universityId || !courseId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const [newApplication, user] = await Promise.all([
       db.application.create({
         data: {
           studentId,
-          universityId,
-          courseId,
-          status: 'Submitted'
+          universityId: Number(universityId),
+          courseId: Number(courseId),
+          status: "Submitted",
         },
-        include: {
-          student: true,
-          course: true
-        }
+        include: { student: true, course: true },
       }),
-      db.user.findUnique({ where: { id: session.id as string } })
+      db.user.findUnique({ where: { id: session.id } }),
     ]);
+
     await logActivity({
-      actorName: user?.name || 'System',
-      action: 'created an application',
+      actorName: user?.name || "System",
+      action: "created an application",
       target: `${newApplication.student.firstName} ${newApplication.student.lastName} for ${newApplication.course.name}`,
     });
 
     return NextResponse.json(newApplication, { status: 201 });
   } catch (error) {
-    console.error('Failed to create application:', error);
-    return NextResponse.json({ error: 'Failed to create application' }, { status: 500 });
+    logError("Create application", error);
+    return apiError("Failed to create application");
   }
 }

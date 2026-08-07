@@ -1,31 +1,58 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { cookies } from 'next/headers';
-import { verifyAuth } from '@/lib/session';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { logError } from "@/lib/logger";
+import { cookies } from "next/headers";
+import { verifyAuth } from "@/lib/session";
+import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
 async function getSession() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
+  const token = cookieStore.get("auth_token")?.value;
   if (!token) return null;
-  try { return await verifyAuth(token); } catch { return null; }
+  try {
+    return await verifyAuth(token);
+  } catch {
+    return null;
+  }
 }
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
     const employee = await db.user.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       select: {
-        id: true, name: true, email: true, role: true, status: true,
-        employeeId: true, phone: true, alternatePhone: true, dateOfBirth: true,
-        gender: true, address: true, city: true, state: true, zipCode: true,
-        country: true, emergencyContact: true, emergencyPhone: true,
-        bankName: true, bankAccount: true, bankIfsc: true, panNumber: true,
-        basicSalary: true, hireDate: true, employmentType: true,
-        avatar: true, faceDescriptor: true, createdAt: true, updatedAt: true,
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        employeeId: true,
+        phone: true,
+        alternatePhone: true,
+        dateOfBirth: true,
+        gender: true,
+        address: true,
+        city: true,
+        state: true,
+        zipCode: true,
+        country: true,
+        emergencyContact: true,
+        emergencyPhone: true,
+        bankName: true,
+        bankAccount: true,
+        bankIfsc: true,
+        panNumber: true,
+        basicSalary: true,
+        hireDate: true,
+        employmentType: true,
+        avatar: true,
+        faceDescriptor: true,
+        createdAt: true,
+        updatedAt: true,
         branchId: true,
         department: { select: { id: true, name: true } },
         designation: { select: { id: true, title: true } },
@@ -38,23 +65,25 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     }
     return NextResponse.json(employee);
   } catch (error) {
-    console.error("Fetch Employee Error:", error);
+    logError("Fetch employee", error);
     return NextResponse.json({ error: "Failed to fetch employee" }, { status: 500 });
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'Admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || !["Admin", "Super Admin"].includes(session.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
     const body = await req.json();
 
+    const existing = await db.user.findUnique({ where: { id: Number(id) } });
+
     const employee = await db.user.update({
-      where: { id },
+      where: { id: Number(id) },
       data: {
         ...(body.name !== undefined && { name: body.name }),
         ...(body.email !== undefined && { email: body.email }),
@@ -74,41 +103,64 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         ...(body.bankAccount !== undefined && { bankAccount: body.bankAccount }),
         ...(body.bankIfsc !== undefined && { bankIfsc: body.bankIfsc }),
         ...(body.panNumber !== undefined && { panNumber: body.panNumber }),
-        ...(body.basicSalary !== undefined && { basicSalary: body.basicSalary ? parseFloat(body.basicSalary) : null }),
+        ...(body.basicSalary !== undefined && {
+          basicSalary: body.basicSalary ? parseFloat(body.basicSalary) : null,
+        }),
         ...(body.hireDate !== undefined && { hireDate: body.hireDate }),
         ...(body.employmentType !== undefined && { employmentType: body.employmentType }),
-        ...(body.departmentId !== undefined && { departmentId: body.departmentId || null }),
-        ...(body.designationId !== undefined && { designationId: body.designationId || null }),
-        ...(body.branchId !== undefined && { branchId: body.branchId || null }),
+        ...(body.departmentId !== undefined && {
+          departmentId: body.departmentId ? Number(body.departmentId) : null,
+        }),
+        ...(body.designationId !== undefined && {
+          designationId: body.designationId ? Number(body.designationId) : null,
+        }),
+        ...(body.branchId !== undefined && {
+          branchId: body.branchId ? Number(body.branchId) : null,
+        }),
         ...(body.status !== undefined && { status: body.status }),
         ...(body.role !== undefined && { role: body.role }),
         ...(body.faceDescriptor !== undefined && { faceDescriptor: body.faceDescriptor }),
       },
     });
 
+    await logActivity({
+      actorName: await getActorName(session?.id),
+      userId: session?.id,
+      action: "updated an employee",
+      target: existing?.name || id,
+      changes: diffChanges(existing, employee),
+    });
     return NextResponse.json(employee);
   } catch (error) {
-    console.error("Update Employee Error:", error);
+    logError("Update employee", error);
     return NextResponse.json({ error: "Failed to update employee" }, { status: 500 });
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'Admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || !["Admin", "Super Admin"].includes(session.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
-    if (id === session.id) {
-      return NextResponse.json({ error: 'You cannot delete your own account' }, { status: 400 });
+    if (Number(id) === session.id) {
+      return NextResponse.json({ error: "You cannot delete your own account" }, { status: 400 });
     }
 
-    await db.user.delete({ where: { id } });
+    const existing = await db.user.findUnique({ where: { id: Number(id) } });
+
+    await db.user.delete({ where: { id: Number(id) } });
+    await logActivity({
+      actorName: await getActorName(session?.id),
+      userId: session?.id,
+      action: "deleted an employee",
+      target: existing?.name || id,
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete Employee Error:", error);
+    logError("Delete employee", error);
     return NextResponse.json({ error: "Failed to delete employee" }, { status: 500 });
   }
 }

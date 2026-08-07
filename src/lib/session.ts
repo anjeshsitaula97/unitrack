@@ -3,28 +3,29 @@ import { jwtVerify, SignJWT } from "jose";
 const getJwtSecretKey = () => {
   const secret = process.env.JWT_SECRET;
   if (!secret || secret.length === 0) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("The environment variable JWT_SECRET is not set.");
-    } else {
-      return "super-secret-default-key-for-dev";
-    }
+    throw new Error("The environment variable JWT_SECRET is not set.");
   }
   return secret;
 };
 
-export const verifyAuth = async (token: string) => {
+export interface SessionPayload {
+  id: number;
+  email: string;
+  role: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
+export const verifyAuth = async (token: string): Promise<SessionPayload> => {
   try {
-    const verified = await jwtVerify(
-      token,
-      new TextEncoder().encode(getJwtSecretKey())
-    );
-    return verified.payload;
+    const verified = await jwtVerify(token, new TextEncoder().encode(getJwtSecretKey()));
+    return verified.payload as unknown as SessionPayload;
   } catch (err) {
     throw new Error("Your token has expired.");
   }
 };
 
-export const signToken = async (payload: { id: string; email: string; role: string }) => {
+export const signToken = async (payload: { id: number; email: string; role: string }) => {
   const token = await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

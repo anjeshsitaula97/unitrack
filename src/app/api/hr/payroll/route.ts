@@ -1,32 +1,46 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { cookies } from 'next/headers';
-import { verifyAuth } from '@/lib/session';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { cookies } from "next/headers";
+import { verifyAuth } from "@/lib/session";
+import { logActivity, getActorName } from "@/lib/activity";
 
 async function getSession() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
+  const token = cookieStore.get("auth_token")?.value;
   if (!token) return null;
-  try { return await verifyAuth(token); } catch { return null; }
+  try {
+    return await verifyAuth(token);
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(req: Request) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
-    const month = parseInt(searchParams.get('month') || String(new Date().getMonth() + 1));
-    const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
+    const month = parseInt(searchParams.get("month") || String(new Date().getMonth() + 1));
+    const year = parseInt(searchParams.get("year") || String(new Date().getFullYear()));
 
     const where: any = { month, year };
-    if (session.role !== 'Admin') where.userId = session.id;
+    if (!["Admin", "Super Admin"].includes(session.role)) where.userId = session.id;
 
     const records = await db.payroll.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       include: {
-        user: { select: { id: true, name: true, email: true, employeeId: true, basicSalary: true, department: { select: { name: true } } } },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            employeeId: true,
+            basicSalary: true,
+            department: { select: { name: true } },
+          },
+        },
         items: true,
       },
     });
@@ -40,8 +54,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'Admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || !["Admin", "Super Admin"].includes(session.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
@@ -58,7 +72,7 @@ export async function POST(req: Request) {
 
     const payroll = await db.payroll.create({
       data: {
-        userId,
+        userId: Number(userId),
         month: parseInt(month),
         year: parseInt(year),
         basicSalary: parseFloat(basicSalary) || 0,
@@ -78,6 +92,12 @@ export async function POST(req: Request) {
         user: { select: { id: true, name: true, employeeId: true } },
         items: true,
       },
+    });
+    await logActivity({
+      actorName: await getActorName(session?.id),
+      userId: session?.id,
+      action: "created a payroll record",
+      target: payroll.user?.name || String(payroll.id),
     });
     return NextResponse.json(payroll);
   } catch (error) {

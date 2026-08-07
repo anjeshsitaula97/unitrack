@@ -1,12 +1,27 @@
-﻿'use client';
+﻿"use client";
 
-import React, { useState } from 'react';
-import { Bell, Settings, ChevronRight, Home, Users, LogOut, User, Shield, HelpCircle } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Bell,
+  Settings,
+  ChevronRight,
+  Home,
+  LogOut,
+  User,
+  HelpCircle,
+  Moon,
+  Sun,
+  ShieldCheck,
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "@/lib/theme";
+import { safeJson } from "@/lib/fetch-client";
+import { clearAuthCache } from "./AppLayoutWrapper";
+import { deactivateSession } from "@/lib/client-session";
 
 interface TopbarProps {
-  role: 'admin' | 'student' | 'staff';
-  onRoleChange: (role: 'admin' | 'student' | 'staff') => void;
+  role: string;
+  onRoleChange: (role: string) => void;
   sidebarCollapsed: boolean;
   user?: any;
 }
@@ -21,94 +36,136 @@ interface Notification {
 }
 
 const breadcrumbMap: Record<string, string[]> = {
-  '/dashboard': ['Dashboard'],
-  '/universities': ['Universities'],
-  '/courses': ['Courses'],
-  '/leads': ['Leads'],
-  '/students': ['Students'],
-  '/applications': ['Applications'],
-  '/search': ['Search Courses'],
-  '/settings': ['Settings'],
-  '/settings/backups': ['Management', 'Database Backups'],
-  '/payments': ['Management', 'Payments'],
-  '/files': ['Files'],
-  '/expenses': ['Management', 'Expenses'],
-  '/tasks': ['Management', 'Country Workflow'],
-  '/analytics': ['Management', 'Analytics'],
-  '/reports': ['Management', 'Reports'],
-  '/access': ['Management', 'User Access'],
-  '/api-keys': ['Management', 'API Keys'],
-  '/learning-hub': ['Platform', 'Learning Hub'],
-  '/featured': ['Platform', 'Featured'],
-  '/automations': ['Platform', 'Automations'],
-  '/notifications': ['Platform', 'Notifications'],
-  '/tickets': ['Support', 'Tickets'],
-  '/support': ['Support', 'Support Hub'],
-  '/chat': ['Platform', 'Chat'],
+  "/dashboard": ["Dashboard"],
+  "/admin-dashboard": ["Administrator", "Dashboard"],
+  "/partner-dashboard": ["Partner", "Dashboard"],
+  "/universities": ["Universities"],
+  "/courses": ["Courses"],
+  "/leads": ["Leads"],
+  "/students": ["Students"],
+  "/applications": ["Applications"],
+  "/search": ["Search Courses"],
+  "/settings": ["Settings"],
+  "/settings/backups": ["Management", "Database Backups"],
+  "/payments": ["Management", "Payments"],
+  "/files": ["Files"],
+  "/expenses": ["Management", "Expenses"],
+  "/tasks": ["Management", "Country Workflow"],
+  "/analytics": ["Management", "Analytics"],
+  "/reports": ["Management", "Reports"],
+  "/reports/builder": ["Management", "Report Builder"],
+  "/access": ["Management", "User Access"],
+  "/api-keys": ["Management", "API Keys"],
+  "/learning-hub": ["Platform", "Learning Hub"],
+  "/featured": ["Platform", "Featured"],
+  "/automations": ["Platform", "Automations"],
+  "/notifications": ["Platform", "Notifications"],
+  "/tickets": ["Support", "Tickets"],
+  "/support": ["Support", "Support Hub"],
+  "/chat": ["Platform", "Chat"],
+  "/student-messages": ["Messages"],
+  "/calendar": ["Calendar"],
+  "/visa-timeline": ["Visa Timeline"],
+  "/bulk-import": ["Management", "Bulk Import/Export"],
 };
 
 export default function Topbar({ role, onRoleChange, sidebarCollapsed, user }: TopbarProps) {
+  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
-  const crumbs = breadcrumbMap[pathname] || ['Dashboard'];
+  const crumbs =
+    pathname.startsWith("/applications/") && pathname !== "/applications"
+      ? ["Applications", "Details"]
+      : breadcrumbMap[pathname] || ["Dashboard"];
   const [notifOpen, setNotifOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [notifications, setNotifications] = useState<Notification[] | undefined>(undefined);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isMounted, setIsMounted] = useState(true);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch('/api/notifications');
-      const data = await res.json();
+      const res = await fetch("/api/notifications");
+      const data = await safeJson(res);
       if (Array.isArray(data)) {
         setNotifications(data);
-        setUnreadCount(data.filter(n => !n.read).length);
+        setUnreadCount(data.filter((n) => !n.read).length);
       }
     } catch (err) {
-      console.error('Failed to fetch notifications:', err);
+      console.error("Failed to fetch notifications:", err);
     }
   };
 
-  React.useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // Polling every minute
-    return () => clearInterval(interval);
+  useEffect(() => {
+    Promise.resolve().then(fetchNotifications);
+
+    const es = new EventSource("/api/notifications/stream");
+    eventSourceRef.current = es;
+
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "notifications" && data.notifications?.length > 0) {
+          setNotifications((prev) => {
+            const existing = prev || [];
+            const newIds = new Set(data.notifications.map((n: any) => n.id));
+            const merged = [
+              ...data.notifications,
+              ...existing.filter((n: any) => !newIds.has(n.id)),
+            ];
+            return merged.slice(0, 50);
+          });
+          setUnreadCount(data.unreadCount);
+        }
+      } catch {}
+    };
+
+    es.onerror = () => {
+      es.close();
+    };
+
+    return () => {
+      es.close();
+    };
   }, []);
 
   const markAllRead = async () => {
     try {
-      await fetch('/api/notifications', { method: 'PUT', body: JSON.stringify({ read: true }) });
-      fetchNotifications();
+      await fetch("/api/notifications", { method: "PUT", body: JSON.stringify({ read: true }) });
+      setNotifications((prev) => prev?.map((n) => ({ ...n, read: true })));
+      setUnreadCount(0);
     } catch (err) {
-      console.error('Failed to mark all read:', err);
+      console.error("Failed to mark all read:", err);
     }
   };
 
   const markRead = async (id: string) => {
     try {
-      await fetch('/api/notifications', { 
-        method: 'PUT', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, read: true }) 
+      await fetch("/api/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, read: true }),
       });
-      fetchNotifications();
+      setNotifications((prev) => prev?.map((n) => (n.id === id ? { ...n, read: true } : n)));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
-      console.error('Failed to mark notification as read:', err);
+      console.error("Failed to mark notification as read:", err);
     }
   };
 
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      const res = await fetch('/api/auth/logout', { method: 'POST' });
+      const res = await fetch("/api/auth/logout", { method: "POST" });
       if (res.ok) {
-        router.push('/login');
-
+        clearAuthCache();
+        deactivateSession();
+        router.push("/login");
       }
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     } finally {
       setIsLoggingOut(false);
     }
@@ -119,99 +176,109 @@ export default function Topbar({ role, onRoleChange, sidebarCollapsed, user }: T
       className={`
         fixed top-0 right-0 h-14 bg-white border-b border-slate-200 z-20
         flex items-center px-6 gap-4 transition-all duration-300
-        ${sidebarCollapsed ? 'left-16' : 'left-60'}
+        ${sidebarCollapsed ? "left-16" : "left-60"}
       `}
     >
-      {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm flex-1 min-w-0">
         <Home size={15} className="text-slate-400 flex-shrink-0" />
         {crumbs.map((crumb, i) => (
           <React.Fragment key={`crumb-${crumb}-${i}`}>
             <ChevronRight size={13} className="text-slate-300 flex-shrink-0" />
-            <span className={`truncate ${i === crumbs.length - 1 ? 'font-semibold text-slate-800' : 'text-slate-500'}`}>
+            <span
+              className={`truncate ${i === crumbs.length - 1 ? "font-semibold text-slate-800" : "text-slate-500"}`}
+            >
               {crumb}
             </span>
           </React.Fragment>
         ))}
       </div>
 
-      {/* Role Display Buttons (Read-only) */}
-      <div className="flex items-center bg-slate-100 rounded-lg p-0.5 gap-0.5 ml-auto mr-2">
-        <div
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 ${
-            user?.role?.toLowerCase() === 'admin' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-400 opacity-60 cursor-not-allowed'
-          }`}
-        >
-          <Shield size={13} />
-          Admin
-        </div>
-        <div
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 ${
-            user?.role?.toLowerCase() === 'staff' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-400 opacity-60 cursor-not-allowed'
-          }`}
-        >
-          <Users size={13} />
-          Staff
-        </div>
-        <div
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 ${
-            user?.role?.toLowerCase() === 'student' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-400 opacity-60 cursor-not-allowed'
-          }`}
-        >
-          <User size={13} />
-          Student
-        </div>
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-white text-indigo-700 shadow-sm ml-auto mr-2">
+        <ShieldCheck size={13} />
+        {user?.role || role}
       </div>
 
-      {/* Settings Dropdown */}
+      <button
+        type="button"
+        aria-label="Toggle dark mode"
+        onClick={toggleTheme}
+        className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all duration-150"
+      >
+        {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+      </button>
+
       <div className="relative">
-        <button type="button" aria-label="Settings"
+        <button
+          type="button"
+          aria-label="Settings"
           onClick={() => setSettingsOpen(!settingsOpen)}
-          className={`p-2 rounded-lg transition-all duration-150 ${settingsOpen ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+          className={`p-2 rounded-lg transition-all duration-150 ${settingsOpen ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
         >
           <Settings size={17} />
         </button>
 
         {settingsOpen && (
           <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-slate-200 shadow-lg z-50 animate-fade-in py-1">
-            <button type="button" 
-              onClick={() => { router.push('/settings?tab=profile'); setSettingsOpen(false); }}
+            <button
+              type="button"
+              onClick={() => {
+                router.push("/settings?tab=profile");
+                setSettingsOpen(false);
+              }}
               className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
             >
               <User size={14} /> My Profile
             </button>
-            <button type="button" 
-              onClick={() => { router.push('/settings?tab=roles'); setSettingsOpen(false); }}
+            <button
+              type="button"
+              onClick={() => {
+                router.push("/settings?tab=roles");
+                setSettingsOpen(false);
+              }}
               className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
             >
               <Settings size={14} /> System Settings
             </button>
-            <button type="button" 
-              onClick={() => { router.push('/support'); setSettingsOpen(false); }}
+            <button
+              type="button"
+              onClick={() => {
+                router.push("/support");
+                setSettingsOpen(false);
+              }}
               className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
             >
               <HelpCircle size={14} /> Support Hub
             </button>
-            <button type="button" 
+            <button
+              type="button"
               onClick={handleLogout}
               disabled={isLoggingOut}
               className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
-             aria-label="LogOut"> <LogOut size={14} className={isLoggingOut ? 'animate-spin' : ''} />
-              {isLoggingOut ? 'Signing out...' : 'Sign Out'}
+              aria-label="LogOut"
+            >
+              {" "}
+              <LogOut size={14} className={isLoggingOut ? "animate-spin" : ""} />
+              {isLoggingOut ? "Signing out..." : "Sign Out"}
             </button>
           </div>
         )}
       </div>
 
-      {/* Notifications */}
       <div className="relative">
-        <button type="button" aria-label="Notifications"
-          onClick={() => { setNotifOpen(!notifOpen); setSettingsOpen(false); }}
+        <button
+          type="button"
+          aria-label="Notifications"
+          onClick={() => {
+            setNotifOpen(!notifOpen);
+            setSettingsOpen(false);
+          }}
           className="relative p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all duration-150"
         >
           <Bell size={17} />
           {isMounted && unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 size-2 bg-indigo-500 rounded-full border border-white" />
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-indigo-500 text-white text-[10px] font-bold rounded-full px-1 border-2 border-white leading-none">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
           )}
         </button>
         {isMounted && notifOpen && (
@@ -219,7 +286,8 @@ export default function Topbar({ role, onRoleChange, sidebarCollapsed, user }: T
             <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
               <span className="font-semibold text-slate-800 text-sm">Notifications</span>
               {unreadCount > 0 && (
-                <button type="button" 
+                <button
+                  type="button"
                   onClick={markAllRead}
                   className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline"
                 >
@@ -234,10 +302,11 @@ export default function Topbar({ role, onRoleChange, sidebarCollapsed, user }: T
                 </div>
               )}
               {(notifications ?? []).map((n) => (
-                <button type="button"
-                  key={n.id} 
+                <button
+                  type="button"
+                  key={n.id}
                   onClick={() => markRead(n.id)}
-                  className={`px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors ${!n.read ? 'bg-indigo-50/30' : ''}`}
+                  className={`w-full px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors text-left ${!n.read ? "bg-indigo-50/30" : ""}`}
                 >
                   <p className="text-[11px] font-semibold text-slate-800 mb-0.5">{n.title}</p>
                   <p className="text-xs text-slate-700 leading-relaxed">{n.message}</p>
@@ -247,8 +316,12 @@ export default function Topbar({ role, onRoleChange, sidebarCollapsed, user }: T
             </div>
             {(notifications?.length ?? 0) > 0 && (
               <div className="px-4 py-2 border-t border-slate-100 text-center">
-                <button type="button" 
-                  onClick={() => { router.push('/notifications'); setNotifOpen(false); }}
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push("/notifications");
+                    setNotifOpen(false);
+                  }}
                   className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
                 >
                   View All

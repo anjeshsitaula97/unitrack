@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { logError } from "@/lib/logger";
 
 const prisma = db;
 
@@ -20,7 +21,7 @@ export async function GET() {
       courses: featuredCourses,
     });
   } catch (error) {
-    console.error('Failed to fetch featured content:', error);
-    return NextResponse.json({ error: 'Failed to fetch featured content' }, { status: 500 });
+    logError("Fetch featured content", error);
+    return NextResponse.json({ error: "Failed to fetch featured content" }, { status: 500 });
   }
 }

@@ -1,30 +1,81 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
+import { logActivity, getActorName } from "@/lib/activity";
+import { getPaginationParams, paginatedResponse, apiError, getSession } from "@/lib/api-utils";
 
 const prisma = db;
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const leads = await prisma.lead.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    const session = await getSession();
+    if (!session) return apiError("Unauthorized", 401);
 
-    return NextResponse.json(leads);
+    const { searchParams } = new URL(req.url);
+    const params = getPaginationParams(searchParams);
+    const statusFilter = searchParams.get("status") || "";
+    const sourceFilter = searchParams.get("source") || "";
+    const counselorFilter = searchParams.get("counselor") || "";
+
+    const where: any = {};
+
+    if (params.search) {
+      where.OR = [
+        { name: { contains: params.search, mode: "insensitive" } },
+        { email: { contains: params.search, mode: "insensitive" } },
+        { phone: { contains: params.search, mode: "insensitive" } },
+      ];
+    }
+
+    if (statusFilter) {
+      where.status = statusFilter;
+    } else {
+      where.status = { not: "Deleted" };
+    }
+    if (sourceFilter) where.source = sourceFilter;
+    if (counselorFilter) where.counselor = counselorFilter;
+
+    const [leads, total] = await Promise.all([
+      prisma.lead.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: params.skip,
+        take: params.perPage,
+      }),
+      prisma.lead.count({ where }),
+    ]);
+
+    return NextResponse.json(paginatedResponse(leads, total, params));
   } catch (error) {
     console.error("Fetch Leads Error:", error);
-    return NextResponse.json({ error: "Failed to fetch leads" }, { status: 500 });
+    return apiError("Failed to fetch leads");
   }
 }
 
 export async function POST(req: Request) {
   try {
+    const session = await getSession();
+    if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
+      return apiError("Unauthorized", 401);
+
     const body = await req.json();
-    const { 
-      name, email, phone, source, status, notes, 
-      uploadedBy, uploaderNotes, counselor, counselorNotes,
-      assignedDate, nextFollowUp,
-      interestedCountry, maritalStatus, childrenCount,
-      referenceName
+    const {
+      name,
+      email,
+      phone,
+      source,
+      status,
+      notes,
+      uploadedBy,
+      uploaderNotes,
+      counselor,
+      counselorNotes,
+      assignedDate,
+      nextFollowUp,
+      interestedCountry,
+      maritalStatus,
+      childrenCount,
+      referenceName,
     } = body;
 
     if (!name || !email) {
@@ -52,12 +103,25 @@ export async function POST(req: Request) {
       },
     });
 
+    await createNotification({
+      title: "Lead Created",
+      message: `Lead "${name}" has been added.`,
+      type: "Success",
+    });
+
+    await logActivity({
+      actorName: await getActorName(session?.id),
+      userId: session?.id,
+      action: "created a lead",
+      target: lead.name,
+    });
+
     return NextResponse.json(lead);
   } catch (error) {
     console.error("Create Lead Error:", error);
-    if ((error as any).code === 'P2002') {
+    if ((error as any).code === "P2002") {
       return NextResponse.json({ error: "A lead with this email already exists" }, { status: 400 });
     }
-    return NextResponse.json({ error: "Failed to create lead" }, { status: 500 });
+    return apiError("Failed to create lead");
   }
 }

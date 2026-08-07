@@ -1,109 +1,159 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { safeParseArray } from '@/lib/json';
-import { logActivity } from '@/lib/activity';
-import { cookies } from 'next/headers';
-import { verifyAuth } from '@/lib/session';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { safeParseArray } from "@/lib/json";
+import { logActivity } from "@/lib/activity";
+import { createNotification } from "@/lib/notifications";
+import { getPaginationParams, paginatedResponse, apiError, getSession } from "@/lib/api-utils";
 
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
-  if (!token) return null;
+export async function GET(req: NextRequest) {
   try {
-    return await verifyAuth(token);
-  } catch (err) {
-    return null;
-  }
-}
+    const session = await getSession();
+    if (!session) return apiError("Unauthorized", 401);
 
-export async function GET() {
-  try {
-    const courses = await db.course.findMany({
-      orderBy: { name: 'asc' },
-      include: { university: true },
-    });
-    // Transform to flat structure for the frontend if needed
+    const { searchParams } = new URL(req.url);
+    const params = getPaginationParams(searchParams);
+    const statusFilter = searchParams.get("status") || "";
+    const universityId = searchParams.get("universityId") || "";
+    const levelFilter = searchParams.get("level") || "";
+    const facultyFilter = searchParams.get("faculty") || "";
+    const degreeTypeFilter = searchParams.get("degreeType") || "";
+
+    const where: any = {};
+
+    if (params.search) {
+      where.OR = [
+        { name: { contains: params.search, mode: "insensitive" } },
+        { instructor: { contains: params.search, mode: "insensitive" } },
+        { description: { contains: params.search, mode: "insensitive" } },
+      ];
+    }
+
+    if (statusFilter) {
+      where.status = statusFilter;
+    } else {
+      where.status = { not: "Deleted" };
+    }
+    if (universityId) where.universityId = Number(universityId);
+    if (levelFilter) where.level = levelFilter;
+    if (facultyFilter) where.faculty = facultyFilter;
+    if (degreeTypeFilter) where.degreeType = degreeTypeFilter;
+
+    const [courses, total] = await Promise.all([
+      db.course.findMany({
+        where,
+        orderBy: { name: "asc" },
+        include: { university: true },
+        skip: params.skip,
+        take: params.perPage,
+      }),
+      db.course.count({ where }),
+    ]);
+
     const transformed = courses.map((course: any) => ({
       ...course,
-      university: course.university?.name || 'Unknown',
+      university: course.university?.name || "Unknown",
       universityLogo: course.university?.logo || null,
-      faculty: course.faculty || 'General',
-      degreeType: course.degreeType || 'None',
-      // Convert JSON strings to arrays
+      faculty: course.faculty || "General",
+      degreeType: course.degreeType || "None",
       prerequisites: safeParseArray(course.prerequisites),
       quickFilters: safeParseArray(course.quickFilters),
       requirements: safeParseArray(course.requirements),
       applicationDeadline: course.applicationDeadline,
     }));
-    return NextResponse.json(transformed);
+
+    return NextResponse.json(paginatedResponse(transformed, total, params));
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch courses' }, { status: 500 });
+    console.error(error);
+    return apiError("Failed to fetch courses");
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
+      return apiError("Unauthorized", 401);
     const data = await req.json();
     const newCourse = await db.course.create({
-      // ... existing data ...
       data: {
         name: data.name || data.title,
-        universityId: data.universityId,
-        faculty: data.faculty || 'General',
-        degreeType: data.degreeType || 'None',
-        level: data.studyLevel || 'Undergraduate',
+        universityId: Number(data.universityId),
+        faculty: data.faculty || "General",
+        degreeType: data.degreeType || "None",
+        level: data.studyLevel || "Undergraduate",
         credits: parseInt(data.credits) || 0,
-        duration: data.duration || '0',
-        startDate: data.startDate && !isNaN(new Date(data.startDate).getTime()) 
-          ? new Date(data.startDate) 
-          : null,
-        color: data.color || '#6366f1',
-        initials: data.initials || data.name?.substring(0, 2).toUpperCase() || 'CX',
-        instructor: data.instructor || 'TBA',
-        description: data.description || '',
+        duration: data.duration || "0",
+        startDate:
+          data.startDate && !isNaN(new Date(data.startDate).getTime())
+            ? new Date(data.startDate)
+            : null,
+        color: data.color || "#6366f1",
+        initials: data.initials || data.name?.substring(0, 2).toUpperCase() || "CX",
+        instructor: data.instructor || "TBA",
+        description: data.description || "",
         prerequisites: JSON.stringify(data.prerequisites || []),
-        intake: data.intake || '',
-        language: data.language || 'English',
-        mode: data.mode || 'Online',
-        academicRequirement: data.academicRequirement || '',
-        percentageRequired: data.percentageRequired || '',
-        gpaRequired: data.gpaRequired || '',
-        englishLanguageType: data.englishLanguageType || 'IELTS',
-        englishOverallScore: data.englishOverallScore || '',
-        englishReadingScore: data.englishReadingScore || '',
-        englishWritingScore: data.englishWritingScore || '',
-        englishListeningScore: data.englishListeningScore || '',
-        englishSpeakingScore: data.englishSpeakingScore || '',
-        tuitionFee: data.tuitionFee || '',
-        applicationFee: data.applicationFee || '',
-        applicationFeeCurrency: data.applicationFeeCurrency || '',
-        currency: data.currency || '',
+        intake: data.intake || "",
+        language: data.language || "English",
+        mode: data.mode || "Online",
+        academicRequirement: data.academicRequirement || "",
+        percentageRequired: data.percentageRequired || "",
+        gpaRequired: data.gpaRequired || "",
+        englishLanguageType: data.englishLanguageType || "IELTS",
+        englishOverallScore: data.englishOverallScore || "",
+        englishReadingScore: data.englishReadingScore || "",
+        englishWritingScore: data.englishWritingScore || "",
+        englishListeningScore: data.englishListeningScore || "",
+        englishSpeakingScore: data.englishSpeakingScore || "",
+        tuitionFee: data.tuitionFee || "",
+        applicationFee: data.applicationFee || "",
+        applicationFeeCurrency: data.applicationFeeCurrency || "",
+        currency: data.currency || "",
         quickFilters: JSON.stringify(data.quickFilters || []),
         requirements: JSON.stringify(data.requirements || []),
-        applicationDeadline: data.applicationDeadline && !isNaN(new Date(data.applicationDeadline).getTime()) 
-          ? new Date(data.applicationDeadline) 
-          : null,
+        applicationDeadline:
+          data.applicationDeadline && !isNaN(new Date(data.applicationDeadline).getTime())
+            ? new Date(data.applicationDeadline)
+            : null,
         courseCode: data.courseCode || null,
-        englishTests: typeof data.englishTests === 'string' ? data.englishTests : JSON.stringify(data.englishTests || []),
+        englishTests:
+          typeof data.englishTests === "string"
+            ? data.englishTests
+            : JSON.stringify(data.englishTests || []),
+        commissionType: data.commissionType || "Percentage",
+        commissionValue:
+          data.commissionValue !== undefined &&
+          data.commissionValue !== "" &&
+          data.commissionValue !== null
+            ? parseFloat(data.commissionValue)
+            : null,
+        commissionCurrency: data.commissionCurrency || null,
       },
     });
 
     if (session) {
-      const user = await db.user.findUnique({ where: { id: session.id as string } });
+      const user = await db.user.findUnique({ where: { id: session.id } });
       await logActivity({
-        actorName: user?.name || 'System',
-        action: 'created a new course',
+        actorName: user?.name || "System",
+        action: "created a new course",
         target: newCourse.name,
       });
     }
 
+    await createNotification({
+      userId: String(session.id),
+      title: "Course Created",
+      message: `Course "${newCourse.name}" has been added.`,
+      type: "Success",
+    });
+
     return NextResponse.json(newCourse, { status: 201 });
   } catch (error) {
-    console.error('Course Creation Error:', error);
-    return NextResponse.json({ 
-      error: 'Failed to create course', 
-      details: error instanceof Error ? error.message : String(error) 
-    }, { status: 400 });
+    console.error("Course Creation Error:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to create course",
+      },
+      { status: 400 }
+    );
   }
 }

@@ -1,54 +1,44 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Home } from 'lucide-react';
-
-const handleGoBack = () => {
-    if (typeof window !== 'undefined') {
-        window.history?.back();
-    }
-};
+import React from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Home, SearchSlash } from "lucide-react";
 
 export default function NotFound() {
-    const { push } = useRouter();
+  const router = useRouter();
 
-    const handleGoHome = () => {
-        push('/');
-    };
-
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-            <div className="text-center max-w-md">
-                <div className="flex justify-center mb-6">
-                    <div className="relative">
-                        <h1 className="text-9xl font-bold text-primary opacity-20">404</h1>
-                    </div>
-                </div>
-
-                <h2 className="text-2xl font-medium text-onBackground mb-2">Page Not Found</h2>
-                <p className="text-onBackground/70 mb-8">
-                    The page you&apos;re looking for doesn&apos;t exist. Let&apos;s get you back!
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button type="button"
-                        onClick={handleGoBack}
-                        className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors duration-200"
-                    >
-                        <ArrowLeft size={16} />
-                        Go Back
-                    </button>
-
-                    <button type="button"
-                        onClick={handleGoHome}
-                        className="inline-flex items-center justify-center gap-2 border border-border bg-background text-foreground px-6 py-3 rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
-                    >
-                        <Home size={16} />
-                        Back to Home
-                    </button>
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
+      <div className="text-center max-w-md">
+        <div className="size-20 rounded-3xl bg-slate-100 flex items-center justify-center mx-auto mb-6">
+          <SearchSlash size={40} className="text-slate-400" />
         </div>
-    );
+
+        <h1 className="text-6xl font-black text-slate-200 mb-2">404</h1>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Page not found</h2>
+        <p className="text-sm text-slate-500 mb-8">
+          The page you&apos;re looking for doesn&apos;t exist or has been moved.
+        </p>
+
+        <div className="flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all"
+          >
+            <ArrowLeft size={16} />
+            Go Back
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+          >
+            <Home size={16} />
+            Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

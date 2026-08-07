@@ -1,10 +1,10 @@
-import React from 'react';
-import AppLayoutWrapper from '@/components/AppLayoutWrapper';
-import AutomationsContent from './components/AutomationsContent';
+import React from "react";
+import AppLayoutWrapper from "@/components/AppLayoutWrapper";
+import AutomationsContent from "./components/AutomationsContent";
 
 export const metadata = {
-  title: 'Automations | UniTrack',
-  description: 'UniTrack administration - Automations',
+  title: "Automations | UniTrack",
+  description: "UniTrack administration - Automations",
 };
 
 export default function AutomationsPage() {

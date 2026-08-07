@@ -1,5 +1,5 @@
-import React from 'react';
-import { Loader2 } from 'lucide-react';
+import React from "react";
+import { Loader2 } from "lucide-react";
 
 export default function LoginLoading() {
   return (
@@ -10,4 +10,4 @@ export default function LoginLoading() {
       </div>
     </div>
   );
-};
+}

@@ -1,10 +1,10 @@
-import React from 'react';
-import AppLayoutWrapper from '@/components/AppLayoutWrapper';
-import SupportContent from './components/SupportContent';
+import React from "react";
+import AppLayoutWrapper from "@/components/AppLayoutWrapper";
+import SupportContent from "./components/SupportContent";
 
 export const metadata = {
-  title: 'Support | UniTrack',
-  description: 'UniTrack administration - Support',
+  title: "Support | UniTrack",
+  description: "UniTrack administration - Support",
 };
 
 export default function SupportPage() {

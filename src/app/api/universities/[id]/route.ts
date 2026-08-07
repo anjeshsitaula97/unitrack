@@ -1,25 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
+import { softDeleteUniversity } from "@/lib/trash";
+import { getSession, apiError } from "@/lib/api-utils";
+import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await getSession();
+    if (!session) return apiError("Unauthorized", 401);
     const { id } = await params;
 
     const university = await db.university.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: {
         partner: true,
         courses: {
-          orderBy: { name: 'asc' },
+          orderBy: { name: "asc" },
         },
       },
     });
 
     if (!university) {
-      return NextResponse.json({ error: 'University not found' }, { status: 404 });
+      return NextResponse.json({ error: "University not found" }, { status: 404 });
     }
 
     // Transform university data
@@ -27,17 +30,34 @@ export async function GET(
       ...university,
       addedDate: university.createdAt,
       accredited: university.accreditation !== null,
-      accreditation: university.accreditation ? (university.accreditation.startsWith('[') ? JSON.parse(university.accreditation) : [university.accreditation]) : [],
-      color: `hsl(${university.name.length * 137 % 360}, 70%, 50%)`,
-      initials: university.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2),
-      requirements: university.requirements ? (university.requirements.startsWith('[') ? JSON.parse(university.requirements) : [university.requirements]) : [],
-      images: university.images ? (university.images.startsWith('[') ? JSON.parse(university.images) : [university.images]) : [],
+      accreditation: university.accreditation
+        ? university.accreditation.startsWith("[")
+          ? JSON.parse(university.accreditation)
+          : [university.accreditation]
+        : [],
+      color: `hsl(${(university.name.length * 137) % 360}, 70%, 50%)`,
+      initials: university.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .substring(0, 2),
+      requirements: university.requirements
+        ? university.requirements.startsWith("[")
+          ? JSON.parse(university.requirements)
+          : [university.requirements]
+        : [],
+      images: university.images
+        ? university.images.startsWith("[")
+          ? JSON.parse(university.images)
+          : [university.images]
+        : [],
     };
 
     // Group courses by faculty
     const groupedCourses: Record<string, any[]> = {};
-    transformed.courses.forEach(course => {
-      const faculty = course.faculty || 'General';
+    university.courses.forEach((course: any) => {
+      const faculty = course.faculty || "General";
       if (!groupedCourses[faculty]) {
         groupedCourses[faculty] = [];
       }
@@ -49,81 +69,123 @@ export async function GET(
       groupedCourses,
     });
   } catch (error) {
-    console.error('Error fetching university:', error);
-    return NextResponse.json({ error: 'Failed to fetch university details' }, { status: 500 });
+    console.error("Error fetching university:", error);
+    return NextResponse.json({ error: "Failed to fetch university details" }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await getSession();
+    if (!session || !["Admin", "Super Admin"].includes(session.role as string))
+      return apiError("Unauthorized", 401);
     const { id } = await params;
-    
-    await db.university.delete({
-      where: { id }
-    });
+    const university = await softDeleteUniversity(id);
 
-    return NextResponse.json({ success: true, message: 'University deleted successfully' });
+    if (university) {
+      await createNotification({
+        title: "University Deleted",
+        message: `University "${university.name}" has been moved to trash.`,
+        type: "Warning",
+      });
+
+      await logActivity({
+        actorName: await getActorName(session?.id),
+        userId: session?.id,
+        action: "deleted a university",
+        target: university.name,
+      });
+    }
+
+    return NextResponse.json({ success: true, message: "University moved to trash" });
   } catch (error) {
-    console.error('Delete error:', error);
-    return NextResponse.json({ error: 'Failed to delete university' }, { status: 500 });
+    console.error("Delete error:", error);
+    return NextResponse.json({ error: "Failed to delete university" }, { status: 500 });
   }
 }
 
 const parseSafeInt = (val: any) => {
-  if (val === undefined || val === null || val === '') return null;
+  if (val === undefined || val === null || val === "") return null;
   const parsed = parseInt(val.toString());
   return isNaN(parsed) ? null : parsed;
 };
 
 const parseSafeFloat = (val: any) => {
-  if (val === undefined || val === null || val === '') return null;
+  if (val === undefined || val === null || val === "") return null;
   const parsed = parseFloat(val.toString());
   return isNaN(parsed) ? null : parsed;
 };
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await getSession();
+    if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
+      return apiError("Unauthorized", 401);
     const { id } = await params;
     const data = await req.json();
-    
+    const university = await db.university.findUnique({ where: { id: Number(id) } });
+
     const updated = await db.university.update({
-      where: { id },
+      where: { id: Number(id) },
       data: {
         name: data.name,
         shortName: data.shortName || null,
         country: data.country,
-        city: data.city || '',
+        city: data.city || "",
         website: data.websiteUrl || data.website || null,
         founded: parseSafeInt(data.establishedYear || data.foundedYear),
-        accreditation: data.accreditationBody ? (typeof data.accreditationBody === 'string' ? data.accreditationBody : JSON.stringify(data.accreditationBody)) : (data.accreditation ? (typeof data.accreditation === 'string' ? data.accreditation : JSON.stringify(data.accreditation)) : null),
+        accreditation: data.accreditationBody
+          ? typeof data.accreditationBody === "string"
+            ? data.accreditationBody
+            : JSON.stringify(data.accreditationBody)
+          : data.accreditation
+            ? typeof data.accreditation === "string"
+              ? data.accreditation
+              : JSON.stringify(data.accreditation)
+            : null,
         ranking: parseSafeInt(data.ranking),
         logo: data.logo || null,
         banner: data.banner || null,
         images: data.images || (data.imagesList ? JSON.stringify(data.imagesList) : null),
-        requirements: data.requirements ? (typeof data.requirements === 'string' ? data.requirements : JSON.stringify(data.requirements)) : null,
-        partnerId: data.partnerId || null,
+        requirements: data.requirements
+          ? typeof data.requirements === "string"
+            ? data.requirements
+            : JSON.stringify(data.requirements)
+          : null,
+        partnerId: data.partnerId ? Number(data.partnerId) : null,
         partnershipAmount: parseSafeFloat(data.partnershipAmount),
-        commissionType: data.commissionType || 'Percentage',
+        commissionType: data.commissionType || "Percentage",
         commissionValue: parseSafeFloat(data.commissionValue),
         commissionCurrency: data.commissionCurrency || null,
-        status: data.status || 'Active',
-        type: data.type || 'Public',
+        status: data.status || "Active",
+        type: data.type || "Public",
         email: data.email || null,
         phone: data.phone || null,
         address: data.address || null,
         description: data.description || null,
-      }
+      },
+    });
+
+    if (university) {
+      await createNotification({
+        title: "University Updated",
+        message: `University "${university.name}" has been updated.`,
+        type: "Info",
+      });
+    }
+
+    const changes = diffChanges(university, updated);
+    await logActivity({
+      actorName: await getActorName(session?.id),
+      userId: session?.id,
+      action: "updated a university",
+      target: updated.name,
+      changes,
     });
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error('Update error:', error);
-    return NextResponse.json({ error: 'Failed to update university' }, { status: 500 });
+    console.error("Update error:", error);
+    return NextResponse.json({ error: "Failed to update university" }, { status: 500 });
   }
 }

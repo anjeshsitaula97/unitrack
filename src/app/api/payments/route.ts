@@ -1,57 +1,67 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { logActivity } from '@/lib/activity';
-import { cookies } from 'next/headers';
-import { verifyAuth } from '@/lib/session';
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch (err) {
-    return null;
-  }
-}
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { logActivity } from "@/lib/activity";
+import { getPaginationParams, paginatedResponse, apiError, getSession } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) return apiError("Unauthorized", 401);
+
     const { searchParams } = new URL(req.url);
-    const studentId = searchParams.get('studentId');
+    const params = getPaginationParams(searchParams);
+    const studentId = searchParams.get("studentId");
+    const statusFilter = searchParams.get("status") || "";
+    const methodFilter = searchParams.get("method") || "";
 
     const where: any = {};
-    if (studentId) {
-      where.studentId = studentId;
+    if (studentId) where.studentId = Number(studentId);
+    if (statusFilter) where.status = statusFilter;
+    if (methodFilter) where.method = methodFilter;
+
+    if (params.search) {
+      where.student = {
+        OR: [
+          { firstName: { contains: params.search, mode: "insensitive" } },
+          { lastName: { contains: params.search, mode: "insensitive" } },
+          { email: { contains: params.search, mode: "insensitive" } },
+        ],
+      };
     }
 
-    const payments = await db.payment.findMany({
-      where,
-      include: {
-        student: {
-          select: { firstName: true, lastName: true, email: true }
-        }
-      },
-      orderBy: { date: 'desc' }
-    });
+    const [payments, total] = await Promise.all([
+      db.payment.findMany({
+        where,
+        include: {
+          student: {
+            select: { firstName: true, lastName: true, email: true },
+          },
+        },
+        orderBy: { date: "desc" },
+        skip: params.skip,
+        take: params.perPage,
+      }),
+      db.payment.count({ where }),
+    ]);
 
-    return NextResponse.json(payments);
+    return NextResponse.json(paginatedResponse(payments, total, params));
   } catch (error) {
-    console.error('Failed to fetch payments:', error);
-    return NextResponse.json({ error: 'Failed to fetch payments' }, { status: 500 });
+    console.error("Failed to fetch payments:", error);
+    return apiError("Failed to fetch payments");
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const data = await req.json();
-    const { studentId, amount, currency, status, method, date, description, proofUrl } = data;
+    const studentId = Number(data.studentId);
+    const { amount, currency, status, method, date, description, proofUrl } = data;
 
     if (!studentId || !amount) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const [newPayment, user] = await Promise.all([
@@ -59,28 +69,27 @@ export async function POST(req: NextRequest) {
         data: {
           studentId,
           amount: parseFloat(amount),
-          currency: currency || 'NPR',
-          status: status || 'Pending',
-          method: method || 'Cash',
+          currency: currency || "NPR",
+          status: status || "Pending",
+          method: method || "Cash",
           date: date ? new Date(date) : new Date(),
-          description: description || '',
-          proofUrl: proofUrl || null
+          description: description || "",
+          proofUrl: proofUrl || null,
         },
-        include: {
-          student: true
-        }
+        include: { student: true },
       }),
-      db.user.findUnique({ where: { id: session.id as string } })
+      db.user.findUnique({ where: { id: session.id } }),
     ]);
+
     await logActivity({
-      actorName: user?.name || 'System',
-      action: 'recorded a payment',
+      actorName: user?.name || "System",
+      action: "recorded a payment",
       target: `${newPayment.currency} ${newPayment.amount} for ${newPayment.student.firstName} ${newPayment.student.lastName}`,
     });
 
     return NextResponse.json(newPayment, { status: 201 });
   } catch (error) {
-    console.error('Failed to record payment:', error);
-    return NextResponse.json({ error: 'Failed to record payment' }, { status: 500 });
+    console.error("Failed to record payment:", error);
+    return apiError("Failed to record payment");
   }
 }

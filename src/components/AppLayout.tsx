@@ -1,14 +1,16 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Sidebar from './Sidebar';
-import Topbar from './Topbar';
-import { Toaster } from 'sonner';
+import React, { useState } from "react";
+import Sidebar from "./Sidebar";
+import Topbar from "./Topbar";
+import ErrorBoundary from "./ErrorBoundary";
+import GuidedTour from "./GuidedTour";
+import { Toaster } from "sonner";
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  role: 'admin' | 'student' | 'staff';
-  onRoleChange: (role: 'admin' | 'student' | 'staff') => void;
+  role: string;
+  onRoleChange: (role: string) => void;
   user?: any;
 }
 
@@ -20,12 +22,13 @@ export default function AppLayout({ children, role, onRoleChange, user }: AppLay
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} user={user} />
       <Topbar role={role} onRoleChange={onRoleChange} sidebarCollapsed={collapsed} user={user} />
       <main
-        className={`transition-all duration-300 pt-14 min-h-screen ${collapsed ? 'ml-16' : 'ml-60'}`}
+        className={`transition-all duration-300 pt-14 min-h-screen ${collapsed ? "ml-16" : "ml-60"}`}
       >
         <div className="p-6 max-w-screen-2xl mx-auto">
-          {children}
+          <ErrorBoundary>{children}</ErrorBoundary>
         </div>
       </main>
+      <GuidedTour user={user} />
       <Toaster position="bottom-right" richColors />
     </div>
   );

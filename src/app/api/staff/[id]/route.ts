@@ -1,42 +1,37 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import bcrypt from 'bcryptjs';
-import { cookies } from 'next/headers';
-import { verifyAuth } from '@/lib/session';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
+import { verifyAuth } from "@/lib/session";
+import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
 async function getSession() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
-  if (!token) {
-    console.log("No auth token found in cookies");
-    return null;
-  }
+  const token = cookieStore.get("auth_token")?.value;
+  if (!token) return null;
   try {
-    const payload = await verifyAuth(token);
-    console.log("Session payload verified:", payload);
-    return payload;
-  } catch (err: any) {
-    console.error("Session verification failed:", err.message);
+    return await verifyAuth(token);
+  } catch (err) {
     return null;
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'Admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || !["Admin", "Super Admin"].includes(session.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
 
-    let updateData: any = {};
+    const updateData: any = {};
     try {
       const body = await req.json();
       const { name, email, password, role, status } = body;
 
       const existingUser = await db.user.findUnique({
-        where: { id },
+        where: { id: Number(id) },
       });
 
       if (!existingUser) {
@@ -48,64 +43,74 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       if (role) updateData.role = role;
       if (status) updateData.status = status;
       if (password) {
-        updateData.password = await bcrypt.hash(password, 10);
+        updateData.password = await bcrypt.hash(password, 12);
       }
 
-      console.log("Updating user:", id, "with data:", { ...updateData, password: updateData.password ? "[REDACTED]" : undefined });
-
       const user = await db.user.update({
-        where: { id },
+        where: { id: Number(id) },
         data: updateData,
+      });
+
+      const changes = diffChanges(existingUser, user);
+
+      await logActivity({
+        actorName: await getActorName(session?.id),
+        userId: session?.id,
+        action: "updated a user",
+        target: existingUser.name,
+        changes,
       });
 
       const { password: _, ...userWithoutPassword } = user;
       return NextResponse.json(userWithoutPassword);
     } catch (error: any) {
-      console.error("Update Staff Error Detail:", {
-        message: error.message,
-        code: error.code,
-        meta: error.meta,
-        id,
-        updateData
-      });
-      return NextResponse.json({ 
-        error: "Failed to update staff",
-        details: error.message 
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: "Failed to update staff",
+        },
+        { status: 500 }
+      );
     }
   } catch (error) {
-    console.error("Critical PUT error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'Admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || !["Admin", "Super Admin"].includes(session.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
-    console.log("Attempting to delete user with ID:", id);
 
     // Prevent self-deletion
-    if (id === session.id) {
-      return NextResponse.json({ error: 'You cannot delete your own account' }, { status: 400 });
+    if (Number(id) === session.id) {
+      return NextResponse.json({ error: "You cannot delete your own account" }, { status: 400 });
     }
 
+    const existingUser = await db.user.findUnique({ where: { id: Number(id) } });
+
     const result = await db.user.deleteMany({
-      where: { id },
+      where: { id: Number(id) },
     });
 
     if (result.count === 0) {
-      console.warn(`User deletion failed: Record with ID ${id} not found.`);
-      return NextResponse.json({ error: 'Staff member not found' }, { status: 404 });
+      return NextResponse.json({ error: "Staff member not found" }, { status: 404 });
+    }
+
+    if (existingUser) {
+      await logActivity({
+        actorName: await getActorName(session?.id),
+        userId: session?.id,
+        action: "deleted a user",
+        target: existingUser.name,
+      });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete Staff Error:", error);
     return NextResponse.json({ error: "Failed to delete staff" }, { status: 500 });
   }
 }

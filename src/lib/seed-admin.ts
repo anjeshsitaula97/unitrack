@@ -1,13 +1,14 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = "anjeshsitaula.arj@gmail.com";
-  const rawPassword = "admin";
+  const email = process.env.ADMIN_EMAIL || "admin@unitrack.local";
+  const rawPassword = process.env.ADMIN_PASSWORD || crypto.randomBytes(16).toString("hex");
 
-  const salt = await bcrypt.genSalt(10);
+  const salt = await bcrypt.genSalt(12);
   const hashedPassword = await bcrypt.hash(rawPassword, salt);
 
   const admin = await prisma.user.upsert({
@@ -18,13 +19,16 @@ async function main() {
     },
     create: {
       email,
-      name: "Anjesh Sitaula",
+      name: process.env.ADMIN_NAME || "Admin",
       password: hashedPassword,
       role: "Admin",
     },
   });
 
-  console.log('Seeded admin user:', admin.email);
+  console.log("Seeded admin user:", admin.email);
+  if (!process.env.ADMIN_PASSWORD) {
+    console.log("Generated password (set ADMIN_PASSWORD env var to use custom):", rawPassword);
+  }
 }
 
 main()

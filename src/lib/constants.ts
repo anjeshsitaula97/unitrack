@@ -18,5 +18,20 @@ export const REQUIREMENTS_LIST = [
   "Application Fee Waiver (upto 100%)",
   "Scholarship Available",
   "With 15 Years of Education",
-  "Open Programs"
+  "Open Programs",
+];
+
+export const ACADEMIC_DOCUMENTS_LIST = [
+  "Grade XII Marksheet",
+  "Grade XII Academics",
+  "Bachelor's Transcript",
+  "Bachelor's Degree Certificate",
+  "Master's Transcript",
+  "Master's Degree Certificate",
+  "CV / Resume",
+  "Statement of Purpose (SOP)",
+  "Letter of Recommendation (LOR)",
+  "Passport Copy",
+  "English Proficiency Certificate",
+  "Work Experience Letter",
 ];

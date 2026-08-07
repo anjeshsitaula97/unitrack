@@ -7,7 +7,7 @@
 export function safeParseArray<T = any>(data: any, fallback: T[] = []): T[] {
   if (data === null || data === undefined) return fallback;
   if (Array.isArray(data)) return data;
-  if (typeof data !== 'string') return fallback;
+  if (typeof data !== "string") return fallback;
   if (!data.trim()) return fallback;
 
   try {
