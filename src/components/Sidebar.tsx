@@ -16,6 +16,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   GraduationCap,
   Bell,
   Star,
@@ -96,7 +97,8 @@ interface NavSection {
 
 const navSections: NavSection[] = [
   {
-    id: "main",
+    id: "overview",
+    title: "Overview",
     items: [
       {
         id: "nav-dashboard",
@@ -104,6 +106,12 @@ const navSections: NavSection[] = [
         icon: <LayoutDashboard size={18} />,
         href: "/dashboard",
       },
+    ],
+  },
+  {
+    id: "academics",
+    title: "Academics",
+    items: [
       {
         id: "nav-universities",
         label: "Universities",
@@ -111,6 +119,14 @@ const navSections: NavSection[] = [
         href: "/universities",
       },
       { id: "nav-courses", label: "Courses", icon: <BookOpen size={18} />, href: "/courses" },
+      { id: "nav-search", label: "Search Courses", icon: <Search size={18} />, href: "/search" },
+      { id: "nav-compare", label: "Compare", icon: <GitCompare size={18} />, href: "/compare" },
+    ],
+  },
+  {
+    id: "students",
+    title: "Students",
+    items: [
       { id: "nav-leads", label: "Leads", icon: <Users size={18} />, href: "/leads" },
       {
         id: "nav-students",
@@ -126,20 +142,16 @@ const navSections: NavSection[] = [
       },
       {
         id: "nav-student-messages",
-        label: "Messages",
+        label: "Student Messages",
         icon: <MessageSquare size={18} />,
         href: "/student-messages",
       },
-      { id: "nav-search", label: "Search Courses", icon: <Search size={18} />, href: "/search" },
-      { id: "nav-files", label: "Files", icon: <Folder size={18} />, href: "/files" },
-      { id: "nav-calendar", label: "Calendar", icon: <Calendar size={18} />, href: "/calendar" },
       {
         id: "nav-visa-timeline",
         label: "Visa Timeline",
         icon: <Route size={18} />,
         href: "/visa-timeline",
       },
-      { id: "nav-compare", label: "Compare", icon: <GitCompare size={18} />, href: "/compare" },
       {
         id: "nav-onboarding",
         label: "Onboarding",
@@ -149,31 +161,11 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    id: "management",
-    title: "Management",
+    id: "workspace",
+    title: "Workspace",
     items: [
-      { id: "nav-staff", label: "User Access", icon: <ShieldCheck size={18} />, href: "/access" },
-      { id: "nav-apikeys", label: "API Keys", icon: <Key size={18} />, href: "/api-keys" },
-      { id: "nav-payments", label: "Payments", icon: <CreditCard size={18} />, href: "/payments" },
-      {
-        id: "nav-partnership",
-        label: "Partnership",
-        icon: <Handshake size={18} />,
-        href: "/partnership",
-      },
-      {
-        id: "nav-commission",
-        label: "Commission",
-        icon: <BadgeDollarSign size={18} />,
-        href: "/commission",
-      },
-      { id: "nav-expenses", label: "Expenses", icon: <Receipt size={18} />, href: "/expenses" },
-      {
-        id: "nav-backups",
-        label: "Database Backups",
-        icon: <Database size={18} />,
-        href: "/settings/backups",
-      },
+      { id: "nav-calendar", label: "Calendar", icon: <Calendar size={18} />, href: "/calendar" },
+      { id: "nav-files", label: "Files", icon: <Folder size={18} />, href: "/files" },
       { id: "nav-workflow", label: "Country Workflow", icon: <Layout size={18} />, href: "/tasks" },
       {
         id: "nav-staff-tasks",
@@ -181,6 +173,52 @@ const navSections: NavSection[] = [
         icon: <CheckSquare size={18} />,
         href: "/staff-tasks",
       },
+    ],
+  },
+  {
+    id: "communication",
+    title: "Communication",
+    items: [
+      { id: "nav-chat", label: "Chat", icon: <MessageSquare size={18} />, href: "/chat" },
+      { id: "nav-email", label: "Email", icon: <Mail size={18} />, href: "/email" },
+      {
+        id: "nav-notifications",
+        label: "Notifications",
+        icon: <Bell size={18} />,
+        href: "/notifications",
+      },
+    ],
+  },
+  {
+    id: "business",
+    title: "Business",
+    items: [
+      { id: "nav-payments", label: "Payments", icon: <CreditCard size={18} />, href: "/payments" },
+      { id: "nav-expenses", label: "Expenses", icon: <Receipt size={18} />, href: "/expenses" },
+      {
+        id: "nav-commission",
+        label: "Commission",
+        icon: <BadgeDollarSign size={18} />,
+        href: "/commission",
+      },
+      {
+        id: "nav-partnership",
+        label: "Partnership",
+        icon: <Handshake size={18} />,
+        href: "/partnership",
+      },
+      {
+        id: "nav-bulk-import",
+        label: "Bulk Import/Export",
+        icon: <Upload size={18} />,
+        href: "/bulk-import",
+      },
+    ],
+  },
+  {
+    id: "analytics",
+    title: "Analytics",
+    items: [
       {
         id: "nav-analytics",
         label: "Analytics",
@@ -189,18 +227,26 @@ const navSections: NavSection[] = [
       },
       { id: "nav-reports", label: "Reports", icon: <FileText size={18} />, href: "/reports" },
       {
-        id: "nav-bulk-import",
-        label: "Bulk Import/Export",
-        icon: <Upload size={18} />,
-        href: "/bulk-import",
-      },
-      {
         id: "nav-report-builder",
         label: "Report Builder",
         icon: <BarChart3 size={18} />,
         href: "/reports/builder",
       },
       { id: "nav-audit", label: "Audit Trail", icon: <Activity size={18} />, href: "/audit" },
+    ],
+  },
+  {
+    id: "administration",
+    title: "Administration",
+    items: [
+      { id: "nav-staff", label: "User Access", icon: <ShieldCheck size={18} />, href: "/access" },
+      { id: "nav-apikeys", label: "API Keys", icon: <Key size={18} />, href: "/api-keys" },
+      {
+        id: "nav-backups",
+        label: "Database Backups",
+        icon: <Database size={18} />,
+        href: "/settings/backups",
+      },
       { id: "nav-trash", label: "Recycle Bin", icon: <Trash2 size={18} />, href: "/trash" },
     ],
   },
@@ -259,14 +305,6 @@ const navSections: NavSection[] = [
         icon: <Zap size={18} />,
         href: "/automations",
       },
-      {
-        id: "nav-notifications",
-        label: "Notifications",
-        icon: <Bell size={18} />,
-        href: "/notifications",
-      },
-      { id: "nav-chat", label: "Chat", icon: <MessageSquare size={18} />, href: "/chat" },
-      { id: "nav-email", label: "Email", icon: <Mail size={18} />, href: "/email" },
     ],
   },
 ];
@@ -361,7 +399,32 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
   const [enabledModuleIds, setEnabledModuleIds] = useState<string[]>(() =>
     MODULES.map((m) => m.id)
   );
+  const [collapsedSectionIds, setCollapsedSectionIds] = useState<string[]>([]);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("sidebar-collapsed-sections");
+      if (saved) {
+        const parsed: string[] = JSON.parse(saved);
+        requestAnimationFrame(() => setCollapsedSectionIds(parsed));
+      }
+    } catch {
+      // ignore malformed storage
+    }
+  }, []);
+
+  const toggleSection = (id: string) => {
+    setCollapsedSectionIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      try {
+        sessionStorage.setItem("sidebar-collapsed-sections", JSON.stringify(next));
+      } catch {
+        // ignore storage failures
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     fetch("/api/settings/localization")
@@ -513,6 +576,9 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
         unreadCount={unreadCount}
         navRef={navRef}
         handleScroll={handleScroll}
+        collapsedSectionIds={collapsedSectionIds}
+        onToggleSection={toggleSection}
+        searchActive={searchQuery.length > 0}
       />
 
       <UserBottomSection
@@ -538,6 +604,9 @@ function NavSectionList({
   unreadCount,
   navRef,
   handleScroll,
+  collapsedSectionIds,
+  onToggleSection,
+  searchActive,
 }: {
   filteredSections: NavSection[];
   collapsed: boolean;
@@ -546,6 +615,9 @@ function NavSectionList({
   unreadCount: number | undefined;
   navRef: React.RefObject<HTMLElement | null>;
   handleScroll: () => void;
+  collapsedSectionIds: string[];
+  onToggleSection: (id: string) => void;
+  searchActive: boolean;
 }) {
   return (
     <nav
@@ -553,22 +625,38 @@ function NavSectionList({
       onScroll={handleScroll}
       className="flex-1 overflow-y-auto py-3 px-2 scrollbar-thin"
     >
-      {filteredSections.map((section) => (
-        <div key={section.id} className="mb-4">
-          {section.title && !collapsed && (
-            <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-              {section.title}
-            </p>
-          )}
-          {section.items.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.id}
-                id={item.id}
-                href={item.href}
-                title={collapsed ? item.label : undefined}
-                className={`
+      {filteredSections.map((section) => {
+        const isCollapsed = collapsedSectionIds.includes(section.id);
+        const itemsVisible = collapsed || searchActive || !isCollapsed;
+
+        return (
+          <div key={section.id} className="mb-4">
+            {section.title && !collapsed && (
+              <button
+                type="button"
+                onClick={() => onToggleSection(section.id)}
+                className="w-full flex items-center justify-between px-3 py-2 mb-0.5 text-sm font-bold text-slate-400 hover:text-slate-600 group transition-colors"
+                aria-expanded={!isCollapsed}
+              >
+                <span>{section.title}</span>
+                <ChevronDown
+                  size={12}
+                  className={`transition-transform duration-150 group-hover:text-slate-500 ${
+                    isCollapsed ? "-rotate-90" : ""
+                  }`}
+                />
+              </button>
+            )}
+            {itemsVisible &&
+              section.items.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.id}
+                    id={item.id}
+                    href={item.href}
+                    title={collapsed ? item.label : undefined}
+                    className={`
                   w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 mb-0.5 relative group
                   ${
                     isActive
@@ -577,73 +665,74 @@ function NavSectionList({
                   }
                   ${collapsed ? "justify-center" : ""}
                 `}
-              >
-                <span className={`flex-shrink-0 ${isActive ? "text-indigo-600" : ""}`}>
-                  {item.icon}
-                </span>
-                {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
-                {!collapsed &&
-                  (item.id === "nav-notifications"
-                    ? (unreadCount ?? 0) > 0
-                    : item.id === "nav-universities"
-                      ? (stats?.totalUniversities || 0) > 0
-                      : item.id === "nav-courses"
-                        ? (stats?.totalCourses || 0) > 0
-                        : item.id === "nav-leads"
-                          ? (stats?.totalLeads || 0) > 0
-                          : item.id === "nav-students"
-                            ? (stats?.totalStudents || 0) > 0
-                            : item.id === "nav-applications"
-                              ? (stats?.totalApplications || 0) > 0
-                              : item.id === "nav-staff-tasks"
-                                ? (stats?.totalTasks || 0) > 0
-                                : (item.badge || 0) > 0) && (
-                    <span className="ml-auto bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                      {item.id === "nav-notifications"
-                        ? unreadCount
-                        : item.id === "nav-universities"
-                          ? stats?.totalUniversities || 0
-                          : item.id === "nav-courses"
-                            ? stats?.totalCourses || 0
-                            : item.id === "nav-leads"
-                              ? stats?.totalLeads || 0
-                              : item.id === "nav-students"
-                                ? stats?.totalStudents || 0
-                                : item.id === "nav-applications"
-                                  ? stats?.totalApplications || 0
-                                  : item.id === "nav-staff-tasks"
-                                    ? stats?.totalTasks || 0
-                                    : item.badge}
+                  >
+                    <span className={`flex-shrink-0 ${isActive ? "text-indigo-600" : ""}`}>
+                      {item.icon}
                     </span>
-                  )}
-                {collapsed &&
-                  (item.id === "nav-notifications"
-                    ? (unreadCount ?? 0) > 0
-                    : item.id === "nav-universities"
-                      ? (stats?.totalUniversities || 0) > 0
-                      : item.id === "nav-courses"
-                        ? (stats?.totalCourses || 0) > 0
-                        : item.id === "nav-leads"
-                          ? (stats?.totalLeads || 0) > 0
-                          : item.id === "nav-students"
-                            ? (stats?.totalStudents || 0) > 0
-                            : item.id === "nav-applications"
-                              ? (stats?.totalApplications || 0) > 0
-                              : item.id === "nav-staff-tasks"
-                                ? (stats?.totalTasks || 0) > 0
-                                : item.badge) && (
-                    <span className="absolute top-1 right-1 size-2 bg-indigo-500 rounded-full" />
-                  )}
-                {collapsed && (
-                  <span className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity duration-150">
-                    {item.label}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      ))}
+                    {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+                    {!collapsed &&
+                      (item.id === "nav-notifications"
+                        ? (unreadCount ?? 0) > 0
+                        : item.id === "nav-universities"
+                          ? (stats?.totalUniversities || 0) > 0
+                          : item.id === "nav-courses"
+                            ? (stats?.totalCourses || 0) > 0
+                            : item.id === "nav-leads"
+                              ? (stats?.totalLeads || 0) > 0
+                              : item.id === "nav-students"
+                                ? (stats?.totalStudents || 0) > 0
+                                : item.id === "nav-applications"
+                                  ? (stats?.totalApplications || 0) > 0
+                                  : item.id === "nav-staff-tasks"
+                                    ? (stats?.totalTasks || 0) > 0
+                                    : (item.badge || 0) > 0) && (
+                        <span className="ml-auto bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                          {item.id === "nav-notifications"
+                            ? unreadCount
+                            : item.id === "nav-universities"
+                              ? stats?.totalUniversities || 0
+                              : item.id === "nav-courses"
+                                ? stats?.totalCourses || 0
+                                : item.id === "nav-leads"
+                                  ? stats?.totalLeads || 0
+                                  : item.id === "nav-students"
+                                    ? stats?.totalStudents || 0
+                                    : item.id === "nav-applications"
+                                      ? stats?.totalApplications || 0
+                                      : item.id === "nav-staff-tasks"
+                                        ? stats?.totalTasks || 0
+                                        : item.badge}
+                        </span>
+                      )}
+                    {collapsed &&
+                      (item.id === "nav-notifications"
+                        ? (unreadCount ?? 0) > 0
+                        : item.id === "nav-universities"
+                          ? (stats?.totalUniversities || 0) > 0
+                          : item.id === "nav-courses"
+                            ? (stats?.totalCourses || 0) > 0
+                            : item.id === "nav-leads"
+                              ? (stats?.totalLeads || 0) > 0
+                              : item.id === "nav-students"
+                                ? (stats?.totalStudents || 0) > 0
+                                : item.id === "nav-applications"
+                                  ? (stats?.totalApplications || 0) > 0
+                                  : item.id === "nav-staff-tasks"
+                                    ? (stats?.totalTasks || 0) > 0
+                                    : item.badge) && (
+                        <span className="absolute top-1 right-1 size-2 bg-indigo-500 rounded-full" />
+                      )}
+                    {collapsed && (
+                      <span className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity duration-150">
+                        {item.label}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+          </div>
+        );
+      })}
       {filteredSections.length === 0 && !collapsed && (
         <div className="px-4 py-8 text-center">
           <p className="text-xs text-slate-400">No menu items found</p>
