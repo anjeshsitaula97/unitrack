@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, Loader2, GraduationCap, ShieldCheck } from "lucide-react";
+import { Lock, Mail, Loader2, GraduationCap, ShieldCheck, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getRoleHome } from "@/lib/role-home";
 import { clearAuthCache } from "@/components/AppLayoutWrapper";
@@ -58,7 +58,16 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md mb-4">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors"
+        >
+          <ArrowLeft size={16} />
+          Back to UniTrack Website
+        </Link>
+      </div>
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
         <div className="p-8">
           <div className="flex flex-col items-center mb-8">

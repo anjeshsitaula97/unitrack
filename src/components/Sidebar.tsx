@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -51,6 +51,10 @@ import {
   Trash2,
   Handshake,
   BadgeDollarSign,
+  Moon,
+  Sun,
+  HelpCircle,
+  User,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MODULES, getEnabledModuleIds } from "@/lib/modules";
@@ -93,6 +97,15 @@ interface NavSection {
   id: string;
   title?: string;
   items: NavItem[];
+}
+
+interface SidebarNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  time: string;
 }
 
 const navSections: NavSection[] = [
@@ -309,6 +322,9 @@ const navSections: NavSection[] = [
   },
 ];
 
+import { useTheme } from "@/lib/theme";
+import { safeJson } from "@/lib/fetch-client";
+
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
@@ -316,41 +332,105 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
+  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState<number | undefined>(undefined);
+  const [notifications, setNotifications] = useState<SidebarNotification[] | undefined>(undefined);
   const [stats, setStats] = useState<DashboardStats | undefined>(undefined);
+  const [isMounted] = useState(true);
+  const eventSourceRef = useRef<EventSource | null>(null);
   const navRef = React.useRef<HTMLElement>(null);
 
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch("/api/notifications");
+      const data = await safeJson(res);
+      if (Array.isArray(data)) {
+        setNotifications(data);
+        setUnreadCount(data.filter((n) => !n.read).length);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  };
+
   useEffect(() => {
-    const fetchUnreadCount = async () => {
+    Promise.resolve().then(fetchNotifications);
+
+    const es = new EventSource("/api/notifications/stream");
+    eventSourceRef.current = es;
+
+    es.onmessage = (event) => {
       try {
-        const res = await fetch("/api/notifications");
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setUnreadCount(data.filter((n: { read: boolean }) => !n.read).length);
+        const data = JSON.parse(event.data);
+        if (data.type === "notifications" && data.notifications?.length > 0) {
+          setNotifications((prev) => {
+            const existing = prev || [];
+            const newIds = new Set(data.notifications.map((n: SidebarNotification) => n.id));
+            const merged = [
+              ...data.notifications,
+              ...existing.filter((n: SidebarNotification) => !newIds.has(n.id)),
+            ];
+            return merged.slice(0, 50);
+          });
+          setUnreadCount(data.unreadCount);
         }
-      } catch (err) {
-        console.error("Failed to fetch unread count:", err);
-      }
-    };
-    const fetchStats = async () => {
-      try {
-        const res = await fetch("/api/dashboard/stats");
-        const data = await res.json();
-        if (!data.error) {
-          setStats(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch stats:", err);
-      }
+      } catch {}
     };
 
-    fetchUnreadCount();
+    es.onerror = () => {
+      es.close();
+    };
+
+    return () => {
+      es.close();
+    };
+  }, []);
+
+  const markAllRead = async () => {
+    try {
+      await fetch("/api/notifications", { method: "PUT", body: JSON.stringify({ read: true }) });
+      setNotifications((prev) => prev?.map((n) => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error("Failed to mark all read:", err);
+    }
+  };
+
+  const markRead = async (id: string) => {
+    try {
+      await fetch("/api/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, read: true }),
+      });
+      setNotifications((prev) => prev?.map((n) => (n.id === id ? { ...n, read: true } : n)) ?? []);
+      setUnreadCount((prev) => Math.max(0, (prev ?? 1) - 1));
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("/api/dashboard/stats");
+      const data = await res.json();
+      if (!data.error) {
+        setStats(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
+    }
+  };
+
+  useEffect(() => {
     fetchStats();
     const interval = setInterval(() => {
-      fetchUnreadCount();
+      fetchNotifications();
       fetchStats();
     }, 30000); // Polling every 30s
     return () => clearInterval(interval);
@@ -591,6 +671,18 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
         userInitials={userInitials}
         handleLogout={handleLogout}
         isLoggingOut={isLoggingOut}
+        theme={theme}
+        toggleTheme={toggleTheme}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        notifOpen={notifOpen}
+        setNotifOpen={setNotifOpen}
+        settingsOpen={settingsOpen}
+        setSettingsOpen={setSettingsOpen}
+        markAllRead={markAllRead}
+        markRead={markRead}
+        router={router}
+        isMounted={isMounted}
       />
     </aside>
   );
@@ -752,6 +844,18 @@ function UserBottomSection({
   userInitials,
   handleLogout,
   isLoggingOut,
+  theme,
+  toggleTheme,
+  notifications,
+  unreadCount,
+  notifOpen,
+  setNotifOpen,
+  settingsOpen,
+  setSettingsOpen,
+  markAllRead,
+  markRead,
+  router,
+  isMounted,
 }: {
   collapsed: boolean;
   onToggle: () => void;
@@ -762,6 +866,18 @@ function UserBottomSection({
   userInitials: string;
   handleLogout: () => void;
   isLoggingOut: boolean;
+  theme: "light" | "dark";
+  toggleTheme: () => void;
+  notifications: SidebarNotification[] | undefined;
+  unreadCount: number | undefined;
+  notifOpen: boolean;
+  setNotifOpen: (v: boolean) => void;
+  settingsOpen: boolean;
+  setSettingsOpen: (v: boolean) => void;
+  markAllRead: () => void;
+  markRead: (id: string) => void;
+  router: ReturnType<typeof useRouter>;
+  isMounted: boolean;
 }) {
   return (
     <div className="border-t border-slate-100 p-2 space-y-1">
@@ -776,6 +892,136 @@ function UserBottomSection({
           <ChevronRight size={16} />
         </button>
       )}
+
+      <button
+        type="button"
+        aria-label="Toggle dark mode"
+        onClick={toggleTheme}
+        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${collapsed ? "justify-center" : ""} text-slate-400 hover:text-slate-600 hover:bg-slate-100`}
+        title={collapsed ? (theme === "dark" ? "Light mode" : "Dark mode") : undefined}
+      >
+        {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+        {!collapsed && <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>}
+      </button>
+
+      <div className="relative">
+        <button
+          type="button"
+          aria-label="Notifications"
+          onClick={() => {
+            setNotifOpen(!notifOpen);
+            setSettingsOpen(false);
+          }}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${collapsed ? "justify-center" : ""} text-slate-400 hover:text-slate-600 hover:bg-slate-100 relative`}
+          title={collapsed ? "Notifications" : undefined}
+        >
+          <Bell size={18} />
+          {isMounted && unreadCount && unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-indigo-500 text-white text-[10px] font-bold rounded-full px-1 border-2 border-white leading-none">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+          {!collapsed && <span>Notifications</span>}
+        </button>
+        {isMounted && notifOpen && !collapsed && (
+          <div className="absolute left-full ml-2 top-0 w-80 bg-white rounded-xl border border-slate-200 shadow-lg z-50 animate-fade-in">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <span className="font-semibold text-slate-800 text-sm">Notifications</span>
+              {unreadCount && unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllRead}
+                  className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
+            <div className="max-h-[400px] overflow-y-auto divide-y divide-slate-100">
+              {(notifications?.length ?? 0) === 0 && (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-xs text-slate-400">No notifications yet.</p>
+                </div>
+              )}
+              {(notifications ?? []).map((n) => (
+                <button
+                  type="button"
+                  key={n.id}
+                  onClick={() => markRead(n.id)}
+                  className={`w-full px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors text-left ${!n.read ? "bg-indigo-50/30" : ""}`}
+                >
+                  <p className="text-[11px] font-semibold text-slate-800 mb-0.5">{n.title}</p>
+                  <p className="text-xs text-slate-700 leading-relaxed">{n.message}</p>
+                  <p className="text-[10px] text-slate-400 mt-1">{n.time}</p>
+                </button>
+              ))}
+            </div>
+            {(notifications?.length ?? 0) > 0 && (
+              <div className="px-4 py-2 border-t border-slate-100 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push("/notifications");
+                    setNotifOpen(false);
+                  }}
+                  className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
+                >
+                  View All
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="relative">
+        <button
+          type="button"
+          aria-label="Settings"
+          onClick={() => setSettingsOpen(!settingsOpen)}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${collapsed ? "justify-center" : ""} ${settingsOpen ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
+          title={collapsed ? "Settings" : undefined}
+        >
+          <Settings size={18} />
+          {!collapsed && <span>Settings</span>}
+        </button>
+
+        {settingsOpen && !collapsed && (
+          <div className="absolute left-full ml-2 top-0 w-48 bg-white rounded-xl border border-slate-200 shadow-lg z-50 animate-fade-in py-1">
+            <button
+              type="button"
+              onClick={() => {
+                router.push("/settings?tab=profile");
+                setSettingsOpen(false);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+            >
+              <User size={14} /> My Profile
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                router.push("/settings?tab=roles");
+                setSettingsOpen(false);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
+            >
+              <Settings size={14} /> System Settings
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                router.push("/support");
+                setSettingsOpen(false);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
+            >
+              <HelpCircle size={14} /> Support Hub
+            </button>
+          </div>
+        )}
+      </div>
+
       <Link
         href="/tickets"
         className={`text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 w-full ${
@@ -787,18 +1033,6 @@ function UserBottomSection({
       >
         <TicketIcon size={18} className={pathname === "/tickets" ? "text-indigo-600" : ""} />
         {!collapsed && <span>Tickets</span>}
-      </Link>
-      <Link
-        href="/settings"
-        className={`text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 w-full ${
-          pathname === "/settings"
-            ? "bg-indigo-50 text-indigo-700"
-            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-        } ${collapsed ? "justify-center" : ""}`}
-        title={collapsed ? "Settings" : undefined}
-      >
-        <Settings size={18} className={pathname === "/settings" ? "text-indigo-600" : ""} />
-        {!collapsed && <span>Settings</span>}
       </Link>
       <button
         type="button"

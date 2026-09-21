@@ -10,20 +10,18 @@ interface Section {
 }
 
 const SECTIONS: Section[] = [
-  { id: "hero", label: "Explore" },
-  { id: "stats-section", label: "Overview" },
-  { id: "program-section", label: "Programs" },
-  { id: "solutions-section", label: "360 Solutions" },
-  { id: "community", label: "Testimonials" },
-  { id: "institutions", label: "Institutions" },
-  { id: "partners", label: "Partners" },
-  { id: "faqs-section", label: "FAQs" },
+  { id: "overview", label: "Overview" },
+  { id: "crm-showcase", label: "CRM Showcase" },
+  { id: "features", label: "Features" },
+  { id: "university-network", label: "Uni Network" },
+  { id: "pricing", label: "Pricing" },
+  { id: "live-demo", label: "Live Demo" },
 ];
 
 export default function ScrollIndicator() {
   const pathname = usePathname();
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [activeSection, setActiveSection] = useState<string>("hero");
+  const [activeSection, setActiveSection] = useState<string>("overview");
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -89,15 +87,15 @@ export default function ScrollIndicator() {
   return (
     <>
       {/* 1. Top Reading Scroll Progress Bar */}
-      <div className="fixed top-0 left-0 w-full h-1 z-[100] bg-slate-200/20 pointer-events-none">
+      <div className="fixed top-0 left-0 w-full h-1 z-[100] bg-outline/20 pointer-events-none">
         <div
-          className="h-full bg-gradient-to-r from-[#0055c3] via-indigo-600 to-cyan-400 shadow-sm transition-all duration-150 ease-out"
+          className="h-full bg-gradient-to-r from-[#286c00] via-[#58ce18] to-[#85fe4b] shadow-sm transition-all duration-150 ease-out"
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
 
-      {/* 2. Side Section Dot Progress Indicator (Desktop View) */}
-      <div className="fixed right-5 top-1/2 -translate-y-1/2 z-40 hidden xl:flex flex-col gap-2.5 p-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-slate-200/80">
+      {/* 2. Side Section Dot Progress Indicator (Very Large Screens Only) */}
+      <div className="fixed right-5 top-1/2 -translate-y-1/2 z-40 hidden 2xl:flex flex-col gap-2.5 p-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant">
         {SECTIONS.map((sec) => {
           const isActive = activeSection === sec.id;
           return (
@@ -108,15 +106,15 @@ export default function ScrollIndicator() {
               aria-label={`Scroll to ${sec.label}`}
             >
               {/* Floating Tooltip */}
-              <span className="absolute right-8 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 px-3 py-1 bg-slate-900 text-white text-xs font-semibold rounded-md shadow-md whitespace-nowrap">
+              <span className="absolute right-8 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 px-3 py-1 bg-inverse-surface text-inverse-on-surface text-xs font-semibold rounded-md shadow-md whitespace-nowrap">
                 {sec.label}
               </span>
               {/* Indicator Dot */}
               <span
                 className={`transition-all duration-300 rounded-full ${
                   isActive
-                    ? "w-3 h-3 bg-[#0055c3] ring-4 ring-blue-100 scale-110"
-                    : "w-2 h-2 bg-slate-300 group-hover:bg-[#0055c3] group-hover:scale-125"
+                    ? "w-3 h-3 bg-primary ring-4 ring-primary-container/40 scale-110"
+                    : "w-2 h-2 bg-outline group-hover:bg-primary group-hover:scale-125"
                 }`}
               />
             </button>
@@ -131,7 +129,7 @@ export default function ScrollIndicator() {
             onClick={scrollToTop}
             aria-label="Scroll to top"
             title={`Scroll to top (${Math.round(scrollProgress)}%)`}
-            className="relative p-3.5 bg-[#0055c3] hover:bg-[#1e6deb] text-white rounded-full shadow-2xl hover:shadow-blue-500/40 hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center cursor-pointer group"
+            className="relative p-3.5 bg-primary hover:bg-on-surface text-inverse-on-surface rounded-full shadow-2xl hover:shadow-primary/40 hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center cursor-pointer group"
           >
             {/* Circular SVG Gauge */}
             <svg className="absolute inset-0 w-full h-full -rotate-90 p-0.5" viewBox="0 0 48 48">

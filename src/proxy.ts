@@ -22,8 +22,7 @@ export async function proxy(request: NextRequest) {
   const isDashboardRoute =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/admin-dashboard") ||
-    pathname.startsWith("/partner-dashboard") ||
-    pathname === "/";
+    pathname.startsWith("/partner-dashboard");
 
   const token = request.cookies.get("auth_token")?.value;
   let verified = false;
@@ -49,9 +48,6 @@ export async function proxy(request: NextRequest) {
   if (isDashboardRoute) {
     if (!verified) {
       return NextResponse.redirect(new URL("/login", request.url));
-    }
-    if (pathname === "/" && verified) {
-      return NextResponse.redirect(new URL(getRoleHome(role), request.url));
     }
   }
 

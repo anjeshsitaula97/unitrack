@@ -4,6 +4,9 @@ import { imageHosts } from './image-hosts.config.mjs';
 const nextConfig = {
   productionBrowserSourceMaps: false,
   distDir: process.env.DIST_DIR || '.next',
+  experimental: {
+    turbopackFileSystemCacheForDev: false,
+  },
 
   images: {
     remotePatterns: imageHosts,

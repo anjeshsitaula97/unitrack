@@ -78,12 +78,7 @@ interface StudentDoc {
 
 type ReqFilter = "All" | "Pending" | "Approved" | "Rejected" | "In Review";
 type MainTab =
-  | "Requirements"
-  | "Student records"
-  | "Workflow"
-  | "Notes"
-  | "Commission"
-  | "Settings";
+  "Requirements" | "Student records" | "Workflow" | "Notes" | "Commission" | "Settings";
 
 function appIdShort(id: string | number) {
   const str = String(id);
