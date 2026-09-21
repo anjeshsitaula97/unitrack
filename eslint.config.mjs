@@ -77,6 +77,7 @@ export default [
       '*.config.js',
       'next-env.d.ts',
       'prisma/dev.db',
+      '**/._*',
     ],
   },
 ];

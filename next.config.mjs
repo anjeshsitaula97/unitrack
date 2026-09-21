@@ -36,7 +36,10 @@ const nextConfig = {
               "connect-src 'self' http://localhost:5000",
               "frame-ancestors 'none'",
               "base-uri 'self'",
-              "form-action 'self'",
+              // Checkout gateways: the browser POSTs a signed form to these origins.
+              // https://rc-epay.esewa.com.np = eSewa UAT, https://epay.esewa.com.np = eSewa production,
+              // https://dev.connectips.com = connectIPS UAT, https://login.connectips.com = connectIPS production.
+              "form-action 'self' https://rc-epay.esewa.com.np https://epay.esewa.com.np https://dev.connectips.com https://login.connectips.com",
             ].join('; '),
           },
         ],

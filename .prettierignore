@@ -3,3 +3,6 @@ build
 coverage
 node_modules
 public
+
+# macOS AppleDouble metadata files (exFAT volumes)
+._*

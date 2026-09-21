@@ -4,6 +4,7 @@ package-lock.json
 
 # Next.js build output
 .next/
+.next-build/
 out/
 
 # Production build
@@ -18,6 +19,9 @@ pnpm-debug.log*
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# macOS AppleDouble metadata files (exFAT volumes)
+._*
 
 # Vercel deployment
 .vercel/

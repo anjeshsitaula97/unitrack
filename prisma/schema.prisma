@@ -942,3 +942,28 @@ model RateLimitLog {
   @@index([key, createdAt])
   @@index([createdAt])
 }
+
+model CheckoutOrder {
+  id             String    @id @default(cuid())
+  reference      String    @unique
+  planId         String
+  planName       String
+  billingCycle   String
+  amount         Float
+  currency       String    @default("NPR")
+  gateway        String
+  status         String    @default("PENDING")
+  customerName   String
+  customerEmail  String
+  customerPhone  String
+  agencyName     String
+  gatewayRef     String?
+  gatewayTxnId   String?
+  gatewayPayload String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  completedAt    DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+}
