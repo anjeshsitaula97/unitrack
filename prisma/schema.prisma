@@ -1,10 +1,11 @@
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "library"
+  provider      = "prisma-client-js"
+  engineType    = "library"
+  binaryTargets = ["native", "windows"]
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -195,6 +196,9 @@ model User {
   faceDescriptor      String?
   studentConversations StudentConversation[]
   applicationNotes     ApplicationNote[]
+  marketingRequests    MarketingRequest[]      @relation("MarketingRequestRequester")
+  assignedMarketingRequests MarketingRequest[] @relation("MarketingRequestAssignee")
+  uploadedMaterials    MarketingMaterial[]     @relation("MarketingMaterialUploader")
 }
 
 model LoginLog {
@@ -965,5 +969,50 @@ model CheckoutOrder {
   completedAt    DateTime?
 
   @@index([status])
+  @@index([createdAt])
+}
+
+model MarketingRequest {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  type        String   @default("Graphic Design") // "Graphic Design", "Social Media Post", "Video", "Other"
+  status      String   @default("Pending") // "Pending", "In Progress", "Completed", "Cancelled"
+  priority    String   @default("Medium") // "Low", "Medium", "High", "Urgent"
+  requestedBy Int
+  assignedTo  Int?
+  dueDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  completedAt DateTime?
+
+  requester   User     @relation("MarketingRequestRequester", fields: [requestedBy], references: [id], onDelete: Cascade)
+  assignee    User?    @relation("MarketingRequestAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  materials   MarketingMaterial[]
+
+  @@index([status])
+  @@index([requestedBy])
+  @@index([assignedTo])
+  @@index([createdAt])
+}
+
+model MarketingMaterial {
+  id           Int      @id @default(autoincrement())
+  requestId    Int
+  fileName     String
+  fileUrl      String
+  fileType     String   // "image", "video", "document"
+  fileSize     Int
+  uploadedBy   Int
+  description  String?
+  isFinal      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  request      MarketingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  uploader     User             @relation("MarketingMaterialUploader", fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([uploadedBy])
   @@index([createdAt])
 }

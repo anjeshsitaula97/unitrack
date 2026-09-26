@@ -20,9 +20,9 @@ export async function GET(req: NextRequest) {
 
     if (params.search) {
       where.OR = [
-        { name: { contains: params.search, mode: "insensitive" } },
-        { country: { contains: params.search, mode: "insensitive" } },
-        { city: { contains: params.search, mode: "insensitive" } },
+        { name: { contains: params.search } },
+        { country: { contains: params.search } },
+        { city: { contains: params.search } },
       ];
     }
 
@@ -87,9 +87,18 @@ export async function POST(req: NextRequest) {
     if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
       return apiError("Unauthorized", 401);
     const data = await req.json();
+
+    const name = data.name || data.title;
+    if (!name || !String(name).trim()) {
+      return apiError("University name is required", 400);
+    }
+    if (!data.country) {
+      return apiError("Country is required", 400);
+    }
+
     const newUniversity = await db.university.create({
       data: {
-        name: data.name || data.title,
+        name: name.trim(),
         shortName: data.shortName || null,
         country: data.country || "",
         city: data.city || "",

@@ -1,0 +1,1 @@
+The HR camera flow requires HTTPS or localhost (browser `getUserMedia` permission) and uploads captured JPEGs to `/api/upload`; the guided tour triggers only when `user.isFirstLogin === true` and marks itself complete via a PATCH to `/api/auth/tour-completed`.

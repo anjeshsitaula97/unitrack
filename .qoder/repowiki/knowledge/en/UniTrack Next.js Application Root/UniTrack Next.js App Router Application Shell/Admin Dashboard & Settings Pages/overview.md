@@ -1,0 +1,1 @@
+Next.js App Router pages and client components for the admin dashboard, administrator dashboard entry, and system settings including data backup/restore.

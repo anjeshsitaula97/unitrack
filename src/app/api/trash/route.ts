@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
     const where: Record<string, unknown> = { restoredAt: null };
     if (typeFilter) where.entityType = typeFilter;
-    if (search) where.entityName = { contains: search, mode: "insensitive" };
+    if (search) where.entityName = { contains: search };
 
     const items = await db.trashItem.findMany({
       where: where as Prisma.TrashItemWhereInput,

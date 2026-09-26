@@ -1,0 +1,1 @@
+No special build or setup scripts are required; the pages rely on existing backend endpoints (`/api/payments`, `/api/students`, `/api/expenses`, `/api/upload`, `/api/universities`, `/api/courses`) being available at runtime. The expenses page additionally expects an upload endpoint at `/api/upload` that accepts `FormData` with a `file` field and returns `{ url }`.

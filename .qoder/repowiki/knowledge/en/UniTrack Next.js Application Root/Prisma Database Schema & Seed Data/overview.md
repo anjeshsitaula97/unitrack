@@ -1,0 +1,1 @@
+Defines the Prisma SQLite schema for Unitrack's domain models and ships TypeScript seed scripts that populate reference data such as roles, activities, notifications, and universities.

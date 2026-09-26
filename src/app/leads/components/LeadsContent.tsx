@@ -140,7 +140,7 @@ export default function LeadsContent() {
     try {
       const [leadsRes, userRes, usersRes] = await Promise.all([
         fetch("/api/leads"),
-        fetch("/api/auth/me"),
+        fetch("/api/auth/me", { credentials: "include" }),
         fetch("/api/users"),
       ]);
 

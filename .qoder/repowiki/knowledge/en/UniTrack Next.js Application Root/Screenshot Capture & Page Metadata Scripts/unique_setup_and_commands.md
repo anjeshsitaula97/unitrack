@@ -1,0 +1,1 @@
+Both screenshot scripts require a locally running UniTrack dev server at `http://localhost:4028` before execution. They hardcode login credentials (`anjeshsitaula.arj@gmail.com` / `admin`) and write outputs to `public/screenshots/`. The metadata script targets a Windows path (`D:/Coding/.../unitrack/src/app`) and must be run from that location.

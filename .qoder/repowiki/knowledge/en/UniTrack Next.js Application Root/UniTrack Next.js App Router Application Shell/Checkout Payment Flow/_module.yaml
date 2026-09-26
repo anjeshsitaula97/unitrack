@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: app_pages/checkout
+title: Checkout Payment Flow
+scope:
+    - src/app/api/checkout/
+    - src/app/checkout/
+    - src/components/CheckoutModal.tsx
+    - src/lib/checkout/
+    - src/lib/pricing.ts
+source_files: []
+depends_on: []
+related_to: []

@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
             for (let j = 0; j < 10; j++) {
               pw += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            const hashed = await bcrypt.hash(pw, 10);
+            const hashed = await bcrypt.hash(pw, 12);
             await db.student.create({
               data: {
                 name: row.name,
@@ -314,7 +314,7 @@ export async function POST(req: NextRequest) {
               continue;
             }
             const bcrypt = await import("bcryptjs");
-            const hashed = await bcrypt.hash(row.password || "password123", 10);
+            const hashed = await bcrypt.hash(row.password || "password123", 12);
             await db.user.create({
               data: {
                 name: row.name,

@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { signToken } from "@/lib/session";
+import { signStudentToken } from "@/lib/session";
 import { apiError } from "@/lib/api-utils";
 import { normalizeEnabledModulesJson } from "@/lib/modules";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const rl = await checkRateLimit(`student-login:${ip}`, 10, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const { email, password } = await req.json();
 
     if (!email || !password) {
@@ -27,10 +37,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    const token = await signToken({
+    const token = await signStudentToken({
       id: student.id,
       email: student.email,
-      role: "Student",
     });
 
     const response = NextResponse.json({
@@ -42,7 +51,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    response.cookies.set("auth_token", token, {
+    response.cookies.set("student_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

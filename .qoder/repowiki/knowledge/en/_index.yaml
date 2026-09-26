@@ -1,0 +1,323 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: en-US
+branch: main
+nodes_managed: true
+exported_at: "2026-09-21T10:42:38Z"
+modules:
+    "":
+        dir_name: UniTrack Next.js Application Root
+        title: UniTrack Next.js Application Root
+        scope:
+            - README.md
+            - .gitignore
+            - package.json
+            - next.config.mjs
+            - tsconfig.json
+            - tailwind.config.js
+            - postcss.config.js
+            - eslint.config.mjs
+            - .prettierrc
+            - .prettierignore
+            - vitest.config.mjs
+            - react-doctor.config.json
+            - AGENTS.md
+            - CLAUDE.md
+            - mobiledesign.md
+            - ._.next
+            - ._measure.cjs
+            - ._next-env.d.ts
+            - ._next.config.mjs
+            - ._shot.cjs
+            - ._tailwind.config.js
+            - .env.example
+            - image-hosts.config.mjs
+            - measure.cjs
+            - next-env.d.ts
+            - run-dev-task.bat
+            - run-dev.bat
+            - shot.cjs
+            - start-dev.bat
+            - start-dev.ps1
+            - start-server.bat
+            - start.bat
+        source_files: []
+        children:
+            - app_pages
+            - backup_unused
+            - database_schema
+            - graphify_output
+            - scripts
+            - shared_components
+            - shared_lib
+            - styles_assets
+        depends_on: []
+        related_to: []
+    app_pages:
+        dir_name: UniTrack Next.js App Router Application Shell
+        title: UniTrack Next.js App Router Application Shell
+        scope:
+            - src/app/
+        source_files: []
+        children:
+            - app_pages/applications
+            - app_pages/auth_onboarding
+            - app_pages/checkout
+            - app_pages/communications
+            - app_pages/content_master_data
+            - app_pages/dashboard_admin
+            - app_pages/hr_management
+            - app_pages/leads_partners
+            - app_pages/misc_pages
+            - app_pages/payments_expenses
+            - app_pages/reports_analytics
+            - app_pages/students
+            - app_pages/universities_courses
+        depends_on: []
+        related_to: []
+    app_pages/applications:
+        dir_name: Applications & Visa Workflow Admin Pages
+        title: Applications & Visa Workflow Admin Pages
+        scope:
+            - src/app/applications/
+            - src/app/tasks/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    app_pages/auth_onboarding:
+        dir_name: Authentication & Password Reset Pages
+        title: Authentication & Password Reset Pages
+        scope:
+            - src/app/login/
+            - src/app/forgot-password/
+            - src/app/reset-password/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: shared_lib
+    app_pages/checkout:
+        dir_name: Checkout Payment Flow
+        title: Checkout Payment Flow
+        scope:
+            - src/app/api/checkout/
+            - src/app/checkout/
+            - src/components/CheckoutModal.tsx
+            - src/lib/checkout/
+            - src/lib/pricing.ts
+        source_files: []
+        children:
+            - app_pages/checkout/api_routes
+            - app_pages/checkout/shared_lib
+        depends_on: []
+        related_to: []
+    app_pages/checkout/api_routes:
+        dir_name: Checkout Payment API Routes
+        title: Checkout Payment API Routes
+        scope:
+            - src/app/api/checkout/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    app_pages/checkout/shared_lib:
+        dir_name: Checkout Payment Gateways & Pricing
+        title: Checkout Payment Gateways & Pricing
+        scope:
+            - src/lib/checkout/
+            - src/lib/pricing.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    app_pages/communications:
+        dir_name: Chat, Notifications & Email Pages
+        title: Chat, Notifications & Email Pages
+        scope:
+            - src/app/chat/
+            - src/app/notifications/
+            - src/app/email/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: app_pages/students
+    app_pages/content_master_data:
+        dir_name: Files, Document Scanner & Learning Hub Content Pages
+        title: Files, Document Scanner & Learning Hub Content Pages
+        scope:
+            - src/app/files/
+            - src/app/documents/
+            - src/app/learning-hub/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: database_schema
+    app_pages/dashboard_admin:
+        dir_name: Admin Dashboard & Settings Pages
+        title: Admin Dashboard & Settings Pages
+        scope:
+            - src/app/dashboard/
+            - src/app/admin-dashboard/
+            - src/app/settings/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: database_schema
+    app_pages/hr_management:
+        dir_name: HR & Staff Management Pages
+        title: HR & Staff Management Pages
+        scope:
+            - src/app/hr/
+            - src/app/staff/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: database_schema
+    app_pages/leads_partners:
+        dir_name: Leads & Partnerships Admin Pages
+        title: Leads & Partnerships Admin Pages
+        scope:
+            - src/app/leads/
+            - src/app/partnership/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: database_schema
+    app_pages/misc_pages:
+        dir_name: Admin Support Pages (Access, Search & Help)
+        title: Admin Support Pages (Access, Search & Help)
+        scope:
+            - src/app/access/
+            - src/app/search/
+            - src/app/support/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    app_pages/payments_expenses:
+        dir_name: Payments, Expenses & Commission Admin Pages
+        title: Payments, Expenses & Commission Admin Pages
+        scope:
+            - src/app/payments/
+            - src/app/expenses/
+            - src/app/commission/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: database_schema
+    app_pages/reports_analytics:
+        dir_name: Reports, Analytics & Audit Trail Pages
+        title: Reports, Analytics & Audit Trail Pages
+        scope:
+            - src/app/reports/
+            - src/app/analytics/
+            - src/app/audit/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: database_schema
+    app_pages/students:
+        dir_name: Student Management & Student Portal Pages
+        title: Student Management & Student Portal Pages
+        scope:
+            - src/app/students/
+            - src/app/student-messages/
+            - src/app/student-portal/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: app_pages/communications
+            - path: database_schema
+    app_pages/universities_courses:
+        dir_name: Universities & Courses Administration Pages
+        title: Universities & Courses Administration Pages
+        scope:
+            - src/app/universities/
+            - src/app/courses/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: database_schema
+    backup_unused:
+        dir_name: Backup of Unused Unitrack Frontend & Admin Scripts
+        title: Backup of Unused Unitrack Frontend & Admin Scripts
+        scope:
+            - .backup_unused/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    database_schema:
+        dir_name: Prisma Database Schema & Seed Data
+        title: Prisma Database Schema & Seed Data
+        scope:
+            - prisma/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: app_pages/content_master_data
+            - path: app_pages/dashboard_admin
+            - path: app_pages/hr_management
+            - path: app_pages/leads_partners
+            - path: app_pages/payments_expenses
+            - path: app_pages/reports_analytics
+            - path: app_pages/students
+            - path: app_pages/universities_courses
+    graphify_output:
+        dir_name: Graphify Codebase Dependency Graph Output
+        title: Graphify Codebase Dependency Graph Output
+        scope:
+            - graphify-out/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    scripts:
+        dir_name: Screenshot Capture & Page Metadata Scripts
+        title: Screenshot Capture & Page Metadata Scripts
+        scope:
+            - scripts/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    shared_components:
+        dir_name: Application Shell & Shared UI Components
+        title: Application Shell & Shared UI Components
+        scope:
+            - src/components/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    shared_lib:
+        dir_name: Shared Application Utilities & Cross-Cutting Concerns
+        title: Shared Application Utilities & Cross-Cutting Concerns
+        scope:
+            - src/lib/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: app_pages/auth_onboarding
+    styles_assets:
+        dir_name: Global Styles & Static Assets
+        title: Global Styles & Static Assets
+        scope:
+            - src/styles/
+            - public/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []

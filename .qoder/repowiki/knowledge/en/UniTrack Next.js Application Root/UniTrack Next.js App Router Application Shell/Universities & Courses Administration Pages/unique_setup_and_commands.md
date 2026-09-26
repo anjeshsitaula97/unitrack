@@ -1,0 +1,1 @@
+No special build or test commands — standard Next.js dev/build. The courses list page requires the database to be reachable since it calls `db.course.findMany` during server rendering; the universities list page depends on the running API routes at `/api/universities` and `/api/universities/:id`.

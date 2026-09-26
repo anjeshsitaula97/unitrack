@@ -1,0 +1,5 @@
+- Each script defines its target routes as a top-level array of objects containing `path`, `name`, and optionally `label`, driving the iteration loop rather than inline logic.
+- Hardcoded credentials and base URL are declared as module-level constants near the top of each Puppeteer script instead of being read from environment variables.
+- Navigation waits use explicit timeouts via `page.waitForFunction`/`waitForNavigation` with `networkidle0` and a generous timeout (15–60 s) before taking a screenshot.
+- Error handling wraps each page capture in try/catch, incrementing separate success/failure counters and printing per-route status to stdout.
+- Screenshots are saved under `public/screenshots/` with filenames derived from the route's `name` field appended with `.png`.

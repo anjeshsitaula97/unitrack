@@ -22,9 +22,9 @@ export async function GET(req: NextRequest) {
 
     if (params.search) {
       where.OR = [
-        { name: { contains: params.search, mode: "insensitive" } },
-        { email: { contains: params.search, mode: "insensitive" } },
-        { phone: { contains: params.search, mode: "insensitive" } },
+        { name: { contains: params.search } },
+        { email: { contains: params.search } },
+        { phone: { contains: params.search } },
       ];
     }
 
@@ -116,6 +116,36 @@ export async function POST(req: Request) {
       action: "created a lead",
       target: lead.name,
     });
+
+    if (status === "Converted") {
+      try {
+        const existingStudent = await prisma.student.findUnique({ where: { email } });
+        if (!existingStudent) {
+          const nameParts = (lead.name || "").split(" ").filter(Boolean);
+          const initials =
+            nameParts.length >= 2
+              ? (nameParts[0][0] + nameParts[1][0]).toUpperCase()
+              : (nameParts[0]?.[0] || "S").toUpperCase();
+          await prisma.student.create({
+            data: {
+              name: lead.name,
+              email: lead.email,
+              phone: lead.phone,
+              interestedCountry: lead.interestedCountry,
+              maritalStatus: lead.maritalStatus,
+              counselor: lead.counselor,
+              lead: "Converted from Leads",
+              status: "New Leads",
+              initials: initials || "ST",
+              color: "#6366f1",
+              country: lead.interestedCountry,
+            },
+          });
+        }
+      } catch (studentError) {
+        console.error("Migration to Student failed:", studentError);
+      }
+    }
 
     return NextResponse.json(lead);
   } catch (error) {

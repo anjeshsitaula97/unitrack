@@ -1,0 +1,5 @@
+- Each route folder follows a `page.tsx` shell that imports a `*Content` component and wraps it in `AppLayoutWrapper`, while exporting page metadata via `export const metadata`.
+- Client-side logic lives in separate `*Content.tsx` files declared with the `'use client'` directive at the top of the file.
+- Data fetching uses plain `fetch` against `/api/*` endpoints, with error handling via try/catch or `.catch()` and response parsing through `safeJson` from `@/lib/fetch-client`.
+- Periodic data refresh is implemented by storing the fetch function in a `useRef` and re-invoking it inside a `setInterval` within `useEffect`, ensuring the latest closure is always polled.
+- User-facing feedback is delivered via `toast` from Sonner for success/error states rather than custom alert dialogs.

@@ -1,0 +1,1 @@
+Next.js 16 + React 19 + TypeScript 5 on top of Tailwind CSS 3.4, PostCSS, ESLint 9 + Prettier, Vitest + Testing Library for tests, Prisma 5 with SQLite for persistence, Puppeteer for screenshots, and Zod for runtime validation.

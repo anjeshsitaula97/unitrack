@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: app_pages/communications
+title: Chat, Notifications & Email Pages
+scope:
+    - src/app/chat/
+    - src/app/notifications/
+    - src/app/email/
+source_files: []
+depends_on: []
+related_to:
+    - path: app_pages/students

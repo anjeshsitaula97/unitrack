@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import AppLayout from "./AppLayout";
 import { getRoleHome, isDashboardRoute } from "@/lib/role-home";
-import { isSessionActive } from "@/lib/client-session";
 import { Loader2 } from "lucide-react";
 
 interface AppUser {
@@ -33,7 +32,7 @@ export function clearAuthCache() {
 
 async function fetchAuthState(): Promise<AuthState | null> {
   try {
-    const res = await fetch("/api/auth/me", { cache: "no-store" });
+    const res = await fetch("/api/auth/me", { cache: "no-store", credentials: "include" });
     if (!res.ok) return null;
     const data = await res.json();
     if (!data?.id) return null;
@@ -56,27 +55,16 @@ function startAuthLoad(): Promise<AuthState | null> {
 export default function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<string>(cached?.role || "");
   const [user, setUser] = useState<AppUser | null>(cached?.user ?? null);
-  const [sessionReady] = useState<boolean>(isSessionActive());
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isSessionActive()) {
-      // A full page load (refresh or a new tab) loses the in-memory session,
-      // so we end the server session and return to the login page.
-      fetch("/api/auth/logout", { method: "POST" })
-        .catch(() => {})
-        .finally(() => {
-          clearAuthCache();
-          router.replace("/login");
-        });
-      return;
-    }
-
     let cancelled = false;
 
     const apply = (state: AuthState | null) => {
       if (cancelled) return;
+      setLoading(false);
       cached = state;
       if (!state) {
         router.replace("/login");
@@ -94,17 +82,23 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
 
     if (cached !== undefined) {
       apply(cached);
+    } else {
+      startAuthLoad()
+        .then(apply)
+        .catch(() => {
+          if (!cancelled) {
+            setLoading(false);
+            router.replace("/login");
+          }
+        });
     }
-    startAuthLoad()
-      .then(apply)
-      .catch(() => {});
 
     return () => {
       cancelled = true;
     };
   }, [pathname, router]);
 
-  if (!sessionReady) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <Loader2 className="animate-spin text-indigo-600" size={32} />

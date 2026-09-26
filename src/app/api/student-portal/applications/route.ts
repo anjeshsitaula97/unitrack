@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getStudentSession, apiError } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getStudentSession();
     if (!session) return apiError("Unauthorized", 401);
 
     const studentId = Number(session.id);

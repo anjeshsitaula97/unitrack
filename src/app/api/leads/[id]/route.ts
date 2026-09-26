@@ -19,6 +19,22 @@ async function getSession() {
   }
 }
 
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { id } = await params;
+    const lead = await prisma.lead.findUnique({ where: { id: Number(id) } });
+    if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+
+    return NextResponse.json(lead);
+  } catch (error) {
+    console.error("Fetch Lead Error:", error);
+    return NextResponse.json({ error: "Failed to fetch lead" }, { status: 500 });
+  }
+}
+
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const [{ id }, body] = await Promise.all([params, req.json()]);

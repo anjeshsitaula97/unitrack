@@ -6,7 +6,6 @@ import { Lock, Mail, Loader2, GraduationCap, ShieldCheck, ArrowLeft } from "luci
 import Link from "next/link";
 import { getRoleHome } from "@/lib/role-home";
 import { clearAuthCache } from "@/components/AppLayoutWrapper";
-import { activateSession } from "@/lib/client-session";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -29,25 +28,29 @@ export default function LoginForm() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error || "Failed to login.");
+        const errorText = await res.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.error || `Server error: ${res.status}`);
+        } catch {
+          throw new Error(`Server responded with ${res.status}. Please check the server logs.`);
+        }
       }
+
+      const data = await res.json();
 
       if (loginMode === "admin") {
         clearAuthCache();
         let home = "/dashboard";
         try {
-          const me = await fetch("/api/auth/me").then((r) => r.json());
+          const me = await fetch("/api/auth/me", { credentials: "include" }).then((r) => r.json());
           home = getRoleHome(me?.role);
         } catch {
           // fall back to the default dashboard
         }
-        activateSession();
         router.push(home);
       } else {
-        activateSession();
         router.push("/student-portal/dashboard");
       }
     } catch (err) {

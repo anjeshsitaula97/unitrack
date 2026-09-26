@@ -13,8 +13,12 @@ export interface SessionPayload {
   email: string;
   role: string;
   name?: string;
+  subject?: "user" | "student";
   [key: string]: unknown;
 }
+
+export const ADMIN_ROLES = ["Super Admin", "Admin"] as const;
+export const STAFF_ROLES = ["Super Admin", "Admin", "Staff"] as const;
 
 export const verifyAuth = async (token: string): Promise<SessionPayload> => {
   try {
@@ -26,7 +30,17 @@ export const verifyAuth = async (token: string): Promise<SessionPayload> => {
 };
 
 export const signToken = async (payload: { id: number; email: string; role: string }) => {
-  const token = await new SignJWT(payload)
+  const token = await new SignJWT({ ...payload, subject: "user" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("24h")
+    .sign(new TextEncoder().encode(getJwtSecretKey()));
+
+  return token;
+};
+
+export const signStudentToken = async (payload: { id: number; email: string }) => {
+  const token = await new SignJWT({ ...payload, role: "Student", subject: "student" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("24h")

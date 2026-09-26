@@ -1,0 +1,6 @@
+- Route files are thin server components that only import an `AppLayoutWrapper` and a content component, and export `metadata` with title/description for SEO.
+- Heavy interactive UI is implemented as `"use client"` components colocated in a `components/` folder next to their route, keeping page files free of business logic.
+- All user-facing mutations and reads go through direct `fetch()` calls to `/api/*` endpoints with `Content-Type: application/json`, followed by `toast.success` / `toast.error` feedback and local state updates.
+- Client components manage loading/error states with dedicated boolean flags (e.g. `isLoading`, `saving`, `submitting`) and render spinner or empty-state placeholders before data arrives.
+- Search/filter/state changes are derived via `useMemo` over source arrays (e.g. filtered applications, course prerequisites) rather than imperative loops inside render.
+- Navigation between related pages uses `next/navigation`'s `useRouter().push` and query-string parameters (e.g. `view`, `country`, `visa`) are synchronized with `router.replace` to keep the URL in sync with UI state.

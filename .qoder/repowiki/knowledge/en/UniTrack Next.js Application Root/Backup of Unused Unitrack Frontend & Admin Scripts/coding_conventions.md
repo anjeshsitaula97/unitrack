@@ -1,0 +1,3 @@
+- Each feature module follows a `<FeatureName>Content.tsx` component pattern placed under `src/app/<feature>/components/`.
+- Standalone Prisma scripts export a single `main()` async function that instantiates `PrismaClient`, performs the operation, and ensures `$disconnect()` is called in a `finally` block.
+- The Prisma client is instantiated per script but reused across modules via a `globalThis.prisma` singleton guard in `src/lib/db.ts` to avoid multiple connections during development.

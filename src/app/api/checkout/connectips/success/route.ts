@@ -13,6 +13,7 @@ type ResultStatus = "success" | "failed" | "pending";
  * ?TXNID=<reference> to this registered URL, so the final status must be
  * confirmed with the server-to-server validation API before completion.
  */
+// react-doctor-disable-next-line react-doctor/nextjs-no-side-effect-in-get-handler
 export async function GET(req: NextRequest) {
   const reference = req.nextUrl.searchParams.get("TXNID") || "";
   const redirect = (status: ResultStatus) => {

@@ -1,0 +1,1 @@
+Chart widgets are intentionally loaded client-side only via `dynamic(() => import(...), { ssr: false })` because they depend on browser-only libraries; the backup page requires a running backend exposing `/api/backup` (GET) and `/api/restore` (POST) endpoints, and encrypted backups require a password supplied at both export and restore time.

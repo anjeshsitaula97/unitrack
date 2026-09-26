@@ -1,0 +1,1 @@
+Database URL is read from the `DATABASE_URL` environment variable; seeds and dump scripts are executed directly via Node (e.g., `node prisma/seed-roles.ts`) after running `npx prisma generate` to produce the client.

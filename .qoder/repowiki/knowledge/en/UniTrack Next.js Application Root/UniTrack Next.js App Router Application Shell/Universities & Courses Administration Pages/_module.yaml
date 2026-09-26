@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: app_pages/universities_courses
+title: Universities & Courses Administration Pages
+scope:
+    - src/app/universities/
+    - src/app/courses/
+source_files: []
+depends_on: []
+related_to:
+    - path: database_schema

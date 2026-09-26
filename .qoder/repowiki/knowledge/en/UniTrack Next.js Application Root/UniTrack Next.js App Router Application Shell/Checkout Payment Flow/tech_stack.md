@@ -1,0 +1,1 @@
+Next.js App Router server routes (`src/app/api/checkout/*`) paired with a React client component (`CheckoutModal.tsx`); pricing and gateway integrations are shared via `src/lib/pricing.ts` and `src/lib/checkout/` so both UI and API layers consume the same plan definitions and NPR amounts.

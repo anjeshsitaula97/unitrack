@@ -1,0 +1,1 @@
+Root of the UniTrack Next.js application that wires shared components, utilities, Prisma schema, styles, scripts, and archived assets into a single dev/build/start surface.

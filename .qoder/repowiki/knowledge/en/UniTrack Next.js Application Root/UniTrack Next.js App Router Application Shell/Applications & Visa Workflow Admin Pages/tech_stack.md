@@ -1,0 +1,1 @@
+Next.js App Router (server + client components), React hooks for state, Tailwind CSS for styling, lucide-react icons, sonner for toast notifications, and direct browser `fetch` against internal `/api/*` REST endpoints.

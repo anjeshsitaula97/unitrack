@@ -1,0 +1,16 @@
+schema_version: 1
+module_path: database_schema
+title: Prisma Database Schema & Seed Data
+scope:
+    - prisma/
+source_files: []
+depends_on: []
+related_to:
+    - path: app_pages/content_master_data
+    - path: app_pages/dashboard_admin
+    - path: app_pages/hr_management
+    - path: app_pages/leads_partners
+    - path: app_pages/payments_expenses
+    - path: app_pages/reports_analytics
+    - path: app_pages/students
+    - path: app_pages/universities_courses

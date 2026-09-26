@@ -1,0 +1,6 @@
+- Seed scripts instantiate a single `PrismaClient`, perform idempotent upserts keyed by a unique field (e.g., `role.name`), and always disconnect via `prisma.$disconnect()` in a `finally` block.
+- Models consistently include `createdAt` / `updatedAt` DateTime fields with `@default(now())` and `@updatedAt` for auditability.
+- Foreign key relationships declare explicit `onDelete` behavior — `Cascade` for child-owned entities (Course→Application, Student→Payment) and `SetNull` for optional references (Student→Partner).
+- Frequently queried columns are annotated with `@@index([...])` and business keys use `@@unique([...])` (e.g., Attendance on userId+date, Payroll on userId+month+year).
+- Reference-like enums are stored as plain `String` fields with inline comments documenting allowed values (e.g., `commissionType`, `status`, `type`).
+- JSON payloads are persisted as `String` fields with default `[]` and documented shape comments (e.g., `countries`, `enabledModules`, `subtasks`).

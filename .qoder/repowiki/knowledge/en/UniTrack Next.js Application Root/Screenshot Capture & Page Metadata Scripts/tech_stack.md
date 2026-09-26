@@ -1,0 +1,1 @@
+Puppeteer (headless Chrome) for browser automation; Node.js ESM (`.mjs`) for screenshot runners and CommonJS (`.js`) for the metadata injector; Next.js App Router conventions assumed for page discovery and metadata injection.

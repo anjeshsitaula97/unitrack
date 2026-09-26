@@ -257,7 +257,7 @@ export default function AttendanceContent() {
       const query = buildQuery();
       const [allRes, meRes] = await Promise.all([
         fetch(`/api/hr/attendance?${query}`),
-        fetch("/api/auth/me"),
+        fetch("/api/auth/me", { credentials: "include" }),
       ]);
       if (allRes.ok) setRecords((await allRes.json()) as AttendanceRecord[]);
       if (meRes.ok) {

@@ -208,6 +208,14 @@ export const MODULES: ModuleDefinition[] = [
     defaultEnabled: true,
     icon: "Zap",
   },
+  {
+    id: "marketing",
+    label: "Marketing",
+    description: "Marketing materials requests and asset management",
+    routes: ["/marketing/materials"],
+    defaultEnabled: true,
+    icon: "Megaphone",
+  },
 ];
 
 export function defaultEnabledModuleIds(): string[] {

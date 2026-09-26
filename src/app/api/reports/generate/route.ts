@@ -24,14 +24,14 @@ export async function POST(req: NextRequest) {
     if (filters?.length) {
       for (const f of filters) {
         if (!f.value) continue;
-        if (f.op === "contains") where[f.field] = { contains: f.value, mode: "insensitive" };
+        if (f.op === "contains") where[f.field] = { contains: f.value };
         else if (f.op === "equals") where[f.field] = f.value;
         else if (f.op === "gt")
           where[f.field] = { gt: isNaN(Number(f.value)) ? f.value : Number(f.value) };
         else if (f.op === "lt")
           where[f.field] = { lt: isNaN(Number(f.value)) ? f.value : Number(f.value) };
         else if (f.op === "startsWith")
-          where[f.field] = { startsWith: f.value, mode: "insensitive" };
+          where[f.field] = { startsWith: f.value };
       }
     }
 

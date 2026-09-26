@@ -1,0 +1,6 @@
+- Every component file begins with the `"use client"` directive, indicating all shell components are rendered client-side.
+- Navigation entries are defined as plain data objects (`NavItem`, `NavSection`) in a single `navSections` array and rendered generically, keeping route labels, icons, and hrefs decoupled from rendering logic.
+- Notifications are implemented identically across `Topbar` and `Sidebar`: an initial `fetch("/api/notifications")` followed by an `EventSource` subscription to `/api/notifications/stream` with deduplication by notification id.
+- Logout flows consistently call `/api/auth/logout`, then invoke `clearAuthCache()` from `AppLayoutWrapper` and `deactivateSession()` from `@/lib/client-session` before navigating to `/login`.
+- User-facing state is kept local with `useState`/`useRef` and persisted user preferences (collapsed sidebar sections, scroll position) via `sessionStorage` with try/catch guards against storage failures.
+- UI primitives in `ui/` are wrapped with `React.memo` and compute derived class names via `useMemo` to avoid unnecessary re-renders.

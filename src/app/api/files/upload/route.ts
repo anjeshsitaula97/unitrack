@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { writeFile } from "fs/promises";
-import { join } from "path";
 import { db } from "@/lib/db";
 import { verifyAuth } from "@/lib/session";
+import { readUploadedFile, writeUploadedBuffer, UploadError } from "@/lib/upload-security";
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 async function getSession() {
   const cookieStore = await cookies();
@@ -16,35 +17,6 @@ async function getSession() {
   }
 }
 
-const ALLOWED_MIME_TYPES = new Set([
-  "application/pdf",
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "image/svg+xml",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "text/plain",
-  "text/csv",
-  "application/zip",
-  "application/x-zip-compressed",
-]);
-
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
-
-function sanitizeFilename(name: string): string {
-  return (
-    name
-      .replace(/[<>:"/\\|?*\x00-\x1f]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim() || "untitled"
-  );
-}
-
 function buildDisplayName(
   baseName: string,
   academicDocName: string | null,
@@ -54,33 +26,6 @@ function buildDisplayName(
     return `${baseName} - ${academicDocName}`;
   }
   return originalName;
-}
-
-async function writeFileWithName(
-  baseDir: string,
-  displayName: string,
-  fileExtension: string,
-  buffer: Buffer
-): Promise<string> {
-  const safeName = sanitizeFilename(displayName);
-  let storedFileName = `${safeName}.${fileExtension}`;
-  let filePath = join(baseDir, storedFileName);
-  let counter = 1;
-  while (true) {
-    try {
-      await writeFile(filePath, buffer, { flag: "wx" });
-      return storedFileName;
-    } catch (err: unknown) {
-      const error = err as { code?: string };
-      if (error.code === "EEXIST") {
-        storedFileName = `${safeName} (${counter}).${fileExtension}`;
-        filePath = join(baseDir, storedFileName);
-        counter++;
-      } else {
-        throw err;
-      }
-    }
-  }
 }
 
 export async function POST(req: NextRequest) {
@@ -103,21 +48,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: "File too large. Maximum size is 20MB." }, { status: 400 });
-    }
-
-    const detectedMime = file.type || `application/${file.name.split(".").pop()}`;
-    if (!ALLOWED_MIME_TYPES.has(detectedMime)) {
-      return NextResponse.json({ error: "File type not allowed." }, { status: 400 });
-    }
-
+    const uploaded = await readUploadedFile(file, MAX_FILE_SIZE);
     const academicDocumentId = formData.get("academicDocumentId") as string | null;
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const fileExtension = file.name.split(".").pop() || "bin";
-    const uploadsDir = join(process.cwd(), "public", "uploads");
 
     if (folderId.startsWith("student_")) {
       const studentId = folderId.replace("student_", "");
@@ -133,13 +65,8 @@ export async function POST(req: NextRequest) {
       }
 
       const displayName = buildDisplayName(student.name, academicDoc?.name ?? null, file.name);
-      const storedFileName = await writeFileWithName(
-        uploadsDir,
-        displayName,
-        fileExtension,
-        buffer
-      );
-      const url = `/uploads/${storedFileName}`;
+      const stored = writeUploadedBuffer(uploaded.buffer, uploaded.ext);
+      const url = stored.fileUrl;
 
       const document = await db.studentDocument.create({
         data: {
@@ -147,7 +74,7 @@ export async function POST(req: NextRequest) {
           name: displayName,
           url,
           fileSize: file.size,
-          fileType: file.type || `application/${fileExtension}`,
+          fileType: uploaded.mime,
           academicDocumentId: academicDocumentIdNum,
         },
         include: { academicDocument: { select: { id: true, name: true } } },
@@ -168,15 +95,15 @@ export async function POST(req: NextRequest) {
     }
 
     const displayName = buildDisplayName(folder.name, academicDoc?.name ?? null, file.name);
-    const storedFileName = await writeFileWithName(uploadsDir, displayName, fileExtension, buffer);
-    const url = `/uploads/${storedFileName}`;
+    const stored = writeUploadedBuffer(uploaded.buffer, uploaded.ext);
+    const url = stored.fileUrl;
 
     const fileItem = await db.fileItem.create({
       data: {
         name: displayName,
         url,
         fileSize: file.size,
-        fileType: file.type || `application/${fileExtension}`,
+        fileType: uploaded.mime,
         folderId: Number(folderId),
         userId: session.id,
         academicDocumentId: academicDocumentIdNum,
@@ -186,6 +113,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(fileItem, { status: 201 });
   } catch (error) {
     console.error("Error uploading file:", error);
+    if (error instanceof UploadError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
   }
 }

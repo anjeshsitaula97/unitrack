@@ -1,0 +1,5 @@
+- Server-only packages (`@prisma/client`, `prisma`) are declared in `serverExternalPackages` so they never ship to the browser bundle.
+- Cross-cutting concerns (DB access, JWT sessions, permissions, CSRF, API clients) are implemented in `shared_lib` and imported by routes rather than duplicated per page.
+- Reusable UI chrome (layout, sidebar, topbar, guided tour) lives in `shared_components` and is composed by route layouts instead of being re-implemented per page.
+- Global theming, Tailwind plugins, and static assets are co-located under `styles_assets` and referenced via relative imports rather than scattered inline styles.
+- Prisma schema and seed data are kept in `database_schema` and executed through the `prisma` CLI / `npx tsx` entry points defined in `package.json`.

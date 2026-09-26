@@ -1,0 +1,1 @@
+Prisma ORM with `provider = sqlite` and `engineType = library`; TypeScript seed scripts importing the generated `@prisma/client`.

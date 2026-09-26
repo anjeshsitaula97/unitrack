@@ -70,7 +70,7 @@ export default function AdminStudentMessagesContent() {
   const fetchMessagesRef = useRef(fetchMessages);
 
   useEffect(() => {
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", { credentials: "include" })
       .then(safeJson)
       .then((d) => {
         if (d.id) setSessionId(d.id);

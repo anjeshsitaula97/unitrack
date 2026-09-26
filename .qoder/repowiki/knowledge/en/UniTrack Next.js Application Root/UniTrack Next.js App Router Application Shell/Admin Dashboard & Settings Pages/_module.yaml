@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: app_pages/dashboard_admin
+title: Admin Dashboard & Settings Pages
+scope:
+    - src/app/dashboard/
+    - src/app/admin-dashboard/
+    - src/app/settings/
+source_files: []
+depends_on: []
+related_to:
+    - path: database_schema

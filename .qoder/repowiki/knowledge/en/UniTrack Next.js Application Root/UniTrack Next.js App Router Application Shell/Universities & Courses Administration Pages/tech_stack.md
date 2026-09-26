@@ -1,0 +1,1 @@
+Next.js App Router with React Server Components for routes and `'use client'` components for interactive UI; Prisma Client (`@/lib/db`) for course queries; `xlsx` library for Excel import/export; `lucide-react` icons; `sonner` for toast notifications; Tailwind CSS classes for styling.

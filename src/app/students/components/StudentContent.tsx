@@ -624,12 +624,13 @@ export default function StudentContent() {
           <AnimatePresence>
             {showMoreFilters && (
               <motion.div
-                initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
-                animate={prefersReducedMotion ? {} : { height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
+                initial={prefersReducedMotion ? false : { gridTemplateRows: "0fr", opacity: 0 }}
+                animate={prefersReducedMotion ? {} : { gridTemplateRows: "1fr", opacity: 1 }}
+                exit={{ gridTemplateRows: "0fr", opacity: 0 }}
+                className="grid overflow-hidden"
               >
-                <div className="pt-4 border-t border-slate-50 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div className="min-h-0 overflow-hidden">
+                  <div className="pt-4 border-t border-slate-50 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                   <div className="space-y-1.5">
                     <label
                       htmlFor="filter-province"
@@ -729,6 +730,7 @@ export default function StudentContent() {
                       ))}
                     </select>
                   </div>
+                </div>
                 </div>
               </motion.div>
             )}

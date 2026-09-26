@@ -110,7 +110,7 @@ export default function PartnerDashboardContent() {
       setLoading(true);
       try {
         const [me, partnerList, univList, studentList, appList] = await Promise.all([
-          fetch("/api/auth/me")
+          fetch("/api/auth/me", { credentials: "include" })
             .then(safeJson)
             .catch(() => null),
           fetch("/api/partners")

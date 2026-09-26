@@ -1,0 +1,1 @@
+Next.js App Router client components (`"use client"`), Tailwind CSS for styling, lucide-react for icons, sonner for toast notifications, and native Web APIs (`navigator.mediaDevices.getUserMedia`, `EventSource`, Canvas API) for camera capture and live notifications.

@@ -27,17 +27,22 @@ function memoryCleanup() {
 }
 
 export function getClientIp(req: Request): string {
-  const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) {
-    // Use the first hop only; proxies append the client IP last, so take the
-    // rightmost entry when present to avoid attacker-controlled values.
-    const hops = fwd
-      .split(",")
-      .map((h) => h.trim())
-      .filter(Boolean);
-    if (hops.length > 0) return hops[hops.length - 1];
+  // Proxy headers are only trusted when TRUST_PROXY=true (deployed behind a
+  // reverse proxy that overwrites incoming headers). When enabled, the leftmost
+  // X-Forwarded-For hop is the original client; any attacker-supplied trailing
+  // hops are discarded. When disabled, client-controlled X-Forwarded-For is
+  // ignored entirely so it cannot be used to reset rate-limit counters.
+  if (process.env.TRUST_PROXY === "true") {
+    const fwd = req.headers.get("x-forwarded-for");
+    if (fwd) {
+      const hops = fwd
+        .split(",")
+        .map((h) => h.trim())
+        .filter(Boolean);
+      if (hops.length > 0) return hops[0];
+    }
   }
-  return req.headers.get("x-real-ip") || "unknown";
+  return req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || "unknown";
 }
 
 export async function checkRateLimit(

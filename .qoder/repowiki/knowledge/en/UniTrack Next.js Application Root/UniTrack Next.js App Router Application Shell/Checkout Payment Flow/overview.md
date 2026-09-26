@@ -1,0 +1,1 @@
+Orchestrates the end-to-end checkout experience by wiring a React modal, server-side pricing and gateway libraries, and Next.js App Router routes that initiate eSewa/connectIPS payments and handle their webhooks.

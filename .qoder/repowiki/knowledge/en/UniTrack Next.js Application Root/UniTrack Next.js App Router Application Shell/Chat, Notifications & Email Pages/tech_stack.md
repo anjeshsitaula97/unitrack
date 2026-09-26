@@ -1,0 +1,1 @@
+React client components on top of Next.js App Router; Tailwind CSS for styling; Lucide icons; Sonner for toast notifications; direct `fetch` calls against server routes under `/api/chat`, `/api/notifications`, `/api/email*`.

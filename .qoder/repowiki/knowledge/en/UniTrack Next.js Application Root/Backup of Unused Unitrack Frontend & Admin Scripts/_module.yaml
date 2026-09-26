@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: backup_unused
+title: Backup of Unused Unitrack Frontend & Admin Scripts
+scope:
+    - .backup_unused/
+source_files: []
+depends_on: []
+related_to: []

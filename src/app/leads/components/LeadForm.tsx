@@ -82,7 +82,7 @@ export default function LeadForm({ leadId }: LeadFormProps) {
   useEffect(() => {
     const init = async () => {
       try {
-        const [userRes, usersRes] = await Promise.all([fetch("/api/auth/me"), fetch("/api/users")]);
+        const [userRes, usersRes] = await Promise.all([fetch("/api/auth/me", { credentials: "include" }), fetch("/api/users")]);
         if (userRes.ok) {
           const userData = await userRes.json();
           setCurrentUser(userData);
@@ -93,12 +93,10 @@ export default function LeadForm({ leadId }: LeadFormProps) {
 
       if (isEdit && leadId) {
         try {
-          const res = await fetch("/api/leads");
+          const res = await fetch(`/api/leads/${leadId}`);
           if (res.ok) {
-            const data = await res.json();
-            const leads = (Array.isArray(data) ? data : data.data || []) as LeadFormData[];
-            const lead = leads.find((l) => l.id === leadId);
-            if (lead) {
+            const lead = await res.json();
+            if (lead && !lead.error) {
               setFormData({
                 name: lead.name,
                 email: lead.email,

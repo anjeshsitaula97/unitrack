@@ -20,6 +20,7 @@ function resultUrl(reference: string, status: ResultStatus): string {
  * is reconciled through the status-check API before anything is marked FAILED,
  * so a pending payment is never reported as failed.
  */
+// react-doctor-disable-next-line react-doctor/nextjs-no-side-effect-in-get-handler
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ reference?: string[] }> }

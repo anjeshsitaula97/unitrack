@@ -58,13 +58,14 @@ export async function POST(req: Request) {
     });
 
     const cookieStore = await cookies();
+    const isDev = process.env.NODE_ENV !== "production";
     cookieStore.set({
       name: "auth_token",
       value: token,
       httpOnly: true,
       path: "/",
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: !isDev,
+      sameSite: isDev ? "lax" : "strict",
     });
 
     // Update last login & seen
@@ -110,8 +111,8 @@ export async function POST(req: Request) {
     response.cookies.set("enabled_modules", enabledModules, {
       httpOnly: true,
       path: "/",
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: !isDev,
+      sameSite: isDev ? "lax" : "strict",
       maxAge: 86400,
     });
     return response;

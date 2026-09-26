@@ -1,0 +1,1 @@
+Next.js App Router client components (`"use client"`), React state + `next/dynamic` for chart lazy-loading, Tailwind CSS for styling, `lucide-react` icons, `sonner` for toast notifications, `bikram-sambat-js` for Nepali calendar conversion, and raw `fetch` calls to internal `/api/*` routes.

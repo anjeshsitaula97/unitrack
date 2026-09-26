@@ -6,6 +6,7 @@ import { getAppBaseUrl } from "@/lib/checkout/config";
 export const dynamic = "force-dynamic";
 
 /** connectIPS redirects here when the payment fails or is cancelled. */
+// react-doctor-disable-next-line react-doctor/nextjs-no-side-effect-in-get-handler
 export async function GET(req: NextRequest) {
   const reference = req.nextUrl.searchParams.get("TXNID") || "";
 

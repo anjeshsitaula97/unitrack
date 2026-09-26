@@ -1,0 +1,1 @@
+Scripts are run directly with Node/ts-node against the repository's Prisma client; `enable-wal.js` must be executed once to set `PRAGMA journal_mode=WAL` on the SQLite database, and `scratch_seed_admin.ts` creates or updates the default admin account at `admin@unitrack.com`.

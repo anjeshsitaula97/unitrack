@@ -182,7 +182,7 @@ export default function DashboardContent() {
 
   useEffect(() => {
     const ac = new AbortController();
-    fetch("/api/auth/me", { signal: ac.signal })
+    fetch("/api/auth/me", { signal: ac.signal, credentials: "include" })
       .then(safeJson)
       .then((data) => {
         if (data.name) setUserName(data.name.split(" ")[0]);

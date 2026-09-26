@@ -1,0 +1,6 @@
+- Each feature route follows a two-file pattern: a minimal `page.tsx` server component that sets `metadata.title/description` and wraps the client component in `AppLayoutWrapper`, and a `components/<Feature>Content.tsx` client component that owns all state and UI.
+- Data fetching is done imperatively inside `useEffect` (often wrapped in `queueMicrotask` or a ref-based pattern) calling `fetch('/api/...')`, with errors surfaced via `toast.error` and loading indicated by a `Loader2` spinner.
+- New records are created by POSTing JSON to the same `/api/<feature>` endpoint used for listing, then refreshing the list and resetting form fields to defaults on success.
+- Client-side filtering combines a free-text search query with a categorical dropdown filter, computed via `useMemo` over the fetched array.
+- Forms are rendered as controlled inputs driven by a single `formData` object updated via spread-replacement setters, with validation performed before submission and a `isSubmitting` flag disabling the save button.
+- User feedback uses `sonner` toasts (`toast.success` / `toast.error`) rather than alerts or custom notification components.

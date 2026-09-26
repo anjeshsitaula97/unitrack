@@ -1,21 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch {
-    return null;
-  }
-}
+import { getStudentSession } from "@/lib/api-utils";
 
 export async function GET() {
-  const session = await getSession();
+  const session = await getStudentSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const conversations = await db.studentConversation.findMany({
@@ -31,7 +19,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await getSession();
+  const session = await getStudentSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { staffId, subject } = await req.json();

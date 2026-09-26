@@ -56,7 +56,7 @@ export default function ChatContent() {
   const activeRoom = rooms.find((r) => r.id === activeRoomId);
 
   useEffect(() => {
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", { credentials: "include" })
       .then(safeJson)
       .then((data) => {
         if (data.id) setSessionUser({ id: data.id, name: data.name || "" });

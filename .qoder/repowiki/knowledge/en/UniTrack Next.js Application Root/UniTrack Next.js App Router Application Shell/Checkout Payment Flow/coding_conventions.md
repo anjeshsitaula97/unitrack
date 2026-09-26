@@ -1,0 +1,3 @@
+- Gateway selection is driven by a runtime `/api/checkout/config` check rather than compile-time flags, allowing each gateway to be toggled independently.
+- All monetary values flow through `src/lib/pricing.ts` (`getChargeAmount`, `formatPrice`, `CHECKOUT_CURRENCY = 'NPR'`) so the modal, API routes, and gateway payloads stay consistent on NPR billing.
+- Each payment gateway lives as its own route namespace under `src/app/api/checkout/<gateway>/` with parallel `success` and `failure` handlers, mirroring the structure of `src/lib/checkout/<gateway>.ts`.

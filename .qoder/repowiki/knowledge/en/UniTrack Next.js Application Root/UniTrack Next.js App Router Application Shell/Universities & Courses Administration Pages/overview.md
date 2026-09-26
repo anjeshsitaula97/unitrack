@@ -1,0 +1,1 @@
+Next.js App Router pages and client components for administering universities and courses, including listing, detail views, add/edit forms, and bulk operations.

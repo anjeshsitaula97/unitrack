@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -51,10 +51,9 @@ import {
   Trash2,
   Handshake,
   BadgeDollarSign,
-  Moon,
-  Sun,
   HelpCircle,
   User,
+  Megaphone,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MODULES, getEnabledModuleIds } from "@/lib/modules";
@@ -97,15 +96,6 @@ interface NavSection {
   id: string;
   title?: string;
   items: NavItem[];
-}
-
-interface SidebarNotification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  read: boolean;
-  time: string;
 }
 
 const navSections: NavSection[] = [
@@ -202,32 +192,44 @@ const navSections: NavSection[] = [
       },
     ],
   },
-  {
-    id: "business",
-    title: "Business",
-    items: [
-      { id: "nav-payments", label: "Payments", icon: <CreditCard size={18} />, href: "/payments" },
-      { id: "nav-expenses", label: "Expenses", icon: <Receipt size={18} />, href: "/expenses" },
-      {
-        id: "nav-commission",
-        label: "Commission",
-        icon: <BadgeDollarSign size={18} />,
-        href: "/commission",
-      },
-      {
-        id: "nav-partnership",
-        label: "Partnership",
-        icon: <Handshake size={18} />,
-        href: "/partnership",
-      },
-      {
-        id: "nav-bulk-import",
-        label: "Bulk Import/Export",
-        icon: <Upload size={18} />,
-        href: "/bulk-import",
-      },
-    ],
-  },
+{
+      id: "business",
+      title: "Business",
+      items: [
+        { id: "nav-payments", label: "Payments", icon: <CreditCard size={18} />, href: "/payments" },
+        { id: "nav-expenses", label: "Expenses", icon: <Receipt size={18} />, href: "/expenses" },
+        {
+          id: "nav-commission",
+          label: "Commission",
+          icon: <BadgeDollarSign size={18} />,
+          href: "/commission",
+        },
+        {
+          id: "nav-partnership",
+          label: "Partnership",
+          icon: <Handshake size={18} />,
+          href: "/partnership",
+        },
+        {
+          id: "nav-bulk-import",
+          label: "Bulk Import/Export",
+          icon: <Upload size={18} />,
+          href: "/bulk-import",
+        },
+      ],
+    },
+    {
+      id: "marketing",
+      title: "Marketing",
+      items: [
+        {
+          id: "nav-marketing-materials",
+          label: "Marketing Materials",
+          icon: <Megaphone size={18} />,
+          href: "/marketing/materials",
+        },
+      ],
+    },
   {
     id: "analytics",
     title: "Analytics",
@@ -322,9 +324,6 @@ const navSections: NavSection[] = [
   },
 ];
 
-import { useTheme } from "@/lib/theme";
-import { safeJson } from "@/lib/fetch-client";
-
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
@@ -332,88 +331,12 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
-  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState<number | undefined>(undefined);
-  const [notifications, setNotifications] = useState<SidebarNotification[] | undefined>(undefined);
   const [stats, setStats] = useState<DashboardStats | undefined>(undefined);
-  const [isMounted] = useState(true);
-  const eventSourceRef = useRef<EventSource | null>(null);
   const navRef = React.useRef<HTMLElement>(null);
-
-  const fetchNotifications = async () => {
-    try {
-      const res = await fetch("/api/notifications");
-      const data = await safeJson(res);
-      if (Array.isArray(data)) {
-        setNotifications(data);
-        setUnreadCount(data.filter((n) => !n.read).length);
-      }
-    } catch (err) {
-      console.error("Failed to fetch notifications:", err);
-    }
-  };
-
-  useEffect(() => {
-    Promise.resolve().then(fetchNotifications);
-
-    const es = new EventSource("/api/notifications/stream");
-    eventSourceRef.current = es;
-
-    es.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "notifications" && data.notifications?.length > 0) {
-          setNotifications((prev) => {
-            const existing = prev || [];
-            const newIds = new Set(data.notifications.map((n: SidebarNotification) => n.id));
-            const merged = [
-              ...data.notifications,
-              ...existing.filter((n: SidebarNotification) => !newIds.has(n.id)),
-            ];
-            return merged.slice(0, 50);
-          });
-          setUnreadCount(data.unreadCount);
-        }
-      } catch {}
-    };
-
-    es.onerror = () => {
-      es.close();
-    };
-
-    return () => {
-      es.close();
-    };
-  }, []);
-
-  const markAllRead = async () => {
-    try {
-      await fetch("/api/notifications", { method: "PUT", body: JSON.stringify({ read: true }) });
-      setNotifications((prev) => prev?.map((n) => ({ ...n, read: true })));
-      setUnreadCount(0);
-    } catch (err) {
-      console.error("Failed to mark all read:", err);
-    }
-  };
-
-  const markRead = async (id: string) => {
-    try {
-      await fetch("/api/notifications", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, read: true }),
-      });
-      setNotifications((prev) => prev?.map((n) => (n.id === id ? { ...n, read: true } : n)) ?? []);
-      setUnreadCount((prev) => Math.max(0, (prev ?? 1) - 1));
-    } catch (err) {
-      console.error("Failed to mark notification as read:", err);
-    }
-  };
 
   const fetchStats = async () => {
     try {
@@ -429,10 +352,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
 
   useEffect(() => {
     fetchStats();
-    const interval = setInterval(() => {
-      fetchNotifications();
-      fetchStats();
-    }, 30000); // Polling every 30s
+    const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -495,15 +415,15 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
   }, []);
 
   const toggleSection = (id: string) => {
-    setCollapsedSectionIds((prev) => {
-      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
-      try {
-        sessionStorage.setItem("sidebar-collapsed-sections", JSON.stringify(next));
-      } catch {
-        // ignore storage failures
-      }
-      return next;
-    });
+    const next = collapsedSectionIds.includes(id)
+      ? collapsedSectionIds.filter((x) => x !== id)
+      : [...collapsedSectionIds, id];
+    setCollapsedSectionIds(next);
+    try {
+      sessionStorage.setItem("sidebar-collapsed-sections", JSON.stringify(next));
+    } catch {
+      // ignore storage failures
+    }
   };
 
   useEffect(() => {
@@ -576,18 +496,19 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
     <aside
       className={`
         fixed left-0 top-0 h-full bg-white border-r border-slate-200 z-30
+        dark:bg-slate-900 dark:border-slate-800
         flex flex-col transition-all duration-300 ease-in-out
         ${collapsed ? "w-16" : "w-60"}
       `}
     >
       {/* Logo */}
       <div
-        className={`flex items-center h-14 border-b border-slate-100 px-3 ${collapsed ? "justify-center" : "justify-between"}`}
+        className={`flex items-center h-14 border-b border-slate-100 dark:border-slate-800 px-3 ${collapsed ? "justify-center" : "justify-between"}`}
       >
         <div className="flex items-center gap-2 min-w-0">
           <AppLogo size={28} />
           {!collapsed && (
-            <span className="font-bold text-slate-800 text-base tracking-tight truncate">
+            <span className="font-bold text-slate-800 dark:text-slate-100 text-base tracking-tight truncate">
               UniTrack
             </span>
           )}
@@ -596,7 +517,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
           <button
             type="button"
             onClick={onToggle}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all duration-150"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-all duration-150"
             aria-label="Collapse sidebar"
           >
             {" "}
@@ -607,7 +528,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
 
       {/* Search */}
       {!collapsed && (
-        <div className="p-3 border-b border-slate-100">
+        <div className="p-3 border-b border-slate-100 dark:border-slate-800">
           <div className="relative group">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors pointer-events-none"
@@ -627,10 +548,10 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
               autoCorrect="off"
               spellCheck="false"
               aria-label="Search menu"
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 pointer-events-auto relative z-10"
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 pointer-events-auto relative z-10 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500"
             />
             {!searchQuery && (
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-white border border-slate-200 rounded px-1 py-0.5 text-slate-400 pointer-events-none uppercase">
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-white border border-slate-200 rounded px-1 py-0.5 text-slate-400 pointer-events-none uppercase dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500">
                 /
               </kbd>
             )}
@@ -638,7 +559,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
                 aria-label="Clear search"
               >
                 <X size={12} />
@@ -653,7 +574,6 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
         collapsed={collapsed}
         pathname={pathname}
         stats={stats}
-        unreadCount={unreadCount}
         navRef={navRef}
         handleScroll={handleScroll}
         collapsedSectionIds={collapsedSectionIds}
@@ -671,18 +591,9 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
         userInitials={userInitials}
         handleLogout={handleLogout}
         isLoggingOut={isLoggingOut}
-        theme={theme}
-        toggleTheme={toggleTheme}
-        notifications={notifications}
-        unreadCount={unreadCount}
-        notifOpen={notifOpen}
-        setNotifOpen={setNotifOpen}
         settingsOpen={settingsOpen}
         setSettingsOpen={setSettingsOpen}
-        markAllRead={markAllRead}
-        markRead={markRead}
         router={router}
-        isMounted={isMounted}
       />
     </aside>
   );
@@ -693,7 +604,6 @@ function NavSectionList({
   collapsed,
   pathname,
   stats,
-  unreadCount,
   navRef,
   handleScroll,
   collapsedSectionIds,
@@ -704,7 +614,6 @@ function NavSectionList({
   collapsed: boolean;
   pathname: string;
   stats: DashboardStats | undefined;
-  unreadCount: number | undefined;
   navRef: React.RefObject<HTMLElement | null>;
   handleScroll: () => void;
   collapsedSectionIds: string[];
@@ -727,13 +636,13 @@ function NavSectionList({
               <button
                 type="button"
                 onClick={() => onToggleSection(section.id)}
-                className="w-full flex items-center justify-between px-3 py-2 mb-0.5 text-sm font-bold text-slate-400 hover:text-slate-600 group transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2 mb-0.5 text-sm font-bold text-slate-400 hover:text-slate-600 group transition-colors dark:text-slate-500 dark:hover:text-slate-300"
                 aria-expanded={!isCollapsed}
               >
                 <span>{section.title}</span>
                 <ChevronDown
                   size={12}
-                  className={`transition-transform duration-150 group-hover:text-slate-500 ${
+                  className={`transition-transform duration-150 group-hover:text-slate-500 dark:group-hover:text-slate-300 ${
                     isCollapsed ? "-rotate-90" : ""
                   }`}
                 />
@@ -752,66 +661,60 @@ function NavSectionList({
                   w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 mb-0.5 relative group
                   ${
                     isActive
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                   }
                   ${collapsed ? "justify-center" : ""}
                 `}
                   >
-                    <span className={`flex-shrink-0 ${isActive ? "text-indigo-600" : ""}`}>
+                    <span className={`flex-shrink-0 ${isActive ? "text-indigo-600 dark:text-indigo-300" : ""}`}>
                       {item.icon}
                     </span>
                     {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
                     {!collapsed &&
-                      (item.id === "nav-notifications"
-                        ? (unreadCount ?? 0) > 0
-                        : item.id === "nav-universities"
-                          ? (stats?.totalUniversities || 0) > 0
-                          : item.id === "nav-courses"
-                            ? (stats?.totalCourses || 0) > 0
-                            : item.id === "nav-leads"
-                              ? (stats?.totalLeads || 0) > 0
-                              : item.id === "nav-students"
-                                ? (stats?.totalStudents || 0) > 0
-                                : item.id === "nav-applications"
-                                  ? (stats?.totalApplications || 0) > 0
-                                  : item.id === "nav-staff-tasks"
-                                    ? (stats?.totalTasks || 0) > 0
-                                    : (item.badge || 0) > 0) && (
-                        <span className="ml-auto bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                          {item.id === "nav-notifications"
-                            ? unreadCount
-                            : item.id === "nav-universities"
-                              ? stats?.totalUniversities || 0
-                              : item.id === "nav-courses"
-                                ? stats?.totalCourses || 0
-                                : item.id === "nav-leads"
-                                  ? stats?.totalLeads || 0
-                                  : item.id === "nav-students"
-                                    ? stats?.totalStudents || 0
-                                    : item.id === "nav-applications"
-                                      ? stats?.totalApplications || 0
-                                      : item.id === "nav-staff-tasks"
-                                        ? stats?.totalTasks || 0
-                                        : item.badge}
+                      (item.id === "nav-universities"
+                        ? (stats?.totalUniversities || 0) > 0
+                        : item.id === "nav-courses"
+                          ? (stats?.totalCourses || 0) > 0
+                          : item.id === "nav-leads"
+                            ? (stats?.totalLeads || 0) > 0
+                            : item.id === "nav-students"
+                              ? (stats?.totalStudents || 0) > 0
+                              : item.id === "nav-applications"
+                                ? (stats?.totalApplications || 0) > 0
+                                : item.id === "nav-staff-tasks"
+                                  ? (stats?.totalTasks || 0) > 0
+                                  : (item.badge || 0) > 0) && (
+                        <span className="ml-auto bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full dark:bg-indigo-900/40 dark:text-indigo-300">
+                          {item.id === "nav-universities"
+                            ? stats?.totalUniversities || 0
+                            : item.id === "nav-courses"
+                              ? stats?.totalCourses || 0
+                              : item.id === "nav-leads"
+                                ? stats?.totalLeads || 0
+                                : item.id === "nav-students"
+                                  ? stats?.totalStudents || 0
+                                  : item.id === "nav-applications"
+                                    ? stats?.totalApplications || 0
+                                    : item.id === "nav-staff-tasks"
+                                      ? stats?.totalTasks || 0
+                                      : item.badge}
                         </span>
                       )}
                     {collapsed &&
-                      (item.id === "nav-notifications"
-                        ? (unreadCount ?? 0) > 0
-                        : item.id === "nav-universities"
-                          ? (stats?.totalUniversities || 0) > 0
-                          : item.id === "nav-courses"
-                            ? (stats?.totalCourses || 0) > 0
-                            : item.id === "nav-leads"
-                              ? (stats?.totalLeads || 0) > 0
-                              : item.id === "nav-students"
-                                ? (stats?.totalStudents || 0) > 0
-                                : item.id === "nav-applications"
-                                  ? (stats?.totalApplications || 0) > 0
-                                  : item.id === "nav-staff-tasks"
-                                    ? (stats?.totalTasks || 0) > 0
-                                    : item.badge) && (
+                      (item.id === "nav-universities"
+                        ? (stats?.totalUniversities || 0) > 0
+                        : item.id === "nav-courses"
+                          ? (stats?.totalCourses || 0) > 0
+                          : item.id === "nav-leads"
+                            ? (stats?.totalLeads || 0) > 0
+                            : item.id === "nav-students"
+                              ? (stats?.totalStudents || 0) > 0
+                              : item.id === "nav-applications"
+                                ? (stats?.totalApplications || 0) > 0
+                                : item.id === "nav-staff-tasks"
+                                  ? (stats?.totalTasks || 0) > 0
+                                  : item.badge) && (
                         <span className="absolute top-1 right-1 size-2 bg-indigo-500 rounded-full" />
                       )}
                     {collapsed && (
@@ -827,7 +730,7 @@ function NavSectionList({
       })}
       {filteredSections.length === 0 && !collapsed && (
         <div className="px-4 py-8 text-center">
-          <p className="text-xs text-slate-400">No menu items found</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">No menu items found</p>
         </div>
       )}
     </nav>
@@ -844,18 +747,9 @@ function UserBottomSection({
   userInitials,
   handleLogout,
   isLoggingOut,
-  theme,
-  toggleTheme,
-  notifications,
-  unreadCount,
-  notifOpen,
-  setNotifOpen,
   settingsOpen,
   setSettingsOpen,
-  markAllRead,
-  markRead,
   router,
-  isMounted,
 }: {
   collapsed: boolean;
   onToggle: () => void;
@@ -866,26 +760,17 @@ function UserBottomSection({
   userInitials: string;
   handleLogout: () => void;
   isLoggingOut: boolean;
-  theme: "light" | "dark";
-  toggleTheme: () => void;
-  notifications: SidebarNotification[] | undefined;
-  unreadCount: number | undefined;
-  notifOpen: boolean;
-  setNotifOpen: (v: boolean) => void;
   settingsOpen: boolean;
   setSettingsOpen: (v: boolean) => void;
-  markAllRead: () => void;
-  markRead: (id: string) => void;
   router: ReturnType<typeof useRouter>;
-  isMounted: boolean;
 }) {
   return (
-    <div className="border-t border-slate-100 p-2 space-y-1">
+    <div className="border-t border-slate-100 dark:border-slate-800 p-2 space-y-1">
       {collapsed && (
         <button
           type="button"
           onClick={onToggle}
-          className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all duration-150"
+          className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-all duration-150"
           aria-label="Expand sidebar"
         >
           {" "}
@@ -893,93 +778,12 @@ function UserBottomSection({
         </button>
       )}
 
-      <button
-        type="button"
-        aria-label="Toggle dark mode"
-        onClick={toggleTheme}
-        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${collapsed ? "justify-center" : ""} text-slate-400 hover:text-slate-600 hover:bg-slate-100`}
-        title={collapsed ? (theme === "dark" ? "Light mode" : "Dark mode") : undefined}
-      >
-        {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-        {!collapsed && <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>}
-      </button>
-
-      <div className="relative">
-        <button
-          type="button"
-          aria-label="Notifications"
-          onClick={() => {
-            setNotifOpen(!notifOpen);
-            setSettingsOpen(false);
-          }}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${collapsed ? "justify-center" : ""} text-slate-400 hover:text-slate-600 hover:bg-slate-100 relative`}
-          title={collapsed ? "Notifications" : undefined}
-        >
-          <Bell size={18} />
-          {isMounted && unreadCount && unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-indigo-500 text-white text-[10px] font-bold rounded-full px-1 border-2 border-white leading-none">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </span>
-          )}
-          {!collapsed && <span>Notifications</span>}
-        </button>
-        {isMounted && notifOpen && !collapsed && (
-          <div className="absolute left-full ml-2 top-0 w-80 bg-white rounded-xl border border-slate-200 shadow-lg z-50 animate-fade-in">
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <span className="font-semibold text-slate-800 text-sm">Notifications</span>
-              {unreadCount && unreadCount > 0 && (
-                <button
-                  type="button"
-                  onClick={markAllRead}
-                  className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline"
-                >
-                  Mark all read
-                </button>
-              )}
-            </div>
-            <div className="max-h-[400px] overflow-y-auto divide-y divide-slate-100">
-              {(notifications?.length ?? 0) === 0 && (
-                <div className="px-4 py-8 text-center">
-                  <p className="text-xs text-slate-400">No notifications yet.</p>
-                </div>
-              )}
-              {(notifications ?? []).map((n) => (
-                <button
-                  type="button"
-                  key={n.id}
-                  onClick={() => markRead(n.id)}
-                  className={`w-full px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors text-left ${!n.read ? "bg-indigo-50/30" : ""}`}
-                >
-                  <p className="text-[11px] font-semibold text-slate-800 mb-0.5">{n.title}</p>
-                  <p className="text-xs text-slate-700 leading-relaxed">{n.message}</p>
-                  <p className="text-[10px] text-slate-400 mt-1">{n.time}</p>
-                </button>
-              ))}
-            </div>
-            {(notifications?.length ?? 0) > 0 && (
-              <div className="px-4 py-2 border-t border-slate-100 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    router.push("/notifications");
-                    setNotifOpen(false);
-                  }}
-                  className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
-                >
-                  View All
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
       <div className="relative">
         <button
           type="button"
           aria-label="Settings"
           onClick={() => setSettingsOpen(!settingsOpen)}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${collapsed ? "justify-center" : ""} ${settingsOpen ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${collapsed ? "justify-center" : ""} ${settingsOpen ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800"}`}
           title={collapsed ? "Settings" : undefined}
         >
           <Settings size={18} />
@@ -987,14 +791,14 @@ function UserBottomSection({
         </button>
 
         {settingsOpen && !collapsed && (
-          <div className="absolute left-full ml-2 top-0 w-48 bg-white rounded-xl border border-slate-200 shadow-lg z-50 animate-fade-in py-1">
+          <div className="absolute left-full ml-2 top-0 w-48 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg z-50 animate-fade-in py-1">
             <button
               type="button"
               onClick={() => {
                 router.push("/settings?tab=profile");
                 setSettingsOpen(false);
               }}
-              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-indigo-300 transition-colors"
             >
               <User size={14} /> My Profile
             </button>
@@ -1004,7 +808,7 @@ function UserBottomSection({
                 router.push("/settings?tab=roles");
                 setSettingsOpen(false);
               }}
-              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
+              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-indigo-300 transition-colors border-b border-slate-50 dark:border-slate-800"
             >
               <Settings size={14} /> System Settings
             </button>
@@ -1014,7 +818,7 @@ function UserBottomSection({
                 router.push("/support");
                 setSettingsOpen(false);
               }}
-              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
+              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-indigo-300 transition-colors border-b border-slate-50 dark:border-slate-800"
             >
               <HelpCircle size={14} /> Support Hub
             </button>
@@ -1026,19 +830,19 @@ function UserBottomSection({
         href="/tickets"
         className={`text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 w-full ${
           pathname === "/tickets"
-            ? "bg-indigo-50 text-indigo-700"
-            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
         } ${collapsed ? "justify-center" : ""}`}
         title={collapsed ? "Tickets" : undefined}
       >
-        <TicketIcon size={18} className={pathname === "/tickets" ? "text-indigo-600" : ""} />
+        <TicketIcon size={18} className={pathname === "/tickets" ? "text-indigo-600 dark:text-indigo-300" : ""} />
         {!collapsed && <span>Tickets</span>}
       </Link>
       <button
         type="button"
         onClick={handleLogout}
         disabled={isLoggingOut}
-        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-150 ${collapsed ? "justify-center" : ""}`}
+        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 transition-all duration-150 ${collapsed ? "justify-center" : ""}`}
         title={collapsed ? "Logout" : undefined}
       >
         {" "}
@@ -1047,31 +851,31 @@ function UserBottomSection({
       </button>
 
       {!collapsed && (
-        <div className="mx-1 mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+        <div className="mx-1 mt-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
           {user?.role?.includes("Admin") ? (
             <>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-600">Storage</span>
-                <span className="text-xs text-slate-400">68% used</span>
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Storage</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">68% used</span>
               </div>
-              <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div className="h-full w-[68%] bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full" />
               </div>
             </>
           ) : (
             <>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   Your Plan
                 </span>
-                <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold">
+                <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold dark:bg-indigo-900/40 dark:text-indigo-300">
                   {user?.subscriptionPackage || "Basic"}
                 </span>
               </div>
               <div className="flex flex-col gap-1">
-                <p className="text-[10px] text-slate-500 font-medium">
+                <p className="text-[10px] text-slate-500 font-medium dark:text-slate-400">
                   Expires:{" "}
-                  <span className="text-slate-700 font-bold">
+                  <span className="text-slate-700 font-bold dark:text-slate-200">
                     {user?.subscriptionExpiry
                       ? new Date(user.subscriptionExpiry).toLocaleDateString("en-US", {
                           month: "short",
@@ -1111,8 +915,8 @@ function UserBottomSection({
         )}
         {!collapsed && (
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-slate-800 truncate">{userName}</p>
-            <p className="text-[10px] text-slate-400 truncate">{userRole}</p>
+            <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">{userName}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{userRole}</p>
           </div>
         )}
       </div>

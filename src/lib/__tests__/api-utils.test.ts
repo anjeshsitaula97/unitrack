@@ -39,8 +39,8 @@ describe("API Utils", () => {
       const filter = buildSearchFilter("john", ["name", "email"]);
       expect(filter).toHaveProperty("OR");
       expect(filter.OR).toHaveLength(2);
-      expect(filter.OR![0]).toEqual({ name: { contains: "john", mode: "insensitive" } });
-      expect(filter.OR![1]).toEqual({ email: { contains: "john", mode: "insensitive" } });
+      expect(filter.OR![0]).toEqual({ name: { contains: "john" } });
+      expect(filter.OR![1]).toEqual({ email: { contains: "john" } });
     });
   });
 

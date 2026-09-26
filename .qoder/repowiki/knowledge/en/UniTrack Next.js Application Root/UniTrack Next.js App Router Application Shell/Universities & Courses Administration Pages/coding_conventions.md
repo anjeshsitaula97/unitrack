@@ -1,0 +1,7 @@
+- Route `page.tsx` files are thin server components that only declare `metadata` and wrap a content component inside `AppLayoutWrapper`, delegating all UI logic to `./components/*Content`.
+- Dynamic route pages (`[id]/page.tsx`) await `params` destructuring and pass the id as a prop to their corresponding detail content component.
+- Client components are explicitly opt-in via a `'use client';` directive at the top of each file in `components/`.
+- List pages implement full client-side search, multi-field filtering, sorting, pagination, and list/grid view toggle using `useState` + `useMemo` over locally fetched or prop-driven data.
+- Mutations (create/update/delete) are performed via direct `fetch` calls to `/api/universities/*` or `/api/courses/*` endpoints, with success/error feedback delivered through `sonner` toasts.
+- Status and type badges are rendered through lookup tables (e.g., `statusConfig`, `levelConfig`, `facultyColors`) mapping enum values to label + className pairs rather than inline conditionals.
+- Array-typed JSON fields stored in the database (prerequisites, quickFilters, requirements, intake) are parsed at the boundary using `safeParseArray` or try/catch JSON.parse before being consumed by the UI.

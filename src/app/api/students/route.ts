@@ -21,10 +21,10 @@ export async function GET(req: NextRequest) {
 
     if (params.search) {
       where.OR = [
-        { name: { contains: params.search, mode: "insensitive" } },
-        { email: { contains: params.search, mode: "insensitive" } },
-        { phone: { contains: params.search, mode: "insensitive" } },
-        { passportNumber: { contains: params.search, mode: "insensitive" } },
+        { name: { contains: params.search } },
+        { email: { contains: params.search } },
+        { phone: { contains: params.search } },
+        { passportNumber: { contains: params.search } },
       ];
     }
 

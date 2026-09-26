@@ -1,0 +1,1 @@
+`npm run dev` starts the Next.js dev server on port 4028; `npm run build` produces a production bundle; `npm run start` serves the built app; `npm run seed:universities` runs the Prisma university seed via `tsx`; `npm run test[/watch|coverage]` drives Vitest; Windows helpers (`start-dev.bat`, `run-dev-task.bat`, etc.) wrap the same commands for local development.

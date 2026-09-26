@@ -22,6 +22,7 @@ function resultUrl(reference: string, status: ResultStatus): string {
  * The signature is re-generated locally, then the transaction is confirmed
  * against eSewa's server-to-server status API before it is marked COMPLETED.
  */
+// react-doctor-disable-next-line react-doctor/nextjs-no-side-effect-in-get-handler
 export async function GET(req: NextRequest) {
   const encoded = req.nextUrl.searchParams.get("data");
   if (!encoded) return NextResponse.redirect(resultUrl("", "failed"));

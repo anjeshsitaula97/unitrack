@@ -13,6 +13,9 @@ const PASSWORD = 'admin';
 const USER_ID = 'cmpmxws680000hqmsx86u0ji1';
 
 const PAGES = [
+  // Public / marketing pages
+  { path: '/',                     name: 'landing',                label: 'Landing Page (pricing)' },
+
   // Core pages
   { path: '/login',                name: 'login',                  label: 'Login Page' },
   { path: '/dashboard',            name: 'dashboard',              label: 'Dashboard' },

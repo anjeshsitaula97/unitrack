@@ -1,0 +1,6 @@
+- Route page files are minimal wrappers that export `metadata` and render their content component inside `AppLayoutWrapper`.
+- Heavy or browser-only subcomponents (charts, large setting panels) are loaded lazily with `next/dynamic` and `ssr: false`.
+- Server communication uses plain `fetch` against `/api/*` endpoints with `safeJson` helper and `AbortController` for cleanup on unmount.
+- User feedback is consistently delivered via `sonner` toasts, with destructive operations gated behind a shared `ConfirmDialog`.
+- Configurable feature sets are expressed as static arrays of objects (e.g., `DATA_SECTIONS`, `WIDGET_LIBRARY`, `PERMISSIONS`) rather than inline logic, enabling declarative rendering and selection.
+- Client components mark interactivity with the `"use client"` directive at the top of the file and keep server-rendered shell pages as default exports.

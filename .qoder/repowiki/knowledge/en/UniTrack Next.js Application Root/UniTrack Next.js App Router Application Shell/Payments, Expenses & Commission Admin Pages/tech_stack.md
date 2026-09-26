@@ -1,0 +1,1 @@
+Next.js App Router (client components via `'use client'`), React hooks (`useState`, `useEffect`, `useMemo`, `useRef`), Tailwind CSS for styling, lucide-react icons, sonner for toast notifications, and direct browser `fetch` calls against internal `/api/*` routes.

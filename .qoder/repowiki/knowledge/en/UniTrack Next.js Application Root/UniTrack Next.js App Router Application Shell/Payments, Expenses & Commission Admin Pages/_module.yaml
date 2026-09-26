@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: app_pages/payments_expenses
+title: Payments, Expenses & Commission Admin Pages
+scope:
+    - src/app/payments/
+    - src/app/expenses/
+    - src/app/commission/
+source_files: []
+depends_on: []
+related_to:
+    - path: database_schema
