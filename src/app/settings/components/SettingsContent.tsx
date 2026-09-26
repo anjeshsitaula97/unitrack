@@ -42,6 +42,7 @@ import {
   Layers,
   ArrowUp,
   ArrowDown,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -2049,7 +2050,7 @@ function SettingsContentInternal() {
                         </label>
                         <textarea
                           id="settings-editRole-description"
-                          value={editingRole.description}
+                          value={editingRole.description || ""}
                           onChange={(e) =>
                             setEditingRole({ ...editingRole, description: e.target.value })
                           }
