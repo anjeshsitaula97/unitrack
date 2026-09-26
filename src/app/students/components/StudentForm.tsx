@@ -1501,16 +1501,19 @@ export default function StudentForm({
                                 value={formData.permanentMunicipality}
                                 onChange={(e) => {
                                   const v = e.target.value;
-                                  setFormData({
-                                    ...formData,
-                                    permanentMunicipality: v,
-                                    permanentWardNo: "",
+                                  setFormData((prev) => {
+                                    const next = {
+                                      ...prev,
+                                      permanentMunicipality: v,
+                                      permanentWardNo: "",
+                                    };
+                                    if (v && prev.permanentDistrict) {
+                                      fetchWards(prev.permanentDistrict, v, setPermanentWards);
+                                    } else {
+                                      setPermanentWards([]);
+                                    }
+                                    return next;
                                   });
-                                  if (v && formData.permanentDistrict) {
-                                    fetchWards(formData.permanentDistrict, v, setPermanentWards);
-                                  } else {
-                                    setPermanentWards([]);
-                                  }
                                 }}
                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
                               >
