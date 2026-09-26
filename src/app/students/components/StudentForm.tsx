@@ -224,6 +224,7 @@ const docTypes = [
   "Bachelor Transcript",
   "Bachelor Character",
   "Master Transcript",
+  "Master Character",
   "IELTS/PTE/TOEFL Scorecard",
   "Statement of Purpose (SOP)",
   "CV/Resume",
@@ -231,6 +232,46 @@ const docTypes = [
   "Experience Letter",
   "Other",
 ];
+
+const qualificationDocMap: Record<string, string[]> = {
+  "SEE": ["SLC/SEE Transcript", "SLC/SEE Character"],
+  "SLC": ["SLC/SEE Transcript", "SLC/SEE Character"],
+  "GRADE 10": ["SLC/SEE Transcript", "SLC/SEE Character"],
+  "+2": ["+2/PCL Transcript", "+2/PCL Character"],
+  "PLUS 2": ["+2/PCL Transcript", "+2/PCL Character"],
+  "GRADE 12": ["+2/PCL Transcript", "+2/PCL Character"],
+  "GRADE XII": ["+2/PCL Transcript", "+2/PCL Character"],
+  "PCL": ["+2/PCL Transcript", "+2/PCL Character"],
+  "BACHELOR": ["Bachelor Transcript", "Bachelor Character"],
+  "UNDERGRADUATE": ["Bachelor Transcript", "Bachelor Character"],
+  "MASTER": ["Master Transcript", "Master Character"],
+  "POSTGRADUATE": ["Master Transcript", "Master Character"],
+  "PHD": ["Master Transcript", "Master Character"],
+  "DOCTORATE": ["Master Transcript", "Master Character"],
+};
+
+const commonDocs = [
+  "Passport",
+  "IELTS/PTE/TOEFL Scorecard",
+  "Statement of Purpose (SOP)",
+  "CV/Resume",
+  "Citizenship",
+  "Experience Letter",
+  "Other",
+];
+
+function getRequiredDocsForQualifications(education: EducationEntry[]): string[] {
+  const required = new Set<string>(commonDocs);
+  education.forEach((edu) => {
+    const qual = edu.qualification?.toUpperCase() || "";
+    Object.entries(qualificationDocMap).forEach(([key, docs]) => {
+      if (qual.includes(key)) {
+        docs.forEach((d) => required.add(d));
+      }
+    });
+  });
+  return Array.from(required);
+}
 
 const capitalize = (str: string) => {
   if (!str) return "";
@@ -1913,8 +1954,11 @@ export default function StudentForm({
                         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest shadow-[inset_0_0_0_1px_theme(colors.indigo.200)] pl-3 mb-6">
                           Student Documents
                         </h3>
+                        <p className="text-xs text-slate-500 ml-1">
+                          Required documents based on highest qualification: <span className="font-semibold text-slate-700">{getRequiredDocsForQualifications(formData.education).filter(d => !commonDocs.includes(d)).join(", ") || "None specific"}</span>
+                        </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {docTypes.map((type) => {
+                          {docTypes.filter((type) => getRequiredDocsForQualifications(formData.education).includes(type)).map((type) => {
                             const existingDoc = formData.documents.find((d) => d.type === type);
                             return (
                               <div
