@@ -444,6 +444,7 @@ interface SystemSettings {
   officeLongitude?: number | null;
   officeRadius?: number | null;
   enabledModules?: string;
+  theme?: "system" | "light" | "dark";
 }
 
 interface Branch {
@@ -494,6 +495,7 @@ function SettingsContentInternal() {
     officeLatitude: null,
     officeLongitude: null,
     officeRadius: 100,
+    theme: "system",
   });
   const [isSavingLoc, setIsSavingLoc] = useState(false);
   const [enabledModules, setEnabledModules] = useState<string[]>(() =>
@@ -1672,6 +1674,30 @@ function SettingsContentInternal() {
                       <option>Chinese</option>
                       <option>Japanese</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="settings-theme"
+                      className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+                    >
+                      Theme Mode
+                    </label>
+                    <select
+                      id="settings-theme"
+                      value={locSettings.theme || "system"}
+                      onChange={(e) =>
+                        setLocSettings({ ...locSettings, theme: e.target.value as "system" | "light" | "dark" })
+                      }
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium appearance-none"
+                    >
+                      <option value="system">System Default</option>
+                      <option value="light">Light Mode</option>
+                      <option value="dark">Dark Mode</option>
+                    </select>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Choose your preferred color scheme. System default follows your OS setting.
+                    </p>
                   </div>
 
                   <div className="md:col-span-2 py-4 border-t border-slate-50 mt-2">
