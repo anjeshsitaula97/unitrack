@@ -7,7 +7,7 @@ export const metadata = {
   description: "UniTrack administration - Edit University",
 };
 
-export default async function EditUniversityPage({ params }: { params: { id: string } }) {
+export default async function EditUniversityPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   return (

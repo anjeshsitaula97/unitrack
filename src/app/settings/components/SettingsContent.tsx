@@ -501,6 +501,7 @@ function SettingsContentInternal() {
   const tabFromUrl = searchParams.get("tab") as SettingsTab;
 
   const [activeTab, setActiveTab] = useState<SettingsTab>(tabFromUrl || "roles");
+  const [showTiles, setShowTiles] = useState(true);
   const [prevTabFromUrl, setPrevTabFromUrl] = useState(tabFromUrl);
 
   if (tabFromUrl && prevTabFromUrl !== tabFromUrl) {
@@ -510,6 +511,7 @@ function SettingsContentInternal() {
 
   const handleTabChange = (tab: SettingsTab) => {
     setActiveTab(tab);
+    setShowTiles(false);
     router.push(`/settings?tab=${tab}`, { scroll: false });
   };
   const [roles, setRoles] = useState<Role[]>([]);
@@ -1467,47 +1469,124 @@ function SettingsContentInternal() {
 
   return (
     <div className="animate-fade-in py-6">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-800">System Settings</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Manage your account preferences, platform roles, and application security.
-        </p>
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">System Settings</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Manage your account preferences, platform roles, and application security.
+          </p>
+        </div>
+        {!showTiles && (
+          <button
+            type="button"
+            onClick={() => {
+              setShowTiles(true);
+              router.replace("/settings", { scroll: false });
+            }}
+            className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-800"
+          >
+            Back to All Settings
+          </button>
+        )}
       </header>
+      {showTiles ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {(() => {
+            const groups: Record<string, { id: string; label: string; icon: React.ReactNode; desc: string }[]> = {
+              "Account & Access": [
+                { id: "profile", label: "Profile", icon: <User size={26} />, desc: "Edit your name, email and contact details" },
+                { id: "roles", label: "Roles", icon: <Shield size={26} />, desc: "Create and manage admin & staff roles" },
+                { id: "permissions", label: "Role Permissions", icon: <ShieldCheck size={26} />, desc: "Granular capability controls per role" },
+                { id: "email", label: "Email Settings", icon: <Mail size={26} />, desc: "SMTP, sender identity and template" },
+                { id: "security", label: "Security", icon: <Lock size={26} />, desc: "Password policy and 2FA" },
+              ],
+              "Platform & Content": [
+                { id: "localization", label: "Localization", icon: <Globe size={26} />, desc: "Region, language and currency" },
+                { id: "branches", label: "Branches", icon: <MapPin size={26} />, desc: "Campus locations & branches" },
+                { id: "qualifications", label: "Qualifications", icon: <GraduationCap size={26} />, desc: "Degree types and levels" },
+                { id: "academics", label: "Academics", icon: <BookOpen size={26} />, desc: "Programs, courses and grading" },
+              ],
+              Application: [
+                { id: "modules", label: "Modules", icon: <Puzzle size={26} />, desc: "Toggle platform feature modules" },
+                { id: "statuses", label: "Application Statuses", icon: <Layers size={26} />, desc: "Review pipeline & status labels" },
+                { id: "notifications", label: "Notifications", icon: <Bell size={26} />, desc: "Alert channels & delivery" },
+              ],
+};
+            return Object.entries(groups).map(([group, tabs]) => {
+              return (
+                <div key={group} className="space-y-4">
+                  <div className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{group}</div>
+                  {tabs.map((tab) => (
+                    <button
+                      type="button"
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id as SettingsTab)}
+                      className="w-full flex flex-col items-start gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" 
+                    >
+                      <span className="flex items-center gap-3">
+                        <span className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">{tab.icon}</span>
+                        <span className="text-sm font-bold text-slate-700">{tab.label}</span>
+                      </span>
+                      <span className="text-xs text-slate-400 leading-snug">{tab.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
+          )()}
+        </div>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Sub-navigation */}
         <aside className="lg:col-span-3">
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden sticky top-24">
             <nav className="flex flex-col">
-              {[
-                { id: "profile", label: "Profile", icon: <User size={18} /> },
-                { id: "roles", label: "Roles", icon: <Shield size={18} /> },
-                { id: "permissions", label: "Role Permissions", icon: <ShieldCheck size={18} /> },
-                { id: "localization", label: "Localization", icon: <Globe size={18} /> },
-                { id: "branches", label: "Branches", icon: <MapPin size={18} /> },
-                { id: "qualifications", label: "Qualifications", icon: <BookOpen size={18} /> },
-                { id: "academics", label: "Academics", icon: <GraduationCap size={18} /> },
-                { id: "email", label: "Email Settings", icon: <Mail size={18} /> },
-                { id: "security", label: "Security", icon: <Lock size={18} /> },
-                { id: "modules", label: "Modules", icon: <Puzzle size={18} /> },
-                { id: "statuses", label: "Application Statuses", icon: <Layers size={18} /> },
-                { id: "notifications", label: "Notifications", icon: <Bell size={18} /> },
-              ].map((tab) => (
-                <button
-                  type="button"
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id as SettingsTab)}
-                  className={`flex items-center gap-3 px-5 py-4 text-left border-b border-slate-200 last:border-b-0 transition-colors duration-200 ${
-                    activeTab === tab.id
-                      ? "bg-indigo-50 text-indigo-700 font-bold"
-                      : "text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-800"
-                  }`}
-                >
-                  <span className={activeTab === tab.id ? "text-indigo-600" : "text-slate-400"}>
-                    {tab.icon}
-                  </span>
-                  <span className="text-sm">{tab.label}</span>
-                </button>
-              ))}
+              {(Object.entries({
+                "Account & Access": [
+                  { id: "profile", label: "Profile", icon: <User size={18} /> },
+                  { id: "roles", label: "Roles", icon: <Shield size={18} /> },
+                  { id: "permissions", label: "Role Permissions", icon: <ShieldCheck size={18} /> },
+                  { id: "email", label: "Email Settings", icon: <Mail size={18} /> },
+                  { id: "security", label: "Security", icon: <Lock size={18} /> },
+                ],
+                "Platform & Content": [
+                  { id: "localization", label: "Localization", icon: <Globe size={18} /> },
+                  { id: "branches", label: "Branches", icon: <MapPin size={18} /> },
+                  { id: "qualifications", label: "Qualifications", icon: <BookOpen size={18} /> },
+                  { id: "academics", label: "Academics", icon: <GraduationCap size={18} /> },
+                ],
+                Application: [
+                  { id: "modules", label: "Modules", icon: <Puzzle size={18} /> },
+                  { id: "statuses", label: "Application Statuses", icon: <Layers size={18} /> },
+                  { id: "notifications", label: "Notifications", icon: <Bell size={18} /> },
+                ],
+                            })).map(
+                ([group, tabs]: [string, { id: string; label: string; icon: React.ReactNode }[]]) =>
+ (
+                  <div key={group} className="border-b border-slate-200 last:border-b-0">
+                    <div className="px-5 pt-4 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      {group}
+                    </div>
+                    {tabs.map((tab) => (
+                      <button
+                        type="button"
+                        key={tab.id}
+                        onClick={() => handleTabChange(tab.id as SettingsTab)}
+                        className={`flex items-center gap-3 px-5 py-2.5 text-left transition-colors duration-200 rounded-lg mx-2 mb-0.5 ${
+                          activeTab === tab.id
+                            ? "bg-indigo-50 text-indigo-700 font-bold"
+                            : "text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-800"
+                        }`}
+                      >
+                        <span className={activeTab === tab.id ? "text-indigo-600" : "text-slate-400"}>
+                          {tab.icon}
+                        </span>
+                        <span className="text-sm">{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )
+              )}
             </nav>
           </div>
         </aside>
@@ -4051,6 +4130,7 @@ function SettingsContentInternal() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }
