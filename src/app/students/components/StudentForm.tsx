@@ -105,12 +105,12 @@ interface StudentFormData {
   guardianRelation: string;
   guardianAddress: string;
   status: string;
-  permanentProvince: string;
+  permanentProvince: number;
   permanentDistrict: string;
   permanentMunicipality: string;
   permanentWardNo: string;
   permanentAddress: string;
-  temporaryProvince: string;
+  temporaryProvince: number;
   temporaryDistrict: string;
   temporaryMunicipality: string;
   temporaryWardNo: string;
@@ -164,12 +164,12 @@ export interface Student {
   guardianEmail?: string;
   guardianRelation?: string;
   guardianAddress?: string;
-  permanentProvince?: string;
+  permanentProvince?: number;
   permanentDistrict?: string;
   permanentMunicipality?: string;
   permanentWardNo?: string;
   permanentAddress?: string;
-  temporaryProvince?: string;
+  temporaryProvince?: number;
   temporaryDistrict?: string;
   temporaryMunicipality?: string;
   temporaryWardNo?: string;
@@ -259,9 +259,9 @@ const capitalize = (str: string) => {
     .join(" ");
 };
 
-const fetchDistricts = async (province: string, setter: (val: string[]) => void) => {
+const fetchDistricts = async (provinceId: number, setter: (val: string[]) => void) => {
   try {
-    const res = await fetch(`/api/nepal/districts?province=${encodeURIComponent(province)}`);
+    const res = await fetch(`/api/nepal/districts?province=${provinceId}`);
     const data = await res.json();
     setter(data);
   } catch (_err) {}
@@ -318,7 +318,7 @@ export default function StudentForm({
     });
     return Array.from(required);
   };
-  const [provinces, setProvinces] = useState<string[]>([]);
+  const [provinces, setProvinces] = useState<{ id: number; name: string }[]>([]);
   const [permanentDistricts, setPermanentDistricts] = useState<string[]>([]);
   const [permanentMunicipalities, setPermanentMunicipalities] = useState<string[]>([]);
   const [permanentWards, setPermanentWards] = useState<string[]>([]);
@@ -351,12 +351,12 @@ export default function StudentForm({
     guardianRelation: "",
     guardianAddress: "",
     status: "In Review",
-    permanentProvince: "",
+    permanentProvince: 0,
     permanentDistrict: "",
     permanentMunicipality: "",
     permanentWardNo: "",
     permanentAddress: "",
-    temporaryProvince: "",
+    temporaryProvince: 0,
     temporaryDistrict: "",
     temporaryMunicipality: "",
     temporaryWardNo: "",
@@ -446,12 +446,12 @@ export default function StudentForm({
         guardianRelation: s.guardianRelation || "",
         guardianAddress: s.guardianAddress || "",
         status: s.status || "In Review",
-        permanentProvince: s.permanentProvince || "",
+        permanentProvince: Number(s.permanentProvince) || 0,
         permanentDistrict: s.permanentDistrict || "",
         permanentMunicipality: s.permanentMunicipality || "",
         permanentWardNo: s.permanentWardNo || "",
         permanentAddress: s.permanentAddress || "",
-        temporaryProvince: s.temporaryProvince || "",
+        temporaryProvince: Number(s.temporaryProvince) || 0,
         temporaryDistrict: s.temporaryDistrict || "",
         temporaryMunicipality: s.temporaryMunicipality || "",
         temporaryWardNo: s.temporaryWardNo || "",
@@ -1428,7 +1428,7 @@ export default function StudentForm({
                                 id="permanent-province"
                                 value={formData.permanentProvince}
                                 onChange={(e) => {
-                                  const v = e.target.value;
+                                  const v = Number(e.target.value);
                                   setFormData({
                                     ...formData,
                                     permanentProvince: v,
@@ -1447,9 +1447,9 @@ export default function StudentForm({
                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
                               >
                                 <option value="">Select Province</option>
-                                {provinces.map((p) => (
-                                  <option key={p} value={p}>
-                                    {capitalize(p)}
+                                {provinces.map((p: { id: number; name: string }) => (
+                                  <option key={p.id} value={p.id}>
+                                    {p.name}
                                   </option>
                                 ))}
                               </select>

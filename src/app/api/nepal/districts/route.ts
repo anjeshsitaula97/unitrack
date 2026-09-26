@@ -10,40 +10,47 @@ function capitalize(str: string) {
     .join(" ");
 }
 
-const filePath = path.join(process.cwd(), "data", "nepal", "districts-by-province.json");
-let cachedData: Record<string, string[]> | null = null;
+const D_FILE_PATH = path.join(process.cwd(), "data", "nepal", "lsn-districts.json");
+let districtsData: { id: number; name: string; province_id: number }[] = [];
 try {
-  if (fs.existsSync(filePath)) {
-    cachedData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  if (fs.existsSync(D_FILE_PATH)) {
+    districtsData = JSON.parse(fs.readFileSync(D_FILE_PATH, "utf-8"));
   }
 } catch (_e) {}
+
+const provinceDistrictMap: Record<number, string[]> = {};
+districtsData.forEach((d) => {
+  if (!provinceDistrictMap[d.province_id]) provinceDistrictMap[d.province_id] = [];
+  provinceDistrictMap[d.province_id].push(d.name);
+});
+
+const provinceNames: Record<number, string> = {
+  1: "Pradesh 1",
+  2: "Madhesh",
+  3: "Bagmati",
+  4: "Gandaki",
+  5: "Lumbini",
+  6: "Karnali",
+  7: "Sudurpaschim",
+};
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const province = searchParams.get("province");
 
-    if (!cachedData) {
-      return NextResponse.json([]);
-    }
-    const data = cachedData;
-
-    if (province) {
-      // Try exact match or normalized match
-      const list = data[province] || [];
-      if (list.length === 0) {
-        const key = Object.keys(data).find((k) => k.toLowerCase() === province.toLowerCase());
-        const result = key ? data[key] : [];
-        return NextResponse.json(result.map((d: string) => capitalize(d)));
-      }
-      return NextResponse.json(list.map((d: string) => capitalize(d)));
+    if (!province) {
+      const result: Record<string, string[]> = {};
+      Object.entries(provinceNames).forEach(([id, name]) => {
+        result[name] = provinceDistrictMap[Number(id)] || [];
+      });
+      return NextResponse.json(result);
     }
 
-    const result: Record<string, string[]> = {};
-    Object.keys(data).forEach((k) => {
-      result[capitalize(k)] = data[k].map((d: string) => capitalize(d));
-    });
-    return NextResponse.json(result);
+    const provinceId = Number(province);
+    const list = provinceDistrictMap[provinceId] || [];
+
+    return NextResponse.json(list);
   } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch districts" }, { status: 500 });
   }
