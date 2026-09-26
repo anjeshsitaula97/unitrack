@@ -525,9 +525,10 @@ function SettingsContentInternal() {
   });
 
   // Qualifications states
-  const [qualifications, setQualifications] = useState<{ id: string; name: string }[]>([]);
+  const [qualifications, setQualifications] = useState<{ id: string; name: string; level: number }[]>([]);
   const [newQualName, setNewQualName] = useState("");
-  const [editingQual, setEditingQual] = useState<{ id: string; name: string } | null>(null);
+  const [newQualLevel, setNewQualLevel] = useState(0);
+  const [editingQual, setEditingQual] = useState<{ id: string; name: string; level: number } | null>(null);
   const [deleteQualId, setDeleteQualId] = useState<string | null>(null);
 
   // Academic settings states
@@ -1228,12 +1229,13 @@ function SettingsContentInternal() {
       const res = await fetch("/api/qualifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newQualName }),
+        body: JSON.stringify({ name: newQualName, level: newQualLevel }),
       });
       const data = await res.json();
       if (res.ok) {
         setQualifications([...qualifications, data]);
         setNewQualName("");
+        setNewQualLevel(0);
         toast.success("Qualification added");
       } else {
         toast.error(data.error || "Failed to add qualification");
@@ -1249,7 +1251,7 @@ function SettingsContentInternal() {
       const res = await fetch(`/api/qualifications/${editingQual.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editingQual.name }),
+        body: JSON.stringify({ name: editingQual.name, level: editingQual.level }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -3095,14 +3097,26 @@ function SettingsContentInternal() {
               </div>
 
               <div className="card p-6">
-                <div className="flex gap-4 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                   <input
                     type="text"
                     value={newQualName}
                     onChange={(e) => setNewQualName(e.target.value)}
                     placeholder="e.g. SLC, +2, Bachelor's, Master's"
-                    className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
                   />
+                  <select
+                    value={newQualLevel}
+                    onChange={(e) => setNewQualLevel(Number(e.target.value))}
+                    className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    <option value={0}>No Level (Custom)</option>
+                    <option value={1}>Level 1: SEE / SLC / Grade 10</option>
+                    <option value={2}>Level 2: +2 / PCL / Grade 12</option>
+                    <option value={3}>Level 3: Bachelor / Undergraduate</option>
+                    <option value={4}>Level 4: Master / Postgraduate</option>
+                    <option value={5}>Level 5: PhD / Doctorate</option>
+                  </select>
                   <button
                     type="button"
                     onClick={handleAddQual}
@@ -3134,6 +3148,20 @@ function SettingsContentInternal() {
                             }}
                             className="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                           />
+                          <select
+                            value={editingQual.level}
+                            onChange={(e) =>
+                              setEditingQual({ ...editingQual, level: Number(e.target.value) })
+                            }
+                            className="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value={0}>Custom</option>
+                            <option value={1}>Level 1</option>
+                            <option value={2}>Level 2</option>
+                            <option value={3}>Level 3</option>
+                            <option value={4}>Level 4</option>
+                            <option value={5}>Level 5</option>
+                          </select>
                           <button
                             type="button"
                             onClick={handleUpdateQual}
@@ -3154,6 +3182,11 @@ function SettingsContentInternal() {
                       ) : (
                         <>
                           <span className="text-sm font-bold text-slate-700">{q.name}</span>
+                          {q.level && (
+                            <span className="ml-2 px-2 py-0.5 text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-full">
+                              Level {q.level}
+                            </span>
+                          )}
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                             <button
                               type="button"

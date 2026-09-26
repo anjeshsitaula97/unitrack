@@ -7,7 +7,7 @@ import { logActivity, getActorName } from "@/lib/activity";
 export async function GET() {
   try {
     const qualifications = await db.qualification.findMany({
-      orderBy: { name: "asc" },
+      orderBy: { level: "asc" },
     });
     return NextResponse.json(qualifications);
   } catch (error) {
@@ -19,11 +19,11 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    const { name } = await req.json();
+    const { name, level } = await req.json();
     if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
 
     const qualification = await db.qualification.create({
-      data: { name },
+      data: { name, level: level || 0 },
     });
 
     await logActivity({
@@ -40,5 +40,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Qualification already exists" }, { status: 400 });
     }
     return NextResponse.json({ error: "Failed to create qualification" }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const session = await getSession();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    const { name, level } = await req.json();
+    if (!id) return NextResponse.json({ error: "ID is required" }, { status: 400 });
+
+    const qualification = await db.qualification.update({
+      where: { id: Number(id) },
+      data: { name, level },
+    });
+
+    await logActivity({
+      actorName: await getActorName(session?.id),
+      userId: session?.id,
+      action: "updated a qualification",
+      target: qualification.name,
+    });
+
+    return NextResponse.json(qualification);
+  } catch (error) {
+    logError("Update qualification", error);
+    return NextResponse.json({ error: "Failed to update qualification" }, { status: 500 });
   }
 }

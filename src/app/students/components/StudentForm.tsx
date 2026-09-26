@@ -233,21 +233,12 @@ const docTypes = [
   "Other",
 ];
 
-const qualificationDocMap: Record<string, string[]> = {
-  "SEE": ["SLC/SEE Transcript", "SLC/SEE Character"],
-  "SLC": ["SLC/SEE Transcript", "SLC/SEE Character"],
-  "GRADE 10": ["SLC/SEE Transcript", "SLC/SEE Character"],
-  "+2": ["+2/PCL Transcript", "+2/PCL Character"],
-  "PLUS 2": ["+2/PCL Transcript", "+2/PCL Character"],
-  "GRADE 12": ["+2/PCL Transcript", "+2/PCL Character"],
-  "GRADE XII": ["+2/PCL Transcript", "+2/PCL Character"],
-  "PCL": ["+2/PCL Transcript", "+2/PCL Character"],
-  "BACHELOR": ["Bachelor Transcript", "Bachelor Character"],
-  "UNDERGRADUATE": ["Bachelor Transcript", "Bachelor Character"],
-  "MASTER": ["Master Transcript", "Master Character"],
-  "POSTGRADUATE": ["Master Transcript", "Master Character"],
-  "PHD": ["Master Transcript", "Master Character"],
-  "DOCTORATE": ["Master Transcript", "Master Character"],
+const qualificationDocMap: Record<number, string[]> = {
+  1: ["SLC/SEE Transcript", "SLC/SEE Character"],
+  2: ["+2/PCL Transcript", "+2/PCL Character"],
+  3: ["Bachelor Transcript", "Bachelor Character"],
+  4: ["Master Transcript", "Master Character"],
+  5: ["Master Transcript", "Master Character"],
 };
 
 const commonDocs = [
@@ -259,19 +250,6 @@ const commonDocs = [
   "Experience Letter",
   "Other",
 ];
-
-function getRequiredDocsForQualifications(education: EducationEntry[]): string[] {
-  const required = new Set<string>(commonDocs);
-  education.forEach((edu) => {
-    const qual = edu.qualification?.toUpperCase() || "";
-    Object.entries(qualificationDocMap).forEach(([key, docs]) => {
-      if (qual.includes(key)) {
-        docs.forEach((d) => required.add(d));
-      }
-    });
-  });
-  return Array.from(required);
-}
 
 const capitalize = (str: string) => {
   if (!str) return "";
@@ -322,13 +300,24 @@ export default function StudentForm({
   const prefersReducedMotion = useReducedMotion();
   const [step, setStep] = useState(1);
   const totalSteps = 8;
-  const [qualifications, setQualifications] = useState<{ id: string; name: string }[]>([]);
+  const [qualifications, setQualifications] = useState<{ id: string; name: string; level: number }[]>([]);
   const [allUsers, setAllUsers] = useState<UserSummary[]>([]);
   const [allPartners, setAllPartners] = useState<PartnerSummary[]>([]);
   const staffUsers = useMemo(
     () => (allUsers || []).filter((u) => u.role !== "Student"),
     [allUsers]
   );
+
+  const getRequiredDocsForQualifications = (education: EducationEntry[]): string[] => {
+    const required = new Set<string>(commonDocs);
+    education.forEach((edu) => {
+      const qual = qualifications.find((q) => q.name === edu.qualification);
+      if (qual?.level && qualificationDocMap[qual.level]) {
+        qualificationDocMap[qual.level].forEach((d) => required.add(d));
+      }
+    });
+    return Array.from(required);
+  };
   const [provinces, setProvinces] = useState<string[]>([]);
   const [permanentDistricts, setPermanentDistricts] = useState<string[]>([]);
   const [permanentMunicipalities, setPermanentMunicipalities] = useState<string[]>([]);
@@ -596,7 +585,7 @@ export default function StudentForm({
   const fetchQualifications = async () => {
     try {
       const res = await fetch("/api/qualifications");
-      const data = (await res.json()) as { id: string; name: string }[];
+      const data = (await res.json()) as { id: string; name: string; level: number }[];
       if (Array.isArray(data)) {
         const order: Record<string, number> = {
           SEE: 1,

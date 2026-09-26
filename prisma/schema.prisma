@@ -478,6 +478,7 @@ model StudentDocument {
 model Qualification {
   id        Int      @id @default(autoincrement())
   name      String   @unique
+  level     Int      @default(0) // 1=SEE/SLC/Grade10, 2=+2/PCL/Grade12, 3=Bachelor, 4=Master, 5=PhD
   createdAt DateTime @default(now())
 }
 
