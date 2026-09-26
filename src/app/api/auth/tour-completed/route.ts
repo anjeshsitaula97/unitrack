@@ -2,24 +2,22 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
 import { db } from "@/lib/db";
+import { getSession } from "@/lib/api-utils";
 
 export async function PATCH() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
-    if (!token) {
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const payload = await verifyAuth(token);
-
     await db.user.update({
-      where: { id: payload.id },
+      where: { id: session.id },
       data: { isFirstLogin: false },
     });
 
     return NextResponse.json({ success: true });
   } catch (_error) {
-    return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
   }
 }

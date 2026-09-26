@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { X, ChevronRight, ChevronLeft, GraduationCap } from "lucide-react";
+import { clearAuthCache } from "./AppLayoutWrapper";
 
 const steps = [
   {
@@ -46,6 +47,7 @@ export default function GuidedTour({ user }: GuidedTourProps) {
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [prevActive, setPrevActive] = useState(active);
+  const [tourCompleted, setTourCompleted] = useState(false);
 
   if (prevActive !== active) {
     setPrevActive(active);
@@ -56,8 +58,10 @@ export default function GuidedTour({ user }: GuidedTourProps) {
 
   const complete = useCallback(async () => {
     setActive(false);
+    setTourCompleted(true);
     try {
       await fetch("/api/auth/tour-completed", { method: "PATCH" });
+      clearAuthCache();
     } catch {
       /* ignore */
     }
@@ -68,11 +72,11 @@ export default function GuidedTour({ user }: GuidedTourProps) {
   }, [complete]);
 
   useEffect(() => {
-    if (user?.isFirstLogin === true) {
+    if (user?.isFirstLogin === true && !tourCompleted) {
       const timer = setTimeout(() => setActive(true), 800);
       return () => clearTimeout(timer);
     }
-  }, [user]);
+  }, [user, tourCompleted]);
 
   const updatePosition = useCallback(() => {
     const step = steps[currentStep];
@@ -119,7 +123,7 @@ export default function GuidedTour({ user }: GuidedTourProps) {
     };
   }, [active, updatePosition]);
 
-  if (!active || !user?.isFirstLogin) return null;
+  if (!active || !user?.isFirstLogin || tourCompleted) return null;
 
   const step = steps[currentStep];
 

@@ -84,11 +84,12 @@ interface EmailSetting {
 }
 
 interface Role {
-  id: string;
+  id: number;
   name: string;
-  description: string;
+  description: string | null;
   userCount: number;
   color: string;
+  permissions: string[];
 }
 
 interface Permission {
@@ -97,44 +98,6 @@ interface Permission {
   description: string;
   module: string;
 }
-
-const _INITIAL_ROLES: Role[] = [
-  {
-    id: "role-1",
-    name: "Administrator",
-    description: "Full access to all modules and settings.",
-    userCount: 3,
-    color: "text-rose-600 bg-rose-50 border-rose-200",
-  },
-  {
-    id: "role-2",
-    name: "Moderator",
-    description: "Can manage courses and universities but cannot edit system settings.",
-    userCount: 8,
-    color: "text-indigo-600 bg-indigo-50 border-indigo-200",
-  },
-  {
-    id: "role-3",
-    name: "Editor",
-    description: "Can edit content but cannot approve or delete.",
-    userCount: 15,
-    color: "text-emerald-600 bg-emerald-50 border-emerald-200",
-  },
-  {
-    id: "role-4",
-    name: "Viewer",
-    description: "Read-only access to all modules.",
-    userCount: 142,
-    color: "text-slate-600 bg-slate-50 border-slate-200",
-  },
-  {
-    id: "role-5",
-    name: "Student",
-    description: "Student portal access — can view own applications, payments, and documents.",
-    userCount: 0,
-    color: "text-amber-600 bg-amber-50 border-amber-200",
-  },
-];
 
 const PERMISSIONS: Permission[] = [
   // ── General ──
@@ -517,7 +480,7 @@ function SettingsContentInternal() {
   const [roles, setRoles] = useState<Role[]>([]);
   const isLoadingRoles = useRef(true);
   const [showAddRole, setShowAddRole] = useState(false);
-  const [newRole, setNewRole] = useState({ name: "", description: "" });
+  const [newRole, setNewRole] = useState({ name: "", description: "", color: "text-slate-600 bg-slate-50 border-slate-200" });
 
   // Localization states
   const [locSettings, setLocSettings] = useState<SystemSettings>({
@@ -631,10 +594,16 @@ function SettingsContentInternal() {
       .then(safeJson)
       .then((data) => {
         if (Array.isArray(data)) {
-          setRoles(data);
+          const formattedRoles = data.map((role) => ({
+            ...role,
+            id: Number(role.id),
+            userCount: role.userCount || 0,
+            permissions: JSON.parse(role.permissions || "[]"),
+          }));
+          setRoles(formattedRoles);
           const perms: Record<string, string[]> = {};
-          data.forEach((r) => {
-            perms[r.id] = r.permissions || [];
+          formattedRoles.forEach((r) => {
+            perms[String(r.id)] = r.permissions || [];
           });
           setRolePermissions(perms);
         }
@@ -1109,9 +1078,15 @@ function SettingsContentInternal() {
       });
       const data = await res.json();
       if (res.ok) {
-        setRoles([...roles, data]);
-        setRolePermissions({ ...rolePermissions, [data.id]: [] });
-        setNewRole({ name: "", description: "" });
+        const newRoleData = {
+          ...data,
+          id: Number(data.id),
+          userCount: 0,
+          permissions: JSON.parse(data.permissions || "[]"),
+        };
+        setRoles([...roles, newRoleData]);
+        setRolePermissions({ ...rolePermissions, [String(data.id)]: [] });
+        setNewRole({ name: "", description: "", color: "text-slate-600 bg-slate-50 border-slate-200" });
         setShowAddRole(false);
         toast.success("New role created");
       } else {
@@ -1122,7 +1097,7 @@ function SettingsContentInternal() {
     }
   };
 
-  const handleDeleteRole = async (id: string) => {
+  const handleDeleteRole = async (id: number | string) => {
     if (confirm("Are you sure you want to delete this role?")) {
       try {
         const res = await fetch(`/api/roles/${id}`, { method: "DELETE" });
@@ -1150,11 +1125,18 @@ function SettingsContentInternal() {
         body: JSON.stringify({
           name: editingRole.name,
           description: editingRole.description,
+          color: editingRole.color,
         }),
       });
       const data = await res.json();
       if (res.ok) {
-        setRoles(roles.map((r) => (r.id === editingRole.id ? data : r)));
+        const updatedRole = {
+          ...data,
+          id: Number(data.id),
+          userCount: data.userCount || 0,
+          permissions: JSON.parse(data.permissions || "[]"),
+        };
+        setRoles(roles.map((r) => (r.id === editingRole.id ? updatedRole : r)));
         setEditingRole(null);
         toast.success("Role updated");
       } else {
@@ -1923,6 +1905,31 @@ function SettingsContentInternal() {
                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                       />
                     </div>
+                    <div>
+                      <label
+                        htmlFor="settings-addRole-color"
+                        className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+                      >
+                        Color Theme
+                      </label>
+                      <select
+                        id="settings-addRole-color"
+                        value={newRole.color}
+                        onChange={(e) => setNewRole({ ...newRole, color: e.target.value })}
+                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      >
+                        <option value="text-rose-600 bg-rose-50 border-rose-200">Rose</option>
+                        <option value="text-indigo-600 bg-indigo-50 border-indigo-200">Indigo</option>
+                        <option value="text-emerald-600 bg-emerald-50 border-emerald-200">Emerald</option>
+                        <option value="text-slate-600 bg-slate-50 border-slate-200">Slate</option>
+                        <option value="text-amber-600 bg-amber-50 border-amber-200">Amber</option>
+                        <option value="text-violet-600 bg-violet-50 border-violet-200">Violet</option>
+                        <option value="text-cyan-600 bg-cyan-50 border-cyan-200">Cyan</option>
+                        <option value="text-orange-600 bg-orange-50 border-orange-200">Orange</option>
+                        <option value="text-pink-600 bg-pink-50 border-pink-200">Pink</option>
+                        <option value="text-teal-600 bg-teal-50 border-teal-200">Teal</option>
+                      </select>
+                    </div>
                   </div>
                   <div className="flex justify-end gap-3">
                     <button
@@ -1940,56 +1947,63 @@ function SettingsContentInternal() {
               )}
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {roles.map((role) => (
-                  <div
-                    key={role.id}
-                    className="card p-5 group hover:shadow-md transition-all duration-300"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border ${role.color}`}
-                      >
-                        {role.name}
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          type="button"
-                          onClick={() => setEditingRole(role)}
-                          className="p-1.5 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteRole(role.id)}
-                          className="p-1.5 text-red-800 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                    <p className="text-sm font-semibold text-slate-700 mb-1">{role.name}</p>
-                    <p className="text-xs text-slate-400 leading-relaxed min-h-[40px]">
-                      {role.description}
-                    </p>
-                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                        <Users size={14} />
-                        <span>{role.userCount} Active Users</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab("permissions");
-                          // Logic to scroll or highlight permissions for this role
-                        }}
-                        className="text-xs font-bold text-indigo-600 hover:underline"
-                      >
-                        Manage Permissions
-                      </button>
-                    </div>
+                {isLoadingRoles.current ? (
+                  <div className="xl:col-span-2 flex items-center justify-center py-8">
+                    <Loader2 className="animate-spin text-indigo-600" size={24} />
                   </div>
-                ))}
+                ) : roles.length === 0 ? (
+                  <div className="xl:col-span-2 text-center py-8 text-sm text-slate-400">
+                    No roles found. Create a role to get started.
+                  </div>
+                ) : (
+                  roles.map((role) => (
+                    <div
+                      key={role.id}
+                      className="card p-5 group hover:shadow-md transition-all duration-300"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border ${role.color}`}
+                        >
+                          {role.name}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={() => setEditingRole(role)}
+                            className="p-1.5 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRole(role.id)}
+                            className="p-1.5 text-red-800 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm font-semibold text-slate-700 mb-1">{role.name}</p>
+                      <p className="text-xs text-slate-400 leading-relaxed min-h-[40px]">
+                        {role.description || "No description"}
+                      </p>
+                      <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                          <Users size={14} />
+                          <span>{role.userCount} Active Users</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("permissions")}
+                          className="text-xs font-bold text-indigo-600 hover:underline"
+                        >
+                          Manage Permissions
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
               {editingRole && (
@@ -2042,6 +2056,31 @@ function SettingsContentInternal() {
                           rows={3}
                           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
                         />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="settings-editRole-color"
+                          className="block text-xs font-semibold text-slate-600 mb-1.5"
+                        >
+                          Color Theme
+                        </label>
+                        <select
+                          id="settings-editRole-color"
+                          value={editingRole.color}
+                          onChange={(e) => setEditingRole({ ...editingRole, color: e.target.value })}
+                          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                        >
+                          <option value="text-rose-600 bg-rose-50 border-rose-200">Rose</option>
+                          <option value="text-indigo-600 bg-indigo-50 border-indigo-200">Indigo</option>
+                          <option value="text-emerald-600 bg-emerald-50 border-emerald-200">Emerald</option>
+                          <option value="text-slate-600 bg-slate-50 border-slate-200">Slate</option>
+                          <option value="text-amber-600 bg-amber-50 border-amber-200">Amber</option>
+                          <option value="text-violet-600 bg-violet-50 border-violet-200">Violet</option>
+                          <option value="text-cyan-600 bg-cyan-50 border-cyan-200">Cyan</option>
+                          <option value="text-orange-600 bg-orange-50 border-orange-200">Orange</option>
+                          <option value="text-pink-600 bg-pink-50 border-pink-200">Pink</option>
+                          <option value="text-teal-600 bg-teal-50 border-teal-200">Teal</option>
+                        </select>
                       </div>
                       <div className="flex justify-end gap-2 mt-4">
                         <button
@@ -2135,7 +2174,8 @@ function SettingsContentInternal() {
                                 </p>
                               </td>
                               {roles.map((role) => {
-                                const hasPerm = rolePermissions[role.id]?.includes(perm.id);
+                                const roleIdStr = String(role.id);
+                                const hasPerm = rolePermissions[roleIdStr]?.includes(perm.id);
                                 return (
                                   <td
                                     key={`${role.id}-${perm.id}`}
@@ -2143,7 +2183,7 @@ function SettingsContentInternal() {
                                   >
                                     <button
                                       type="button"
-                                      onClick={() => togglePermission(role.id, perm.id)}
+                                      onClick={() => togglePermission(roleIdStr, perm.id)}
                                       className={`size-8 rounded-xl flex items-center justify-center mx-auto transition-all ${
                                         hasPerm
                                           ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
