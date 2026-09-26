@@ -10,40 +10,43 @@ function capitalize(str: string) {
     .join(" ");
 }
 
-const filePath = path.join(process.cwd(), "data", "nepal", "municipalities-by-district.json");
-let cachedData: Record<string, string[]> | null = null;
+const M_FILE_PATH = path.join(process.cwd(), "data", "nepal", "lsn-municipalities.json");
+const D_FILE_PATH = path.join(process.cwd(), "data", "nepal", "lsn-districts.json");
+let municipalitiesData: { district_id: number; name: string }[] = [];
+let districtsData: { id: number; name: string }[] = [];
 try {
-  if (fs.existsSync(filePath)) {
-    cachedData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  if (fs.existsSync(M_FILE_PATH) && fs.existsSync(D_FILE_PATH)) {
+    municipalitiesData = JSON.parse(fs.readFileSync(M_FILE_PATH, "utf-8"));
+    districtsData = JSON.parse(fs.readFileSync(D_FILE_PATH, "utf-8"));
   }
 } catch (_e) {}
+
+const districtMunicipalityMap: Record<string, string[]> = {};
+districtsData.forEach((d) => {
+  const muniNames = municipalitiesData
+    .filter((m) => m.district_id === d.id)
+    .map((m) => m.name);
+  districtMunicipalityMap[d.name] = muniNames;
+});
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const district = searchParams.get("district");
 
-    if (!cachedData) {
-      return NextResponse.json([]);
+    if (!district) {
+      const result: Record<string, string[]> = {};
+      Object.keys(districtMunicipalityMap).forEach((k) => {
+        result[k] = districtMunicipalityMap[k];
+      });
+      return NextResponse.json(result);
     }
 
-    const data = cachedData;
+    const matchedDistrict = districtsData.find((d) => d.name.toLowerCase() === district.toLowerCase());
+    if (!matchedDistrict) return NextResponse.json([]);
 
-    if (district) {
-      const list = data[district] || [];
-      if (list.length === 0) {
-        const key = Object.keys(data).find((k) => k.toLowerCase() === district.toLowerCase());
-        const result = key ? data[key] : [];
-        return NextResponse.json(result.map((m: string) => capitalize(m)));
-      }
-      return NextResponse.json(list.map((m: string) => capitalize(m)));
-    }
-
-    const result: Record<string, string[]> = {};
-    Object.keys(data).forEach((k) => {
-      result[capitalize(k)] = data[k].map((m: string) => capitalize(m));
-    });
-    return NextResponse.json(result);
+    const list = districtMunicipalityMap[matchedDistrict.name] || [];
+    return NextResponse.json(list);
   } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch municipalities" }, { status: 500 });
   }
