@@ -13,13 +13,29 @@ interface MediaCardProps {
   toast: typeof sonnerToast;
 }
 
+const IMAGE_ACCEPT = "image/png,image/jpeg,image/webp,image/gif,image/svg+xml";
+
 async function uploadFile(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
   const res = await fetch("/api/upload", { method: "POST", body: formData });
-  if (!res.ok) throw new Error("Upload failed");
+  if (!res.ok) {
+    let message = `Upload failed (${res.status})`;
+    try {
+      const data = await res.json();
+      if (data && typeof data.error === "string" && data.error) message = data.error;
+    } catch {
+      message = `Upload failed (${res.status})`;
+    }
+    throw new Error(message);
+  }
   const data = await res.json();
+  if (!data?.url) throw new Error("Upload did not return a file URL");
   return data.url;
+}
+
+function describeError(err: unknown, fallback: string): string {
+  return err instanceof Error && err.message ? err.message : fallback;
 }
 
 export default function MediaCard({ form, update, dispatch, toast }: MediaCardProps) {
@@ -33,8 +49,8 @@ export default function MediaCard({ form, update, dispatch, toast }: MediaCardPr
       const url = await uploadFile(file);
       update("logo", url);
       toast.success("Logo uploaded");
-    } catch {
-      toast.error("Failed to upload logo");
+    } catch (err) {
+      toast.error(describeError(err, "Failed to upload logo"));
     } finally {
       setUploading(null);
     }
@@ -48,8 +64,8 @@ export default function MediaCard({ form, update, dispatch, toast }: MediaCardPr
       const url = await uploadFile(file);
       update("banner", url);
       toast.success("Banner uploaded");
-    } catch {
-      toast.error("Failed to upload banner");
+    } catch (err) {
+      toast.error(describeError(err, "Failed to upload banner"));
     } finally {
       setUploading(null);
     }
@@ -67,8 +83,8 @@ export default function MediaCard({ form, update, dispatch, toast }: MediaCardPr
         count++;
       }
       toast.success(`${count} image${count > 1 ? "s" : ""} added`);
-    } catch {
-      toast.error("Failed to upload some images");
+    } catch (err) {
+      toast.error(describeError(err, "Failed to upload some images"));
     } finally {
       setUploading(null);
     }
@@ -113,7 +129,7 @@ export default function MediaCard({ form, update, dispatch, toast }: MediaCardPr
                   id="logoUpload"
                   type="file"
                   className="hidden"
-                  accept="image/*"
+                  accept={IMAGE_ACCEPT}
                   disabled={uploading !== null}
                   onChange={handleLogoUpload}
                 />
@@ -151,7 +167,7 @@ export default function MediaCard({ form, update, dispatch, toast }: MediaCardPr
                 id="bannerUpload"
                 type="file"
                 className="hidden"
-                accept="image/*"
+                accept={IMAGE_ACCEPT}
                 disabled={uploading !== null}
                 onChange={handleBannerUpload}
               />
@@ -204,7 +220,7 @@ export default function MediaCard({ form, update, dispatch, toast }: MediaCardPr
                 type="file"
                 className="hidden"
                 multiple
-                accept="image/*"
+                accept={IMAGE_ACCEPT}
                 disabled={uploading !== null}
                 onChange={handleGalleryUpload}
               />

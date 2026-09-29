@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { getUploadsRoot, getLegacyUploadsDir } from "./upload-storage";
 
 export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
 
@@ -10,6 +11,7 @@ export const ALLOWED_EXTENSIONS = new Set([
   "png",
   "gif",
   "webp",
+  "svg",
   "pdf",
   "doc",
   "docx",
@@ -22,7 +24,6 @@ export const ALLOWED_EXTENSIONS = new Set([
 const ACTIVE_EXTENSIONS = new Set([
   "html",
   "htm",
-  "svg",
   "js",
   "mjs",
   "xml",
@@ -36,7 +37,6 @@ const ACTIVE_EXTENSIONS = new Set([
 ]);
 
 const ACTIVE_MIME_TYPES = new Set([
-  "image/svg+xml",
   "text/html",
   "application/xhtml+xml",
   "application/xml",
@@ -51,6 +51,7 @@ const EXTENSION_MIME_TYPES: Record<string, string> = {
   png: "image/png",
   gif: "image/gif",
   webp: "image/webp",
+  svg: "image/svg+xml",
   pdf: "application/pdf",
   doc: "application/msword",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -128,6 +129,47 @@ export function getExtensionFromFilename(name: string): string {
   return base.slice(dot + 1).toLowerCase();
 }
 
+export function isSvgDocument(text: string): boolean {
+  const stripped = text.replace(/<!--[\s\S]*?-->/g, "");
+  return /<svg[\s>]/i.test(stripped) && /<\/svg\s*>/i.test(stripped);
+}
+
+export function sanitizeSvg(buffer: Buffer): Buffer {
+  const raw = buffer.toString("utf8");
+  if (raw.includes("\u0000")) {
+    throw new UploadError("File content does not match an allowed type", 400);
+  }
+  if (/<!ENTITY/i.test(raw) || /<!DOCTYPE[^>]*\[/i.test(raw)) {
+    throw new UploadError("SVG files with entity declarations are not allowed", 400);
+  }
+  if (!isSvgDocument(raw)) {
+    throw new UploadError("File content does not match an allowed type", 400);
+  }
+
+  const cleaned = raw
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<!DOCTYPE[^>]*>/gi, "")
+    .replace(/<\?xml-stylesheet[\s\S]*?\?>/gi, "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, "")
+    .replace(/<script\b[^>]*\/>/gi, "")
+    .replace(/<foreignObject\b[^>]*>[\s\S]*?<\/foreignObject\s*>/gi, "")
+    .replace(/<foreignObject\b[^>]*\/>/gi, "")
+    .replace(/<(iframe|embed|object|audio|video|handler|listener)\b[^>]*>/gi, "")
+    .replace(/<(animate|animateTransform|animateMotion|set)\b[^>]*\/?>/gi, "")
+    .replace(/\son[a-z-]+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son[a-z-]+\s*=\s*'[^']*'/gi, "")
+    .replace(/\son[a-z-]+\s*=\s*[^\s>]+/gi, "")
+    .replace(/(?:xlink:)?href\s*=\s*(["'])\s*(?:javascript|vbscript|data:text\/html)[^"']*\1/gi, "")
+    .replace(/(?:xlink:)?href\s*=\s*(?:javascript|vbscript)[^\s>]*/gi, "")
+    .replace(/(?:xlink:)?href\s*=\s*["']\s*javascript:[^"']*["']/gi, "");
+
+  if (!isSvgDocument(cleaned)) {
+    throw new UploadError("File content does not match an allowed type", 400);
+  }
+
+  return Buffer.from(cleaned, "utf8");
+}
+
 export function sanitizeFilename(name: string): string {
   if (!name || typeof name !== "string") return "file";
   const base = (name.split(/[/\\]/).pop() || "").replace(/[\x00-\x1f<>:"|?*]/g, "");
@@ -136,7 +178,10 @@ export function sanitizeFilename(name: string): string {
 }
 
 export function getUploadsDir(...subdirs: string[]): string {
-  return path.join(process.cwd(), "public", "uploads", ...subdirs);
+  const safeSubdirs = subdirs
+    .map((sub) => sanitizeFilename(sub))
+    .filter((sub) => sub && sub !== "." && sub !== "..");
+  return path.join(getUploadsRoot(), ...safeSubdirs);
 }
 
 export function ensureUploadDir(dir: string): void {
@@ -179,6 +224,17 @@ export async function readUploadedFile(
   if (sniffed === null) throw new UploadError("File content does not match an allowed type", 400);
 
   let ext: string;
+  if (claimedExt === "svg") {
+    if (sniffed !== "text")
+      throw new UploadError("File content does not match an allowed type", 400);
+    return {
+      buffer: sanitizeSvg(buffer),
+      ext: "svg",
+      mime: EXTENSION_MIME_TYPES.svg,
+      originalName,
+    };
+  }
+
   if (sniffed === "text") {
     if (claimedExt !== "txt" && claimedExt !== "csv")
       throw new UploadError("File content does not match an allowed type", 400);
@@ -238,9 +294,11 @@ export function deleteStoredFile(fileUrl: string, ...subdirs: string[]): void {
   const relName = fileUrl.slice(prefix.length);
   if (!/^[A-Za-z0-9._-]+$/.test(relName) || relName === "." || relName === "..") return;
 
-  const dir = path.resolve(getUploadsDir(...subdirs));
-  const filePath = path.resolve(path.join(dir, relName));
-  if (!filePath.startsWith(`${dir}${path.sep}`)) return;
+  for (const dir of [getUploadsDir(...subdirs), getLegacyUploadsDir(...subdirs)]) {
+    const resolvedDir = path.resolve(dir);
+    const filePath = path.resolve(path.join(resolvedDir, relName));
+    if (!filePath.startsWith(`${resolvedDir}${path.sep}`)) continue;
 
-  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
 }
