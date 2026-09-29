@@ -4,6 +4,8 @@ import { createNotification } from "@/lib/notifications";
 import { softDeleteCourse } from "@/lib/trash";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 import { logError } from "@/lib/logger";
+import { getSession, checkRoutePermission } from "@/lib/api-utils";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -126,8 +128,33 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await getSession();
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
+
+    const rl = await checkRateLimit(`delete-course:${getClientIp(req)}`, 10, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const { id } = await params;
-    const course = await softDeleteCourse(id);
+    const numId = Number(id);
+    if (!Number.isInteger(numId)) {
+      return NextResponse.json({ error: "Invalid course id" }, { status: 400 });
+    }
+
+    let course;
+    try {
+      course = await softDeleteCourse(numId);
+    } catch (err) {
+      if ((err as { code?: string })?.code === "P2025") {
+        return NextResponse.json({ error: "Course not found" }, { status: 404 });
+      }
+      throw err;
+    }
 
     if (course) {
       await createNotification({
@@ -137,14 +164,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       });
 
       await logActivity({
-        actorName: await getActorName(undefined),
-        userId: undefined,
+        actorName: await getActorName(session?.id),
+        userId: session?.id,
         action: "deleted a course",
         target: course.name,
       });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: "Course moved to trash" });
   } catch (error) {
     logError("Delete Course", error);
     return NextResponse.json({ error: "Failed to delete course" }, { status: 500 });

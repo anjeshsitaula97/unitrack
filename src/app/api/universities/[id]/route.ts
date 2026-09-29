@@ -4,8 +4,9 @@ import type { Course } from "@prisma/client";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { softDeleteUniversity } from "@/lib/trash";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -79,10 +80,33 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
-    if (!session || !["Admin", "Super Admin"].includes(session.role as string))
-      return apiError("Unauthorized", 401);
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
+
+    // Rate limit university deletion
+    const rl = await checkRateLimit(`delete-university:${getClientIp(req)}`, 10, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const { id } = await params;
-    const university = await softDeleteUniversity(id);
+    const numId = Number(id);
+    if (!Number.isInteger(numId)) {
+      return NextResponse.json({ error: "Invalid university id" }, { status: 400 });
+    }
+
+    let university;
+    try {
+      university = await softDeleteUniversity(numId);
+    } catch (err) {
+      if ((err as { code?: string })?.code === "P2025") {
+        return NextResponse.json({ error: "University not found" }, { status: 404 });
+      }
+      throw err;
+    }
 
     if (university) {
       await createNotification({

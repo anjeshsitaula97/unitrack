@@ -236,11 +236,7 @@ export default function UniversitiesContent() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${name}"? This will also remove all associated courses and applications.`
-      )
-    )
+    if (!confirm(`Move "${name}" to trash? You can restore it from the Trash page for 30 days.`))
       return;
 
     setDeletingId(id);
@@ -248,20 +244,50 @@ export default function UniversitiesContent() {
       const res = await fetch(`/api/universities/${id}`, { method: "DELETE" });
       if (res.ok) {
         setUniversitiesData((prev) => prev.filter((u) => u.id !== id));
-        toast.success(`"${name}" has been permanently deleted`);
+        setSelected((prev) => prev.filter((x) => x !== id));
+        toast.success(`"${name}" moved to trash`);
       } else {
-        throw new Error("Failed to delete");
+        const body = await res.json().catch(() => null);
+        toast.error(body?.error || `Failed to delete "${name}" (HTTP ${res.status})`);
       }
     } catch (_error) {
-      toast.error(`Failed to delete "${name}"`);
+      toast.error(`Network error. Failed to delete "${name}".`);
     } finally {
       setDeletingId(null);
     }
   };
 
-  const handleBulkDelete = () => {
-    toast.success(`${selected.length} universities removed`);
-    setSelected([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  const handleBulkDelete = async () => {
+    if (selected.length === 0) return;
+    if (!confirm(`Move ${selected.length} universities to trash?`)) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const results = await Promise.all(
+        selected.map((id) => fetch(`/api/universities/${id}`, { method: "DELETE" }))
+      );
+      const deleted = selected.filter((_, i) => results[i].ok);
+      const failed = results.length - deleted.length;
+
+      if (deleted.length > 0) {
+        setUniversitiesData((prev) => prev.filter((u) => !deleted.includes(u.id)));
+      }
+      setSelected([]);
+
+      if (failed === 0) {
+        toast.success(`${deleted.length} universities moved to trash`);
+      } else if (deleted.length === 0) {
+        toast.error(`Failed to delete ${failed} universities`);
+      } else {
+        toast.error(`${deleted.length} moved to trash, ${failed} failed`);
+      }
+    } catch (_error) {
+      toast.error("Network error. Bulk delete failed.");
+    } finally {
+      setIsBulkDeleting(false);
+    }
   };
 
   const handleClearFilters = () => {
@@ -308,6 +334,7 @@ export default function UniversitiesContent() {
               handleExport(UNIVERSITIES_DATA.filter((u) => selected.includes(u.id)))
             }
             onDeleteSelected={handleBulkDelete}
+            isDeleting={isBulkDeleting}
           />
         )}
 
@@ -607,11 +634,13 @@ function BulkActionBar({
   setSelected,
   onExportSelected,
   onDeleteSelected,
+  isDeleting = false,
 }: {
   selected: string[];
   setSelected: (v: string[]) => void;
   onExportSelected: () => void;
   onDeleteSelected: () => void;
+  isDeleting?: boolean;
 }) {
   return (
     <div className="px-5 py-2.5 bg-indigo-50 border-b border-indigo-200 flex items-center gap-4 animate-slide-up">
@@ -626,9 +655,10 @@ function BulkActionBar({
       <button
         type="button"
         onClick={onDeleteSelected}
-        className="text-xs text-red-500 hover:underline font-medium"
+        disabled={isDeleting}
+        className="text-xs text-red-500 hover:underline font-medium disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
       >
-        Delete selected
+        {isDeleting ? "Deleting…" : "Delete selected"}
       </button>
       <button
         type="button"
@@ -861,7 +891,7 @@ function UniversityTable({
                       <button
                         type="button"
                         className="p-1.5 rounded-lg hover:bg-red-100 transition-colors"
-                        title="Remove university from listings — this cannot be undone"
+                        title="Move university to trash (restorable for 30 days)"
                         onClick={() => handleDelete(univ.id, univ.name)}
                       >
                         <Trash2 size={13} className="text-red-400" />

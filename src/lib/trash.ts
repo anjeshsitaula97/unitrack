@@ -96,21 +96,28 @@ export async function purgeExpiredTrash() {
       const entityIdNum = Number(item.entityId);
       switch (item.entityType) {
         case "Student":
-          await db.student.delete({ where: { id: entityIdNum } }).catch(() => {});
+          await db.student.delete({ where: { id: entityIdNum } });
           break;
         case "University":
-          await db.university.delete({ where: { id: entityIdNum } }).catch(() => {});
+          await db.university.delete({ where: { id: entityIdNum } });
           break;
         case "Course":
-          await db.course.delete({ where: { id: entityIdNum } }).catch(() => {});
+          await db.course.delete({ where: { id: entityIdNum } });
           break;
         case "Lead":
-          await db.lead.delete({ where: { id: entityIdNum } }).catch(() => {});
+          await db.lead.delete({ where: { id: entityIdNum } });
           break;
       }
       await db.trashItem.delete({ where: { id: item.id } });
       purged++;
-    } catch {}
+    } catch (error) {
+      // Keep the TrashItem so the purge is retried on the next run instead of
+      // orphaning a row that is still flagged as deleted.
+      console.error(
+        `Failed to purge ${item.entityType} ${item.entityId}:`,
+        error instanceof Error ? error.message : error
+      );
+    }
   }
 
   return purged;

@@ -184,13 +184,21 @@ export default function UniversityDetailContent({ id }: { id: string }) {
   }, [university, activeFaculty, searchQuery]);
 
   const handleDeleteCourse = async (courseId: string, courseName: string) => {
-    if (!confirm(`Are you sure you want to delete ${courseName}?`)) return;
+    if (
+      !confirm(`Move "${courseName}" to trash? You can restore it from the Trash page for 30 days.`)
+    )
+      return;
 
     try {
       const res = await fetch(`/api/courses/${courseId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete course");
 
-      toast.success("Course deleted successfully");
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        toast.error(body?.error || `Failed to delete course (HTTP ${res.status})`);
+        return;
+      }
+
+      toast.success(`"${courseName}" moved to trash`);
 
       // Update local state
       if (university) {
@@ -206,7 +214,7 @@ export default function UniversityDetailContent({ id }: { id: string }) {
         setUniversity({ ...university, groupedCourses: updatedGroupedCourses });
       }
     } catch (err) {
-      toast.error("Failed to delete course");
+      toast.error("Network error. Failed to delete course.");
       console.error(err);
     }
   };
