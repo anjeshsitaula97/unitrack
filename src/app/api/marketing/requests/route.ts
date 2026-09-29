@@ -23,10 +23,7 @@ export async function GET(req: NextRequest) {
     if (type) where.type = type;
     if (assignedToMe) where.assignedTo = session.id;
     if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { description: { contains: search } },
-      ];
+      where.OR = [{ title: { contains: search } }, { description: { contains: search } }];
     }
 
     const [requests, total] = await Promise.all([
@@ -59,7 +56,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    logError(error);
+    logError("Fetch marketing requests", error);
     return apiError("Failed to fetch marketing requests");
   }
 }
@@ -114,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(request, { status: 201 });
   } catch (error) {
-    logError(error);
+    logError("Create marketing request", error);
     return apiError("Failed to create marketing request", 400);
   }
 }

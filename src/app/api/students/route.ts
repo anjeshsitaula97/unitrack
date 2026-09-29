@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(paginatedResponse(students, total, params));
   } catch (error) {
-    logError(error);
+    logError("Fetch students", error);
     return apiError("Failed to fetch students");
   }
 }
@@ -214,7 +214,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ...student, generatedPassword: passwordToUse });
   } catch (error) {
-    logError(error);
+    logError("Create student", error);
     if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "Email already exists" }, { status: 400 });
     }

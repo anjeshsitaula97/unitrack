@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -19,7 +19,7 @@ async function getSession() {
   }
 }
 
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // CSRF protection for state-changing operations
     const csrf = validateCsrfHeaders(req);
@@ -35,7 +35,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     // Rate limit role updates
     const rl = await checkRateLimit(`update-role:${getClientIp(req)}`, 20, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const { id } = await params;
@@ -74,7 +77,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // CSRF protection for state-changing operations
     const csrf = validateCsrfHeaders(req);
@@ -90,7 +93,10 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     // Rate limit role deletion
     const rl = await checkRateLimit(`delete-role:${getClientIp(req)}`, 10, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const { id } = await params;

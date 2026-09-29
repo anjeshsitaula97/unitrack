@@ -5,10 +5,7 @@ import { logActivity } from "@/lib/activity";
 import { getSession, apiError } from "@/lib/api-utils";
 import { deleteUploadedFile } from "@/lib/marketing-files";
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
     if (!session) return apiError("Unauthorized", 401);
@@ -37,7 +34,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    logError(error);
+    logError("Delete marketing material", error);
     return apiError("Failed to delete marketing material", 400);
   }
 }

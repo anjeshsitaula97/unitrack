@@ -5,10 +5,7 @@ import { logActivity } from "@/lib/activity";
 import { getSession, apiError } from "@/lib/api-utils";
 import { deleteUploadedFile } from "@/lib/marketing-files";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
     if (!session) return apiError("Unauthorized", 401);
@@ -34,15 +31,12 @@ export async function GET(
 
     return NextResponse.json(request);
   } catch (error) {
-    logError(error);
+    logError("Fetch marketing request", error);
     return apiError("Failed to fetch marketing request");
   }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
     if (!session) return apiError("Unauthorized", 401);
@@ -108,15 +102,12 @@ export async function PUT(
 
     return NextResponse.json(request);
   } catch (error) {
-    logError(error);
+    logError("Update marketing request", error);
     return apiError("Failed to update marketing request", 400);
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
     if (!session) return apiError("Unauthorized", 401);
@@ -151,7 +142,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    logError(error);
+    logError("Delete marketing request", error);
     return apiError("Failed to delete marketing request", 400);
   }
 }

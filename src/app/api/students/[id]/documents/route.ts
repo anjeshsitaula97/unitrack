@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return NextResponse.json(document);
   } catch (error) {
-    logError(error);
+    logError("Upload student document", error);
     return NextResponse.json({ error: "Failed to upload document" }, { status: 500 });
   }
 }
@@ -80,7 +80,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    logError(error);
+    logError("Delete student document", error);
     return NextResponse.json({ error: "Failed to delete document" }, { status: 500 });
   }
 }

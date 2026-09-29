@@ -66,7 +66,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       name: student.name,
     });
   } catch (error) {
-    logError(error);
+    logError("Generate student credentials", error);
     return NextResponse.json({ error: "Failed to generate credentials" }, { status: 500 });
   }
 }

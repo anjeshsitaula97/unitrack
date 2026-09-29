@@ -32,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(student);
   } catch (error) {
-    logError(error);
+    logError("Fetch student", error);
     return NextResponse.json({ error: "Failed to fetch student" }, { status: 500 });
   }
 }
@@ -215,7 +215,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(student);
   } catch (error) {
-    logError(error);
+    logError("Update student", error);
     return NextResponse.json({ error: "Failed to update student" }, { status: 500 });
   }
 }

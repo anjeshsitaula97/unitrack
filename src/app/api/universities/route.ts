@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(paginatedResponse(transformed, total, params));
   } catch (error) {
-    logError(error);
+    logError("Fetch universities", error);
     return apiError("Failed to fetch universities");
   }
 }
@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(newUniversity, { status: 201 });
   } catch (error) {
-    logError(error);
+    logError("Create university", error);
     return apiError("Failed to create university", 400);
   }
 }

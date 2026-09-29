@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(material, { status: 201 });
   } catch (error) {
-    logError(error);
+    logError("Upload marketing material", error);
     if (error instanceof UploadError) return apiError(error.message, error.status);
     return apiError("Failed to upload marketing material", 400);
   }

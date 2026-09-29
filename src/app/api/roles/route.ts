@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
@@ -49,7 +49,7 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     // CSRF protection for state-changing operations
     const csrf = validateCsrfHeaders(req);
@@ -65,7 +65,10 @@ export async function POST(req: Request) {
     // Rate limit role creation
     const rl = await checkRateLimit(`create-role:${getClientIp(req)}`, 10, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const body = await req.json();

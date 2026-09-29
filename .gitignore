@@ -57,3 +57,10 @@ tmp_users.json
 api_output.json
 scratch/
 .stitch/
+
+# macOS AppleDouble resource-fork files (noisy on external volumes)
+._*
+.DS_Store
+
+# persistent upload storage (survives deploys, served via /api/uploads)
+/storage/
