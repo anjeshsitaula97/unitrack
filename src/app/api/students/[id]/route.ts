@@ -7,6 +7,7 @@ import { softDeleteStudent } from "@/lib/trash";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logError } from "@/lib/logger";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(student);
   } catch (error) {
-    console.error(error);
+    logError(error);
     return NextResponse.json({ error: "Failed to fetch student" }, { status: 500 });
   }
 }
@@ -41,6 +42,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const session = await getSession();
     if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
       return apiError("Unauthorized", 401);
+
+    // Rate limit student updates
+    const rl = await checkRateLimit(`update-student:${getClientIp(req)}`, 30, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    }
 
     const { id } = await params;
     const numId = Number(id);
@@ -208,7 +215,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(student);
   } catch (error) {
-    console.error(error);
+    logError(error);
     return NextResponse.json({ error: "Failed to update student" }, { status: 500 });
   }
 }
@@ -218,6 +225,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const session = await getSession();
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
+
+    // Rate limit student deletion
+    const rl = await checkRateLimit(`delete-student:${getClientIp(req)}`, 10, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    }
 
     const { id } = await params;
     const student = await softDeleteStudent(id);

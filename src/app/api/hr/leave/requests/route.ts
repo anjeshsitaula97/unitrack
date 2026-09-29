@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
@@ -39,7 +40,7 @@ export async function GET(req: Request) {
     });
     return NextResponse.json(requests);
   } catch (error) {
-    console.error("Fetch Leave Requests Error:", error);
+    logError("Fetch Leave Requests Error:", error);
     return NextResponse.json({ error: "Failed to fetch leave requests" }, { status: 500 });
   }
 }
@@ -77,7 +78,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(leaveRequest);
   } catch (error) {
-    console.error("Create Leave Request Error:", error);
+    logError("Create Leave Request Error:", error);
     return NextResponse.json({ error: "Failed to create leave request" }, { status: 500 });
   }
 }

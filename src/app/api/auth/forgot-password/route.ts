@@ -3,6 +3,7 @@ import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { db } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { logError } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
         });
       }
     } catch (emailError) {
-      console.error("Failed to send OTP email:", emailError);
+      logError("Send OTP Email", emailError);
     }
 
     return NextResponse.json({
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
       message: "If an account with that email exists, an OTP has been sent.",
     });
   } catch (error) {
-    console.error("Forgot password error:", error);
+    logError("Forgot Password", error);
     return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
   }
 }

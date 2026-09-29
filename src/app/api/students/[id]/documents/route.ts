@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return NextResponse.json(document);
   } catch (error) {
-    console.error(error);
+    logError(error);
     return NextResponse.json({ error: "Failed to upload document" }, { status: 500 });
   }
 }
@@ -79,7 +80,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    logError(error);
     return NextResponse.json({ error: "Failed to delete document" }, { status: 500 });
   }
 }

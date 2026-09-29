@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import crypto from "crypto";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
+import { logError } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ token: raw, name: data.name || "Generated Key" }, { status: 201 });
   } catch (error) {
-    console.error(error);
+    logError("Create API Key", error);
     return NextResponse.json({ error: "Failed to create API Key" }, { status: 400 });
   }
 }

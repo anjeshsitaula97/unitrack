@@ -236,6 +236,7 @@ model SystemSettings {
   language        String   @default("English")
   enableBranches  Boolean  @default(false)
   showBSDate      Boolean  @default(false)
+  theme           String   @default("system")
   officeLatitude  Float?
   officeLongitude Float?
   officeRadius    Float?   @default(100)
@@ -305,7 +306,7 @@ model Role {
   id        Int      @id @default(autoincrement())
   name        String   @unique
   description String?
-  permissions String
+  permissions String   @db.LongText
   color       String?  @default("text-slate-600 bg-slate-50 border-slate-200")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

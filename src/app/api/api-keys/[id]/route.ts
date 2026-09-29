@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
+import { logError } from "@/lib/logger";
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -25,7 +26,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete API Key Error:", error);
+    logError("Delete API Key", error);
     return NextResponse.json({ error: "Failed to delete API Key" }, { status: 500 });
   }
 }

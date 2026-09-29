@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
 import { softDeleteLead } from "@/lib/trash";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const prisma = db;
 
@@ -30,7 +32,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     return NextResponse.json(lead);
   } catch (error) {
-    console.error("Fetch Lead Error:", error);
+    logError("Fetch Lead Error:", error);
     return NextResponse.json({ error: "Failed to fetch lead" }, { status: 500 });
   }
 }
@@ -40,6 +42,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const [{ id }, body] = await Promise.all([params, req.json()]);
 
     const session = await getSession();
+
+    // Rate limit lead updates
+    const rl = await checkRateLimit(`update-lead:${getClientIp(req)}`, 30, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    }
 
     // Get current lead to check previous status
     const currentLead = await prisma.lead.findUnique({ where: { id: Number(id) } });
@@ -89,7 +97,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
           });
         }
       } catch (err) {
-        console.error("Failed to soft-hide student on lead status change:", err);
+        logError("Failed to soft-hide student on lead status change:", err);
       }
     }
 
@@ -133,7 +141,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
           });
         }
       } catch (studentError) {
-        console.error("Migration to Student failed:", studentError);
+        logError("Migration to Student failed:", studentError);
       }
     }
 
@@ -153,7 +161,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json(lead);
   } catch (error) {
-    console.error("Update Lead Error:", error);
+    logError("Update Lead Error:", error);
     return NextResponse.json({ error: "Failed to update lead" }, { status: 500 });
   }
 }
@@ -163,6 +171,12 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const session = await getSession();
     if (!session || !["Admin", "Super Admin"].includes(session.role)) {
       return NextResponse.json({ error: "Only admins can delete leads" }, { status: 403 });
+    }
+
+    // Rate limit lead deletion
+    const rl = await checkRateLimit(`delete-lead:${getClientIp(req)}`, 10, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
 
     const { id } = await params;
@@ -185,7 +199,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete Lead Error:", error);
+    logError("Delete Lead Error:", error);
     return NextResponse.json({ error: "Failed to delete lead" }, { status: 500 });
   }
 }

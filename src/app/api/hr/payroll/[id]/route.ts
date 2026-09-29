@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -47,7 +48,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     }
     return NextResponse.json(payroll);
   } catch (error) {
-    console.error("Fetch Payroll Error:", error);
+    logError("Fetch Payroll Error:", error);
     return NextResponse.json({ error: "Failed to fetch payroll" }, { status: 500 });
   }
 }
@@ -107,7 +108,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   } catch (error) {
-    console.error("Update Payroll Error:", error);
+    logError("Update Payroll Error:", error);
     return NextResponse.json({ error: "Failed to update payroll" }, { status: 500 });
   }
 }

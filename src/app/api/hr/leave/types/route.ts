@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -25,7 +26,7 @@ export async function GET() {
     });
     return NextResponse.json(types);
   } catch (error) {
-    console.error("Fetch Leave Types Error:", error);
+    logError("Fetch Leave Types Error:", error);
     return NextResponse.json({ error: "Failed to fetch leave types" }, { status: 500 });
   }
 }
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    console.error("Create Leave Type Error:", error);
+    logError("Create Leave Type Error:", error);
     return NextResponse.json({ error: "Failed to create leave type" }, { status: 500 });
   }
 }

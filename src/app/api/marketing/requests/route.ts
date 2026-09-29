@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
 import { getSession, apiError } from "@/lib/api-utils";
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(error);
+    logError(error);
     return apiError("Failed to fetch marketing requests");
   }
 }
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(request, { status: 201 });
   } catch (error) {
-    console.error(error);
+    logError(error);
     return apiError("Failed to create marketing request", 400);
   }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { getSession, apiError } from "@/lib/api-utils";
 import { purgeExpiredTrash } from "@/lib/trash";
 import { logActivity, getActorName } from "@/lib/activity";
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, purged });
   } catch (error) {
-    console.error("Purge error:", error);
+    logError("Purge error:", error);
     return apiError("Failed to purge expired trash");
   }
 }

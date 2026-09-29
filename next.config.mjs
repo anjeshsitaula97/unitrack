@@ -15,6 +15,21 @@ const nextConfig = {
   serverExternalPackages: ['@prisma/client', 'prisma'],
 
   async headers() {
+    const isDev = process.env.NODE_ENV !== "production";
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js requires unsafe-inline for hydration
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: blob: https: https://images.unsplash.com",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "connect-src 'self' https: wss:", // Allow HTTPS and WSS only
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self' https://rc-epay.esewa.com.np https://epay.esewa.com.np https://dev.connectips.com https://login.connectips.com",
+      "object-src 'none'",
+      "frame-src 'self' https://rc-epay.esewa.com.np https://epay.esewa.com.np https://dev.connectips.com https://login.connectips.com",
+    ].join('; ');
+
     return [
       {
         source: '/(.*)',
@@ -25,23 +40,7 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: http: https: https://images.unsplash.com",
-              "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' http://localhost:5000",
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              // Checkout gateways: the browser POSTs a signed form to these origins.
-              // https://rc-epay.esewa.com.np = eSewa UAT, https://epay.esewa.com.np = eSewa production,
-              // https://dev.connectips.com = connectIPS UAT, https://login.connectips.com = connectIPS production.
-              "form-action 'self' https://rc-epay.esewa.com.np https://epay.esewa.com.np https://dev.connectips.com https://login.connectips.com",
-            ].join('; '),
-          },
+          { key: 'Content-Security-Policy', value: csp },
         ],
       },
     ];

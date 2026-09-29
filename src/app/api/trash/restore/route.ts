@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { getSession, apiError } from "@/lib/api-utils";
 import { restoreFromTrash } from "@/lib/trash";
 import { db } from "@/lib/db";
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, item: restored });
   } catch (error) {
-    console.error("Restore error:", error);
+    logError("Restore error:", error);
     return apiError("Failed to restore item");
   }
 }

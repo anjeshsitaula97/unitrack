@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -51,7 +52,7 @@ export async function GET() {
     });
     return NextResponse.json(employees);
   } catch (error) {
-    console.error("Fetch Employees Error:", error);
+    logError("Fetch Employees Error:", error);
     return NextResponse.json({ error: "Failed to fetch employees" }, { status: 500 });
   }
 }
@@ -101,7 +102,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(employee);
   } catch (error) {
-    console.error("Create Employee Error:", error);
+    logError("Create Employee Error:", error);
     return NextResponse.json({ error: "Failed to create employee profile" }, { status: 500 });
   }
 }

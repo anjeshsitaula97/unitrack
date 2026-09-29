@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { decryptBackup } from "@/lib/crypto";
 import type { EncryptedPayload } from "@/lib/crypto";
@@ -255,7 +256,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: "Data restored successfully" });
   } catch (error) {
-    console.error("Restore error:", error);
+    logError("Restore error:", error);
     return NextResponse.json(
       { error: "Failed to restore data. Check file compatibility." },
       { status: 500 }

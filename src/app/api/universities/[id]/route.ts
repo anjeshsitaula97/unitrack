@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import type { Course } from "@prisma/client";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
@@ -70,7 +71,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       groupedCourses,
     });
   } catch (error) {
-    console.error("Error fetching university:", error);
+    logError("Error fetching university:", error);
     return NextResponse.json({ error: "Failed to fetch university details" }, { status: 500 });
   }
 }
@@ -100,7 +101,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return NextResponse.json({ success: true, message: "University moved to trash" });
   } catch (error) {
-    console.error("Delete error:", error);
+    logError("Delete error:", error);
     return NextResponse.json({ error: "Failed to delete university" }, { status: 500 });
   }
 }
@@ -186,7 +187,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Update error:", error);
+    logError("Update error:", error);
     return NextResponse.json({ error: "Failed to update university" }, { status: 500 });
   }
 }

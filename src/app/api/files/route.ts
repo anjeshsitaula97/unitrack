@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { verifyAuth } from "@/lib/session";
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(files);
   } catch (error) {
-    console.error("Error fetching files:", error);
+    logError("Error fetching files:", error);
     return NextResponse.json({ error: "Failed to fetch files" }, { status: 500 });
   }
 }
@@ -80,7 +81,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting file:", error);
+    logError("Error deleting file:", error);
     return NextResponse.json({ error: "Failed to delete file" }, { status: 500 });
   }
 }

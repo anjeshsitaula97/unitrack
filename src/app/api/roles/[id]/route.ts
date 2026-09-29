@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
 import { logActivity, diffChanges } from "@/lib/activity";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { validateCsrfHeaders } from "@/lib/csrf";
 
 async function getSession() {
   const cookieStore = await cookies();
@@ -18,9 +21,21 @@ async function getSession() {
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // CSRF protection for state-changing operations
+    const csrf = validateCsrfHeaders(req);
+    if (!csrf.valid) {
+      return NextResponse.json({ error: csrf.error }, { status: 403 });
+    }
+
     const session = await getSession();
     if (!session || !["Admin", "Super Admin"].includes(session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit role updates
+    const rl = await checkRateLimit(`update-role:${getClientIp(req)}`, 20, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
 
     const { id } = await params;
@@ -54,16 +69,28 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       userCount: 0,
     });
   } catch (error) {
-    console.error("Update Role Error:", error);
+    logError("Update Role Error:", error);
     return NextResponse.json({ error: "Failed to update role" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // CSRF protection for state-changing operations
+    const csrf = validateCsrfHeaders(req);
+    if (!csrf.valid) {
+      return NextResponse.json({ error: csrf.error }, { status: 403 });
+    }
+
     const session = await getSession();
     if (!session || !["Admin", "Super Admin"].includes(session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit role deletion
+    const rl = await checkRateLimit(`delete-role:${getClientIp(req)}`, 10, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
 
     const { id } = await params;
@@ -82,7 +109,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete Role Error:", error);
+    logError("Delete Role Error:", error);
     return NextResponse.json({ error: "Failed to delete role" }, { status: 500 });
   }
 }

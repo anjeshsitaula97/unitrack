@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { getStudentSession, apiError } from "@/lib/api-utils";
 
@@ -21,7 +22,7 @@ export async function GET() {
     const { studentPassword: _studentPassword, ...safeStudent } = student;
     return NextResponse.json(safeStudent);
   } catch (error) {
-    console.error("Student fetch error:", error);
+    logError("Student fetch error:", error);
     return apiError("Failed to fetch student data");
   }
 }

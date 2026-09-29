@@ -42,6 +42,7 @@ import {
   Layers,
   ArrowUp,
   ArrowDown,
+  ArrowLeft,
   Loader2,
   type LucideIcon,
 } from "lucide-react";
@@ -103,68 +104,95 @@ interface Permission {
 const PERMISSIONS: Permission[] = [
   // ── General ──
   {
-    id: "p1",
+    id: "dashboard:view",
     name: "dashboard:view",
     description: "Access main dashboard and metrics",
+    module: "General",
+  },
+  {
+    id: "dashboard:export",
+    name: "dashboard:export",
+    description: "Export dashboard data",
     module: "General",
   },
 
   // ── Universities ──
   {
-    id: "p2",
-    name: "universities:view",
+    id: "universities:read",
+    name: "universities:read",
     description: "View university list and details",
     module: "Universities",
   },
   {
-    id: "p3",
+    id: "universities:create",
     name: "universities:create",
     description: "Add new universities",
     module: "Universities",
   },
   {
-    id: "p4",
+    id: "universities:update",
     name: "universities:update",
     description: "Edit university information",
     module: "Universities",
   },
   {
-    id: "p5",
+    id: "universities:delete",
     name: "universities:delete",
     description: "Remove universities from the platform",
     module: "Universities",
   },
   {
-    id: "p6",
+    id: "universities:export",
     name: "universities:export",
     description: "Export university data to Excel/CSV",
     module: "Universities",
   },
   {
-    id: "p7",
+    id: "universities:import",
     name: "universities:import",
     description: "Import universities from external files",
+    module: "Universities",
+  },
+  {
+    id: "universities:partners",
+    name: "universities:partners",
+    description: "Manage university partnerships",
     module: "Universities",
   },
 
   // ── Courses ──
   {
-    id: "p8",
-    name: "courses:view",
+    id: "courses:read",
+    name: "courses:read",
     description: "View course list and details",
     module: "Courses",
   },
-  { id: "p9", name: "courses:create", description: "Add new courses", module: "Courses" },
-  { id: "p10", name: "courses:update", description: "Edit course information", module: "Courses" },
-  { id: "p11", name: "courses:delete", description: "Delete courses", module: "Courses" },
   {
-    id: "p12",
+    id: "courses:create",
+    name: "courses:create",
+    description: "Add new courses",
+    module: "Courses",
+  },
+  {
+    id: "courses:update",
+    name: "courses:update",
+    description: "Edit course information",
+    module: "Courses",
+  },
+  {
+    id: "courses:delete",
+    name: "courses:delete",
+    description: "Delete courses",
+    module: "Courses",
+  },
+  {
+    id: "courses:export",
     name: "courses:export",
     description: "Export course data to Excel/CSV",
     module: "Courses",
   },
   {
-    id: "p13",
+    id: "courses:import",
     name: "courses:import",
     description: "Import courses from external files",
     module: "Courses",
@@ -172,220 +200,804 @@ const PERMISSIONS: Permission[] = [
 
   // ── Students ──
   {
-    id: "p14",
-    name: "students:view",
+    id: "students:read",
+    name: "students:read",
     description: "View student profiles and records",
     module: "Students",
   },
-  { id: "p15", name: "students:create", description: "Add new students", module: "Students" },
   {
-    id: "p16",
+    id: "students:create",
+    name: "students:create",
+    description: "Add new students",
+    module: "Students",
+  },
+  {
+    id: "students:update",
     name: "students:update",
     description: "Edit student information",
     module: "Students",
   },
-  { id: "p17", name: "students:delete", description: "Delete student records", module: "Students" },
   {
-    id: "p18",
+    id: "students:delete",
+    name: "students:delete",
+    description: "Delete student records",
+    module: "Students",
+  },
+  {
+    id: "students:export",
     name: "students:export",
     description: "Export student data to Excel/CSV",
     module: "Students",
   },
   {
-    id: "p19",
+    id: "students:import",
     name: "students:import",
     description: "Import students from external files",
     module: "Students",
   },
   {
-    id: "p20",
+    id: "students:credentials",
     name: "students:credentials",
     description: "Generate login credentials for student portal",
+    module: "Students",
+  },
+  {
+    id: "students:messages",
+    name: "students:messages",
+    description: "Manage student conversations",
     module: "Students",
   },
 
   // ── Applications ──
   {
-    id: "p21",
-    name: "applications:view",
+    id: "applications:read",
+    name: "applications:read",
     description: "View applications and statuses",
     module: "Applications",
   },
   {
-    id: "p22",
+    id: "applications:create",
     name: "applications:create",
     description: "Submit new applications",
     module: "Applications",
   },
   {
-    id: "p23",
+    id: "applications:update",
     name: "applications:update",
     description: "Edit application details",
     module: "Applications",
   },
   {
-    id: "p24",
+    id: "applications:delete",
     name: "applications:delete",
     description: "Delete applications",
+    module: "Applications",
+  },
+  {
+    id: "applications:export",
+    name: "applications:export",
+    description: "Export application data",
+    module: "Applications",
+  },
+  {
+    id: "applications:workflow",
+    name: "applications:workflow",
+    description: "Manage application workflow stages",
     module: "Applications",
   },
 
   // ── Leads ──
   {
-    id: "p25",
-    name: "leads:manage",
-    description: "Full management of leads (view, create, update, delete)",
+    id: "leads:read",
+    name: "leads:read",
+    description: "View leads list and details",
+    module: "Leads",
+  },
+  {
+    id: "leads:create",
+    name: "leads:create",
+    description: "Add new leads",
+    module: "Leads",
+  },
+  {
+    id: "leads:update",
+    name: "leads:update",
+    description: "Edit lead information",
+    module: "Leads",
+  },
+  {
+    id: "leads:delete",
+    name: "leads:delete",
+    description: "Delete leads",
+    module: "Leads",
+  },
+  {
+    id: "leads:export",
+    name: "leads:export",
+    description: "Export leads data",
+    module: "Leads",
+  },
+  {
+    id: "leads:assign",
+    name: "leads:assign",
+    description: "Assign leads to counselors",
     module: "Leads",
   },
 
-  // ── Payments & Expenses ──
+  // ── Payments ──
   {
-    id: "p26",
-    name: "payments:manage",
-    description: "Full management of payments and transactions",
+    id: "payments:read",
+    name: "payments:read",
+    description: "View payments and transactions",
     module: "Payments",
   },
   {
-    id: "p27",
-    name: "expenses:manage",
-    description: "Full management of expenses",
+    id: "payments:create",
+    name: "payments:create",
+    description: "Record new payments",
+    module: "Payments",
+  },
+  {
+    id: "payments:update",
+    name: "payments:update",
+    description: "Edit payment records",
+    module: "Payments",
+  },
+  {
+    id: "payments:delete",
+    name: "payments:delete",
+    description: "Delete payment records",
+    module: "Payments",
+  },
+  {
+    id: "payments:export",
+    name: "payments:export",
+    description: "Export payment data",
+    module: "Payments",
+  },
+  {
+    id: "payments:refund",
+    name: "payments:refund",
+    description: "Process refunds",
+    module: "Payments",
+  },
+
+  // ── Expenses ──
+  {
+    id: "expenses:read",
+    name: "expenses:read",
+    description: "View expenses",
+    module: "Expenses",
+  },
+  {
+    id: "expenses:create",
+    name: "expenses:create",
+    description: "Add new expenses",
+    module: "Expenses",
+  },
+  {
+    id: "expenses:update",
+    name: "expenses:update",
+    description: "Edit expense records",
+    module: "Expenses",
+  },
+  {
+    id: "expenses:delete",
+    name: "expenses:delete",
+    description: "Delete expense records",
+    module: "Expenses",
+  },
+  {
+    id: "expenses:export",
+    name: "expenses:export",
+    description: "Export expense data",
     module: "Expenses",
   },
 
   // ── Reports & Analytics ──
-  { id: "p28", name: "reports:view", description: "View and access reports", module: "Reports" },
   {
-    id: "p29",
+    id: "reports:read",
+    name: "reports:read",
+    description: "View and access reports",
+    module: "Reports",
+  },
+  {
+    id: "reports:create",
     name: "reports:create",
     description: "Create new reports and export data",
     module: "Reports",
   },
   {
-    id: "p30",
-    name: "analytics:view",
+    id: "reports:delete",
+    name: "reports:delete",
+    description: "Delete saved reports",
+    module: "Reports",
+  },
+  {
+    id: "analytics:read",
+    name: "analytics:read",
     description: "Access analytics dashboard",
+    module: "Analytics",
+  },
+  {
+    id: "analytics:export",
+    name: "analytics:export",
+    description: "Export analytics data",
     module: "Analytics",
   },
 
   // ── HR & Payroll ──
   {
-    id: "p31",
-    name: "hr:manage",
-    description: "Full management of HR (employees, attendance, leave, payroll)",
+    id: "hr:read",
+    name: "hr:read",
+    description: "View HR dashboard and employee list",
+    module: "HR & Payroll",
+  },
+  {
+    id: "hr:create",
+    name: "hr:create",
+    description: "Add employees, departments, designations",
+    module: "HR & Payroll",
+  },
+  {
+    id: "hr:update",
+    name: "hr:update",
+    description: "Edit employee and HR records",
+    module: "HR & Payroll",
+  },
+  {
+    id: "hr:delete",
+    name: "hr:delete",
+    description: "Delete HR records",
+    module: "HR & Payroll",
+  },
+  {
+    id: "hr:attendance",
+    name: "hr:attendance",
+    description: "Manage attendance records",
+    module: "HR & Payroll",
+  },
+  {
+    id: "hr:leave",
+    name: "hr:leave",
+    description: "Manage leave requests and balances",
+    module: "HR & Payroll",
+  },
+  {
+    id: "hr:payroll",
+    name: "hr:payroll",
+    description: "Manage payroll processing",
+    module: "HR & Payroll",
+  },
+  {
+    id: "hr:export",
+    name: "hr:export",
+    description: "Export HR data",
     module: "HR & Payroll",
   },
 
   // ── Files ──
-  { id: "p32", name: "files:view", description: "View and download files", module: "Files" },
-  { id: "p33", name: "files:upload", description: "Upload new files and scans", module: "Files" },
-  { id: "p34", name: "files:delete", description: "Delete files and folders", module: "Files" },
+  {
+    id: "files:read",
+    name: "files:read",
+    description: "View and download files",
+    module: "Files",
+  },
+  {
+    id: "files:create",
+    name: "files:create",
+    description: "Upload new files and create folders",
+    module: "Files",
+  },
+  {
+    id: "files:update",
+    name: "files:update",
+    description: "Rename and move files/folders",
+    module: "Files",
+  },
+  {
+    id: "files:delete",
+    name: "files:delete",
+    description: "Delete files and folders",
+    module: "Files",
+  },
+  {
+    id: "files:share",
+    name: "files:share",
+    description: "Share files with team members",
+    module: "Files",
+  },
 
   // ── Calendar ──
   {
-    id: "p35",
-    name: "calendar:manage",
-    description: "Full calendar management",
+    id: "calendar:read",
+    name: "calendar:read",
+    description: "View calendar events",
+    module: "Calendar",
+  },
+  {
+    id: "calendar:create",
+    name: "calendar:create",
+    description: "Create new events",
+    module: "Calendar",
+  },
+  {
+    id: "calendar:update",
+    name: "calendar:update",
+    description: "Edit calendar events",
+    module: "Calendar",
+  },
+  {
+    id: "calendar:delete",
+    name: "calendar:delete",
+    description: "Delete calendar events",
     module: "Calendar",
   },
 
   // ── Visa & Country Workflow ──
   {
-    id: "p36",
-    name: "visa:manage",
-    description: "Manage visa timeline and checklists",
+    id: "visa:read",
+    name: "visa:read",
+    description: "View visa timelines and checklists",
     module: "Visa",
   },
   {
-    id: "p37",
-    name: "workflow:manage",
-    description: "Manage country workflows and task templates",
+    id: "visa:create",
+    name: "visa:create",
+    description: "Create visa applications",
+    module: "Visa",
+  },
+  {
+    id: "visa:update",
+    name: "visa:update",
+    description: "Update visa status and documents",
+    module: "Visa",
+  },
+  {
+    id: "visa:delete",
+    name: "visa:delete",
+    description: "Delete visa records",
+    module: "Visa",
+  },
+  {
+    id: "workflow:read",
+    name: "workflow:read",
+    description: "View country workflows and task templates",
+    module: "Workflow",
+  },
+  {
+    id: "workflow:create",
+    name: "workflow:create",
+    description: "Create workflow stages and templates",
+    module: "Workflow",
+  },
+  {
+    id: "workflow:update",
+    name: "workflow:update",
+    description: "Edit workflow stages and templates",
+    module: "Workflow",
+  },
+  {
+    id: "workflow:delete",
+    name: "workflow:delete",
+    description: "Delete workflow stages and templates",
     module: "Workflow",
   },
 
   // ── Access Control ──
   {
-    id: "p38",
-    name: "users:manage",
-    description: "Invite, edit, and remove platform users",
+    id: "users:read",
+    name: "users:read",
+    description: "View platform users",
     module: "Access Control",
   },
   {
-    id: "p39",
-    name: "roles:manage",
-    description: "Create, edit, and delete user roles",
+    id: "users:create",
+    name: "users:create",
+    description: "Invite new users",
     module: "Access Control",
   },
   {
-    id: "p40",
-    name: "permissions:manage",
+    id: "users:update",
+    name: "users:update",
+    description: "Edit user profiles and roles",
+    module: "Access Control",
+  },
+  {
+    id: "users:delete",
+    name: "users:delete",
+    description: "Remove platform users",
+    module: "Access Control",
+  },
+  {
+    id: "roles:read",
+    name: "roles:read",
+    description: "View role definitions",
+    module: "Access Control",
+  },
+  {
+    id: "roles:create",
+    name: "roles:create",
+    description: "Create new roles",
+    module: "Access Control",
+  },
+  {
+    id: "roles:update",
+    name: "roles:update",
+    description: "Edit role details",
+    module: "Access Control",
+  },
+  {
+    id: "roles:delete",
+    name: "roles:delete",
+    description: "Delete roles",
+    module: "Access Control",
+  },
+  {
+    id: "permissions:read",
+    name: "permissions:read",
+    description: "View permission configurations",
+    module: "Access Control",
+  },
+  {
+    id: "permissions:update",
+    name: "permissions:update",
     description: "Configure permission toggles for each role",
     module: "Access Control",
   },
   {
-    id: "p41",
-    name: "api_keys:manage",
-    description: "Manage API keys for integrations",
+    id: "api_keys:read",
+    name: "api_keys:read",
+    description: "View API keys",
+    module: "Access Control",
+  },
+  {
+    id: "api_keys:create",
+    name: "api_keys:create",
+    description: "Generate new API keys",
+    module: "Access Control",
+  },
+  {
+    id: "api_keys:delete",
+    name: "api_keys:delete",
+    description: "Revoke API keys",
     module: "Access Control",
   },
 
   // ── Settings ──
   {
-    id: "p42",
-    name: "settings:view",
+    id: "settings:read",
+    name: "settings:read",
     description: "View system settings pages",
     module: "Settings",
   },
   {
-    id: "p43",
+    id: "settings:update",
     name: "settings:update",
     description: "Modify system configuration",
     module: "Settings",
   },
   {
-    id: "p44",
-    name: "backups:manage",
-    description: "Create and restore database backups",
+    id: "backups:read",
+    name: "backups:read",
+    description: "View database backups",
+    module: "Settings",
+  },
+  {
+    id: "backups:create",
+    name: "backups:create",
+    description: "Create database backups",
+    module: "Settings",
+  },
+  {
+    id: "backups:restore",
+    name: "backups:restore",
+    description: "Restore database from backup",
+    module: "Settings",
+  },
+  {
+    id: "branches:read",
+    name: "branches:read",
+    description: "View branch locations",
+    module: "Settings",
+  },
+  {
+    id: "branches:create",
+    name: "branches:create",
+    description: "Add new branch locations",
+    module: "Settings",
+  },
+  {
+    id: "branches:update",
+    name: "branches:update",
+    description: "Edit branch details",
+    module: "Settings",
+  },
+  {
+    id: "branches:delete",
+    name: "branches:delete",
+    description: "Remove branch locations",
     module: "Settings",
   },
 
   // ── Platform ──
   {
-    id: "p45",
-    name: "chat:access",
+    id: "chat:read",
+    name: "chat:read",
     description: "Access the chat/messaging system",
     module: "Platform",
   },
   {
-    id: "p46",
-    name: "email:manage",
+    id: "chat:send",
+    name: "chat:send",
+    description: "Send messages in chat",
+    module: "Platform",
+  },
+  {
+    id: "email:read",
+    name: "email:read",
+    description: "View email settings",
+    module: "Platform",
+  },
+  {
+    id: "email:create",
+    name: "email:create",
     description: "Configure SMTP and email settings",
     module: "Platform",
   },
   {
-    id: "p47",
-    name: "notifications:manage",
-    description: "Manage notification templates and broadcasts",
+    id: "email:update",
+    name: "email:update",
+    description: "Update email configuration",
     module: "Platform",
   },
   {
-    id: "p48",
-    name: "tasks:manage",
-    description: "Manage staff tasks and assignments",
+    id: "email:delete",
+    name: "email:delete",
+    description: "Remove email configuration",
+    module: "Platform",
+  },
+  {
+    id: "notifications:read",
+    name: "notifications:read",
+    description: "View notification center",
+    module: "Platform",
+  },
+  {
+    id: "notifications:create",
+    name: "notifications:create",
+    description: "Create notification templates and broadcasts",
+    module: "Platform",
+  },
+  {
+    id: "notifications:update",
+    name: "notifications:update",
+    description: "Edit notification templates",
+    module: "Platform",
+  },
+  {
+    id: "notifications:delete",
+    name: "notifications:delete",
+    description: "Delete notification templates",
+    module: "Platform",
+  },
+  {
+    id: "tasks:read",
+    name: "tasks:read",
+    description: "View staff tasks and assignments",
+    module: "Platform",
+  },
+  {
+    id: "tasks:create",
+    name: "tasks:create",
+    description: "Create new tasks",
+    module: "Platform",
+  },
+  {
+    id: "tasks:update",
+    name: "tasks:update",
+    description: "Edit task details",
+    module: "Platform",
+  },
+  {
+    id: "tasks:delete",
+    name: "tasks:delete",
+    description: "Delete tasks",
+    module: "Platform",
+  },
+  {
+    id: "learning:read",
+    name: "learning:read",
+    description: "Access learning hub and featured content",
+    module: "Platform",
+  },
+  {
+    id: "learning:create",
+    name: "learning:create",
+    description: "Add learning resources",
+    module: "Platform",
+  },
+  {
+    id: "learning:update",
+    name: "learning:update",
+    description: "Edit learning resources",
+    module: "Platform",
+  },
+  {
+    id: "learning:delete",
+    name: "learning:delete",
+    description: "Delete learning resources",
+    module: "Platform",
+  },
+  {
+    id: "automations:read",
+    name: "automations:read",
+    description: "View automation rules",
+    module: "Platform",
+  },
+  {
+    id: "automations:create",
+    name: "automations:create",
+    description: "Create automation rules",
+    module: "Platform",
+  },
+  {
+    id: "automations:update",
+    name: "automations:update",
+    description: "Edit automation rules",
+    module: "Platform",
+  },
+  {
+    id: "automations:delete",
+    name: "automations:delete",
+    description: "Delete automation rules",
+    module: "Platform",
+  },
+  {
+    id: "marketing:read",
+    name: "marketing:read",
+    description: "View marketing materials requests",
+    module: "Platform",
+  },
+  {
+    id: "marketing:create",
+    name: "marketing:create",
+    description: "Create marketing requests",
+    module: "Platform",
+  },
+  {
+    id: "marketing:update",
+    name: "marketing:update",
+    description: "Update marketing requests",
+    module: "Platform",
+  },
+  {
+    id: "marketing:delete",
+    name: "marketing:delete",
+    description: "Delete marketing requests",
     module: "Platform",
   },
 
   // ── System ──
   {
-    id: "p49",
-    name: "audit:view",
+    id: "audit:read",
+    name: "audit:read",
     description: "View audit trail and activity logs",
     module: "System",
   },
   {
-    id: "p50",
-    name: "trash:manage",
-    description: "View and restore deleted items",
+    id: "audit:export",
+    name: "audit:export",
+    description: "Export audit logs",
     module: "System",
+  },
+  {
+    id: "trash:read",
+    name: "trash:read",
+    description: "View deleted items in recycle bin",
+    module: "System",
+  },
+  {
+    id: "trash:restore",
+    name: "trash:restore",
+    description: "Restore deleted items",
+    module: "System",
+  },
+  {
+    id: "trash:delete",
+    name: "trash:delete",
+    description: "Permanently delete items",
+    module: "System",
+  },
+  {
+    id: "bulk:import",
+    name: "bulk:import",
+    description: "Import data in bulk",
+    module: "System",
+  },
+  {
+    id: "bulk:export",
+    name: "bulk:export",
+    description: "Export data in bulk",
+    module: "System",
+  },
+
+  // ── Compare ──
+  {
+    id: "compare:read",
+    name: "compare:read",
+    description: "View university and course comparisons",
+    module: "Compare",
+  },
+  {
+    id: "compare:create",
+    name: "compare:create",
+    description: "Create new comparisons",
+    module: "Compare",
+  },
+  {
+    id: "compare:update",
+    name: "compare:update",
+    description: "Update comparisons",
+    module: "Compare",
+  },
+  {
+    id: "compare:delete",
+    name: "compare:delete",
+    description: "Delete comparisons",
+    module: "Compare",
+  },
+
+  // ── Onboarding ──
+  {
+    id: "onboarding:read",
+    name: "onboarding:read",
+    description: "View student onboarding progress",
+    module: "Onboarding",
+  },
+  {
+    id: "onboarding:create",
+    name: "onboarding:create",
+    description: "Manage onboarding workflow",
+    module: "Onboarding",
+  },
+  {
+    id: "onboarding:update",
+    name: "onboarding:update",
+    description: "Update onboarding steps",
+    module: "Onboarding",
+  },
+  {
+    id: "onboarding:delete",
+    name: "onboarding:delete",
+    description: "Delete onboarding records",
+    module: "Onboarding",
+  },
+
+  // ── Qualifications ──
+  {
+    id: "qualifications:read",
+    name: "qualifications:read",
+    description: "View qualifications, faculties, degree types",
+    module: "Qualifications",
+  },
+  {
+    id: "qualifications:create",
+    name: "qualifications:create",
+    description: "Add new qualifications",
+    module: "Qualifications",
+  },
+  {
+    id: "qualifications:update",
+    name: "qualifications:update",
+    description: "Edit qualifications",
+    module: "Qualifications",
+  },
+  {
+    id: "qualifications:delete",
+    name: "qualifications:delete",
+    description: "Delete qualifications",
+    module: "Qualifications",
   },
 ];
 
@@ -1476,7 +2088,7 @@ function SettingsContentInternal() {
           </button>
         )}
       </header>
-      {showTiles ? (
+{showTiles ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {(() => {
             const groups: Record<string, { id: string; label: string; icon: React.ReactNode; desc: string }[]> = {
@@ -1523,63 +2135,22 @@ function SettingsContentInternal() {
           )()}
         </div>
       ) : (
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Sub-navigation */}
-        <aside className="lg:col-span-3">
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden sticky top-24">
-            <nav className="flex flex-col">
-              {(Object.entries({
-                "Account & Access": [
-                  { id: "profile", label: "Profile", icon: <User size={18} /> },
-                  { id: "roles", label: "Roles", icon: <Shield size={18} /> },
-                  { id: "permissions", label: "Role Permissions", icon: <ShieldCheck size={18} /> },
-                  { id: "email", label: "Email Settings", icon: <Mail size={18} /> },
-                  { id: "security", label: "Security", icon: <Lock size={18} /> },
-                ],
-                "Platform & Content": [
-                  { id: "localization", label: "Localization", icon: <Globe size={18} /> },
-                  { id: "branches", label: "Branches", icon: <MapPin size={18} /> },
-                  { id: "qualifications", label: "Qualifications", icon: <BookOpen size={18} /> },
-                  { id: "academics", label: "Academics", icon: <GraduationCap size={18} /> },
-                ],
-                Application: [
-                  { id: "modules", label: "Modules", icon: <Puzzle size={18} /> },
-                  { id: "statuses", label: "Application Statuses", icon: <Layers size={18} /> },
-                  { id: "notifications", label: "Notifications", icon: <Bell size={18} /> },
-                ],
-                            })).map(
-                ([group, tabs]: [string, { id: string; label: string; icon: React.ReactNode }[]]) =>
- (
-                  <div key={group} className="border-b border-slate-200 last:border-b-0">
-                    <div className="px-5 pt-4 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                      {group}
-                    </div>
-                    {tabs.map((tab) => (
-                      <button
-                        type="button"
-                        key={tab.id}
-                        onClick={() => handleTabChange(tab.id as SettingsTab)}
-                        className={`flex items-center gap-3 px-5 py-2.5 text-left transition-colors duration-200 rounded-lg mx-2 mb-0.5 ${
-                          activeTab === tab.id
-                            ? "bg-indigo-50 text-indigo-700 font-bold"
-                            : "text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-800"
-                        }`}
-                      >
-                        <span className={activeTab === tab.id ? "text-indigo-600" : "text-slate-400"}>
-                          {tab.icon}
-                        </span>
-                        <span className="text-sm">{tab.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )
-              )}
-            </nav>
-          </div>
-        </aside>
-
-        {/* Content Sections */}
-        <div className="lg:col-span-9 space-y-6 min-w-0">
+        <div className="space-y-6 min-w-0">
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowTiles(true);
+              router.replace("/settings", { scroll: false });
+            }}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-800"
+          >
+            <ArrowLeft size={16} />
+            Back to All Settings
+          </button>
+          
+          {/* Content Sections - Full Width */}
+          <div className="space-y-6 max-w-5xl">
           {activeTab === "localization" && (
             <div className="space-y-6 max-w-2xl animate-fade-in">
               <div className="flex items-center gap-3">

@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { logActivity, getActorName } from "@/lib/activity";
-import { getPaginationParams, paginatedResponse, apiError, getSession } from "@/lib/api-utils";
+import { getPaginationParams, paginatedResponse, apiError, getSession, checkRoutePermission } from "@/lib/api-utils";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const prisma = db;
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return apiError("Unauthorized", 401);
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
 
     const { searchParams } = new URL(req.url);
     const params = getPaginationParams(searchParams);
@@ -48,16 +51,22 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(paginatedResponse(leads, total, params));
   } catch (error) {
-    console.error("Fetch Leads Error:", error);
+    logError("Fetch Leads Error:", error);
     return apiError("Failed to fetch leads");
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
-      return apiError("Unauthorized", 401);
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
+
+    // Rate limit lead creation
+    const rl = await checkRateLimit(`create-lead:${getClientIp(req)}`, 30, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    }
 
     const body = await req.json();
     const {
@@ -111,8 +120,8 @@ export async function POST(req: Request) {
     });
 
     await logActivity({
-      actorName: await getActorName(session?.id),
-      userId: session?.id,
+      actorName: await getActorName(session!.id),
+      userId: session!.id,
       action: "created a lead",
       target: lead.name,
     });
@@ -143,13 +152,13 @@ export async function POST(req: Request) {
           });
         }
       } catch (studentError) {
-        console.error("Migration to Student failed:", studentError);
+        logError("Migration to Student failed:", studentError);
       }
     }
 
     return NextResponse.json(lead);
   } catch (error) {
-    console.error("Create Lead Error:", error);
+    logError("Create Lead Error:", error);
     if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "A lead with this email already exists" }, { status: 400 });
     }

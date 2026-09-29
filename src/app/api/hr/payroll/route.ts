@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
@@ -47,7 +48,7 @@ export async function GET(req: Request) {
     });
     return NextResponse.json(records);
   } catch (error) {
-    console.error("Fetch Payroll Error:", error);
+    logError("Fetch Payroll Error:", error);
     return NextResponse.json({ error: "Failed to fetch payroll" }, { status: 500 });
   }
 }
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(payroll);
   } catch (error) {
-    console.error("Create Payroll Error:", error);
+    logError("Create Payroll Error:", error);
     return NextResponse.json({ error: "Failed to create payroll" }, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ items, total });
   } catch (error) {
-    console.error("Trash fetch error:", error);
+    logError("Trash fetch error:", error);
     return apiError("Failed to fetch trash items");
   }
 }

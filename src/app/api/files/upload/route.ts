@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { verifyAuth } from "@/lib/session";
@@ -112,7 +113,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(fileItem, { status: 201 });
   } catch (error) {
-    console.error("Error uploading file:", error);
+    logError("Error uploading file:", error);
     if (error instanceof UploadError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }

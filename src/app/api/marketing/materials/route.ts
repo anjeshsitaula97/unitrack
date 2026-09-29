@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
 import { getSession, apiError } from "@/lib/api-utils";
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(material, { status: 201 });
   } catch (error) {
-    console.error(error);
+    logError(error);
     if (error instanceof UploadError) return apiError(error.message, error.status);
     return apiError("Failed to upload marketing material", 400);
   }

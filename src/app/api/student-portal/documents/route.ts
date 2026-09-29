@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { getStudentSession, apiError } from "@/lib/api-utils";
 
@@ -14,7 +15,7 @@ export async function GET() {
 
     return NextResponse.json(documents);
   } catch (error) {
-    console.error("Student documents error:", error);
+    logError("Student documents error:", error);
     return apiError("Failed to fetch documents");
   }
 }

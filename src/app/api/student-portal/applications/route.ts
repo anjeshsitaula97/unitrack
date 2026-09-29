@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getStudentSession, apiError } from "@/lib/api-utils";
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(applications);
   } catch (error) {
-    console.error("Student applications error:", error);
+    logError("Student applications error:", error);
     return apiError("Failed to fetch applications");
   }
 }

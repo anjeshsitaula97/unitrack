@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { createNotification } from "@/lib/notifications";
 import { logActivity, getActorName } from "@/lib/activity";
-import { getPaginationParams, paginatedResponse, apiError, getSession } from "@/lib/api-utils";
+import { getPaginationParams, paginatedResponse, apiError, getSession, checkRoutePermission } from "@/lib/api-utils";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return apiError("Unauthorized", 401);
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
 
     const { searchParams } = new URL(req.url);
     const params = getPaginationParams(searchParams);
@@ -53,7 +56,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(paginatedResponse(students, total, params));
   } catch (error) {
-    console.error(error);
+    logError(error);
     return apiError("Failed to fetch students");
   }
 }
@@ -61,8 +64,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
-      return apiError("Unauthorized", 401);
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
+
+    // Rate limit student creation
+    const rl = await checkRateLimit(`create-student:${getClientIp(req)}`, 20, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    }
 
     const data = await req.json();
 
@@ -190,21 +199,22 @@ export async function POST(req: NextRequest) {
     }
 
     await createNotification({
+      userId: String(session!.id),
       title: "Student Created",
       message: `Student "${name}" has been added successfully.`,
       type: "Success",
     });
 
     await logActivity({
-      actorName: await getActorName(session?.id),
-      userId: session?.id,
+      actorName: await getActorName(session!.id),
+      userId: session!.id,
       action: "created a student",
       target: name,
     });
 
     return NextResponse.json({ ...student, generatedPassword: passwordToUse });
   } catch (error) {
-    console.error(error);
+    logError(error);
     if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "Email already exists" }, { status: 400 });
     }

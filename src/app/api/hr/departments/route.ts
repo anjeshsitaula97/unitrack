@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -29,7 +30,7 @@ export async function GET() {
     });
     return NextResponse.json(departments);
   } catch (error) {
-    console.error("Fetch Departments Error:", error);
+    logError("Fetch Departments Error:", error);
     return NextResponse.json({ error: "Failed to fetch departments" }, { status: 500 });
   }
 }
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    console.error("Create Department Error:", error);
+    logError("Create Department Error:", error);
     return NextResponse.json({ error: "Failed to create department" }, { status: 500 });
   }
 }

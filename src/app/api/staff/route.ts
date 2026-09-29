@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
@@ -36,7 +37,7 @@ export async function GET() {
 
     return NextResponse.json(users);
   } catch (error) {
-    console.error("Fetch Staff Error:", error);
+    logError("Fetch Staff Error:", error);
     return NextResponse.json({ error: "Failed to fetch staff" }, { status: 500 });
   }
 }
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
     const { password: _, ...userWithoutPassword } = user;
     return NextResponse.json(userWithoutPassword);
   } catch (error) {
-    console.error("Create Staff Error:", error);
+    logError("Create Staff Error:", error);
     if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "A user with this email already exists" }, { status: 400 });
     }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -52,7 +53,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         { status: 400 }
       );
     }
-    console.error("Update Designation Error:", error);
+    logError("Update Designation Error:", error);
     return NextResponse.json({ error: "Failed to update designation" }, { status: 500 });
   }
 }
@@ -79,7 +80,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete Designation Error:", error);
+    logError("Delete Designation Error:", error);
     return NextResponse.json({ error: "Failed to delete designation" }, { status: 500 });
   }
 }

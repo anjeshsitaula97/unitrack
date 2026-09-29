@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { getSession, apiError } from "@/lib/api-utils";
 import { fetchMasterCourses, isConfigured } from "@/lib/master-api";
 
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Master courses fetch error:", error);
+    logError("Master courses fetch error:", error);
     return apiError("Failed to fetch courses from Master API");
   }
 }

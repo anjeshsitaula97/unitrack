@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { getStudentSession, apiError } from "@/lib/api-utils";
 
@@ -24,7 +25,7 @@ export async function GET() {
         .reduce((sum, p) => sum + p.amount, 0),
     });
   } catch (error) {
-    console.error("Student payments error:", error);
+    logError("Student payments error:", error);
     return apiError("Failed to fetch payments");
   }
 }

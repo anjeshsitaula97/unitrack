@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { verifyAuth } from "@/lib/session";
@@ -52,7 +53,7 @@ export async function GET() {
 
     return NextResponse.json([...folders, ...studentFolders]);
   } catch (error) {
-    console.error("Error fetching folders:", error);
+    logError("Error fetching folders:", error);
     return NextResponse.json({ error: "Failed to fetch folders" }, { status: 500 });
   }
 }
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(folder, { status: 201 });
   } catch (error) {
-    console.error("Error creating folder:", error);
+    logError("Error creating folder:", error);
     return NextResponse.json({ error: "Failed to create folder" }, { status: 500 });
   }
 }
@@ -121,7 +122,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting folder:", error);
+    logError("Error deleting folder:", error);
     return NextResponse.json({ error: "Failed to delete folder" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
+import { logError } from "@/lib/logger";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(userDetails);
   } catch (error: unknown) {
-    console.error("Failed to fetch user details:", error);
+    logError("Fetch User Details", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

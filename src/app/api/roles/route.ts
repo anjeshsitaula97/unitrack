@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
 import { logActivity } from "@/lib/activity";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { validateCsrfHeaders } from "@/lib/csrf";
 
 async function getSession() {
   const cookieStore = await cookies();
@@ -41,16 +44,28 @@ export async function GET() {
 
     return NextResponse.json(formattedRoles);
   } catch (error) {
-    console.error("Fetch Roles Error:", error);
+    logError("Fetch Roles Error:", error);
     return NextResponse.json({ error: "Failed to fetch roles" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
+    // CSRF protection for state-changing operations
+    const csrf = validateCsrfHeaders(req);
+    if (!csrf.valid) {
+      return NextResponse.json({ error: csrf.error }, { status: 403 });
+    }
+
     const session = await getSession();
     if (!session || !["Admin", "Super Admin"].includes(session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit role creation
+    const rl = await checkRateLimit(`create-role:${getClientIp(req)}`, 10, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
 
     const body = await req.json();
@@ -82,7 +97,7 @@ export async function POST(req: Request) {
       userCount: 0,
     });
   } catch (error) {
-    console.error("Create Role Error:", error);
+    logError("Create Role Error:", error);
     if ((error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "A role with this name already exists" }, { status: 400 });
     }

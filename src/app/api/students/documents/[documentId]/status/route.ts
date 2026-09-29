@@ -1,4 +1,5 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
@@ -43,7 +44,7 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Document status update error:", error);
+    logError("Document status update error:", error);
     return NextResponse.json({ error: "Failed to update document status" }, { status: 500 });
   }
 }

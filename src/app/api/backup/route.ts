@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { encryptBackup } from "@/lib/crypto";
 import { getSession, apiError } from "@/lib/api-utils";
+import { logError } from "@/lib/logger";
 
 export async function GET(req: Request) {
   try {
@@ -195,7 +196,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error("Backup error:", error);
+    logError("Backup", error);
     return NextResponse.json({ error: "Failed to generate backup" }, { status: 500 });
   }
 }

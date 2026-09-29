@@ -6,6 +6,9 @@ import { z } from "zod";
 import { createNotification } from "@/lib/notifications";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
+import { logError } from "@/lib/logger";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { validateCsrfHeaders } from "@/lib/csrf";
 
 const createUserSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -44,9 +47,21 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // CSRF protection for state-changing operations
+    const csrf = validateCsrfHeaders(req);
+    if (!csrf.valid) {
+      return NextResponse.json({ error: csrf.error }, { status: 403 });
+    }
+
     const session = await getSession();
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
+
+    // Rate limit user creation
+    const rl = await checkRateLimit(`create-user:${getClientIp(req)}`, 10, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    }
 
     const parsed = createUserSchema.safeParse(await req.json());
     if (!parsed.success) {
@@ -111,13 +126,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         user: newUser,
+        // Only show generated password and API key once upon creation
         generatedPassword: generatedPassword || null,
         apiKey: apiKeyRaw ? { token: apiKeyRaw, name: `${data.name}'s Auto-key` } : null,
+        // Security note: These values are only returned once. Store them securely.
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error(error);
+    logError("Create User", error);
     return NextResponse.json({ error: "Failed to create user/invite" }, { status: 400 });
   }
 }

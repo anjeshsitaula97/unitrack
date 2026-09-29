@@ -48,10 +48,11 @@ export default function TicketsContent() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    type: "Technical",
-    priority: "Medium",
+    type: "",
+    priority: "",
     screenshot: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const fetchTickets = async () => {
     try {
@@ -86,10 +87,21 @@ export default function TicketsContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.description) {
+
+    // Validate all required fields
+    const newErrors: Record<string, string> = {};
+    if (!formData.title.trim()) newErrors.title = "Title is required";
+    if (!formData.type) newErrors.type = "Category is required";
+    if (!formData.priority) newErrors.priority = "Priority is required";
+    if (!formData.description.trim()) newErrors.description = "Description is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       toast.error("Please fill in all required fields");
       return;
     }
+
+    setErrors({});
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/tickets", {
@@ -100,12 +112,13 @@ export default function TicketsContent() {
       if (res.ok) {
         toast.success("Ticket submitted successfully");
         setShowModal(false);
+        setErrors({});
         fetchTickets();
         setFormData({
           title: "",
           description: "",
-          type: "Technical",
-          priority: "Medium",
+          type: "",
+          priority: "",
           screenshot: "",
         });
       } else {
@@ -348,11 +361,12 @@ export default function TicketsContent() {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20"
           role="button"
           tabIndex={0}
-          onClick={() => setShowModal(false)}
+          onClick={() => { setShowModal(false); setErrors({}); }}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
               setShowModal(false);
+              setErrors({});
             }
           }}
         >
@@ -367,7 +381,7 @@ export default function TicketsContent() {
               </div>
               <button
                 type="button"
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setErrors({}); }}
                 className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400"
               >
                 <X size={18} />
@@ -380,53 +394,62 @@ export default function TicketsContent() {
                   required
                   placeholder="Summarize the issue or feature..."
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                  onChange={(e) => { setFormData({ ...formData, title: e.target.value }); if (errors.title) setErrors({...errors, title: ""}); }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm ${errors.title ? "border-red-300 bg-red-50" : "border-slate-200"}`}
                 />
+                {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-1">
-                    Category
+                    Category *
                   </label>
                   <select
                     value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                    onChange={(e) => { setFormData({ ...formData, type: e.target.value }); if (errors.type) setErrors({...errors, type: ""}); }}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm ${errors.type ? "border-red-300 bg-red-50" : "border-slate-200"}`}
                   >
-                    <option value="Technical">Technical (Bug)</option>
-                    <option value="Feature Request">Feature Request</option>
+                    <option value="">Select category...</option>
+                    {TICKET_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
                   </select>
+                  {errors.type && <p className="text-xs text-red-500 mt-1">{errors.type}</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-1">
-                    Priority
+                    Priority *
                   </label>
                   <select
                     value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                    onChange={(e) => { setFormData({ ...formData, priority: e.target.value }); if (errors.priority) setErrors({...errors, priority: ""}); }}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm ${errors.priority ? "border-red-300 bg-red-50" : "border-slate-200"}`}
                   >
+                    <option value="">Select priority...</option>
                     {PRIORITIES.map((p) => (
                       <option key={p} value={p}>
                         {p}
                       </option>
                     ))}
                   </select>
+                  {errors.priority && <p className="text-xs text-red-500 mt-1">{errors.priority}</p>}
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1">
-                  Description
+                  Description *
                 </label>
                 <textarea
                   rows={3}
                   required
                   placeholder="Steps to reproduce or objective..."
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"
+                  onChange={(e) => { setFormData({ ...formData, description: e.target.value }); if (errors.description) setErrors({...errors, description: ""}); }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none ${errors.description ? "border-red-300 bg-red-50" : "border-slate-200"}`}
                 />
+                {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1">
@@ -471,7 +494,7 @@ export default function TicketsContent() {
               <div className="flex gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => { setShowModal(false); setErrors({}); }}
                   className="btn-secondary flex-1"
                 >
                   Cancel

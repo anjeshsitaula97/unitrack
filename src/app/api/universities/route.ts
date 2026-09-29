@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
 import { createNotification } from "@/lib/notifications";
-import { getPaginationParams, paginatedResponse, apiError, getSession } from "@/lib/api-utils";
+import { getPaginationParams, paginatedResponse, apiError, getSession, checkRoutePermission } from "@/lib/api-utils";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return apiError("Unauthorized", 401);
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
 
     const { searchParams } = new URL(req.url);
     const params = getPaginationParams(searchParams);
@@ -76,7 +79,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(paginatedResponse(transformed, total, params));
   } catch (error) {
-    console.error(error);
+    logError(error);
     return apiError("Failed to fetch universities");
   }
 }
@@ -84,8 +87,15 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
-      return apiError("Unauthorized", 401);
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
+
+    // Rate limit university creation
+    const rl = await checkRateLimit(`create-university:${getClientIp(req)}`, 20, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    }
+
     const data = await req.json();
 
     const name = data.name || data.title;
@@ -152,7 +162,7 @@ export async function POST(req: NextRequest) {
     }
 
     await createNotification({
-      userId: String(session.id),
+      userId: String(session!.id),
       title: "University Created",
       message: `University "${newUniversity.name}" has been added.`,
       type: "Success",
@@ -160,7 +170,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(newUniversity, { status: 201 });
   } catch (error) {
-    console.error(error);
+    logError(error);
     return apiError("Failed to create university", 400);
   }
 }

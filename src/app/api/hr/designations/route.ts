@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -26,7 +27,7 @@ export async function GET() {
     });
     return NextResponse.json(designations);
   } catch (error) {
-    console.error("Fetch Designations Error:", error);
+    logError("Fetch Designations Error:", error);
     return NextResponse.json({ error: "Failed to fetch designations" }, { status: 500 });
   }
 }
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    console.error("Create Designation Error:", error);
+    logError("Create Designation Error:", error);
     return NextResponse.json({ error: "Failed to create designation" }, { status: 500 });
   }
 }

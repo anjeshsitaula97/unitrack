@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -93,7 +94,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json(leaveRequest);
   } catch (error) {
-    console.error("Update Leave Request Error:", error);
+    logError("Update Leave Request Error:", error);
     return NextResponse.json({ error: "Failed to update leave request" }, { status: 500 });
   }
 }

@@ -4,12 +4,14 @@ import { db } from "@/lib/db";
 import { safeParseArray } from "@/lib/json";
 import { logActivity } from "@/lib/activity";
 import { createNotification } from "@/lib/notifications";
-import { getPaginationParams, paginatedResponse, apiError, getSession } from "@/lib/api-utils";
+import { getPaginationParams, paginatedResponse, apiError, getSession, checkRoutePermission } from "@/lib/api-utils";
+import { logError } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return apiError("Unauthorized", 401);
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
 
     const { searchParams } = new URL(req.url);
     const params = getPaginationParams(searchParams);
@@ -64,7 +66,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(paginatedResponse(transformed, total, params));
   } catch (error) {
-    console.error(error);
+    logError("Fetch Courses", error);
     return apiError("Failed to fetch courses");
   }
 }
@@ -72,8 +74,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
-      return apiError("Unauthorized", 401);
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
+
     const data = await req.json();
     const newCourse = await db.course.create({
       data: {
@@ -141,7 +144,7 @@ export async function POST(req: NextRequest) {
     }
 
     await createNotification({
-      userId: String(session.id),
+      userId: String(session!.id),
       title: "Course Created",
       message: `Course "${newCourse.name}" has been added.`,
       type: "Success",
@@ -149,7 +152,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(newCourse, { status: 201 });
   } catch (error) {
-    console.error("Course Creation Error:", error);
+    logError("Create Course", error);
     return NextResponse.json(
       {
         error: "Failed to create course",

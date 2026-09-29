@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { logError } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
       message: "Password reset successfully. You can now log in.",
     });
   } catch (error) {
-    console.error("Reset password error:", error);
+    logError("Reset Password", error);
     return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
   }
 }

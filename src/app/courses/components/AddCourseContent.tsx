@@ -86,7 +86,6 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
     duration: "",
     startDate: "",
     intake: "",
-    applicationDeadline: "",
     tuitionFee: "",
     applicationFee: "",
     currency: "",
@@ -327,7 +326,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
 
   if (submitted) {
     return (
-      <div className="animate-fade-in max-w-lg mx-auto mt-16 text-center">
+      <div className="animate-fade-in text-center">
         <div className="size-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5">
           <CheckCircle size={40} className="text-emerald-500" />
         </div>
@@ -358,10 +357,9 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 level: "Undergraduate",
                 credits: "",
                 duration: "",
-                startDate: "",
-                intake: "",
-                applicationDeadline: "",
-                tuitionFee: "",
+startDate: "",
+    intake: "",
+    tuitionFee: "",
                 applicationFee: "",
                 currency: "",
                 applicationFeeCurrency: "",
@@ -398,7 +396,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
   }
 
   return (
-    <div className="animate-fade-in max-w-3xl mx-auto">
+    <div className="animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
@@ -941,27 +939,6 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
 
         {/* Intakes & Deadlines */}
         <div className="card p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <label
-                htmlFor="course-app-deadline"
-                className="block text-[10px] font-bold text-slate-500 uppercase tracking-tight mb-1.5"
-              >
-                Application Deadline
-              </label>
-              <input
-                id="course-app-deadline"
-                type="date"
-                value={form.applicationDeadline}
-                onChange={(e) => update("applicationDeadline", e.target.value)}
-                aria-label="Application deadline"
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
-              />
-              <p className="text-[10px] text-slate-400 mt-1">
-                Applications for this course are accepted until this date.
-              </p>
-            </div>
-          </div>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <div className="size-8 bg-orange-50 rounded-lg flex items-center justify-center">

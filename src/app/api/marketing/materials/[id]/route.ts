@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
 import { getSession, apiError } from "@/lib/api-utils";
@@ -36,7 +37,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    logError(error);
     return apiError("Failed to delete marketing material", 400);
   }
 }

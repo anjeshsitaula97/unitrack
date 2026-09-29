@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import crypto from "crypto";
+import { logError } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, expiresAt: resetExpiresAt });
   } catch (error) {
-    console.error("Verify OTP error:", error);
+    logError("Verify OTP", error);
     return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 import { cookies } from "next/headers";
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(newTicket, { status: 201 });
   } catch (error) {
-    console.error("Ticket creation error:", error);
+    logError("Ticket creation error:", error);
     return NextResponse.json({ error: "Failed to create ticket" }, { status: 500 });
   }
 }

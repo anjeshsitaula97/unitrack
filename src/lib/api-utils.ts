@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyAuth } from "./session";
 import type { SessionPayload } from "./session";
+import { checkRoutePermission, checkPermission } from "./rbac";
+
+export type { SessionPayload } from "./session";
 
 export function apiError(message: string, status: number = 500) {
   return NextResponse.json({ error: message }, { status });
@@ -101,3 +104,5 @@ export function paginatedResponse<T>(
     totalPages: Math.ceil(total / params.perPage),
   };
 }
+
+export { checkRoutePermission, checkPermission } from "./rbac";

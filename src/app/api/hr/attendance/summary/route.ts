@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -73,7 +74,7 @@ export async function GET(req: Request) {
       year,
     });
   } catch (error) {
-    console.error("Attendance Summary Error:", error);
+    logError("Attendance Summary Error:", error);
     return NextResponse.json({ error: "Failed to fetch summary" }, { status: 500 });
   }
 }

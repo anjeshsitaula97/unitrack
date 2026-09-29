@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -67,7 +68,7 @@ export async function GET() {
       recentAttendance: todayAttendance,
     });
   } catch (error) {
-    console.error("HR Dashboard Error:", error);
+    logError("HR Dashboard Error:", error);
     return NextResponse.json({ error: "Failed to fetch HR dashboard" }, { status: 500 });
   }
 }

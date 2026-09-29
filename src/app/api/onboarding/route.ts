@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
     const progress = await db.onboardingProgress.findMany({ where: { studentId } });
     return NextResponse.json(progress);
   } catch (error) {
-    console.error("Onboarding fetch error:", error);
+    logError("Onboarding fetch error:", error);
     return apiError("Failed to fetch progress");
   }
 }
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(progress);
   } catch (error) {
-    console.error("Onboarding save error:", error);
+    logError("Onboarding save error:", error);
     return apiError("Failed to save progress");
   }
 }

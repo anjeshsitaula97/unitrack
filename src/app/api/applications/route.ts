@@ -3,10 +3,14 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
 import { logActivity } from "@/lib/activity";
-import { getPaginationParams, paginatedResponse, apiError, getSession } from "@/lib/api-utils";
+import { getPaginationParams, paginatedResponse, apiError, getSession, checkRoutePermission } from "@/lib/api-utils";
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await getSession();
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
+
     const { searchParams } = new URL(req.url);
     const params = getPaginationParams(searchParams);
     const studentId = searchParams.get("studentId");
@@ -75,7 +79,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const permError = checkRoutePermission(session, req.url, req.method);
+    if (permError) return permError;
 
     const data = await req.json();
     const studentId = Number(data.studentId);
@@ -95,7 +100,7 @@ export async function POST(req: NextRequest) {
         },
         include: { student: true, course: true },
       }),
-      db.user.findUnique({ where: { id: session.id } }),
+      db.user.findUnique({ where: { id: session!.id } }),
     ]);
 
     await logActivity({

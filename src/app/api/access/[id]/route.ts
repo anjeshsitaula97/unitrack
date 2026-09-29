@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
+import { logError } from "@/lib/logger";
 
 const _ALLOWED_FIELDS = ["role", "status", "password"];
 
@@ -67,7 +68,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Update User Error:", error);
+    logError("Update User", error);
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   }
 }

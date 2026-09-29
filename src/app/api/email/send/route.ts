@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import nodemailer from "nodemailer";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, messageId: null });
   } catch (error) {
-    console.error("Email send error:", error);
+    logError("Email send error:", error);
     return apiError("Failed to send email. Check your SMTP settings.");
   }
 }
@@ -97,7 +98,7 @@ export async function GET(_req: NextRequest) {
       host: settings?.smtpHost || null,
     });
   } catch (error) {
-    console.error("Email settings check error:", error);
+    logError("Email settings check error:", error);
     return apiError("Failed to check email settings");
   }
 }

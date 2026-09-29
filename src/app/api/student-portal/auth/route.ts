@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { signStudentToken } from "@/lib/session";
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Student login error:", error);
+    logError("Student login error:", error);
     return apiError("Login failed");
   }
 }

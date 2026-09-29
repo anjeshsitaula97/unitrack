@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
 
@@ -140,7 +141,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Search API Error:", error);
+    logError("Search API Error:", error);
     return NextResponse.json({ error: "Failed to search" }, { status: 500 });
   }
 }

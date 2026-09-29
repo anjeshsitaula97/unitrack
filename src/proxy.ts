@@ -3,20 +3,16 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { getRoleHome } from "@/lib/role-home";
 
+const getJwtSecretKey = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.length === 0) {
+    throw new Error("The environment variable JWT_SECRET is not set.");
+  }
+  return secret;
+};
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  const getJwtSecretKey = () => {
-    const secret = process.env.JWT_SECRET;
-    if (!secret || secret.length === 0) {
-      if (process.env.NODE_ENV === "production") {
-        throw new Error("The environment variable JWT_SECRET is not set.");
-      } else {
-        return "super-secret-default-key-for-dev";
-      }
-    }
-    return secret;
-  };
 
   const isAuthRoute = pathname.startsWith("/login");
   const isDashboardRoute =

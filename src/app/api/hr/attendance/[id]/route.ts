@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
@@ -38,7 +39,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete Attendance Error:", error);
+    logError("Delete Attendance Error:", error);
     return NextResponse.json({ error: "Failed to delete attendance record" }, { status: 500 });
   }
 }

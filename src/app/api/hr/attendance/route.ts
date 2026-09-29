@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
@@ -119,7 +120,7 @@ export async function GET(req: Request) {
     });
     return NextResponse.json(records);
   } catch (error) {
-    console.error("Fetch Attendance Error:", error);
+    logError("Fetch Attendance Error:", error);
     return NextResponse.json({ error: "Failed to fetch attendance" }, { status: 500 });
   }
 }
@@ -234,7 +235,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    console.error("Attendance Action Error:", error);
+    logError("Attendance Action Error:", error);
     return NextResponse.json({ error: "Failed to process attendance" }, { status: 500 });
   }
 }

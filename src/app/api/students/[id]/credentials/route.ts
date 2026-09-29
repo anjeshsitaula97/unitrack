@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { getSession, apiError } from "@/lib/api-utils";
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       name: student.name,
     });
   } catch (error) {
-    console.error(error);
+    logError(error);
     return NextResponse.json({ error: "Failed to generate credentials" }, { status: 500 });
   }
 }

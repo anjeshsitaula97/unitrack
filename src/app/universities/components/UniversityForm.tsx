@@ -316,7 +316,7 @@ export default function UniversityForm({ universityId }: UniversityFormProps) {
 
   if (submitted && !universityId) {
     return (
-      <div className="animate-fade-in max-w-lg mx-auto mt-16 text-center">
+      <div className="animate-fade-in text-center">
         <div className="size-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5">
           <CheckCircle size={40} className="text-emerald-500" />
         </div>
@@ -347,7 +347,7 @@ export default function UniversityForm({ universityId }: UniversityFormProps) {
   }
 
   return (
-    <div className="animate-fade-in max-w-3xl mx-auto">
+    <div className="animate-fade-in">
       <FormHeader universityId={universityId} formName={form.name} onBack={() => router.back()} />
 
       <form onSubmit={handleSubmit} className="space-y-5">

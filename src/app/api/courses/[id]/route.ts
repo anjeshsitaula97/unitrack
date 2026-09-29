@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { softDeleteCourse } from "@/lib/trash";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
+import { logError } from "@/lib/logger";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(course);
   } catch (error) {
-    console.error(error);
+    logError("Fetch Course", error);
     return NextResponse.json({ error: "Failed to fetch course" }, { status: 500 });
   }
 }
@@ -112,7 +113,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(course);
   } catch (error) {
-    console.error("Course Update Error:", error);
+    logError("Update Course", error);
     return NextResponse.json(
       {
         error: "Failed to update course",
@@ -145,7 +146,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    logError("Delete Course", error);
     return NextResponse.json({ error: "Failed to delete course" }, { status: 500 });
   }
 }

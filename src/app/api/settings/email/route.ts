@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
@@ -23,7 +24,7 @@ export async function GET(_req: NextRequest) {
       settings.map((s) => ({ ...s, smtpPass: s.smtpPass ? "********" : "" }))
     );
   } catch (error) {
-    console.error("Error fetching email settings:", error);
+    logError("Error fetching email settings:", error);
     return NextResponse.json({ error: "Failed to fetch email settings" }, { status: 500 });
   }
 }
@@ -119,7 +120,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(setting);
   } catch (error) {
-    console.error("Error saving email settings:", error);
+    logError("Error saving email settings:", error);
     return NextResponse.json({ error: "Failed to save email settings" }, { status: 500 });
   }
 }
