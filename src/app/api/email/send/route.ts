@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
 import { createNotification } from "@/lib/notifications";
 import { logActivity } from "@/lib/activity";
+import { normalizeRecipients } from "@/lib/email-recipients";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,10 +15,13 @@ export async function POST(req: NextRequest) {
 
     const { to, subject, body, studentId: rawStudentId, type: _type } = await req.json();
     const studentId = rawStudentId ? Number(rawStudentId) : null;
+    const recipients = normalizeRecipients(to);
 
-    if (!to || !subject || !body) {
+    if (recipients.length === 0 || !subject || !body) {
       return NextResponse.json({ error: "to, subject, and body are required" }, { status: 400 });
     }
+
+    const recipientLabel = recipients.join(", ");
 
     const settings = await db.emailSetting.findFirst({
       where: { isActive: true },
@@ -48,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     await transporter.sendMail({
       from: `"${settings.fromName}" <${settings.fromEmail}>`,
-      to,
+      to: recipients,
       subject,
       html: body,
     });
@@ -56,12 +60,12 @@ export async function POST(req: NextRequest) {
     await logActivity({
       actorName: user?.name || "System",
       action: "sent an email",
-      target: `To: ${to} - Subject: ${subject}`,
+      target: `To: ${recipientLabel} - Subject: ${subject}`,
     });
 
     await createNotification({
       title: "Email Sent",
-      message: `Email "${subject}" sent to ${to}`,
+      message: `Email "${subject}" sent to ${recipientLabel}`,
       type: "Success",
     });
 

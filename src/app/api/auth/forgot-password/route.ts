@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import { normalizeRecipients } from "@/lib/email-recipients";
 import { db } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { logError } from "@/lib/logger";
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
 
         await transporter.sendMail({
           from: `"${settings.fromName}" <${settings.fromEmail}>`,
-          to: email,
+          to: normalizeRecipients(email),
           subject: "UniTrack - Password Reset OTP",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
