@@ -37,11 +37,15 @@ const owns = (value: string | null | undefined, relativePath: string) =>
  * every signed-in role, including Viewer, so any valid session may read them.
  */
 async function isSharedAsset(relativePath: string): Promise<boolean> {
+  // Match on a suffix, not equality: rows store an absolute public path
+  // ("/uploads/<name>") while the route resolves a bare relative path. Comparing
+  // for equality never matched, which denied every shared logo and avatar.
+  const match = { endsWith: relativePath };
   const [university, branch, avatar, resource] = await Promise.all([
-    db.university.findFirst({ where: { logo: relativePath }, select: { id: true } }),
-    db.branch.findFirst({ where: { logo: relativePath }, select: { id: true } }),
-    db.user.findFirst({ where: { avatar: relativePath }, select: { id: true } }),
-    db.learningResource.findFirst({ where: { url: relativePath }, select: { id: true } }),
+    db.university.findFirst({ where: { logo: match }, select: { id: true } }),
+    db.branch.findFirst({ where: { logo: match }, select: { id: true } }),
+    db.user.findFirst({ where: { avatar: match }, select: { id: true } }),
+    db.learningResource.findFirst({ where: { url: match }, select: { id: true } }),
   ]);
   return Boolean(university || branch || avatar || resource);
 }

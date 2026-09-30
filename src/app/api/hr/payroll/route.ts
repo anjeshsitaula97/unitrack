@@ -9,11 +9,14 @@ export async function GET(req: Request) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const deniedGET = checkPermission(session, "hr:read");
+    if (deniedGET) return deniedGET;
 
     const { searchParams } = new URL(req.url);
     const month = parseInt(searchParams.get("month") || String(new Date().getMonth() + 1));
     const year = parseInt(searchParams.get("year") || String(new Date().getFullYear()));
 
+    // Staff see only their own payslips; admins see the whole period.
     const where: Record<string, unknown> = { month, year };
     if (!["Admin", "Super Admin"].includes(session.role)) where.userId = session.id;
 

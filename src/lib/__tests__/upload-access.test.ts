@@ -77,4 +77,44 @@ describe("authorizeUploadAccess", () => {
     db.fileItem.findFirst.mockResolvedValue({ userId: 3, url: "/uploads/other.png" });
     expect(await authorizeUploadAccess("a.png", staff(3, "Staff"), none())).toBe("deny");
   });
+
+  describe("path matching", () => {
+    /**
+     * Rows store an absolute public path ("/uploads/<name>") while the route
+     * resolves a bare relative path ("<name>"). These assert the query itself
+     * rather than a mocked return value, because an equality comparison
+     * silently denied every shared logo even when the row existed.
+     */
+    const whereFor = (model: keyof typeof db, call = 0) =>
+      (db[model].findFirst as ReturnType<typeof vi.fn>).mock.calls[call][0].where;
+
+    it("matches shared branding by suffix, not equality", async () => {
+      db.university.findFirst.mockResolvedValue({ id: 1 });
+      await authorizeUploadAccess("logo.png", staff(4, "Viewer"), none());
+      expect(whereFor("university")).toEqual({ logo: { endsWith: "logo.png" } });
+    });
+
+    it("applies the same suffix match to branch, avatar and learning resources", async () => {
+      db.university.findFirst.mockResolvedValue({ id: 1 });
+      await authorizeUploadAccess("logo.png", staff(4, "Viewer"), none());
+      expect(whereFor("branch")).toEqual({ logo: { endsWith: "logo.png" } });
+      expect(whereFor("user")).toEqual({ avatar: { endsWith: "logo.png" } });
+      expect(whereFor("learningResource")).toEqual({ url: { endsWith: "logo.png" } });
+    });
+
+    it("matches private file rows by suffix as well", async () => {
+      db.fileItem.findFirst.mockResolvedValue({ userId: 3, url: "/uploads/a.png" });
+      await authorizeUploadAccess("a.png", staff(3, "Staff"), none());
+      expect(whereFor("fileItem")).toEqual({ url: { endsWith: "a.png" } });
+    });
+
+    it("matches a student document by suffix", async () => {
+      db.studentDocument.findMany.mockResolvedValue([{ id: 1 }]);
+      await authorizeUploadAccess("doc.pdf", none(), student(7));
+      expect(db.studentDocument.findMany.mock.calls[0][0].where).toEqual({
+        studentId: 7,
+        url: { endsWith: "doc.pdf" },
+      });
+    });
+  });
 });
