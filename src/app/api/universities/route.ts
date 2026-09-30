@@ -4,7 +4,13 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
 import { createNotification } from "@/lib/notifications";
-import { getPaginationParams, paginatedResponse, apiError, getSession, checkRoutePermission } from "@/lib/api-utils";
+import {
+  getPaginationParams,
+  paginatedResponse,
+  apiError,
+  getSession,
+  checkRoutePermission,
+} from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
@@ -51,31 +57,40 @@ export async function GET(req: NextRequest) {
       db.university.count({ where: where as Prisma.UniversityWhereInput }),
     ]);
 
-    const transformed = universities.map((u) => ({
-      ...u,
-      courses: u._count.courses,
-      students: 0,
-      type: u.type || "Public",
-      addedDate: u.createdAt,
-      accredited: u.accreditation !== null,
-      color: `hsl(${(u.name.length * 137) % 360}, 70%, 50%)`,
-      initials: u.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .substring(0, 2),
-      requirements: u.requirements
-        ? u.requirements.startsWith("[")
-          ? JSON.parse(u.requirements)
-          : [u.requirements]
-        : [],
-      accreditation: u.accreditation
+    const transformed = universities.map((u) => {
+      // Accreditation is stored as a JSON array string. An empty array means
+      // "not accredited", so a plain null check would mark every empty record
+      // as accredited and put a green tick on the card.
+      const accreditationList: string[] = u.accreditation
         ? u.accreditation.startsWith("[")
           ? JSON.parse(u.accreditation)
           : [u.accreditation]
-        : [],
-    }));
+        : [];
+
+      return {
+        ...u,
+        courses: u._count.courses,
+        type: u.type || "Public",
+        addedDate: u.createdAt,
+        accredited: accreditationList.length > 0,
+        // Omitted rather than sent as 0, so the UI can tell "no data" apart from
+        // "genuinely zero students".
+        students: (u as { students?: number }).students ?? null,
+        color: `hsl(${(u.name.length * 137) % 360}, 70%, 50%)`,
+        initials: u.name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .substring(0, 2),
+        requirements: u.requirements
+          ? u.requirements.startsWith("[")
+            ? JSON.parse(u.requirements)
+            : [u.requirements]
+          : [],
+        accreditation: accreditationList,
+      };
+    });
 
     return NextResponse.json(paginatedResponse(transformed, total, params));
   } catch (error) {
@@ -93,7 +108,10 @@ export async function POST(req: NextRequest) {
     // Rate limit university creation
     const rl = await checkRateLimit(`create-university:${getClientIp(req)}`, 20, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const data = await req.json();

@@ -62,7 +62,8 @@ interface UniversityRow {
   initials?: string | null;
   accredited?: boolean;
   courses?: number;
-  students?: number;
+  // null means the figure is not tracked, which is different from zero.
+  students?: number | null;
 }
 
 const SortIcon = ({
@@ -82,18 +83,24 @@ const SortIcon = ({
   );
 };
 
-const formatCities = (cityStr: string | null | undefined) => {
-  if (!cityStr) return "N/A";
+const parseList = (raw: string | string[] | null | undefined): string[] => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
   try {
-    if (typeof cityStr === "string" && cityStr.startsWith("[")) {
-      const cities = JSON.parse(cityStr);
-      if (Array.isArray(cities) && cities.length > 0) {
-        const first = cities[0];
-        return `${first}${cities.length > 1 ? ` (+${cities.length - 1})` : ""}`;
-      }
+    if (raw.startsWith("[")) {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
     }
   } catch (_e) {}
-  return cityStr;
+  return [raw];
+};
+
+/** Returns "City (+2)" for multi-campus universities, or null when unknown. */
+const formatCities = (cityStr: string | null | undefined) => {
+  const cities = parseList(cityStr);
+  if (cities.length === 0) return null;
+  const [first, ...rest] = cities;
+  return rest.length > 0 ? `${first} (+${rest.length})` : first;
 };
 
 const handleExport = async (dataToExport: UniversityRow[]) => {
@@ -107,7 +114,7 @@ const handleExport = async (dataToExport: UniversityRow[]) => {
       "University Name": u.name,
       "Short Name": u.shortName || "",
       Country: u.country,
-      Cities: u.city && u.city.startsWith("[") ? JSON.parse(u.city).join(", ") : u.city || "",
+      Cities: parseList(u.city).join(", "),
       Type: u.type || "",
       Ranking: u.ranking || "",
       Founded: u.founded || "",
@@ -115,7 +122,7 @@ const handleExport = async (dataToExport: UniversityRow[]) => {
       Email: u.email || "",
       Phone: u.phone || "",
       Status: u.status || "",
-      Accreditation: u.accreditation || "",
+      Accreditation: parseList(u.accreditation).join(", "),
       "Added Date": new Date(u.addedDate).toLocaleDateString(),
     }));
 
@@ -828,15 +835,12 @@ function UniversityTable({
                       <span
                         className={`text-xs font-medium ${univ.accredited ? "text-slate-700" : "text-slate-400"}`}
                       >
-                        {Array.isArray(univ.accreditation)
-                          ? univ.accreditation.length > 1
-                            ? `${univ.accreditation[0]} +${univ.accreditation.length - 1}`
-                            : univ.accreditation[0] || "Pending"
-                          : univ.accreditation || "Pending"}
+                        {univ.accredited
+                          ? parseList(univ.accreditation).length > 1
+                            ? `${parseList(univ.accreditation)[0]} +${parseList(univ.accreditation).length - 1}`
+                            : parseList(univ.accreditation)[0] || "Accredited"
+                          : "Pending"}
                       </span>
-                      {!univ.accredited && (
-                        <span className="text-[10px] text-amber-600 font-medium">(Pending)</span>
-                      )}
                     </div>
                   </td>
                   <td className="p-3">
@@ -849,9 +853,13 @@ function UniversityTable({
                   </td>
                   <td className="p-3">
                     <div className="flex items-center gap-1.5">
-                      <Users size={12} className="text-slate-400" />
-                      <span className="text-xs font-semibold text-slate-700 font-tabular">
-                        {(univ.students || 0).toLocaleString()}
+                      <Users size={12} className="text-slate-300" />
+                      <span
+                        className={`text-xs font-semibold font-tabular ${univ.students === null || univ.students === undefined ? "text-slate-300" : "text-slate-700"}`}
+                      >
+                        {univ.students === null || univ.students === undefined
+                          ? "—"
+                          : univ.students.toLocaleString()}
                       </span>
                     </div>
                   </td>
@@ -921,7 +929,7 @@ function UniversityGrid({
   handleDelete: (id: string, name: string) => void;
 }) {
   return (
-    <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+    <div className="p-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 animate-fade-in">
       {paginated.length === 0 ? (
         <div className="col-span-full py-16 text-center">
           <Building2 size={48} className="text-slate-200 mx-auto mb-4" />
@@ -932,96 +940,138 @@ function UniversityGrid({
       ) : (
         paginated.map((univ) => {
           const status = statusConfig[univ.status] || statusConfig["Active"];
+          const accreditations = parseList(univ.accreditation);
+          const city = formatCities(univ.city);
+          const hasStudents = univ.students !== null && univ.students !== undefined;
+          const ranking =
+            univ.ranking !== null && univ.ranking !== undefined && univ.ranking !== "";
+
           return (
-            <div
+            <article
               key={`grid-${univ.id}`}
-              className="card overflow-hidden hover:shadow-md transition-all duration-200 group relative"
+              className="group card relative flex flex-col overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-indigo-200 focus-within:border-indigo-300"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 via-teal-300/10 to-transparent pointer-events-none" />
+              {/* Status is carried by a single colour cue in the top rail, so the
+                  eye reads state before it reads text. */}
               <div
-                className="h-1 w-full relative"
+                className="h-1 w-full flex-shrink-0"
                 style={{ backgroundColor: univ.color || undefined }}
+                aria-hidden="true"
               />
-              <div className="p-4 relative">
-                <div className="flex items-start justify-between mb-5">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div
-                      className="size-16 rounded-2xl flex items-center justify-center text-white text-base font-bold flex-shrink-0 shadow-sm border border-slate-50 overflow-hidden relative"
-                      style={{
-                        backgroundColor: univ.logo ? "transparent" : univ.color || undefined,
-                      }}
-                    >
-                      {univ.logo ? (
-                        <Image
-                          src={univ.logo}
-                          alt=""
-                          fill
-                          className="object-contain p-1"
-                          sizes="64px"
-                        />
-                      ) : (
-                        univ.initials
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="text-base font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors leading-tight mb-1">
-                        <Link href={`/universities/${univ.id}`}>{univ.name}</Link>
-                      </h3>
-                      <p className="text-sm text-slate-500 flex items-center gap-1.5 truncate">
-                        {getCountryFlag(univ.country) && (
-                          <Image
-                            src={getCountryFlag(univ.country)}
-                            alt={`${univ.country} flag`}
-                            width={24}
-                            height={24}
-                            className="w-5 h-3.5 rounded-sm object-cover"
-                          />
-                        )}
-                        {formatCities(univ.city)}, {univ.country}
-                      </p>
-                    </div>
+
+              <div className="p-5 flex-1 flex flex-col">
+                <div className="flex items-start gap-3.5 mb-4">
+                  <div
+                    className="size-12 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0 overflow-hidden relative shadow-sm ring-1 ring-slate-900/5"
+                    style={{
+                      backgroundColor: univ.logo ? "transparent" : univ.color || undefined,
+                    }}
+                  >
+                    {univ.logo ? (
+                      <Image
+                        src={univ.logo}
+                        alt=""
+                        fill
+                        className="object-contain p-1 bg-white"
+                        sizes="48px"
+                      />
+                    ) : (
+                      univ.initials
+                    )}
                   </div>
-                  <span className={`badge ${status.className} flex-shrink-0 ml-2`}>
-                    {status.label}
-                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-bold text-slate-800 leading-snug line-clamp-2 mb-1 group-hover:text-indigo-600 transition-colors">
+                      <Link href={`/universities/${univ.id}`} className="hover:underline">
+                        {univ.name}
+                      </Link>
+                    </h3>
+                    <p className="text-xs text-slate-500 flex items-center gap-1.5 truncate">
+                      {getCountryFlag(univ.country) && (
+                        <Image
+                          src={getCountryFlag(univ.country)}
+                          alt=""
+                          width={24}
+                          height={24}
+                          className="w-4 h-3 rounded-sm object-cover flex-shrink-0"
+                        />
+                      )}
+                      <span className="truncate">
+                        {city ? `${city}, ` : ""}
+                        {univ.country}
+                      </span>
+                    </p>
+                  </div>
+
+                  <span className={`badge ${status.className} flex-shrink-0`}>{status.label}</span>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600`}
-                  >
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600">
                     {univ.type}
                   </span>
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-600`}
-                  >
-                    <Award size={8} />
-                    Rank #{univ.ranking}
-                  </span>
+                  {ranking ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-600">
+                      <Award size={9} />
+                      Rank #{univ.ranking}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-50 text-slate-400 border border-slate-100">
+                      Unranked
+                    </span>
+                  )}
+                  {univ.accredited ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+                      <Award size={9} />
+                      {accreditations.length > 1
+                        ? `${accreditations[0]} +${accreditations.length - 1}`
+                        : accreditations[0] || "Accredited"}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700">
+                      <AlertCircle size={9} />
+                      Accreditation pending
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-3 mb-4 text-xs text-slate-500">
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <BookOpen size={12} className="text-slate-400" />
-                    {univ.courses || 0} Courses
-                  </span>
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <Users size={12} className="text-slate-400" />
-                    {univ.students || 0} Students
-                  </span>
-                </div>
+                <dl className="grid grid-cols-2 gap-2 mb-4">
+                  <div className="rounded-lg bg-slate-50 px-3 py-2">
+                    <dt className="text-[10px] text-slate-400 font-medium uppercase tracking-wide flex items-center gap-1">
+                      <BookOpen size={9} />
+                      Courses
+                    </dt>
+                    <dd className="text-sm font-bold text-slate-700 font-tabular mt-0.5">
+                      {(univ.courses ?? 0).toLocaleString()}
+                    </dd>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 px-3 py-2">
+                    <dt className="text-[10px] text-slate-400 font-medium uppercase tracking-wide flex items-center gap-1">
+                      <Users size={9} />
+                      Students
+                    </dt>
+                    <dd
+                      className={`text-sm font-bold font-tabular mt-0.5 ${hasStudents ? "text-slate-700" : "text-slate-400 font-medium"}`}
+                    >
+                      {hasStudents ? univ.students!.toLocaleString() : "—"}
+                    </dd>
+                  </div>
+                </dl>
 
-                <div className="flex items-center gap-2 pt-4 border-t border-slate-50">
+                <div className="mt-auto pt-4 border-t border-slate-100 flex items-center gap-2">
                   <Link
                     href={`/universities/${univ.id}`}
-                    className="flex-1 py-2 rounded-lg bg-slate-900 text-white text-[11px] font-bold text-center hover:bg-indigo-600 transition-all uppercase tracking-wide"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg bg-slate-900 text-white text-[11px] font-bold hover:bg-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 transition-colors uppercase tracking-wide"
                   >
                     View Profile
+                    <ExternalLink size={11} />
                   </Link>
                   <div className="relative">
                     <button
                       type="button"
-                      className={`p-2 rounded-lg border transition-all ${activeDropdown === univ.id ? "bg-indigo-50 border-indigo-200 text-indigo-600" : "border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50"}`}
+                      aria-label={`More actions for ${univ.name}`}
+                      aria-expanded={activeDropdown === univ.id}
+                      className={`p-2 rounded-lg border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${activeDropdown === univ.id ? "bg-indigo-50 border-indigo-200 text-indigo-600" : "border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50"}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveDropdown(activeDropdown === univ.id ? null : univ.id);
@@ -1032,9 +1082,16 @@ function UniversityGrid({
 
                     {activeDropdown === univ.id && (
                       <div
-                        className="absolute bottom-full right-0 mb-2 w-40 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-20 animate-in fade-in slide-in-from-bottom-2 duration-200"
+                        className="absolute bottom-full right-0 mb-2 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-20 animate-in fade-in slide-in-from-bottom-2 duration-200"
                         onClick={(e) => e.stopPropagation()}
                       >
+                        <Link
+                          href={`/universities/${univ.id}`}
+                          className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                        >
+                          <ExternalLink size={12} className="text-slate-400" />
+                          View Profile
+                        </Link>
                         <Link
                           href={`/universities/${univ.id}/edit`}
                           className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
@@ -1058,7 +1115,7 @@ function UniversityGrid({
                   </div>
                 </div>
               </div>
-            </div>
+            </article>
           );
         })
       )}
