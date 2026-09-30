@@ -192,15 +192,15 @@ export async function POST(req: NextRequest) {
     }
 
     await createNotification({
-      title: "User Invited",
-      message: `User "${data.name}" has been invited with role ${data.role || "Viewer"}.`,
+      title: "User Added",
+      message: `User "${data.name}" has been added with role ${data.role || "Viewer"}.`,
       type: "Success",
     });
 
     await logActivity({
       actorName: await getActorName(session?.id),
       userId: session?.id,
-      action: "invited a user",
+      action: "added a user",
       target: newUser.name,
     });
 

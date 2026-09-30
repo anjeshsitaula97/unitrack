@@ -100,7 +100,7 @@ export default function AccessContent() {
   const [autoGeneratePassword, setAutoGeneratePassword] = useState(true);
   const [manualPassword, setManualPassword] = useState("");
   const [generateApiKey, setGenerateApiKey] = useState(false);
-  const [sendCredentialsEmail, setSendCredentialsEmail] = useState(true);
+  const [sendCredentialsEmail, setSendCredentialsEmail] = useState(false);
   const [viewingUser, setViewingUser] = useState<AccessUser | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
@@ -265,7 +265,7 @@ export default function AccessContent() {
         setManualPassword("");
         setAutoGeneratePassword(true);
         setGenerateApiKey(false);
-        setSendCredentialsEmail(true);
+        setSendCredentialsEmail(false);
         setIsInviteModalOpen(false);
       } else {
         const body = await res.json().catch(() => null);
@@ -291,7 +291,7 @@ export default function AccessContent() {
           </p>
         </div>
         <button type="button" onClick={() => setIsInviteModalOpen(true)} className="btn-primary">
-          <Plus size={15} /> Invite User
+          <Plus size={15} /> Add User
         </button>
       </div>
 
@@ -585,7 +585,7 @@ function InviteUserModal({
       />
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md animate-slide-up overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="text-base font-bold text-slate-800">Invite New User</h3>
+          <h3 className="text-base font-bold text-slate-800">Add New User</h3>
           <button
             type="button"
             aria-label="Close"
@@ -718,8 +718,9 @@ function InviteUserModal({
                     Email login details to this user
                   </label>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Sends their email, temporary password and role. If the email fails the user is
-                    still created and you can share the password manually.
+                    Off by default. The user is added straight to the user list and you share their
+                    password yourself. Tick to also email them their email, temporary password and
+                    role.
                   </p>
                 </div>
               </div>
@@ -735,7 +736,7 @@ function InviteUserModal({
               Cancel
             </button>
             <button type="submit" className="btn-primary">
-              Send Invite
+              Add User
             </button>
           </div>
         </form>
