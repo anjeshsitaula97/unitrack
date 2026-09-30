@@ -100,6 +100,7 @@ export default function AccessContent() {
   const [autoGeneratePassword, setAutoGeneratePassword] = useState(true);
   const [manualPassword, setManualPassword] = useState("");
   const [generateApiKey, setGenerateApiKey] = useState(false);
+  const [sendCredentialsEmail, setSendCredentialsEmail] = useState(true);
   const [viewingUser, setViewingUser] = useState<AccessUser | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
@@ -225,19 +226,37 @@ export default function AccessContent() {
           autoGeneratePassword,
           password: manualPassword,
           generateApiKey,
+          sendCredentialsEmail,
         }),
       });
       if (res.ok) {
         const data = await res.json();
         setUsers([data.user, ...users]); // optimistic local update
 
-        let message = `Invitation sent to ${inviteEmail}`;
-        if (data.generatedPassword) message += `. Temporary password: ${data.generatedPassword}`;
-        if (data.apiKey) message += `. API Key generated.`;
+        const email = data.credentialsEmail as
+          { attempted: boolean; sent: boolean; error?: string } | undefined;
+        const emailFailed = Boolean(email?.attempted && !email.sent);
 
-        toast.success(message, {
-          duration: 10000, // Show longer so they can copy
-        });
+        const parts = [`User ${inviteName} created`];
+        if (email?.sent) parts.push(`Login details emailed to ${inviteEmail}`);
+        else if (emailFailed) {
+          const reason = email?.error ? email.error.replace(/\.\s*$/, "") : "";
+          parts.push(
+            reason
+              ? `Could not email login details: ${reason}. Share the password manually`
+              : "Could not email login details. Share the password manually"
+          );
+        } else if (!email?.attempted) parts.push("No email was sent");
+        if (data.generatedPassword) parts.push(`Temporary password: ${data.generatedPassword}`);
+        if (data.apiKey) parts.push("API key generated");
+        const message = parts.join(". ") + (parts[parts.length - 1].endsWith(".") ? "" : ".");
+
+        // The invite succeeded either way, so a mail failure is a warning, not an error.
+        if (emailFailed) {
+          toast.warning(message, { duration: 12000 });
+        } else {
+          toast.success(message, { duration: 10000 });
+        }
 
         // Reset and close modal
         setInviteName("");
@@ -246,9 +265,11 @@ export default function AccessContent() {
         setManualPassword("");
         setAutoGeneratePassword(true);
         setGenerateApiKey(false);
+        setSendCredentialsEmail(true);
         setIsInviteModalOpen(false);
       } else {
-        toast.error("Failed to send invitation");
+        const body = await res.json().catch(() => null);
+        toast.error(body?.error || "Failed to create user");
       }
     } catch (_err) {
       toast.error("Error connecting to backend");
@@ -474,6 +495,8 @@ export default function AccessContent() {
         setManualPassword={setManualPassword}
         generateApiKey={generateApiKey}
         setGenerateApiKey={setGenerateApiKey}
+        sendCredentialsEmail={sendCredentialsEmail}
+        setSendCredentialsEmail={setSendCredentialsEmail}
         handleInviteUser={handleInviteUser}
         roles={roles}
       />
@@ -527,6 +550,8 @@ function InviteUserModal({
   setManualPassword,
   generateApiKey,
   setGenerateApiKey,
+  sendCredentialsEmail,
+  setSendCredentialsEmail,
   handleInviteUser,
   roles,
 }: {
@@ -544,6 +569,8 @@ function InviteUserModal({
   setManualPassword: (v: string) => void;
   generateApiKey: boolean;
   setGenerateApiKey: (v: boolean) => void;
+  sendCredentialsEmail: boolean;
+  setSendCredentialsEmail: (v: boolean) => void;
   handleInviteUser: (e: React.FormEvent) => Promise<void>;
   roles: string[];
 }) {
@@ -673,6 +700,28 @@ function InviteUserModal({
                 <label htmlFor="genApiKey" className="text-sm font-medium text-slate-700">
                   Auto-generate API key for this user
                 </label>
+              </div>
+
+              <div className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="sendCredentialsEmail"
+                  checked={sendCredentialsEmail}
+                  onChange={(e) => setSendCredentialsEmail(e.target.checked)}
+                  className="size-4 mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <div>
+                  <label
+                    htmlFor="sendCredentialsEmail"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    Email login details to this user
+                  </label>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Sends their email, temporary password and role. If the email fails the user is
+                    still created and you can share the password manually.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
