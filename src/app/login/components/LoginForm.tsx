@@ -150,7 +150,7 @@ export default function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm text-sm p-3 font-medium text-slate-800 transition-colors bg-slate-50 focus:bg-white"
-                  placeholder={loginMode === "admin" ? "admin@unitrack.com" : "student@example.com"}
+                  placeholder="email@example.com"
                 />
               </div>
             </div>
@@ -173,7 +173,7 @@ export default function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm text-sm p-3 font-medium text-slate-800 transition-colors bg-slate-50 focus:bg-white"
-                  placeholder="********"
+                  placeholder=""
                 />
               </div>
               {loginMode === "student" && (
