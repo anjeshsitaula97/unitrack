@@ -29,21 +29,33 @@ export function getUploadsRoot(): string {
   return configured ? path.resolve(configured) : path.join(process.cwd(), DEFAULT_STORAGE_SUBDIR);
 }
 
-export function getLegacyUploadsRoot(): string {
+/**
+ * Files under `public/` are served as static assets by Next.js, which bypasses
+ * the authenticated `/api/uploads` route entirely, so anything left in this
+ * directory is world-readable. It is therefore opt-in and only for migrating
+ * existing files out of `public/` onto `UPLOADS_DIR`.
+ *
+ * Migration: move the contents of `public/uploads` to a path outside `public/`,
+ * point `UPLOADS_DIR` at it, then remove the empty `public/uploads` directory.
+ */
+export function getLegacyUploadsRoot(): string | null {
+  if ((process.env.UPLOADS_ALLOW_LEGACY_ROOT || "").trim() !== "1") return null;
   return path.join(process.cwd(), "public", "uploads");
 }
 
-export function getLegacyUploadsDir(...subdirs: string[]): string {
+export function getLegacyUploadsDir(...subdirs: string[]): string | null {
+  const root = getLegacyUploadsRoot();
+  if (!root) return null;
   const safeSubdirs = subdirs
     .map((sub) => sub.replace(/[^A-Za-z0-9._-]/g, ""))
     .filter((sub) => sub && sub !== "." && sub !== "..");
-  return path.join(getLegacyUploadsRoot(), ...safeSubdirs);
+  return path.join(root, ...safeSubdirs);
 }
 
 export function getUploadRoots(): string[] {
   const primary = getUploadsRoot();
   const legacy = getLegacyUploadsRoot();
-  return primary === legacy ? [primary] : [primary, legacy];
+  return legacy && legacy !== primary ? [primary, legacy] : [primary];
 }
 
 export function getUploadContentType(filePath: string): string | null {

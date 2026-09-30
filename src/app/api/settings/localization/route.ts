@@ -1,24 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
 import { logError } from "@/lib/logger";
 import { normalizeEnabledModulesJson } from "@/lib/modules";
 import { logActivity, getActorName } from "@/lib/activity";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch {
-    return null;
-  }
-}
+import { checkPermission, checkRoutePermission, getSession } from "@/lib/api-utils";
 
 export async function GET() {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "settings:read");
+    if (deniedGET) return deniedGET;
     const settings = await db.systemSettings.findFirst();
 
     const result = settings ?? {
@@ -78,6 +69,11 @@ export async function POST(req: NextRequest) {
     });
 
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, {
+      url: "/api/settings/localization",
+      method: "POST",
+    });
+    if (deniedPOST) return deniedPOST;
     if (session) {
       await db.notification
         .create({

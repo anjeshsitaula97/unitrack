@@ -1,22 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
 import { logActivity, getActorName } from "@/lib/activity";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch (_err) {
-    return null;
-  }
-}
+import { checkPermission, checkRoutePermission, getSession } from "@/lib/api-utils";
 
 export async function GET() {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "learning:read");
+    if (deniedGET) return deniedGET;
     const countries = await db.country.findMany({
       orderBy: { name: "asc" },
     });
@@ -29,6 +20,11 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, {
+      url: "/api/learning-hub/countries",
+      method: "POST",
+    });
+    if (deniedPOST) return deniedPOST;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const data = await req.json();
@@ -56,6 +52,11 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, {
+      url: "/api/learning-hub/countries",
+      method: "DELETE",
+    });
+    if (deniedDELETE) return deniedDELETE;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);

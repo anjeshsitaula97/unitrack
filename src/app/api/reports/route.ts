@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 
 type ReportRow = {
   id?: number;
@@ -28,6 +28,8 @@ type ReportRow = {
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedGET = checkRoutePermission(session, { url: "/api/reports", method: "GET" });
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
 
     const { searchParams } = new URL(req.url);

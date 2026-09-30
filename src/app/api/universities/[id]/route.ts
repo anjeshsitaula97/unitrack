@@ -4,13 +4,15 @@ import type { Course } from "@prisma/client";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { softDeleteUniversity } from "@/lib/trash";
-import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission, checkPermission } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedGET = checkPermission(session, "universities:read");
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
     const { id } = await params;
 
@@ -145,6 +147,8 @@ const parseSafeFloat = (val: string | number | null | undefined) => {
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedPATCH = checkPermission(session, "universities:update");
+    if (deniedPATCH) return deniedPATCH;
     if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
       return apiError("Unauthorized", 401);
     const { id } = await params;

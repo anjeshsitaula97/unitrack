@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import crypto from "crypto";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
 import { logError } from "@/lib/logger";
 
 export async function GET() {
   try {
     const session = await getSession();
+    const deniedGET = checkPermission(session, "admin:access");
+    if (deniedGET) return deniedGET;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 
@@ -24,6 +26,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkPermission(session, "admin:access");
+    if (deniedPOST) return deniedPOST;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 

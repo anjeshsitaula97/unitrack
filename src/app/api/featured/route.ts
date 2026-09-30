@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
+import { checkPermission, getSession } from "@/lib/api-utils";
 
 const prisma = db;
 
 export async function GET() {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "learning:read");
+    if (deniedGET) return deniedGET;
     const featuredUniversities = await prisma.university.findMany({
       where: { isFeatured: true },
       include: { courses: true },

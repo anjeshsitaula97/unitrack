@@ -2,28 +2,18 @@ import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
 import { softDeleteLead } from "@/lib/trash";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { checkPermission, getSession } from "@/lib/api-utils";
 
 const prisma = db;
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch (_err) {
-    return null;
-  }
-}
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedGET = checkPermission(session, "leads:read");
+    if (deniedGET) return deniedGET;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
@@ -42,11 +32,16 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const [{ id }, body] = await Promise.all([params, req.json()]);
 
     const session = await getSession();
+    const deniedPUT = checkPermission(session, "leads:update");
+    if (deniedPUT) return deniedPUT;
 
     // Rate limit lead updates
     const rl = await checkRateLimit(`update-lead:${getClientIp(req)}`, 30, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     // Get current lead to check previous status
@@ -169,6 +164,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkPermission(session, "leads:delete");
+    if (deniedDELETE) return deniedDELETE;
     if (!session || !["Admin", "Super Admin"].includes(session.role)) {
       return NextResponse.json({ error: "Only admins can delete leads" }, { status: 403 });
     }
@@ -176,7 +173,10 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     // Rate limit lead deletion
     const rl = await checkRateLimit(`delete-lead:${getClientIp(req)}`, 10, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const { id } = await params;

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logError } from "@/lib/logger";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedGET = checkPermission(session, "admin:access");
+    if (deniedGET) return deniedGET;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 

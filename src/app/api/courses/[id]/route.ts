@@ -4,11 +4,14 @@ import { createNotification } from "@/lib/notifications";
 import { softDeleteCourse } from "@/lib/trash";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 import { logError } from "@/lib/logger";
-import { getSession, checkRoutePermission } from "@/lib/api-utils";
+import { getSession, checkRoutePermission, checkPermission } from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "courses:read");
+    if (deniedGET) return deniedGET;
     const { id } = await params;
     const course = await db.course.findUnique({
       where: { id: Number(id) },
@@ -28,6 +31,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await getSession();
+    const deniedPUT = checkPermission(session, "courses:update");
+    if (deniedPUT) return deniedPUT;
     const { id } = await params;
     const data = await req.json();
     const existing = await db.course.findUnique({ where: { id: Number(id) } });

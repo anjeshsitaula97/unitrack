@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { isConfigured } from "@/lib/master-api";
 
 export async function GET() {
   try {
     const session = await getSession();
+    const deniedGET = checkRoutePermission(session, { url: "/api/master/status", method: "GET" });
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
 
     if (!isConfigured()) {

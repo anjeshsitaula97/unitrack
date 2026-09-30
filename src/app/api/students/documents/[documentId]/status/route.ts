@@ -1,7 +1,7 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
 export async function PATCH(
@@ -10,6 +10,8 @@ export async function PATCH(
 ) {
   try {
     const session = await getSession();
+    const deniedPATCH = checkPermission(session, "students:update");
+    if (deniedPATCH) return deniedPATCH;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 

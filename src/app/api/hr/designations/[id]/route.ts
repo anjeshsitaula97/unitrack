@@ -1,24 +1,14 @@
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch {
-    return null;
-  }
-}
+import { getSession, checkPermission } from "@/lib/api-utils";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedPUT = checkPermission(session, "hr:update");
+    if (deniedPUT) return deniedPUT;
     if (!session || !["Admin", "Super Admin"].includes(session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -61,6 +51,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkPermission(session, "hr:delete");
+    if (deniedDELETE) return deniedDELETE;
     if (!session || !["Admin", "Super Admin"].includes(session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

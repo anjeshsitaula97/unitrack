@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { purgeExpiredTrash } from "@/lib/trash";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedGET = checkRoutePermission(session, { url: "/api/trash", method: "GET" });
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
 
     // Auto-purge expired items in background (fire and forget)

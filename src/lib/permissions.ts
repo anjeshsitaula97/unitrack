@@ -3,18 +3,20 @@ const ROLES = {
   ADMIN: "admin",
   STAFF: "staff",
   STUDENT: "student",
-  VIEWER: "Viewer",
+  VIEWER: "viewer",
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
 const PERMISSIONS: Record<string, Role[]> = {
   // General
-  "dashboard:view": ["admin", "staff", "student", "Viewer"],
+  "dashboard:view": ["admin", "staff", "student", "viewer"],
+  "dashboard:read": ["admin", "staff", "student", "viewer"],
+  "dashboard:update": ["admin", "staff", "student", "viewer"],
   "dashboard:export": ["admin", "staff"],
 
   // Universities
-  "universities:read": ["admin", "staff", "student", "Viewer"],
+  "universities:read": ["admin", "staff", "student", "viewer"],
   "universities:create": ["admin", "staff"],
   "universities:update": ["admin", "staff"],
   "universities:delete": ["admin"],
@@ -23,7 +25,7 @@ const PERMISSIONS: Record<string, Role[]> = {
   "universities:partners": ["admin", "staff"],
 
   // Courses
-  "courses:read": ["admin", "staff", "student", "Viewer"],
+  "courses:read": ["admin", "staff", "student", "viewer"],
   "courses:create": ["admin", "staff"],
   "courses:update": ["admin", "staff"],
   "courses:delete": ["admin"],
@@ -31,7 +33,7 @@ const PERMISSIONS: Record<string, Role[]> = {
   "courses:import": ["admin", "staff"],
 
   // Students
-  "students:read": ["admin", "staff", "student", "Viewer"],
+  "students:read": ["admin", "staff", "student", "viewer"],
   "students:create": ["admin", "staff"],
   "students:update": ["admin", "staff"],
   "students:delete": ["admin"],
@@ -72,7 +74,7 @@ const PERMISSIONS: Record<string, Role[]> = {
   "expenses:export": ["admin", "staff"],
 
   // Reports & Analytics
-  "reports:read": ["admin", "staff", "student", "Viewer"],
+  "reports:read": ["admin", "staff", "student", "viewer"],
   "reports:create": ["admin", "staff"],
   "reports:delete": ["admin"],
   "analytics:read": ["admin", "staff"],
@@ -89,14 +91,14 @@ const PERMISSIONS: Record<string, Role[]> = {
   "hr:export": ["admin", "staff"],
 
   // Files
-  "files:read": ["admin", "staff", "student", "Viewer"],
+  "files:read": ["admin", "staff", "student", "viewer"],
   "files:create": ["admin", "staff"],
   "files:update": ["admin", "staff"],
   "files:delete": ["admin"],
   "files:share": ["admin", "staff"],
 
   // Calendar
-  "calendar:read": ["admin", "staff", "student", "Viewer"],
+  "calendar:read": ["admin", "staff", "student", "viewer"],
   "calendar:create": ["admin", "staff"],
   "calendar:update": ["admin", "staff"],
   "calendar:delete": ["admin"],
@@ -152,7 +154,7 @@ const PERMISSIONS: Record<string, Role[]> = {
   "tasks:create": ["admin", "staff"],
   "tasks:update": ["admin", "staff"],
   "tasks:delete": ["admin"],
-  "learning:read": ["admin", "staff", "student", "Viewer"],
+  "learning:read": ["admin", "staff", "student", "viewer"],
   "learning:create": ["admin", "staff"],
   "learning:update": ["admin", "staff"],
   "learning:delete": ["admin"],
@@ -175,13 +177,13 @@ const PERMISSIONS: Record<string, Role[]> = {
   "bulk:export": ["admin", "staff"],
 
   // Qualifications
-  "qualifications:read": ["admin", "staff", "student", "Viewer"],
+  "qualifications:read": ["admin", "staff", "student", "viewer"],
   "qualifications:create": ["admin", "staff"],
   "qualifications:update": ["admin", "staff"],
   "qualifications:delete": ["admin"],
 
   // Compare
-  "compare:read": ["admin", "staff", "student", "Viewer"],
+  "compare:read": ["admin", "staff", "student", "viewer"],
   "compare:create": ["admin", "staff"],
   "compare:update": ["admin", "staff"],
   "compare:delete": ["admin"],
@@ -194,6 +196,32 @@ const PERMISSIONS: Record<string, Role[]> = {
 
   // Admin only
   "admin:access": ["admin"],
+
+  // Reference data and cross-cutting reads
+  "embassy:read": ["admin", "staff"],
+  "embassy:create": ["admin"],
+  "embassy:update": ["admin"],
+  "embassy:delete": ["admin"],
+  "intakes:read": ["admin", "staff"],
+  "intakes:create": ["admin", "staff"],
+  "intakes:update": ["admin", "staff"],
+  "intakes:delete": ["admin"],
+  "master:read": ["admin", "staff"],
+  "master:create": ["admin"],
+  "master:update": ["admin"],
+  "master:delete": ["admin"],
+  "search:read": ["admin", "staff", "viewer"],
+  "tickets:read": ["admin", "staff"],
+  "tickets:create": ["admin", "staff"],
+  "tickets:update": ["admin", "staff"],
+  "tickets:delete": ["admin"],
+  "bulk:read": ["admin"],
+  "bulk:create": ["admin"],
+  "bulk:update": ["admin"],
+  "bulk:delete": ["admin"],
+  "nepal:read": ["admin", "staff", "student"],
+  // Cross-entity bulk mutations (delete / status / assignment) are admin-only.
+  "batch:write": ["admin"],
 };
 
 export function hasPermission(role: string | undefined, permission: string): boolean {
@@ -236,8 +264,15 @@ export function getRoutePermission(pathname: string): string | null {
   if (pathname.startsWith("/marketing")) return "marketing:read";
   if (pathname.startsWith("/audit")) return "audit:read";
   if (pathname.startsWith("/trash")) return "trash:read";
-  if (pathname.startsWith("/backups") || pathname.startsWith("/settings/backups")) return "backups:read";
+  if (pathname.startsWith("/backups") || pathname.startsWith("/settings/backups"))
+    return "backups:read";
   if (pathname.startsWith("/branches")) return "branches:read";
-  if (pathname.startsWith("/qualifications") || pathname.startsWith("/faculties") || pathname.startsWith("/degree-types") || pathname.startsWith("/academic-documents")) return "qualifications:read";
+  if (
+    pathname.startsWith("/qualifications") ||
+    pathname.startsWith("/faculties") ||
+    pathname.startsWith("/degree-types") ||
+    pathname.startsWith("/academic-documents")
+  )
+    return "qualifications:read";
   return null;
 }

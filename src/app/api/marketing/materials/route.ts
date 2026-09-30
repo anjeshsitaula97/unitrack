@@ -2,13 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { saveUploadedFile } from "@/lib/marketing-files";
 import { UploadError } from "@/lib/upload-security";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, {
+      url: "/api/marketing/materials",
+      method: "POST",
+    });
+    if (deniedPOST) return deniedPOST;
     if (!session) return apiError("Unauthorized", 401);
 
     const formData = await req.formData();

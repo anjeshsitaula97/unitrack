@@ -53,9 +53,16 @@ turbo/
 /src/generated/prisma
 
 # Environment variables
+# NOTE: .env.example is intentionally tracked as the documented template.
+# Every other .env* file must stay untracked - gitignore does NOT apply to files
+# that are already tracked, so `git rm --cached` them if they were ever added.
 .env
+.env.*
+!.env.example
 .env.local
 .env.*.local
+.env.production
+.env.development
 
 # Dev artifacts
 *.log

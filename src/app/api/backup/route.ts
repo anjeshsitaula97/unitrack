@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { encryptBackup } from "@/lib/crypto";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logError } from "@/lib/logger";
 
 export async function GET(req: Request) {
   try {
     const session = await getSession();
+    const deniedGET = checkPermission(session, "admin:access");
+    if (deniedGET) return deniedGET;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 

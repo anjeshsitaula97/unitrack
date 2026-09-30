@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 
 export async function GET() {
   try {
     const session = await getSession();
+    const deniedGET = checkRoutePermission(session, { url: "/api/reports/saved", method: "GET" });
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
 
     const reports = await db.savedReport.findMany({ orderBy: { updatedAt: "desc" } });
@@ -19,6 +21,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, { url: "/api/reports/saved", method: "POST" });
+    if (deniedPOST) return deniedPOST;
     if (!session) return apiError("Unauthorized", 401);
 
     const data = await req.json();
@@ -42,6 +46,8 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPUT = checkRoutePermission(session, { url: "/api/reports/saved", method: "PUT" });
+    if (deniedPUT) return deniedPUT;
     if (!session) return apiError("Unauthorized", 401);
 
     const data = await req.json();
@@ -64,6 +70,11 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, {
+      url: "/api/reports/saved",
+      method: "DELETE",
+    });
+    if (deniedDELETE) return deniedDELETE;
     if (!session) return apiError("Unauthorized", 401);
 
     const { searchParams } = new URL(req.url);

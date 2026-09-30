@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, diffChanges } from "@/lib/activity";
 import { getApplicationStatuses } from "@/lib/application-statuses";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedGET = checkRoutePermission(session, {
+      url: "/api/applications/[id]",
+      method: "GET",
+    });
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
 
     const { id } = await params;
@@ -33,6 +38,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedPATCH = checkRoutePermission(session, {
+      url: "/api/applications/[id]",
+      method: "PATCH",
+    });
+    if (deniedPATCH) return deniedPATCH;
     if (!session) return apiError("Unauthorized", 401);
 
     const { id } = await params;
@@ -87,6 +97,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, {
+      url: "/api/applications/[id]",
+      method: "DELETE",
+    });
+    if (deniedDELETE) return deniedDELETE;
     if (!session) return apiError("Unauthorized", 401);
 
     const { id } = await params;

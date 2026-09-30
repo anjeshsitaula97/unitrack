@@ -1,23 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch (_err) {
-    return null;
-  }
-}
+import { checkRoutePermission, getSession } from "@/lib/api-utils";
 
 export async function GET() {
   try {
     const session = await getSession();
+    const deniedGET = checkRoutePermission(session, { url: "/api/notifications", method: "GET" });
+    if (deniedGET) return deniedGET;
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -58,6 +48,8 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, { url: "/api/notifications", method: "POST" });
+    if (deniedPOST) return deniedPOST;
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -82,6 +74,8 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const session = await getSession();
+    const deniedPUT = checkRoutePermission(session, { url: "/api/notifications", method: "PUT" });
+    if (deniedPUT) return deniedPUT;
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -115,6 +109,11 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, {
+      url: "/api/notifications",
+      method: "DELETE",
+    });
+    if (deniedDELETE) return deniedDELETE;
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

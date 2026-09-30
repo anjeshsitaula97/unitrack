@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession } from "@/lib/api-utils";
+import { getSession, checkPermission, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
 export async function GET() {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "qualifications:read");
+    if (deniedGET) return deniedGET;
     const degreeTypes = await db.degreeType.findMany({
       orderBy: { name: "asc" },
     });
@@ -18,6 +21,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, { url: "/api/degree-types", method: "POST" });
+    if (deniedPOST) return deniedPOST;
     const data = await req.json();
     if (!data.name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
 
@@ -40,6 +45,8 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPUT = checkRoutePermission(session, { url: "/api/degree-types", method: "PUT" });
+    if (deniedPUT) return deniedPUT;
     const data = await req.json();
     const { id, name } = data;
     if (!id || !name)
@@ -67,6 +74,11 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, {
+      url: "/api/degree-types",
+      method: "DELETE",
+    });
+    if (deniedDELETE) return deniedDELETE;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "ID is required" }, { status: 400 });

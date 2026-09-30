@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, { url: "/api/comparison", method: "POST" });
+    if (deniedPOST) return deniedPOST;
     if (!session) return apiError("Unauthorized", 401);
 
     const { type, ids } = await req.json();

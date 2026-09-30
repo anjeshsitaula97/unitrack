@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import nodemailer from "nodemailer";
 import { db } from "@/lib/db";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { createNotification } from "@/lib/notifications";
 import { logActivity } from "@/lib/activity";
 import { normalizeRecipients } from "@/lib/email-recipients";
@@ -10,6 +10,8 @@ import { normalizeRecipients } from "@/lib/email-recipients";
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkPermission(session, "email:create");
+    if (deniedPOST) return deniedPOST;
     if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 
@@ -88,6 +90,8 @@ export async function POST(req: NextRequest) {
 export async function GET(_req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedGET = checkPermission(session, "email:read");
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
 
     const settings = await db.emailSetting.findFirst({

@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { createNotification } from "@/lib/notifications";
 import { softDeleteStudent } from "@/lib/trash";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logError } from "@/lib/logger";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -12,6 +12,8 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedGET = checkPermission(session, "students:read");
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
 
     const { id } = await params;
@@ -40,13 +42,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedPUT = checkPermission(session, "students:update");
+    if (deniedPUT) return deniedPUT;
     if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 
     // Rate limit student updates
     const rl = await checkRateLimit(`update-student:${getClientIp(req)}`, 30, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const { id } = await params;
@@ -223,13 +230,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkPermission(session, "students:delete");
+    if (deniedDELETE) return deniedDELETE;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 
     // Rate limit student deletion
     const rl = await checkRateLimit(`delete-student:${getClientIp(req)}`, 10, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const { id } = await params;

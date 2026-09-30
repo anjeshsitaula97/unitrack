@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logError } from "@/lib/logger";
 import { logActivity, getActorName } from "@/lib/activity";
 import {
@@ -11,6 +11,9 @@ import {
 
 export async function GET() {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "settings:read");
+    if (deniedGET) return deniedGET;
     const settings = await db.systemSettings.findFirst();
     return NextResponse.json({
       statuses: getApplicationStatuses(settings?.applicationStatuses),
@@ -24,6 +27,8 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPUT = checkPermission(session, "settings:update");
+    if (deniedPUT) return deniedPUT;
     if (!session) return apiError("Unauthorized", 401);
     if (!["admin", "super admin"].includes((session.role as string).toLowerCase())) {
       return apiError("Forbidden: insufficient permissions", 403);

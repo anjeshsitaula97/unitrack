@@ -295,6 +295,7 @@ export function deleteStoredFile(fileUrl: string, ...subdirs: string[]): void {
   if (!/^[A-Za-z0-9._-]+$/.test(relName) || relName === "." || relName === "..") return;
 
   for (const dir of [getUploadsDir(...subdirs), getLegacyUploadsDir(...subdirs)]) {
+    if (!dir) continue;
     const resolvedDir = path.resolve(dir);
     const filePath = path.resolve(path.join(resolvedDir, relName));
     if (!filePath.startsWith(`${resolvedDir}${path.sep}`)) continue;

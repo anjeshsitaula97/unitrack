@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { deleteUploadedFile } from "@/lib/marketing-files";
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, {
+      url: "/api/marketing/materials/[id]",
+      method: "DELETE",
+    });
+    if (deniedDELETE) return deniedDELETE;
     if (!session) return apiError("Unauthorized", 401);
 
     const { id } = await params;

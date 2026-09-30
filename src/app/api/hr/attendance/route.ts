@@ -2,20 +2,8 @@ import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch {
-    return null;
-  }
-}
+import { checkRoutePermission, getSession } from "@/lib/api-utils";
 
 function toRad(deg: number) {
   return deg * (Math.PI / 180);
@@ -67,6 +55,8 @@ async function validateLocation(lat: number, lng: number, userId?: number) {
 export async function GET(req: Request) {
   try {
     const session = await getSession();
+    const deniedGET = checkRoutePermission(session, { url: "/api/hr/attendance", method: "GET" });
+    if (deniedGET) return deniedGET;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
@@ -128,6 +118,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, { url: "/api/hr/attendance", method: "POST" });
+    if (deniedPOST) return deniedPOST;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();

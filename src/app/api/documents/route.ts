@@ -1,24 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
-import { verifyAuth } from "@/lib/session";
 import { logActivity, getActorName } from "@/lib/activity";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch {
-    return null;
-  }
-}
+import { checkRoutePermission, getSession } from "@/lib/api-utils";
 
 export async function GET() {
   try {
     const session = await getSession();
+    const deniedGET = checkRoutePermission(session, { url: "/api/documents", method: "GET" });
+    if (deniedGET) return deniedGET;
     if (!session?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -38,6 +28,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, { url: "/api/documents", method: "POST" });
+    if (deniedPOST) return deniedPOST;
     if (!session?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -76,6 +68,8 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, { url: "/api/documents", method: "DELETE" });
+    if (deniedDELETE) return deniedDELETE;
     if (!session?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

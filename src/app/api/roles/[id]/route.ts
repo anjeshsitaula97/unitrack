@@ -2,22 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
 import { logActivity, diffChanges } from "@/lib/activity";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { validateCsrfHeaders } from "@/lib/csrf";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch (_err) {
-    return null;
-  }
-}
+import { getSession, checkPermission } from "@/lib/api-utils";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -28,6 +16,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const session = await getSession();
+    const deniedPUT = checkPermission(session, "admin:access");
+    if (deniedPUT) return deniedPUT;
     if (!session || !["Admin", "Super Admin"].includes(session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -86,6 +76,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     const session = await getSession();
+    const deniedDELETE = checkPermission(session, "admin:access");
+    if (deniedDELETE) return deniedDELETE;
     if (!session || !["Admin", "Super Admin"].includes(session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

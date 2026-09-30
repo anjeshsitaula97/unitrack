@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
 
 export async function GET(_req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedGET = checkPermission(session, "email:read");
+    if (deniedGET) return deniedGET;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 
@@ -32,6 +34,8 @@ export async function GET(_req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkPermission(session, "email:create");
+    if (deniedPOST) return deniedPOST;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 
@@ -128,6 +132,8 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkPermission(session, "email:delete");
+    if (deniedDELETE) return deniedDELETE;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 

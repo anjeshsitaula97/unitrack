@@ -5,7 +5,7 @@ import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { z } from "zod";
 import { createNotification } from "@/lib/notifications";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
 import { logError } from "@/lib/logger";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -39,6 +39,8 @@ const escapeHtml = (value: string) =>
 export async function GET() {
   try {
     const session = await getSession();
+    const deniedGET = checkPermission(session, "admin:access");
+    if (deniedGET) return deniedGET;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 
@@ -66,13 +68,18 @@ export async function POST(req: NextRequest) {
     }
 
     const session = await getSession();
+    const deniedPOST = checkPermission(session, "admin:access");
+    if (deniedPOST) return deniedPOST;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 
     // Rate limit user creation
     const rl = await checkRateLimit(`create-user:${getClientIp(req)}`, 10, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const parsed = createUserSchema.safeParse(await req.json());

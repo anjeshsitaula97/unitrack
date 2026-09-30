@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { checkPermission, getSession } from "@/lib/api-utils";
 
 function capitalize(str: string) {
   if (!str) return "";
@@ -36,6 +37,9 @@ const provinceNames: Record<number, string> = {
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "nepal:read");
+    if (deniedGET) return deniedGET;
     const { searchParams } = new URL(req.url);
     const province = searchParams.get("province");
 

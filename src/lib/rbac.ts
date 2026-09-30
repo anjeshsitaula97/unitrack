@@ -2,7 +2,17 @@ import { NextResponse } from "next/server";
 import { hasPermission } from "./permissions";
 import { apiError, type SessionPayload } from "./api-utils";
 
-type PermissionAction = "read" | "create" | "update" | "delete" | "export" | "import" | "manage" | "view" | "access" | "credentials";
+type PermissionAction =
+  | "read"
+  | "create"
+  | "update"
+  | "delete"
+  | "export"
+  | "import"
+  | "manage"
+  | "view"
+  | "access"
+  | "credentials";
 
 function methodToAction(method: string): PermissionAction {
   switch (method) {
@@ -31,7 +41,7 @@ function moduleToPermission(module: string, action: PermissionAction): string {
     expenses: "expenses",
     reports: "reports",
     analytics: "analytics",
-    "hr": "hr",
+    hr: "hr",
     files: "files",
     calendar: "calendar",
     visa: "visa",
@@ -39,7 +49,7 @@ function moduleToPermission(module: string, action: PermissionAction): string {
     users: "users",
     roles: "roles",
     permissions: "permissions",
-    "api_keys": "api_keys",
+    api_keys: "api_keys",
     settings: "settings",
     chat: "chat",
     email: "email",
@@ -48,7 +58,7 @@ function moduleToPermission(module: string, action: PermissionAction): string {
     audit: "audit",
     trash: "trash",
     backups: "backups",
-    "bulk": "bulk",
+    bulk: "bulk",
     qualifications: "qualifications",
     faculties: "qualifications",
     "degree-types": "qualifications",
@@ -60,7 +70,24 @@ function moduleToPermission(module: string, action: PermissionAction): string {
     "student-portal": "students",
     "student-messages": "students",
     "partner-dashboard": "universities",
-    "marketing": "notifications",
+    marketing: "marketing",
+    "marketing/requests": "marketing",
+    batch: "bulk",
+    comparison: "compare",
+    "dashboard-layout": "dashboard",
+    embassy: "embassy",
+    "guided-tour": "dashboard",
+    holidays: "calendar",
+    intakes: "intakes",
+    "learning-resources": "learning",
+    master: "master",
+    search: "search",
+    upload: "files",
+    uploads: "files",
+    "visa-types": "visa",
+    "visa-timeline": "visa",
+    "visa-checklists": "visa",
+    "workflow-stages": "workflow",
     "hr/attendance": "hr",
     "hr/leave": "hr",
     "hr/payroll": "hr",
@@ -96,7 +123,7 @@ export function checkRoutePermission(
 ): NextResponse | null {
   const routePath = typeof arg2 === "string" ? arg2 : arg2?.url;
   const method = arg3 ?? (typeof arg2 === "object" ? arg2?.method : undefined);
-  
+
   if (!session) return apiError("Unauthorized", 401);
   if (!routePath) return null;
 

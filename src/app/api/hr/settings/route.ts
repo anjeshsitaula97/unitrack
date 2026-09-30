@@ -1,24 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
 import { logActivity, getActorName } from "@/lib/activity";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch {
-    return null;
-  }
-}
+import { checkPermission, getSession } from "@/lib/api-utils";
 
 export async function GET() {
   try {
     const session = await getSession();
+    const deniedGET = checkPermission(session, "hr:read");
+    if (deniedGET) return deniedGET;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const settings = await db.systemSettings.findFirst();
@@ -37,6 +27,8 @@ export async function GET() {
 export async function PUT(req: Request) {
   try {
     const session = await getSession();
+    const deniedPUT = checkPermission(session, "settings:update");
+    if (deniedPUT) return deniedPUT;
     if (!session || !["Admin", "Super Admin"].includes(session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

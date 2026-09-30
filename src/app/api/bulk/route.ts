@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { createNotification } from "@/lib/notifications";
 import * as XLSX from "xlsx";
 import { Prisma } from "@prisma/client";
@@ -59,6 +59,8 @@ interface CsvRow {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkPermission(session, "bulk:create");
+    if (deniedPOST) return deniedPOST;
     if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role)) {
       return apiError("Forbidden", 403);
     }
@@ -410,6 +412,8 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedGET = checkPermission(session, "bulk:read");
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
 
     const { searchParams } = new URL(req.url);

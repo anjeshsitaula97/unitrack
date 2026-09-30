@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 
 export async function GET(request: Request) {
   try {
     const session = await getSession();
+    const deniedGET = checkRoutePermission(session, { url: "/api/search", method: "GET" });
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
 
     const { searchParams } = new URL(request.url);

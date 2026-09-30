@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession } from "@/lib/api-utils";
+import { getSession, checkPermission, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
 
 export async function GET() {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "branches:read");
+    if (deniedGET) return deniedGET;
     const branches = await db.branch.findMany({
       orderBy: { createdAt: "desc" },
     });
@@ -19,6 +22,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, { url: "/api/branches", method: "POST" });
+    if (deniedPOST) return deniedPOST;
     const data = await req.json();
 
     if (!data.name) {

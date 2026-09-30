@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { db as prisma } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession } from "@/lib/api-utils";
+import { getSession, checkPermission, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
 export async function GET(req: Request) {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "visa:read");
+    if (deniedGET) return deniedGET;
     const { searchParams } = new URL(req.url);
     const country = searchParams.get("country");
     const visaType = searchParams.get("visaType");
@@ -29,6 +32,11 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, {
+      url: "/api/visa-checklists",
+      method: "POST",
+    });
+    if (deniedPOST) return deniedPOST;
     const { country, visaType, title, description, isRequired } = await req.json();
 
     if (!country || !visaType || !title) {
@@ -65,6 +73,8 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const session = await getSession();
+    const deniedPUT = checkRoutePermission(session, { url: "/api/visa-checklists", method: "PUT" });
+    if (deniedPUT) return deniedPUT;
     const { id, title, description, isRequired } = await req.json();
 
     if (!id || !title) {
@@ -100,6 +110,11 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, {
+      url: "/api/visa-checklists",
+      method: "DELETE",
+    });
+    if (deniedDELETE) return deniedDELETE;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 

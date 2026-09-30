@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkPermission, getSession } from "@/lib/api-utils";
 
 const PROVINCES = [
   { id: 1, name: "Koshi Province" },
@@ -11,5 +12,8 @@ const PROVINCES = [
 ];
 
 export async function GET() {
+  const session = await getSession();
+  const deniedGET = checkPermission(session, "nepal:read");
+  if (deniedGET) return deniedGET;
   return NextResponse.json(PROVINCES);
 }

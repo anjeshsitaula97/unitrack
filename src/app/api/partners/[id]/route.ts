@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession } from "@/lib/api-utils";
+import { getSession, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -10,6 +10,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { id } = await params;
     const body = await req.json();
     const session = await getSession();
+    const deniedPATCH = checkRoutePermission(session, {
+      url: "/api/partners/[id]",
+      method: "PATCH",
+    });
+    if (deniedPATCH) return deniedPATCH;
 
     const updateData: Record<string, unknown> = {};
     for (const field of ["name", "contactPerson", "email", "phone", "address", "description"]) {
@@ -46,6 +51,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   try {
     const { id } = await params;
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, {
+      url: "/api/partners/[id]",
+      method: "DELETE",
+    });
+    if (deniedDELETE) return deniedDELETE;
 
     const partner = await db.partner.findUnique({ where: { id: Number(id) } });
 

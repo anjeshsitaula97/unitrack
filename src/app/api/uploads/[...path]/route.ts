@@ -5,6 +5,7 @@ import {
   resolveStoredUpload,
   UPLOAD_CONTENT_SECURITY_POLICY,
 } from "@/lib/upload-storage";
+import { getSession, getStudentSession } from "@/lib/api-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,21 @@ interface RouteContext {
   params: Promise<{ path: string[] }>;
 }
 
+/**
+ * Every upload lives under one public directory and is rewritten here from
+ * /uploads/*, so this route is the only place that can gate access. It sits
+ * outside the auth proxy, which deliberately lets /uploads/* through.
+ *
+ * No upload is readable anonymously: the pages that render logos, avatars and
+ * marketing collateral are all behind authentication, and assets are fetched
+ * same-origin with the session cookie, so signing in is always sufficient.
+ */
 export async function GET(_request: NextRequest, context: RouteContext) {
+  const [session, studentSession] = await Promise.all([getSession(), getStudentSession()]);
+  if (!session && !studentSession) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   const { path: segments } = await context.params;
   const relativePath = segments
     .map((segment) => {
@@ -43,7 +58,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       "Content-Length": String(data.byteLength),
       "X-Content-Type-Options": "nosniff",
       "Content-Security-Policy": UPLOAD_CONTENT_SECURITY_POLICY,
-      "Cache-Control": "public, max-age=31536000, immutable",
+      "Cache-Control": "private, max-age=3600",
     },
   });
 }

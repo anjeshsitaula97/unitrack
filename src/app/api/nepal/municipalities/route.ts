@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { checkPermission, getSession } from "@/lib/api-utils";
 
 function capitalize(str: string) {
   if (!str) return "";
@@ -23,14 +24,15 @@ try {
 
 const districtMunicipalityMap: Record<string, string[]> = {};
 districtsData.forEach((d) => {
-  const muniNames = municipalitiesData
-    .filter((m) => m.district_id === d.id)
-    .map((m) => m.name);
+  const muniNames = municipalitiesData.filter((m) => m.district_id === d.id).map((m) => m.name);
   districtMunicipalityMap[d.name] = muniNames;
 });
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "nepal:read");
+    if (deniedGET) return deniedGET;
     const { searchParams } = new URL(req.url);
     const district = searchParams.get("district");
 
@@ -42,7 +44,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(result);
     }
 
-    const matchedDistrict = districtsData.find((d) => d.name.toLowerCase() === district.toLowerCase());
+    const matchedDistrict = districtsData.find(
+      (d) => d.name.toLowerCase() === district.toLowerCase()
+    );
     if (!matchedDistrict) return NextResponse.json([]);
 
     const list = districtMunicipalityMap[matchedDistrict.name] || [];

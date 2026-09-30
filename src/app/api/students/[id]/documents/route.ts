@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
 import { deleteStoredFile } from "@/lib/upload-security";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, {
+      url: "/api/students/[id]/documents",
+      method: "POST",
+    });
+    if (deniedPOST) return deniedPOST;
     if (!session) return apiError("Unauthorized", 401);
 
     const { id } = await params;
@@ -53,6 +58,11 @@ export async function DELETE(
 ) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, {
+      url: "/api/students/[id]/documents",
+      method: "DELETE",
+    });
+    if (deniedDELETE) return deniedDELETE;
     if (!session) return apiError("Unauthorized", 401);
 
     const { searchParams } = new URL(req.url);

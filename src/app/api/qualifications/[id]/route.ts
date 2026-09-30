@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession } from "@/lib/api-utils";
+import { getSession, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedPATCH = checkRoutePermission(session, {
+      url: "/api/qualifications/[id]",
+      method: "PATCH",
+    });
+    if (deniedPATCH) return deniedPATCH;
     const { id } = await params;
     const { name } = await req.json();
     if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -40,6 +45,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, {
+      url: "/api/qualifications/[id]",
+      method: "DELETE",
+    });
+    if (deniedDELETE) return deniedDELETE;
     const { id } = await params;
     const qualification = await db.qualification.findUnique({ where: { id: Number(id) } });
     await db.qualification.delete({

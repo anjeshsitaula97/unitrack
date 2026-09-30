@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkPermission(session, "email:update");
+    if (deniedPOST) return deniedPOST;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 

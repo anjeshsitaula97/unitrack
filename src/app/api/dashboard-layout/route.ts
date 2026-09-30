@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 
 export async function GET() {
   try {
     const session = await getSession();
+    const deniedGET = checkRoutePermission(session, {
+      url: "/api/dashboard-layout",
+      method: "GET",
+    });
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
 
     const layout = await db.dashboardLayout.findUnique({ where: { userId: String(session.id) } });
@@ -19,6 +24,11 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, {
+      url: "/api/dashboard-layout",
+      method: "POST",
+    });
+    if (deniedPOST) return deniedPOST;
     if (!session) return apiError("Unauthorized", 401);
 
     const body = await req.json();

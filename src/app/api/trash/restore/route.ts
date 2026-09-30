@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { restoreFromTrash } from "@/lib/trash";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
@@ -8,6 +8,8 @@ import { logActivity } from "@/lib/activity";
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkPermission(session, "trash:restore");
+    if (deniedPOST) return deniedPOST;
     if (!session) return apiError("Unauthorized", 401);
     if (!["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Forbidden", 403);

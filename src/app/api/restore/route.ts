@@ -3,7 +3,7 @@ import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { decryptBackup } from "@/lib/crypto";
 import type { EncryptedPayload } from "@/lib/crypto";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 
 const ALLOWED_TABLES = new Set([
   "universities",
@@ -57,6 +57,8 @@ const MAX_BACKUP_SIZE = 50 * 1024 * 1024; // 50MB
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkPermission(session, "admin:access");
+    if (deniedPOST) return deniedPOST;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 

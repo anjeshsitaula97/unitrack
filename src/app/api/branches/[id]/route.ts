@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession } from "@/lib/api-utils";
+import { getSession, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedPUT = checkRoutePermission(session, { url: "/api/branches/[id]", method: "PUT" });
+    if (deniedPUT) return deniedPUT;
     const { id } = await params;
     const data = await req.json();
 
@@ -46,6 +48,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, {
+      url: "/api/branches/[id]",
+      method: "DELETE",
+    });
+    if (deniedDELETE) return deniedDELETE;
     const { id } = await params;
     const branch = await db.branch.findUnique({ where: { id: Number(id) } });
     await db.branch.delete({

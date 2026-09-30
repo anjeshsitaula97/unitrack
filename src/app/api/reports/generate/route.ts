@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, {
+      url: "/api/reports/generate",
+      method: "POST",
+    });
+    if (deniedPOST) return deniedPOST;
     if (!session) return apiError("Unauthorized", 401);
 
     const { entity, fields, filters, chartType: _chartType } = await req.json();
@@ -30,8 +35,7 @@ export async function POST(req: NextRequest) {
           where[f.field] = { gt: isNaN(Number(f.value)) ? f.value : Number(f.value) };
         else if (f.op === "lt")
           where[f.field] = { lt: isNaN(Number(f.value)) ? f.value : Number(f.value) };
-        else if (f.op === "startsWith")
-          where[f.field] = { startsWith: f.value };
+        else if (f.op === "startsWith") where[f.field] = { startsWith: f.value };
       }
     }
 

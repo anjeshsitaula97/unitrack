@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 import { logError } from "@/lib/logger";
 
@@ -11,6 +11,8 @@ const _ALLOWED_FIELDS = ["role", "status", "password"];
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedPUT = checkPermission(session, "admin:access");
+    if (deniedPUT) return deniedPUT;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 
@@ -76,6 +78,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkPermission(session, "admin:access");
+    if (deniedDELETE) return deniedDELETE;
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 

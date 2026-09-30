@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { checkPermission, getSession } from "@/lib/api-utils";
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -36,6 +37,9 @@ try {
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "nepal:read");
+    if (deniedGET) return deniedGET;
     const { searchParams } = new URL(req.url);
     const district = searchParams.get("district");
     const municipality = searchParams.get("municipality");

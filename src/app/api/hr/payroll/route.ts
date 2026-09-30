@@ -2,20 +2,8 @@ import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
 import { logActivity, getActorName } from "@/lib/activity";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch {
-    return null;
-  }
-}
+import { getSession, checkPermission } from "@/lib/api-utils";
 
 export async function GET(req: Request) {
   try {
@@ -56,6 +44,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
+    const deniedPOST = checkPermission(session, "hr:payroll");
+    if (deniedPOST) return deniedPOST;
     if (!session || !["Admin", "Super Admin"].includes(session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

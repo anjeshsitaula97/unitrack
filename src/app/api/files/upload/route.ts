@@ -1,22 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { verifyAuth } from "@/lib/session";
 import { readUploadedFile, writeUploadedBuffer, UploadError } from "@/lib/upload-security";
+import { checkRoutePermission, getSession } from "@/lib/api-utils";
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch {
-    return null;
-  }
-}
 
 function buildDisplayName(
   baseName: string,
@@ -32,6 +20,8 @@ function buildDisplayName(
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, { url: "/api/files/upload", method: "POST" });
+    if (deniedPOST) return deniedPOST;
     if (!session?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

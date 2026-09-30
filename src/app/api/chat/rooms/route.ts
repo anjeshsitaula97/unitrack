@@ -1,21 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch {
-    return null;
-  }
-}
+import { checkPermission, getSession } from "@/lib/api-utils";
 
 export async function GET() {
   const session = await getSession();
+  const deniedGET = checkPermission(session, "chat:read");
+  if (deniedGET) return deniedGET;
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -32,6 +22,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const session = await getSession();
+  const deniedPOST = checkPermission(session, "chat:send");
+  if (deniedPOST) return deniedPOST;
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -9,6 +9,9 @@ const nextConfig = {
   },
 
   images: {
+    // The optimiser fetches /uploads/* server-side without the session cookie,
+    // which both 401s on protected files and caches them into shared variants.
+    unoptimized: true,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",

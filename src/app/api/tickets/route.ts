@@ -2,22 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
-
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-  try {
-    return await verifyAuth(token);
-  } catch (_err) {
-    return null;
-  }
-}
+import { checkPermission, checkRoutePermission, getSession } from "@/lib/api-utils";
 
 export async function GET(_req: NextRequest) {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "tickets:read");
+    if (deniedGET) return deniedGET;
     const tickets = await db.ticket.findMany({
       include: {
         creator: {
@@ -35,6 +26,8 @@ export async function GET(_req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, { url: "/api/tickets", method: "POST" });
+    if (deniedPOST) return deniedPOST;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const data = await req.json();
@@ -74,6 +67,8 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedPATCH = checkRoutePermission(session, { url: "/api/tickets", method: "PATCH" });
+    if (deniedPATCH) return deniedPATCH;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const data = await req.json();
@@ -114,6 +109,8 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, { url: "/api/tickets", method: "DELETE" });
+    if (deniedDELETE) return deniedDELETE;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);

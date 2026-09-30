@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
-import { getSession, apiError } from "@/lib/api-utils";
+import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { fetchMasterCourses, isConfigured } from "@/lib/master-api";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
+    const deniedGET = checkRoutePermission(session, { url: "/api/master/courses", method: "GET" });
+    if (deniedGET) return deniedGET;
     if (!session) return apiError("Unauthorized", 401);
 
     if (!isConfigured()) {

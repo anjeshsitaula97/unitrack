@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { db as prisma } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { getSession } from "@/lib/api-utils";
+import { getSession, checkPermission, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 
 export async function GET(req: Request) {
   try {
+    const session = await getSession();
+    const deniedGET = checkPermission(session, "embassy:read");
+    if (deniedGET) return deniedGET;
     const { searchParams } = new URL(req.url);
     const country = searchParams.get("country");
     const visaType = searchParams.get("visaType");
@@ -28,6 +31,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, { url: "/api/embassy", method: "POST" });
+    if (deniedPOST) return deniedPOST;
     const { country, visaType, name, address, phone, email, website, workingHours } =
       await req.json();
 
@@ -77,6 +82,8 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const session = await getSession();
+    const deniedDELETE = checkRoutePermission(session, { url: "/api/embassy", method: "DELETE" });
+    if (deniedDELETE) return deniedDELETE;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
