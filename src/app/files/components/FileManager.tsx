@@ -111,6 +111,27 @@ interface FileData {
   academicDocument?: { id: string; name: string } | null;
 }
 
+// The API returns numeric primary keys while these models declare string ids.
+// Normalising on read keeps `String.prototype` calls (e.g. startsWith) safe.
+function normalizeFolder(folder: unknown): FolderData {
+  const f = folder as Record<string, unknown>;
+  return {
+    ...(f as unknown as FolderData),
+    id: String(f.id),
+    userId: String(f.userId),
+  };
+}
+
+function normalizeFile(file: unknown): FileData {
+  const f = file as Record<string, unknown>;
+  return {
+    ...(f as unknown as FileData),
+    id: String(f.id),
+    folderId: f.folderId != null ? String(f.folderId) : undefined,
+    userId: f.userId != null ? String(f.userId) : undefined,
+  };
+}
+
 function CreateFolderDialog({
   open,
   onClose,
@@ -218,11 +239,15 @@ function AddFileDialog({
 }) {
   const [loading, setLoading] = useState(false);
   const [academicDocumentId, setAcademicDocumentId] = useState("");
+  const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
-      const timer = setTimeout(() => setAcademicDocumentId(""), 0);
+      const timer = setTimeout(() => {
+        setAcademicDocumentId("");
+        setError("");
+      }, 0);
       return () => clearTimeout(timer);
     }
   }, [open]);
@@ -233,11 +258,15 @@ function AddFileDialog({
     const file = e.target.files?.[0];
     if (!file) return;
     setLoading(true);
+    setError("");
     try {
       await onSubmit(file, academicDocumentId || undefined);
       onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setLoading(false);
+      e.target.value = "";
     }
   };
 
@@ -284,6 +313,14 @@ function AddFileDialog({
                 ))}
               </select>
             </div>
+          )}
+          {error && (
+            <p
+              role="alert"
+              className="mb-4 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700"
+            >
+              {error}
+            </p>
           )}
           <div className="text-center">
             {loading ? (
@@ -913,7 +950,7 @@ export default function FileManager() {
       const res = await fetch("/api/files/folders");
       if (res.ok) {
         const data = await res.json();
-        setFolders(Array.isArray(data) ? data : []);
+        setFolders(Array.isArray(data) ? data.map(normalizeFolder) : []);
       }
     } catch {
       // silent
@@ -931,8 +968,9 @@ export default function FileManager() {
     fetchAcademicDocumentsRef.current();
   }, []);
 
-  const fetchFiles = async (folderId: string) => {
+  const fetchFiles = async (rawFolderId: string | number) => {
     setFilesLoading(true);
+    const folderId = String(rawFolderId);
     try {
       if (folderId.startsWith("student_")) {
         const studentId = folderId.replace("student_", "");
@@ -941,7 +979,10 @@ export default function FileManager() {
           const student = await res.json();
           setFiles(
             Array.isArray(student.documents)
-              ? student.documents.map((d: FileData) => ({ ...d, __studentId: studentId }))
+              ? student.documents.map((d: FileData) => ({
+                  ...normalizeFile(d),
+                  __studentId: studentId,
+                }))
               : []
           );
         }
@@ -949,11 +990,13 @@ export default function FileManager() {
         const res = await fetch(`/api/files?folderId=${folderId}`);
         if (res.ok) {
           const data = await res.json();
-          setFiles(Array.isArray(data) ? data : []);
+          setFiles(Array.isArray(data) ? data.map(normalizeFile) : []);
         }
       }
-    } catch {
-      // silent
+    } catch (error) {
+      console.error("Failed to load files", error);
+      toast.error("Failed to load files");
+      setFiles([]);
     } finally {
       setFilesLoading(false);
     }
@@ -966,7 +1009,7 @@ export default function FileManager() {
       body: JSON.stringify({ name }),
     });
     if (!res.ok) throw new Error("Failed to create folder");
-    const folder = await res.json();
+    const folder = normalizeFolder(await res.json());
     setFolders((prev) => [folder, ...(prev ?? [])]);
     toast.success("Folder created");
   };
@@ -995,8 +1038,11 @@ export default function FileManager() {
       method: "POST",
       body: formData,
     });
-    if (!res.ok) throw new Error("Upload failed");
-    const newFile = await res.json();
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new Error(body?.error || "Upload failed");
+    }
+    const newFile = normalizeFile(await res.json());
     setFiles((prev) => [newFile, ...(prev ?? [])]);
     setFolders((prev) =>
       (prev ?? []).map((f) =>
@@ -1015,8 +1061,11 @@ export default function FileManager() {
       method: "POST",
       body: formData,
     });
-    if (!res.ok) throw new Error("Upload failed");
-    const newFile = await res.json();
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new Error(body?.error || "Upload failed");
+    }
+    const newFile = normalizeFile(await res.json());
     setFiles((prev) => [newFile, ...(prev ?? [])]);
     setFolders((prev) =>
       (prev ?? []).map((f) =>

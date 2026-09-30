@@ -109,6 +109,10 @@ export async function POST(req: NextRequest) {
         userId: session.id,
         academicDocumentId: academicDocumentIdNum,
       },
+      include: {
+        academicDocument: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true } },
+      },
     });
 
     return NextResponse.json(fileItem, { status: 201 });
