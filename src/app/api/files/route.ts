@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { verifyAuth } from "@/lib/session";
 import { logActivity, getActorName } from "@/lib/activity";
+import { deleteStoredFile } from "@/lib/upload-security";
 
 async function getSession() {
   const cookieStore = await cookies();
@@ -71,6 +72,15 @@ export async function DELETE(req: NextRequest) {
     }
 
     await db.fileItem.delete({ where: { id: Number(id) } });
+
+    // Drop the stored blob as well, otherwise deleting the row just leaves the
+    // file orphaned on disk forever. The row is already gone at this point, so a
+    // failure here must not turn a successful delete into an error.
+    try {
+      deleteStoredFile(file.url);
+    } catch (cleanupError) {
+      logError("Error removing stored file:", cleanupError);
+    }
 
     await logActivity({
       actorName: await getActorName(session?.id),

@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { verifyAuth } from "@/lib/session";
 import { logActivity, getActorName } from "@/lib/activity";
+import { deleteStoredFile } from "@/lib/upload-security";
 
 async function getSession() {
   const cookieStore = await cookies();
@@ -111,7 +112,22 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    // Collect the stored paths first: deleting the folder cascades its file rows
+    // away, after which there is nothing left to tell us what to clean up.
+    const files = await db.fileItem.findMany({
+      where: { folderId: Number(id) },
+      select: { url: true },
+    });
+
     await db.fileFolder.delete({ where: { id: Number(id) } });
+
+    for (const file of files) {
+      try {
+        deleteStoredFile(file.url);
+      } catch (cleanupError) {
+        logError("Error removing stored file:", cleanupError);
+      }
+    }
 
     await logActivity({
       actorName: await getActorName(session?.id),

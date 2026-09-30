@@ -3,6 +3,7 @@ import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { getSession, apiError } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
+import { deleteStoredFile } from "@/lib/upload-security";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -70,6 +71,14 @@ export async function DELETE(
     });
 
     if (existing) {
+      // The row is gone, so remove the blob separately and never fail the
+      // request if the unlink does.
+      try {
+        deleteStoredFile(existing.url);
+      } catch (cleanupError) {
+        logError("Error removing stored document:", cleanupError);
+      }
+
       await logActivity({
         actorName: await getActorName(undefined),
         userId: undefined,

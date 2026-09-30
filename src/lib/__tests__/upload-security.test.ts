@@ -1,5 +1,15 @@
-import { describe, it, expect } from "vitest";
-import { readUploadedFile, sanitizeSvg, isSvgDocument, UploadError } from "../upload-security";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import fs from "fs";
+import os from "os";
+import path from "path";
+import crypto from "crypto";
+import {
+  readUploadedFile,
+  sanitizeSvg,
+  isSvgDocument,
+  deleteStoredFile,
+  UploadError,
+} from "../upload-security";
 
 function svgFile(content: string, name = "logo.svg", type = "image/svg+xml") {
   return new File([content], name, { type });
@@ -100,5 +110,59 @@ describe("readUploadedFile svg handling", () => {
     await expect(readUploadedFile(svgFile(SAFE_SVG, "logo.svg", "text/html"))).rejects.toThrow(
       UploadError
     );
+  });
+});
+
+describe("deleteStoredFile", () => {
+  const originalUploadsDir = process.env.UPLOADS_DIR;
+  let tmpRoot: string;
+
+  beforeEach(() => {
+    tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "unitrack-upload-"));
+    process.env.UPLOADS_DIR = tmpRoot;
+  });
+
+  afterEach(() => {
+    if (originalUploadsDir === undefined) delete process.env.UPLOADS_DIR;
+    else process.env.UPLOADS_DIR = originalUploadsDir;
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
+  });
+
+  it("removes a stored file from the uploads root", () => {
+    const name = `${crypto.randomUUID()}.pdf`;
+    const target = path.join(tmpRoot, name);
+    fs.writeFileSync(target, "hello");
+
+    deleteStoredFile(`/uploads/${name}`);
+
+    expect(fs.existsSync(target)).toBe(false);
+  });
+
+  it("is a no-op for urls outside the uploads prefix", () => {
+    const outside = path.join(tmpRoot, "..", "keep-me.txt");
+    const target = path.resolve(outside);
+    fs.writeFileSync(target, "keep");
+
+    deleteStoredFile("/uploads/../keep-me.txt");
+    deleteStoredFile("https://example.com/evil.pdf");
+    deleteStoredFile("");
+
+    expect(fs.existsSync(target)).toBe(true);
+    fs.rmSync(target, { force: true });
+  });
+
+  it("refuses to escape the uploads root via traversal", () => {
+    const victim = path.join(tmpRoot, "..", "victim.txt");
+    const target = path.resolve(victim);
+    fs.writeFileSync(target, "victim");
+
+    deleteStoredFile("/uploads/../victim.txt");
+
+    expect(fs.existsSync(target)).toBe(true);
+    fs.rmSync(target, { force: true });
+  });
+
+  it("ignores a missing file without throwing", () => {
+    expect(() => deleteStoredFile(`/uploads/${crypto.randomUUID()}.png`)).not.toThrow();
   });
 });
