@@ -6,6 +6,7 @@ import {
   UPLOAD_CONTENT_SECURITY_POLICY,
 } from "@/lib/upload-storage";
 import { getSession, getStudentSession } from "@/lib/api-utils";
+import { authorizeUploadAccess } from "@/lib/upload-access";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,9 @@ interface RouteContext {
  * No upload is readable anonymously: the pages that render logos, avatars and
  * marketing collateral are all behind authentication, and assets are fetched
  * same-origin with the session cookie, so signing in is always sufficient.
+ *
+ * A session alone is not enough. The file is resolved back to the record that
+ * owns it, so one user cannot read another's private document by learning a URL.
  */
 export async function GET(_request: NextRequest, context: RouteContext) {
   const [session, studentSession] = await Promise.all([getSession(), getStudentSession()]);
@@ -47,6 +51,10 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   const contentType = getUploadContentType(absolutePath);
   if (!contentType) {
     return new NextResponse("Not found", { status: 404 });
+  }
+
+  if ((await authorizeUploadAccess(relativePath, session, studentSession)) !== "allow") {
+    return new NextResponse("Forbidden", { status: 403 });
   }
 
   const data = fs.readFileSync(absolutePath);

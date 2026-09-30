@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyAuth } from "./session";
 import type { SessionPayload } from "./session";
-import { checkRoutePermission, checkPermission } from "./rbac";
 
 export type { SessionPayload } from "./session";
 
@@ -14,6 +13,40 @@ export function apiSuccess<T>(data: T, status: number = 200) {
   return NextResponse.json(data, { status });
 }
 
+/**
+ * The role lives in the token so it survives without a database round-trip, but
+ * a token issued before a demotion, disablement or deletion would otherwise keep
+ * its old authority until it expires. Re-reading the account closes that window.
+ * Cached briefly so a single page load does not repeat the lookup per request.
+ */
+const ROLE_CACHE_TTL_MS = 30_000;
+const roleCache = new Map<number, { role: string; expires: number }>();
+
+async function getCurrentAccountRole(id: number): Promise<{ role: string; name: string } | null> {
+  const cached = roleCache.get(id);
+  if (cached && cached.expires > Date.now()) {
+    return { role: cached.role, name: "" };
+  }
+
+  const { db } = await import("./db");
+  const user = await db.user.findUnique({
+    where: { id },
+    select: { role: true, name: true, status: true },
+  });
+
+  if (!user) {
+    roleCache.delete(id);
+    return null;
+  }
+  if (user.status && user.status.toLowerCase() !== "active") {
+    roleCache.delete(id);
+    return null;
+  }
+
+  roleCache.set(id, { role: user.role, expires: Date.now() + ROLE_CACHE_TTL_MS });
+  return { role: user.role, name: user.name };
+}
+
 export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
@@ -22,7 +55,12 @@ export async function getSession(): Promise<SessionPayload | null> {
     const session = await verifyAuth(token);
     // Student subjects belong to the student portal and must never reach admin APIs.
     if (session.subject === "student") return null;
-    return session;
+
+    // Trust the stored account state, not the role claim baked into the token.
+    const account = await getCurrentAccountRole(session.id);
+    if (!account) return null;
+
+    return { ...session, role: account.role, name: session.name || account.name };
   } catch {
     return null;
   }
@@ -35,6 +73,16 @@ export async function getStudentSession(): Promise<SessionPayload | null> {
   try {
     const session = await verifyAuth(token);
     if (session.subject !== "student") return null;
+
+    // Same staleness problem as staff: drop the session if the student record
+    // has since been removed.
+    const { db } = await import("./db");
+    const student = await db.student.findUnique({
+      where: { id: session.id },
+      select: { id: true },
+    });
+    if (!student) return null;
+
     return session;
   } catch {
     return null;

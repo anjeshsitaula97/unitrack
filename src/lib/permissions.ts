@@ -44,7 +44,7 @@ const PERMISSIONS: Record<string, Role[]> = {
 
   // Applications
   "applications:read": ["admin", "staff", "student"],
-  "applications:create": ["admin", "staff", "student"],
+  "applications:create": ["admin", "staff"],
   "applications:update": ["admin", "staff"],
   "applications:delete": ["admin"],
   "applications:export": ["admin", "staff"],

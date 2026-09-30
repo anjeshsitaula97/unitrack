@@ -61,9 +61,6 @@ export async function POST(req: NextRequest) {
     const session = await getSession();
     const deniedPOST = checkPermission(session, "bulk:create");
     if (deniedPOST) return deniedPOST;
-    if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role)) {
-      return apiError("Forbidden", 403);
-    }
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -73,13 +70,54 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File and type are required" }, { status: 400 });
     }
 
+    // xlsx@0.18.5 is the last release on npm and carries unpatched prototype
+    // pollution and ReDoS advisories (GHSA-4r6h-8v6p-xvw6, GHSA-5pgg-2g8v-p4x9)
+    // in its parser. Parsing is therefore confined to admins by bulk:create and
+    // bounded here, and the parser is never asked to build formulas or HTML.
+    const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+    const MAX_ROWS = 5000;
+    const ALLOWED_EXTENSIONS = [".xlsx", ".xls", ".csv"];
+    const ALLOWED_MIME = [
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel",
+      "text/csv",
+      "application/csv",
+      "application/octet-stream",
+    ];
+
+    const extension = `.${file.name.split(".").pop()?.toLowerCase() ?? ""}`;
+    if (!ALLOWED_EXTENSIONS.includes(extension)) {
+      return NextResponse.json(
+        { error: "Only .xlsx, .xls or .csv files are accepted" },
+        { status: 400 }
+      );
+    }
+    if (file.type && !ALLOWED_MIME.includes(file.type)) {
+      return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: "File exceeds the 5 MB limit" }, { status: 400 });
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
-    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const workbook = XLSX.read(buffer, {
+      type: "buffer",
+      cellFormula: false,
+      cellHTML: false,
+      cellNF: false,
+      sheetRows: MAX_ROWS + 1,
+    });
     const sheetName = workbook.SheetNames[0];
     const rows: CsvRow[] = XLSX.utils.sheet_to_json<CsvRow>(workbook.Sheets[sheetName]);
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "File is empty" }, { status: 400 });
+    }
+    if (rows.length > MAX_ROWS) {
+      return NextResponse.json(
+        { error: `File exceeds the ${MAX_ROWS} row limit` },
+        { status: 400 }
+      );
     }
 
     let imported = 0;
