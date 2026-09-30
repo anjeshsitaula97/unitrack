@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Download, FileText, Calendar, Filter, Loader2, Eye, X } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+import { buildXlsx, downloadBlob } from "@/lib/spreadsheet";
 
 const reports = [
   {
@@ -99,17 +99,13 @@ export default function ReportsContent() {
         return;
       }
 
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Report Data");
-
       let filename = `${reportId}_report`;
       if (startDate || endDate) {
         filename += `_${startDate || "start"}_to_${endDate || "end"}`;
       }
       filename += ".xlsx";
 
-      XLSX.writeFile(wb, filename);
+      downloadBlob(await buildXlsx("Report Data", data), filename);
       toast.success(`${title} downloaded successfully!`);
     } catch (err) {
       console.error(err);

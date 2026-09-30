@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
 import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { createNotification } from "@/lib/notifications";
-import * as XLSX from "xlsx";
+import { buildXlsx } from "@/lib/spreadsheet";
+import { readSpreadsheetRows } from "@/lib/spreadsheet-read";
 import { Prisma } from "@prisma/client";
 
 interface CsvRow {
@@ -100,15 +101,7 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const workbook = XLSX.read(buffer, {
-      type: "buffer",
-      cellFormula: false,
-      cellHTML: false,
-      cellNF: false,
-      sheetRows: MAX_ROWS + 1,
-    });
-    const sheetName = workbook.SheetNames[0];
-    const rows: CsvRow[] = XLSX.utils.sheet_to_json<CsvRow>(workbook.Sheets[sheetName]);
+    const rows = (await readSpreadsheetRows(buffer, file.name, MAX_ROWS)) as unknown as CsvRow[];
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "File is empty" }, { status: 400 });
@@ -458,7 +451,7 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get("type") || "students";
     const format = searchParams.get("format") || "xlsx";
 
-    let data: unknown[] = [];
+    let data: Record<string, unknown>[] = [];
 
     switch (type) {
       case "students": {
@@ -614,12 +607,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(data);
     }
 
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, type);
-    const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    const blob = await buildXlsx(type, data);
 
-    return new NextResponse(buffer, {
+    return new NextResponse(blob, {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="${type}_${new Date().toISOString().split("T")[0]}.xlsx"`,

@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+import { buildXlsx, downloadBlob } from "@/lib/spreadsheet";
 
 const importTypes = [
   {
@@ -174,12 +174,9 @@ export default function BulkImportContent() {
     }
   };
 
-  const downloadTemplate = () => {
+  const downloadTemplate = async () => {
     const headers = templates[exportType];
-    const ws = XLSX.utils.aoa_to_sheet([headers]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Template");
-    XLSX.writeFile(wb, `${exportType}_template.xlsx`);
+    downloadBlob(await buildXlsx("Template", [headers]), `${exportType}_template.xlsx`);
     toast.success("Template downloaded");
   };
 

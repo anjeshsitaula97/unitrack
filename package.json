@@ -63,6 +63,7 @@
     "bikram-sambat-js": "^1.0.3",
     "canvg": "^4.0.3",
     "dompurify": "^3.4.12",
+    "exceljs": "^4.4.0",
     "framer-motion": "^12.38.0",
     "html2canvas": "^1.4.1",
     "jose": "^6.2.2",
@@ -75,8 +76,7 @@
     "react": "latest",
     "react-dom": "latest",
     "recharts": "^2.15.2",
-    "sonner": "^1.0.0",
-    "xlsx": "^0.18.5"
+    "sonner": "^1.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -114,5 +114,8 @@
     "esbuild@0.28.2": true,
     "core-js@3.50.0": true,
     "unrs-resolver@1.12.2": true
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }

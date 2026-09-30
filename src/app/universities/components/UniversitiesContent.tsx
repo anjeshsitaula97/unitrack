@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
-import * as XLSX from "xlsx";
+import { buildXlsx, downloadBlob } from "@/lib/spreadsheet";
 import { getCountryFlag } from "@/lib/country-flags";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -96,7 +96,7 @@ const formatCities = (cityStr: string | null | undefined) => {
   return cityStr;
 };
 
-const handleExport = (dataToExport: UniversityRow[]) => {
+const handleExport = async (dataToExport: UniversityRow[]) => {
   if (dataToExport.length === 0) {
     toast.error("No data to export");
     return;
@@ -119,10 +119,8 @@ const handleExport = (dataToExport: UniversityRow[]) => {
       "Added Date": new Date(u.addedDate).toLocaleDateString(),
     }));
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Universities");
-    XLSX.writeFile(wb, `universities_export_${new Date().toISOString().split("T")[0]}.xlsx`);
+    const filename = `universities_export_${new Date().toISOString().split("T")[0]}.xlsx`;
+    downloadBlob(await buildXlsx("Universities", exportData), filename);
     toast.success("Export completed successfully");
   } catch (error) {
     console.error("Export error:", error);
@@ -393,7 +391,7 @@ function UniversitiesHeader({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={() => {
+          onClick={async () => {
             const headers = [
               [
                 "Name",
@@ -412,10 +410,7 @@ function UniversitiesHeader({
                 "Status",
               ],
             ];
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(headers);
-            XLSX.utils.book_append_sheet(wb, ws, "Template");
-            XLSX.writeFile(wb, "universities_import_template.xlsx");
+            downloadBlob(await buildXlsx("Template", headers), "universities_import_template.xlsx");
             toast.success("Excel Template downloaded successfully.");
           }}
           className="btn-secondary"

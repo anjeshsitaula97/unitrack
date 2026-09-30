@@ -39,7 +39,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import * as XLSX from "xlsx";
+import { buildXlsx, downloadBlob } from "@/lib/spreadsheet";
 import { getLatestRates, convertToNPR, formatNPR } from "@/lib/forex";
 import { safeParseArray } from "@/lib/json";
 import { getCountryFlag } from "@/lib/country-flags";
@@ -1486,7 +1486,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => {
+            onClick={async () => {
               const headers = [
                 [
                   "Name",
@@ -1512,10 +1512,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
                   "EnglishSpeakingScore",
                 ],
               ];
-              const wb = XLSX.utils.book_new();
-              const ws = XLSX.utils.aoa_to_sheet(headers);
-              XLSX.utils.book_append_sheet(wb, ws, "Template");
-              XLSX.writeFile(wb, "courses_import_template.xlsx");
+              downloadBlob(await buildXlsx("Template", headers), "courses_import_template.xlsx");
               toast.success("Excel Template downloaded successfully.");
             }}
             className="btn-secondary"
