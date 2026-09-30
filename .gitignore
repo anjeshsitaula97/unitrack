@@ -23,6 +23,14 @@ Thumbs.db
 # macOS AppleDouble metadata files (exFAT volumes)
 ._*
 
+# Local database files
+# The app connects to the DATABASE_URL server (MySQL in .env.example); a
+# checked-in SQLite file would silently shadow real data for anyone cloning.
+prisma/*.db
+prisma/*.db-journal
+prisma/*.sqlite
+prisma/*.sqlite3
+
 # Vercel deployment
 .vercel/
 
