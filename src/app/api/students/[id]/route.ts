@@ -125,8 +125,31 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       ["branchId"],
       ["partnerId"],
     ];
+    // The province pickers are numeric selects but the columns are String?, so
+    // they are coerced rather than copied through raw.
+    const toProvince = (value: unknown): string | null => {
+      if (value === null || value === undefined || value === "") return null;
+      const n = Number(value);
+      return Number.isFinite(n) && n > 0 ? String(n) : null;
+    };
+
     for (const [field] of scalarFields) {
-      if (field in body) updateData[field] = body[field];
+      if (field !== "permanentProvince" && field !== "temporaryProvince" && field in body) {
+        updateData[field] = body[field];
+      }
+    }
+
+    if ("permanentProvince" in body) {
+      updateData.permanentProvince = toProvince(body.permanentProvince);
+      updateData.permanentDistrict = null;
+      updateData.permanentMunicipality = null;
+      updateData.permanentWardNo = null;
+    }
+    if ("temporaryProvince" in body) {
+      updateData.temporaryProvince = toProvince(body.temporaryProvince);
+      updateData.temporaryDistrict = null;
+      updateData.temporaryMunicipality = null;
+      updateData.temporaryWardNo = null;
     }
 
     if ("studentPassword" in body && body.studentPassword) {

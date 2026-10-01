@@ -5,7 +5,13 @@ import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { createNotification } from "@/lib/notifications";
 import { logActivity, getActorName } from "@/lib/activity";
-import { getPaginationParams, paginatedResponse, apiError, getSession, checkRoutePermission } from "@/lib/api-utils";
+import {
+  getPaginationParams,
+  paginatedResponse,
+  apiError,
+  getSession,
+  checkRoutePermission,
+} from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
@@ -70,7 +76,10 @@ export async function POST(req: NextRequest) {
     // Rate limit student creation
     const rl = await checkRateLimit(`create-student:${getClientIp(req)}`, 20, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const data = await req.json();
@@ -80,6 +89,16 @@ export async function POST(req: NextRequest) {
     }
 
     const name = data.name || `${data.firstName || ""} ${data.lastName || ""}`.trim();
+
+    // The province pickers are numeric selects (they feed the district lookup by
+    // province id) but the columns are String?. Coerce here so the create does
+    // not fail on "Expected String or Null, provided Int", and normalise the
+    // unset sentinel 0 to null rather than storing a meaningless "0".
+    const toProvince = (value: unknown): string | null => {
+      if (value === null || value === undefined || value === "") return null;
+      const n = Number(value);
+      return Number.isFinite(n) && n > 0 ? String(n) : null;
+    };
 
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
     let generatedPassword = "";
@@ -107,12 +126,12 @@ export async function POST(req: NextRequest) {
         maritalStatus: data.maritalStatus,
         photoUrl: data.photoUrl,
         address: data.address,
-        permanentProvince: data.permanentProvince,
+        permanentProvince: toProvince(data.permanentProvince),
         permanentDistrict: data.permanentDistrict,
         permanentMunicipality: data.permanentMunicipality,
         permanentWardNo: data.permanentWardNo,
         permanentAddress: data.permanentAddress,
-        temporaryProvince: data.temporaryProvince,
+        temporaryProvince: toProvince(data.temporaryProvince),
         temporaryDistrict: data.temporaryDistrict,
         temporaryMunicipality: data.temporaryMunicipality,
         temporaryWardNo: data.temporaryWardNo,

@@ -300,7 +300,9 @@ export default function StudentForm({
   const prefersReducedMotion = useReducedMotion();
   const [step, setStep] = useState(1);
   const totalSteps = 8;
-  const [qualifications, setQualifications] = useState<{ id: string; name: string; level: number }[]>([]);
+  const [qualifications, setQualifications] = useState<
+    { id: string; name: string; level: number }[]
+  >([]);
   const [allUsers, setAllUsers] = useState<UserSummary[]>([]);
   const [allPartners, setAllPartners] = useState<PartnerSummary[]>([]);
   const staffUsers = useMemo(
@@ -628,10 +630,15 @@ export default function StudentForm({
   const handleSubmit = async () => {
     const method = isEditing ? "PUT" : "POST";
     const url = isEditing ? `/api/students/${initialStudent!.id}` : "/api/students";
-    const submissionData = {
-      ...formData,
-      phone: `${formData.phonePrefix} ${formData.phone}`.trim(),
-    };
+    // The phone field may already carry a country code, in which case adding
+    // the prefix again produced "+977 +977 9800000000".
+    const phone = formData.phone.trim();
+    const prefixedPhone =
+      /^\+?[\d\s()-]+$/.test(phone) && phone.startsWith("+")
+        ? phone
+        : `${formData.phonePrefix} ${phone}`.trim();
+
+    const submissionData = { ...formData, phone: prefixedPhone };
     try {
       const res = await fetch(url, {
         method,
@@ -1947,56 +1954,65 @@ export default function StudentForm({
                           Student Documents
                         </h3>
                         <p className="text-xs text-slate-500 ml-1">
-                          Required documents based on highest qualification: <span className="font-semibold text-slate-700">{getRequiredDocsForQualifications(formData.education).filter(d => !commonDocs.includes(d)).join(", ") || "None specific"}</span>
+                          Required documents based on highest qualification:{" "}
+                          <span className="font-semibold text-slate-700">
+                            {getRequiredDocsForQualifications(formData.education)
+                              .filter((d) => !commonDocs.includes(d))
+                              .join(", ") || "None specific"}
+                          </span>
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {docTypes.filter((type) => getRequiredDocsForQualifications(formData.education).includes(type)).map((type) => {
-                            const existingDoc = formData.documents.find((d) => d.type === type);
-                            return (
-                              <div
-                                key={type}
-                                className={`p-4 rounded-3xl border-2 transition-all ${existingDoc ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}
-                              >
-                                <div className="flex items-center justify-between gap-4">
-                                  <div className="flex items-center gap-3 min-w-0">
-                                    <div
-                                      className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${existingDoc ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"}`}
+                          {docTypes
+                            .filter((type) =>
+                              getRequiredDocsForQualifications(formData.education).includes(type)
+                            )
+                            .map((type) => {
+                              const existingDoc = formData.documents.find((d) => d.type === type);
+                              return (
+                                <div
+                                  key={type}
+                                  className={`p-4 rounded-3xl border-2 transition-all ${existingDoc ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}
+                                >
+                                  <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <div
+                                        className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${existingDoc ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"}`}
+                                      >
+                                        <FileText size={18} />
+                                      </div>
+                                      <div className="min-w-0">
+                                        <p className="text-xs font-black text-slate-800 truncate uppercase tracking-wider">
+                                          {type}
+                                        </p>
+                                        <p className="text-[10px] font-bold text-slate-400 truncate">
+                                          {existingDoc ? existingDoc.name : "Not uploaded yet"}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <label
+                                      htmlFor={`doc-upload-${type}`}
+                                      className="cursor-pointer px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-indigo-600 text-white hover:bg-indigo-700"
                                     >
-                                      <FileText size={18} />
-                                    </div>
-                                    <div className="min-w-0">
-                                      <p className="text-xs font-black text-slate-800 truncate uppercase tracking-wider">
-                                        {type}
-                                      </p>
-                                      <p className="text-[10px] font-bold text-slate-400 truncate">
-                                        {existingDoc ? existingDoc.name : "Not uploaded yet"}
-                                      </p>
-                                    </div>
+                                      {uploadingDoc === type
+                                        ? "Uploading..."
+                                        : existingDoc
+                                          ? "Replace"
+                                          : "Upload"}
+                                      <input
+                                        id={`doc-upload-${type}`}
+                                        type="file"
+                                        className="hidden"
+                                        disabled={uploadingDoc === type}
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) handleFileUpload(type, file);
+                                        }}
+                                      />
+                                    </label>
                                   </div>
-                                  <label
-                                    htmlFor={`doc-upload-${type}`}
-                                    className="cursor-pointer px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-indigo-600 text-white hover:bg-indigo-700"
-                                  >
-                                    {uploadingDoc === type
-                                      ? "Uploading..."
-                                      : existingDoc
-                                        ? "Replace"
-                                        : "Upload"}
-                                    <input
-                                      id={`doc-upload-${type}`}
-                                      type="file"
-                                      className="hidden"
-                                      disabled={uploadingDoc === type}
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) handleFileUpload(type, file);
-                                      }}
-                                    />
-                                  </label>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
                         </div>
                       </div>
                     )}
