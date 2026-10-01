@@ -100,6 +100,14 @@ export async function POST(req: NextRequest) {
       return Number.isFinite(n) && n > 0 ? String(n) : null;
     };
 
+    // The partner <select> yields a string id, and "" when nothing is chosen,
+    // while partnerId is an Int foreign key. Coerce to a real integer or null.
+    const toPartnerId = (value: unknown): number | null => {
+      if (value === null || value === undefined || value === "") return null;
+      const n = Number(value);
+      return Number.isInteger(n) && n > 0 ? n : null;
+    };
+
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
     let generatedPassword = "";
     for (let i = 0; i < 10; i++) {
@@ -164,7 +172,7 @@ export async function POST(req: NextRequest) {
         intakeTerm: data.intakeTerm,
         major: data.major,
         interestedCountry: data.interestedCountry,
-        partnerId: data.partnerId || null,
+          partnerId: toPartnerId(data.partnerId),
         targetUniversities: data.targetUniversities,
         spouseName: data.spouseName,
         childrenDetails:

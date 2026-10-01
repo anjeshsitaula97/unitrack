@@ -29,7 +29,7 @@ model University {
   address       String?
   website       String?
   founded       Int?
-  accreditation String?
+  accreditation String?       @db.LongText
   ranking       Int?
   description   String?
   status        String        @default("Active")
@@ -37,9 +37,9 @@ model University {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   banner        String?
-  images        String?
+  images        String?       @db.LongText
   logo          String?
-  requirements  String?
+  requirements  String?       @db.LongText
   partnerId     Int?
   partner       Partner?      @relation(fields: [partnerId], references: [id])
   partnershipAmount Float?
@@ -58,7 +58,7 @@ model Partner {
   phone         String?
   address       String?
   description   String?
-  countries     String?       @default("[]") // JSON array of country names
+  countries     String?       @default("[]") @db.LongText // JSON array of country names
   universities  University[]
   students      Student[]
   createdAt     DateTime      @default(now())
@@ -82,7 +82,7 @@ model Course {
   initials              String
   instructor            String
   description           String
-  prerequisites         String
+  prerequisites         String        @db.LongText
   intake                String?
   language              String        @default("English")
   mode                  String        @default("Online")
@@ -102,10 +102,10 @@ model Course {
   tuitionFee            String?
   applicationFee        String?
   applicationFeeCurrency String?
-  quickFilters          String?
-  requirements          String?
+  quickFilters          String?       @db.LongText
+  requirements          String?       @db.LongText
   applicationDeadline   DateTime?
-  englishTests          String?
+  englishTests          String?       @db.LongText
   commissionType        String?    @default("Percentage") // "Percentage" or "Flat"
   commissionValue       Float?
   commissionCurrency    String?
@@ -369,9 +369,12 @@ model Student {
   passportIssueDate     String?
   passportExpiryDate    String?
   passportIssuePlace    String?
-  education             String?
-  workExperience        String?
-  training              String?
+  // These hold JSON arrays written by the form. A bare String? maps to
+  // VARCHAR(191) on MySQL, which silently truncated longer histories and left
+  // unparseable values behind, so they are explicitly LONGTEXT.
+  education             String?           @db.LongText
+  workExperience        String?           @db.LongText
+  training              String?           @db.LongText
   testType              String?
   overallScore          String?
   readingScore          String?
@@ -387,9 +390,9 @@ model Student {
   interestedCountry     String?
   partnerId             Int?
   partner               Partner?        @relation(fields: [partnerId], references: [id], onDelete: SetNull)
-  targetUniversities    String?
+  targetUniversities    String?           @db.LongText
   spouseName            String?
-  childrenDetails       String?           @default("[]")
+  childrenDetails       String?           @default("[]") @db.LongText
   guardianName          String?
   guardianPhone         String?
   guardianEmail         String?

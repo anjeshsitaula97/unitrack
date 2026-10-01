@@ -448,18 +448,27 @@ export default function StudentContent() {
       const matchesProvince = provinceFilter === "all" || s.permanentProvince === provinceFilter;
       const matchesGender = genderFilter === "all" || s.gender === genderFilter;
 
-      const matchesAcademic =
-        academicFilter === "all" ||
-        (() => {
-          const edu =
-            typeof s.education === "string"
-              ? (JSON.parse(s.education) as EducationEntry[])
-              : s.education || [];
-          return edu.some((e) => {
-            const score = parseFloat(e.score);
-            return !isNaN(score) && score >= 3.5;
-          });
-        })();
+        const matchesAcademic =
+          academicFilter === "all" ||
+          (() => {
+            // Stored education is a JSON string; a malformed value must not break
+            // the list render, so fall back to "no match" rather than throwing.
+            let edu: EducationEntry[] = [];
+            if (Array.isArray(s.education)) {
+              edu = s.education;
+            } else if (s.education) {
+              try {
+                const parsed = JSON.parse(String(s.education));
+                if (Array.isArray(parsed)) edu = parsed;
+              } catch {
+                edu = [];
+              }
+            }
+            return edu.some((e) => {
+              const score = parseFloat(e.score);
+              return !isNaN(score) && score >= 3.5;
+            });
+          })();
 
       const matchesEnglish =
         englishFilter === "all" ||

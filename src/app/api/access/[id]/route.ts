@@ -8,6 +8,13 @@ import { logError } from "@/lib/logger";
 
 const _ALLOWED_FIELDS = ["role", "status", "password"];
 
+/**
+ * Roles the session logic reasons about by name. The Role table is the source of
+ * truth for what an admin may pick in the UI, so validation below is driven from
+ * it; these are additionally required because authorisation branches on them.
+ */
+const CORE_ROLES = ["Super Admin", "Admin", "B2B Partner", "Student", "Viewer", "Editor"];
+
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
@@ -21,9 +28,27 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { role, status, password } = body;
     const existing = await db.user.findUnique({ where: { id: Number(id) } });
 
-    const VALID_ROLES = ["Super Admin", "Admin", "B2B Partner", "Student", "Viewer", "Editor"];
-    const normalizedRole = VALID_ROLES.find((r) => r.toLowerCase() === (role || "").toLowerCase());
+    // The dropdown in the UI is built from the Role table, so a hardcoded list
+    // here rejected any role an admin had legitimately created ("Moderator",
+    // "Administrator") with a 400 that surfaced as "Failed to update user".
+    // Accept the stored roles plus the core ones, matching what is selectable.
+    const knownRoles = await db.role.findMany({ select: { name: true } });
+    const validRoles = Array.from(new Set([...knownRoles.map((r) => r.name), ...CORE_ROLES]));
+    const normalizedRole = validRoles.find((r) => r.toLowerCase() === (role || "").toLowerCase());
     if (role && !normalizedRole) return apiError("Invalid role", 400);
+
+    // Only a Super Admin may hand out or modify Super Admin, so an ordinary
+    // admin cannot escalate themselves or a colleague by editing the role.
+    if (
+      (normalizedRole === "Super Admin" || existing?.role === "Super Admin") &&
+      session.role !== "Super Admin"
+    ) {
+      return NextResponse.json(
+        { error: "Only a Super Admin can manage Super Admin accounts" },
+        { status: 403 }
+      );
+    }
+
     const updateData: Record<string, unknown> = {};
     if (normalizedRole) updateData.role = normalizedRole;
     if (status) updateData.status = status;

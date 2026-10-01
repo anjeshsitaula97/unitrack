@@ -123,7 +123,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       ["counselor"],
       ["lead"],
       ["branchId"],
-      ["partnerId"],
     ];
     // The province pickers are numeric selects but the columns are String?, so
     // they are coerced rather than copied through raw.
@@ -132,6 +131,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       const n = Number(value);
       return Number.isFinite(n) && n > 0 ? String(n) : null;
     };
+
+    // partnerId is a real foreign key on an Int column. The form renders it as
+    // an empty string when no partner is chosen, which Prisma rejects outright
+    // ("Expected Int ... provided String") and failed every edit with a 500.
+    // An absent or non-numeric selection means "no partner".
+    if ("partnerId" in body) {
+      const raw = body.partnerId;
+      const n = Number(raw);
+      updateData.partnerId =
+        raw === null || raw === undefined || raw === "" || !Number.isInteger(n) || n <= 0
+          ? null
+          : n;
+    }
 
     for (const [field] of scalarFields) {
       if (field !== "permanentProvince" && field !== "temporaryProvince" && field in body) {

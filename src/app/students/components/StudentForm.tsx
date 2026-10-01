@@ -329,6 +329,26 @@ export default function StudentForm({
   const temporaryWards = useRef<string[]>([]);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
 
+  /**
+   * Read a stored JSON list without ever throwing.
+   *
+   * These columns were VARCHAR(191) and MySQL truncated longer values mid-string,
+   * so a record could hold unparseable text. A bare JSON.parse here propagated to
+   * the error boundary and the edit page became unusable ("JSON Parse error:
+   * Expected '}'"), which also blocked the very save that would have repaired the
+   * row. Degrade to an empty list and let the user re-enter the data.
+   */
+  const parseStoredList = <T,>(value: unknown): T[] => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value as T[];
+    try {
+      const parsed = JSON.parse(String(value));
+      return Array.isArray(parsed) ? (parsed as T[]) : [];
+    } catch {
+      return [];
+    }
+  };
+
   const isEditing = !!initialStudent;
 
   const [formData, setFormData] = useState<StudentFormData>(() => ({
@@ -437,11 +457,7 @@ export default function StudentForm({
         nationality: s.nationality || "Nepal",
         maritalStatus: s.maritalStatus || "Single",
         spouseName: s.spouseName || "",
-        childrenDetails: s.childrenDetails
-          ? typeof s.childrenDetails === "string"
-            ? JSON.parse(s.childrenDetails)
-            : s.childrenDetails
-          : [],
+        childrenDetails: parseStoredList<ChildEntry>(s.childrenDetails),
         guardianName: s.guardianName || "",
         guardianPhone: s.guardianPhone || "",
         guardianEmail: s.guardianEmail || "",
@@ -463,10 +479,8 @@ export default function StudentForm({
         passportIssueDate: s.passportIssueDate || "",
         passportExpiryDate: s.passportExpiryDate || "",
         passportIssuePlace: s.passportIssuePlace || "",
-        education: s.education
-          ? typeof s.education === "string"
-            ? JSON.parse(s.education)
-            : s.education
+        education: parseStoredList<EducationEntry>(s.education).length
+          ? parseStoredList<EducationEntry>(s.education)
           : [
               {
                 id: Date.now(),
@@ -478,10 +492,8 @@ export default function StudentForm({
                 country: "",
               },
             ],
-        workExperience: s.workExperience
-          ? typeof s.workExperience === "string"
-            ? JSON.parse(s.workExperience)
-            : s.workExperience
+        workExperience: parseStoredList<WorkExperienceEntry>(s.workExperience).length
+          ? parseStoredList<WorkExperienceEntry>(s.workExperience)
           : [
               {
                 id: Date.now(),
@@ -493,10 +505,8 @@ export default function StudentForm({
                 currentlyWorking: false,
               },
             ],
-        training: s.training
-          ? typeof s.training === "string"
-            ? JSON.parse(s.training)
-            : s.training
+        training: parseStoredList<TrainingEntry>(s.training).length
+          ? parseStoredList<TrainingEntry>(s.training)
           : [{ id: Date.now(), name: "", provider: "", date: "" }],
         testType: s.testType || "Select Test",
         overallScore: s.overallScore || "",

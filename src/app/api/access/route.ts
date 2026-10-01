@@ -101,15 +101,39 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(passwordToHash, 12);
 
+    // The invite form's role list comes from the Role table, so validate against
+    // it. Previously a hardcoded list was used and any other role silently fell
+    // back to "Viewer", handing out the wrong access level without any error.
+    const knownRoles = await db.role.findMany({ select: { name: true } });
+    const validRoles = Array.from(
+      new Set([
+        ...knownRoles.map((r) => r.name),
+        "Super Admin",
+        "Admin",
+        "B2B Partner",
+        "Student",
+        "Viewer",
+        "Editor",
+      ])
+    );
+    const requestedRole = (data.role || "Viewer").trim();
+    const resolvedRole = validRoles.find((r) => r.toLowerCase() === requestedRole.toLowerCase());
+    if (!resolvedRole) {
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    }
+    if (resolvedRole === "Super Admin" && session.role !== "Super Admin") {
+      return NextResponse.json(
+        { error: "Only a Super Admin can invite another Super Admin" },
+        { status: 403 }
+      );
+    }
+
     const newUser = await db.user.create({
       data: {
         name: data.name,
         email: data.email,
         password: hashedPassword,
-        role:
-          ["Super Admin", "Admin", "B2B Partner", "Student", "Viewer", "Editor"].find(
-            (r) => r.toLowerCase() === (data.role || "viewer").toLowerCase()
-          ) || "Viewer",
+        role: resolvedRole,
         status: "Pending",
         lastLogin: "Never",
         avatar: data.avatar || data.name.substring(0, 2).toUpperCase(),
