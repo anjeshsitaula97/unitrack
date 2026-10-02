@@ -82,13 +82,13 @@ export default function AuditContent() {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
           Audit Trail
         </h1>
         <span className="text-sm text-slate-400">{filtered.length} entries</span>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 mb-6">
+      <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-6">
         <div className="flex gap-3 flex-wrap items-end">
           <div className="flex-1 min-w-[200px]">
             <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
@@ -104,7 +104,7 @@ export default function AuditContent() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Actor, target, action..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
@@ -117,7 +117,7 @@ export default function AuditContent() {
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
               placeholder="e.g. created"
-              className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 w-32"
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 w-32"
             />
           </div>
           <div>
@@ -128,7 +128,7 @@ export default function AuditContent() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div>
@@ -139,7 +139,7 @@ export default function AuditContent() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           {(search || actionFilter || dateFrom || dateTo) && (
@@ -160,12 +160,12 @@ export default function AuditContent() {
         </div>
       ) : error ? (
         <div className="py-20 text-center">
-          <AlertCircle className="mx-auto text-red-300 dark:text-red-700 mb-3" size={48} />
+          <AlertCircle className="mx-auto text-red-300 mb-3" size={48} />
           <p className="text-red-500 font-medium">{error}</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="py-20 text-center">
-          <Clock className="mx-auto text-slate-200 dark:text-slate-700 mb-3" size={48} />
+          <Clock className="mx-auto text-slate-200 mb-3" size={48} />
           <p className="text-slate-500 font-medium">No activity logs found</p>
         </div>
       ) : (
@@ -176,10 +176,10 @@ export default function AuditContent() {
             return (
               <div
                 key={log.id}
-                className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden"
+                className="bg-white rounded-xl border border-slate-100 overflow-hidden"
               >
                 <div
-                  className={`p-3 flex items-center gap-3 text-sm ${changes.length > 0 ? "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60" : ""}`}
+                  className={`p-3 flex items-center gap-3 text-sm ${changes.length > 0 ? "cursor-pointer hover:bg-slate-50" : ""}`}
                   onClick={() => changes.length > 0 && setExpandedId(expanded ? null : log.id)}
                 >
                   <div className="size-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
@@ -193,15 +193,15 @@ export default function AuditContent() {
                       "?"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-slate-800 dark:text-white">
+                    <span className="font-semibold text-slate-800">
                       {log.actorName}
                     </span>{" "}
                     <span className="text-slate-500">{log.action}</span>{" "}
-                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                    <span className="font-medium text-slate-700">
                       {log.target}
                     </span>
                     {changes.length > 0 && (
-                      <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 text-[10px] font-semibold">
+                      <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 text-[10px] font-semibold">
                         {changes.length} change{changes.length > 1 ? "s" : ""}
                       </span>
                     )}
@@ -217,17 +217,17 @@ export default function AuditContent() {
                     ))}
                 </div>
                 {expanded && changes.length > 0 && (
-                  <div className="px-4 pb-3 border-t border-slate-100 dark:border-slate-700 pt-3 space-y-1.5">
+                  <div className="px-4 pb-3 border-t border-slate-100 pt-3 space-y-1.5">
                     {changes.map((c, i) => (
                       <div key={`${c.field}-${i}`} className="flex items-start gap-2 text-xs">
-                        <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold capitalize flex-shrink-0 min-w-[90px] text-center">
+                        <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold capitalize flex-shrink-0 min-w-[90px] text-center">
                           {c.field.replace(/([A-Z])/g, " $1").trim()}
                         </span>
-                        <span className="text-slate-400 line-through decoration-red-300 dark:decoration-red-700 break-all">
+                        <span className="text-slate-400 line-through decoration-red-300 break-all">
                           {c.from || "—"}
                         </span>
                         <span className="text-slate-300 flex-shrink-0">→</span>
-                        <span className="text-slate-700 dark:text-slate-200 font-medium break-all">
+                        <span className="text-slate-700 font-medium break-all">
                           {c.to || "—"}
                         </span>
                       </div>

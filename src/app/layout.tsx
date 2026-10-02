@@ -1,7 +1,6 @@
 import React from "react";
 import type { Metadata, Viewport } from "next";
 import "../styles/tailwind.css";
-import { ThemeProvider } from "@/lib/theme";
 import ScrollIndicator from "@/components/ScrollIndicator";
 
 export const viewport: Viewport = {
@@ -20,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
@@ -32,10 +31,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body>
-        <ThemeProvider>
-          {children}
-          <ScrollIndicator />
-        </ThemeProvider>
+        {children}
+        <ScrollIndicator />
       </body>
     </html>
   );

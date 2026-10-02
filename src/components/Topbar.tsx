@@ -9,12 +9,9 @@ import {
   LogOut,
   User,
   HelpCircle,
-  Moon,
-  Sun,
   ShieldCheck,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useTheme } from "@/lib/theme";
 import { safeJson } from "@/lib/fetch-client";
 import { clearAuthCache } from "./AppLayoutWrapper";
 import { deactivateSession } from "@/lib/client-session";
@@ -86,7 +83,6 @@ export default function Topbar({
   sidebarCollapsed,
   user,
 }: TopbarProps) {
-  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
   const crumbs =
@@ -191,18 +187,17 @@ export default function Topbar({
     <header
       className={`
         fixed top-0 right-0 h-14 bg-white border-b border-slate-200 z-20
-        dark:bg-slate-900 dark:border-slate-800
         flex items-center px-6 gap-4 transition-all duration-300
         ${sidebarCollapsed ? "left-16" : "left-60"}
       `}
     >
       <div className="flex items-center gap-1.5 text-sm flex-1 min-w-0">
-        <Home size={15} className="text-slate-400 dark:text-slate-500 flex-shrink-0" />
+        <Home size={15} className="text-slate-400 flex-shrink-0" />
         {crumbs.map((crumb, i) => (
           <React.Fragment key={`crumb-${crumb}-${i}`}>
-            <ChevronRight size={13} className="text-slate-300 dark:text-slate-600 flex-shrink-0" />
+            <ChevronRight size={13} className="text-slate-300 flex-shrink-0" />
             <span
-              className={`truncate ${i === crumbs.length - 1 ? "font-semibold text-slate-800 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}
+              className={`truncate ${i === crumbs.length - 1 ? "font-semibold text-slate-800" : "text-slate-500"}`}
             >
               {crumb}
             </span>
@@ -210,39 +205,30 @@ export default function Topbar({
         ))}
       </div>
 
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 shadow-sm ml-auto mr-2">
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-white text-indigo-700 shadow-sm ml-auto mr-2">
         <ShieldCheck size={13} />
         {user?.role || role}
       </div>
-
-      <button
-        type="button"
-        aria-label="Toggle dark mode"
-        onClick={toggleTheme}
-        className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-all duration-150"
-      >
-        {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-      </button>
 
       <div className="relative">
         <button
           type="button"
           aria-label="Settings"
           onClick={() => setSettingsOpen(!settingsOpen)}
-          className={`p-2 rounded-lg transition-all duration-150 ${settingsOpen ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800"}`}
+          className={`p-2 rounded-lg transition-all duration-150 ${settingsOpen ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
         >
           <Settings size={17} />
         </button>
 
         {settingsOpen && (
-          <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg z-50 animate-fade-in py-1">
+          <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-slate-200 shadow-lg z-50 animate-fade-in py-1">
             <button
               type="button"
               onClick={() => {
                 router.push("/settings?tab=profile");
                 setSettingsOpen(false);
               }}
-              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-indigo-300 transition-colors"
+              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
             >
               <User size={14} /> My Profile
             </button>
@@ -252,7 +238,7 @@ export default function Topbar({
                 router.push("/settings?tab=roles");
                 setSettingsOpen(false);
               }}
-              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-indigo-300 transition-colors border-b border-slate-50 dark:border-slate-800"
+              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
             >
               <Settings size={14} /> System Settings
             </button>
@@ -262,7 +248,7 @@ export default function Topbar({
                 router.push("/support");
                 setSettingsOpen(false);
               }}
-              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-indigo-300 transition-colors border-b border-slate-50 dark:border-slate-800"
+              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
             >
               <HelpCircle size={14} /> Support Hub
             </button>
@@ -270,7 +256,7 @@ export default function Topbar({
               type="button"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
               aria-label="LogOut"
             >
               {" "}
@@ -289,33 +275,33 @@ export default function Topbar({
             setNotifOpen(!notifOpen);
             setSettingsOpen(false);
           }}
-          className="relative p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-all duration-150"
+          className="relative p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all duration-150"
         >
           <Bell size={17} />
           {isMounted && unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-indigo-500 text-white text-[10px] font-bold rounded-full px-1 border-2 border-white dark:border-slate-900 leading-none">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-indigo-500 text-white text-[10px] font-bold rounded-full px-1 border-2 border-white leading-none">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
         </button>
         {isMounted && notifOpen && (
-          <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg z-50 animate-fade-in">
-            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-              <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">Notifications</span>
+          <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl border border-slate-200 shadow-lg z-50 animate-fade-in">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <span className="font-semibold text-slate-800 text-sm">Notifications</span>
               {unreadCount > 0 && (
                 <button
                   type="button"
                   onClick={markAllRead}
-                  className="text-xs text-indigo-600 dark:text-indigo-400 font-medium cursor-pointer hover:underline"
+                  className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline"
                 >
                   Mark all read
                 </button>
               )}
             </div>
-            <div className="max-h-[400px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
+            <div className="max-h-[400px] overflow-y-auto divide-y divide-slate-100">
               {(notifications?.length ?? 0) === 0 && (
                 <div className="px-4 py-8 text-center">
-                  <p className="text-xs text-slate-400 dark:text-slate-500">No notifications yet.</p>
+                  <p className="text-xs text-slate-400">No notifications yet.</p>
                 </div>
               )}
               {(notifications ?? []).map((n) => (
@@ -323,23 +309,23 @@ export default function Topbar({
                   type="button"
                   key={n.id}
                   onClick={() => markRead(n.id)}
-                  className={`w-full px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors text-left ${!n.read ? "bg-indigo-50/30 dark:bg-indigo-900/20" : ""}`}
+                  className={`w-full px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors text-left ${!n.read ? "bg-indigo-50/30" : ""}`}
                 >
-                  <p className="text-[11px] font-semibold text-slate-800 dark:text-slate-100 mb-0.5">{n.title}</p>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{n.message}</p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{n.time}</p>
+                  <p className="text-[11px] font-semibold text-slate-800 mb-0.5">{n.title}</p>
+                  <p className="text-xs text-slate-700 leading-relaxed">{n.message}</p>
+                  <p className="text-[10px] text-slate-400 mt-1">{n.time}</p>
                 </button>
               ))}
             </div>
             {(notifications?.length ?? 0) > 0 && (
-              <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-700 text-center">
+              <div className="px-4 py-2 border-t border-slate-100 text-center">
                 <button
                   type="button"
                   onClick={() => {
                     router.push("/notifications");
                     setNotifOpen(false);
                   }}
-                  className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
+                  className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
                 >
                   View All
                 </button>

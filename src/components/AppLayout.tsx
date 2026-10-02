@@ -29,7 +29,7 @@ export default function AppLayout({ children, role, onRoleChange, user }: AppLay
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-slate-50">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} user={user} />
       <Topbar
         role={role}

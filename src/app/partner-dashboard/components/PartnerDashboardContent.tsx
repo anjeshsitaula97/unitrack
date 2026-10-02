@@ -227,7 +227,7 @@ export default function PartnerDashboardContent() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-0.5">
+          <h1 className="text-2xl font-bold text-slate-800 mb-0.5">
             Good morning, {userName}!
           </h1>
           <p className="text-sm text-slate-400">
@@ -253,7 +253,7 @@ export default function PartnerDashboardContent() {
             {kpis.map((k) => (
               <div
                 key={k.id}
-                className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-3"
+                className="bg-white rounded-2xl border border-slate-100 p-4 flex items-center gap-3"
               >
                 <div
                   className={`size-10 rounded-xl ${k.bg} ${k.color} flex items-center justify-center flex-shrink-0`}
@@ -261,7 +261,7 @@ export default function PartnerDashboardContent() {
                   {k.icon}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xl font-bold text-slate-800 dark:text-white font-tabular">
+                  <div className="text-xl font-bold text-slate-800 font-tabular">
                     {k.value}
                   </div>
                   <div className="text-[11px] text-slate-400 font-medium truncate">{k.label}</div>
@@ -271,11 +271,11 @@ export default function PartnerDashboardContent() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Building2 size={16} className="text-indigo-600" />
-                  <h2 className="font-bold text-slate-800 dark:text-white text-sm">
+                  <h2 className="font-bold text-slate-800 text-sm">
                     Recent Partner Universities
                   </h2>
                 </div>
@@ -286,7 +286,7 @@ export default function PartnerDashboardContent() {
                   View all
                 </Link>
               </div>
-              <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
+              <div className="divide-y divide-slate-50">
                 {recentPartnerUniversities.length === 0 && (
                   <p className="p-6 text-center text-xs text-slate-400">
                     No partner universities yet.
@@ -298,14 +298,14 @@ export default function PartnerDashboardContent() {
                       {(u.name[0] || "?").toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">
+                      <p className="text-sm font-semibold text-slate-800 truncate">
                         {u.name}
                       </p>
                       <p className="text-[10px] text-slate-400">
                         {u.country || "Global"} • {u.partner?.name || "Partner"}
                       </p>
                     </div>
-                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    <span className="text-[11px] font-bold text-slate-600">
                       {commissionLabel(u)}
                     </span>
                   </div>
@@ -313,11 +313,11 @@ export default function PartnerDashboardContent() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Handshake size={16} className="text-cyan-600" />
-                  <h2 className="font-bold text-slate-800 dark:text-white text-sm">Top Partners</h2>
+                  <h2 className="font-bold text-slate-800 text-sm">Top Partners</h2>
                 </div>
                 <Link
                   href="/partnership"
@@ -326,7 +326,7 @@ export default function PartnerDashboardContent() {
                   View partnerships
                 </Link>
               </div>
-              <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
+              <div className="divide-y divide-slate-50">
                 {topPartners.length === 0 && (
                   <p className="p-6 text-center text-xs text-slate-400">
                     No partners registered yet.
@@ -334,11 +334,11 @@ export default function PartnerDashboardContent() {
                 )}
                 {topPartners.map((p, i) => (
                   <div key={p.id} className="px-5 py-3 flex items-center gap-3">
-                    <span className="size-6 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 text-[11px] font-bold flex items-center justify-center flex-shrink-0">
+                    <span className="size-6 rounded-full bg-slate-100 text-slate-500 text-[11px] font-bold flex items-center justify-center flex-shrink-0">
                       {i + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">
+                      <p className="text-sm font-semibold text-slate-800 truncate">
                         {p.name}
                       </p>
                       <p className="text-[10px] text-slate-400 truncate">
@@ -354,11 +354,11 @@ export default function PartnerDashboardContent() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <GraduationCap size={16} className="text-emerald-600" />
-                <h2 className="font-bold text-slate-800 dark:text-white text-sm">
+                <h2 className="font-bold text-slate-800 text-sm">
                   Recently Referred Students
                 </h2>
               </div>
@@ -372,7 +372,7 @@ export default function PartnerDashboardContent() {
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left">
                 <thead>
-                  <tr className="bg-slate-50/50 dark:bg-slate-700/20 border-b border-slate-100 dark:border-slate-700">
+                  <tr className="bg-slate-50/50 border-b border-slate-100">
                     <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       Student
                     </th>
@@ -387,7 +387,7 @@ export default function PartnerDashboardContent() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                <tbody className="divide-y divide-slate-50">
                   {referredStudents.length === 0 && (
                     <tr>
                       <td colSpan={4} className="p-8 text-center text-xs text-slate-400">
@@ -398,15 +398,15 @@ export default function PartnerDashboardContent() {
                   {referredStudents.slice(0, 8).map((s) => (
                     <tr key={s.id} className="hover:bg-slate-50/40 transition-colors">
                       <td className="p-4">
-                        <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                        <p className="text-sm font-semibold text-slate-800">
                           {s.name}
                         </p>
                         <p className="text-[10px] text-slate-400">{s.email || "—"}</p>
                       </td>
-                      <td className="p-4 text-xs font-medium text-slate-600 dark:text-slate-300">
+                      <td className="p-4 text-xs font-medium text-slate-600">
                         {s.partner?.name || "—"}
                       </td>
-                      <td className="p-4 text-xs font-medium text-slate-600 dark:text-slate-300">
+                      <td className="p-4 text-xs font-medium text-slate-600">
                         {s.interestedCountry || "—"}
                       </td>
                       <td className="p-4">

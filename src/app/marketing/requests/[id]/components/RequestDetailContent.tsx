@@ -63,17 +63,17 @@ type MarketingMaterial = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  Pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  "In Progress": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  Completed: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  Cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  Pending: "bg-yellow-100 text-yellow-700",
+  "In Progress": "bg-blue-100 text-blue-700",
+  Completed: "bg-green-100 text-green-700",
+  Cancelled: "bg-red-100 text-red-700",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  Low: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  Medium: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  High: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-  Urgent: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  Low: "bg-slate-100 text-slate-700",
+  Medium: "bg-blue-100 text-blue-700",
+  High: "bg-orange-100 text-orange-700",
+  Urgent: "bg-red-100 text-red-700",
 };
 
 const STATUS_OPTIONS = ["Pending", "In Progress", "Completed", "Cancelled"];
@@ -182,7 +182,7 @@ export default function RequestDetailContent() {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center">
         <Loader2 className="animate-spin text-indigo-600" size={32} />
-        <p className="mt-4 text-slate-500 dark:text-slate-400">Loading request details...</p>
+        <p className="mt-4 text-slate-500">Loading request details...</p>
       </div>
     );
   }
@@ -191,7 +191,7 @@ export default function RequestDetailContent() {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center">
         <XCircle size={48} className="text-red-500 mb-4" />
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+        <h2 className="text-xl font-bold text-slate-900 mb-2">
           Request not found
         </h2>
         <button
@@ -209,20 +209,20 @@ export default function RequestDetailContent() {
       {/* Back button */}
       <button
         onClick={() => router.push("/marketing/materials")}
-        className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-sm font-medium"
+        className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors text-sm font-medium"
       >
         <ArrowLeft size={16} /> Back to Marketing Materials
       </button>
 
       {/* Header */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="p-4 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+            <div className="p-4 bg-indigo-100 rounded-xl text-indigo-600">
               <Megaphone size={28} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{request.title}</h1>
+              <h1 className="text-2xl font-bold text-slate-900">{request.title}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[request.status]}`}>
                   {request.status}
@@ -230,7 +230,7 @@ export default function RequestDetailContent() {
                 <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${PRIORITY_COLORS[request.priority]}`}>
                   {request.priority} priority
                 </span>
-                <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium">
+                <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
                   {request.type}
                 </span>
               </div>
@@ -246,7 +246,7 @@ export default function RequestDetailContent() {
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
                   request.status === status
                     ? "bg-indigo-600 text-white border-indigo-600"
-                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                 }`}
               >
                 {status}
@@ -257,36 +257,36 @@ export default function RequestDetailContent() {
 
         {/* Details */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
             <User size={20} className="text-indigo-500" />
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Requested by</p>
-              <p className="text-sm font-medium text-slate-900 dark:text-white">{request.requester.name}</p>
+              <p className="text-xs text-slate-500">Requested by</p>
+              <p className="text-sm font-medium text-slate-900">{request.requester.name}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
             <User size={20} className="text-emerald-500" />
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Assigned to</p>
-              <p className="text-sm font-medium text-slate-900 dark:text-white">
+              <p className="text-xs text-slate-500">Assigned to</p>
+              <p className="text-sm font-medium text-slate-900">
                 {request.assignee?.name || "Unassigned"}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
             <Calendar size={20} className="text-orange-500" />
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Due date</p>
-              <p className="text-sm font-medium text-slate-900 dark:text-white">
+              <p className="text-xs text-slate-500">Due date</p>
+              <p className="text-sm font-medium text-slate-900">
                 {formatDate(request.dueDate)}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
             <Clock size={20} className="text-purple-500" />
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Created</p>
-              <p className="text-sm font-medium text-slate-900 dark:text-white">
+              <p className="text-xs text-slate-500">Created</p>
+              <p className="text-sm font-medium text-slate-900">
                 {formatDate(request.createdAt)}
               </p>
             </div>
@@ -295,16 +295,16 @@ export default function RequestDetailContent() {
 
         {/* Description */}
         <div className="mt-6">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Description</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">
+          <h3 className="text-sm font-semibold text-slate-700 mb-2">Description</h3>
+          <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
             {request.description}
           </p>
         </div>
       </div>
 
       {/* Upload section */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4">
           <Upload size={20} className="text-indigo-600" />
           Upload Completed Work
         </h2>
@@ -324,8 +324,8 @@ export default function RequestDetailContent() {
           }}
           className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors ${
             dragActive
-              ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20"
-              : "border-slate-300 dark:border-slate-600 hover:border-indigo-400 dark:hover:border-indigo-500"
+              ? "border-indigo-500 bg-indigo-50"
+              : "border-slate-300 hover:border-indigo-400"
           }`}
         >
           <input
@@ -339,7 +339,7 @@ export default function RequestDetailContent() {
           />
           {selectedFile ? (
             <div className="flex items-center justify-center gap-4">
-              <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+              <div className="p-3 bg-indigo-100 rounded-lg text-indigo-600">
                 {selectedFile.type.startsWith("image/") ? (
                   <Image size={24} />
                 ) : selectedFile.type.startsWith("video/") ? (
@@ -349,8 +349,8 @@ export default function RequestDetailContent() {
                 )}
               </div>
               <div className="text-left">
-                <p className="font-medium text-slate-900 dark:text-white">{selectedFile.name}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="font-medium text-slate-900">{selectedFile.name}</p>
+                <p className="text-sm text-slate-500">
                   {formatFileSize(selectedFile.size)}
                 </p>
               </div>
@@ -363,17 +363,17 @@ export default function RequestDetailContent() {
             </div>
           ) : (
             <>
-              <Upload size={32} className="text-slate-400 dark:text-slate-500 mx-auto mb-3" />
-              <p className="text-slate-600 dark:text-slate-300 font-medium mb-1">
+              <Upload size={32} className="text-slate-400 mx-auto mb-3" />
+              <p className="text-slate-600 font-medium mb-1">
                 Drag and drop your file here, or
               </p>
               <button
                 onClick={() => document.getElementById("material-upload")?.click()}
-                className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline"
+                className="text-indigo-600 font-medium hover:underline"
               >
                 browse files
               </button>
-              <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+              <p className="mt-2 text-xs text-slate-400">
                 Images (PNG, JPG, SVG), Videos (MP4, MOV), Documents (PDF, PSD)
               </p>
             </>
@@ -387,9 +387,9 @@ export default function RequestDetailContent() {
             value={materialDescription}
             onChange={(e) => setMaterialDescription(e.target.value)}
             placeholder="Add a description (optional)"
-            className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
           />
-          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
             <input
               type="checkbox"
               checked={isFinal}
@@ -417,15 +417,15 @@ export default function RequestDetailContent() {
       </div>
 
       {/* Delivered materials */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4">
           <CheckCircle size={20} className="text-green-500" />
           Delivered Materials ({request.materials.length})
         </h2>
 
         {request.materials.length === 0 ? (
           <div className="py-8 text-center">
-            <p className="text-slate-400 dark:text-slate-500">
+            <p className="text-slate-400">
               No materials uploaded yet. Upload the first file above.
             </p>
           </div>
@@ -434,10 +434,10 @@ export default function RequestDetailContent() {
             {request.materials.map((material) => (
               <div
                 key={material.id}
-                className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+                className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden"
               >
                 {/* Preview */}
-                <div className="aspect-video bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                <div className="aspect-video bg-slate-200 flex items-center justify-center">
                   {material.fileType === "image" ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -459,19 +459,19 @@ export default function RequestDetailContent() {
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      <p className="text-sm font-medium text-slate-900 truncate">
                         {material.fileName}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-slate-500">
                         {formatFileSize(material.fileSize)} • {material.uploader.name}
                       </p>
                       {material.description && (
-                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 break-words">
+                        <p className="text-xs text-slate-600 mt-1 break-words">
                           {material.description}
                         </p>
                       )}
                       {material.isFinal && (
-                        <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
                           <CheckCircle size={10} /> Final version
                         </span>
                       )}
@@ -487,7 +487,7 @@ export default function RequestDetailContent() {
                     </button>
                     <button
                       onClick={() => handleDeleteMaterial(material.id)}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 size={16} />
                     </button>

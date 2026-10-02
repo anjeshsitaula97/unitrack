@@ -236,7 +236,6 @@ model SystemSettings {
   language        String   @default("English")
   enableBranches  Boolean  @default(false)
   showBSDate      Boolean  @default(false)
-  theme           String   @default("system")
   officeLatitude  Float?
   officeLongitude Float?
   officeRadius    Float?   @default(100)

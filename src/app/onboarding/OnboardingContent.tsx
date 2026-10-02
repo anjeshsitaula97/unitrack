@@ -126,19 +126,19 @@ export default function OnboardingContent() {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
           Student Onboarding
         </h1>
       </div>
 
       {!selectedStudent ? (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6">
+        <div className="bg-white rounded-2xl border border-slate-100 p-6">
           <div className="relative max-w-md mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
               type="text"
               placeholder="Search student by name or email..."
-              className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none text-sm focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div className="space-y-1">
@@ -147,14 +147,14 @@ export default function OnboardingContent() {
                 type="button"
                 key={student.id}
                 onClick={() => handleStudentSelect(student)}
-                className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center gap-3"
+                className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-3"
               >
                 <div className="size-10 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold">
                   {student.firstName?.[0]}
                   {student.lastName?.[0]}
                 </div>
                 <div>
-                  <div className="font-medium text-slate-800 dark:text-white text-sm">
+                  <div className="font-medium text-slate-800 text-sm">
                     {student.firstName} {student.lastName}
                   </div>
                   <div className="text-xs text-slate-400">
@@ -181,7 +181,7 @@ export default function OnboardingContent() {
               {selectedStudent.lastName?.[0]}
             </div>
             <div>
-              <div className="font-bold text-slate-800 dark:text-white">
+              <div className="font-bold text-slate-800">
                 {selectedStudent.firstName} {selectedStudent.lastName}
               </div>
               <div className="text-xs text-slate-400">{selectedStudent.email}</div>
@@ -202,7 +202,7 @@ export default function OnboardingContent() {
                   className="flex flex-col items-center gap-1 relative"
                 >
                   <div
-                    className={`size-10 rounded-xl flex items-center justify-center transition-all ${completed ? "bg-emerald-500 text-white" : isActive ? "bg-indigo-600 text-white ring-4 ring-indigo-200 dark:ring-indigo-800" : "bg-slate-100 dark:bg-slate-700 text-slate-400"}`}
+                    className={`size-10 rounded-xl flex items-center justify-center transition-all ${completed ? "bg-emerald-500 text-white" : isActive ? "bg-indigo-600 text-white ring-4 ring-indigo-200" : "bg-slate-100 text-slate-400"}`}
                   >
                     {completed ? <Check size={18} /> : <Icon size={18} />}
                   </div>
@@ -216,8 +216,8 @@ export default function OnboardingContent() {
             })}
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 mb-6">
-            <h3 className="font-bold text-slate-800 dark:text-white mb-4">
+          <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+            <h3 className="font-bold text-slate-800 mb-4">
               {stepMeta[currentStep].label}
             </h3>
             <div className="grid grid-cols-2 gap-4">
@@ -242,7 +242,7 @@ export default function OnboardingContent() {
                         value={stepData[1]?.[field] || ""}
                         onChange={(e) => updateStepData(field, e.target.value)}
                         placeholder={field}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
                   ))}
@@ -268,7 +268,7 @@ export default function OnboardingContent() {
                       field === "resume" ? (
                         <input
                           type="file"
-                          className="w-full text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900/20 file:text-indigo-600 dark:file:text-indigo-400"
+                          className="w-full text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600"
                           onChange={(e) => updateStepData(field, e.target.files?.[0]?.name || "")}
                         />
                       ) : (
@@ -277,7 +277,7 @@ export default function OnboardingContent() {
                           value={stepData[2]?.[field] || ""}
                           onChange={(e) => updateStepData(field, e.target.value)}
                           placeholder={field}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       )}
                     </div>
@@ -302,7 +302,7 @@ export default function OnboardingContent() {
                         value={stepData[3]?.[field] || ""}
                         onChange={(e) => updateStepData(field, e.target.value)}
                         placeholder={field}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
                   ))}
@@ -326,7 +326,7 @@ export default function OnboardingContent() {
                         <select
                           value={stepData[4]?.[field] || ""}
                           onChange={(e) => updateStepData(field, e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                           <option value="">Select...</option>
                           {["Received", "Accepted", "Rejected", "Deferred", "Conditional"].map(
@@ -343,7 +343,7 @@ export default function OnboardingContent() {
                           value={stepData[4]?.[field] || ""}
                           onChange={(e) => updateStepData(field, e.target.value)}
                           placeholder={field}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       )}
                     </div>
@@ -369,7 +369,7 @@ export default function OnboardingContent() {
                         <select
                           value={stepData[5]?.[field] || ""}
                           onChange={(e) => updateStepData(field, e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                           <option value="">Select...</option>
                           {[
@@ -387,7 +387,7 @@ export default function OnboardingContent() {
                           type="date"
                           value={stepData[5]?.[field] || ""}
                           onChange={(e) => updateStepData(field, e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       ) : (
                         <input
@@ -397,7 +397,7 @@ export default function OnboardingContent() {
                           value={stepData[5]?.[field] || ""}
                           onChange={(e) => updateStepData(field, e.target.value)}
                           placeholder={field}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       )}
                     </div>
@@ -424,7 +424,7 @@ export default function OnboardingContent() {
                         <select
                           value={stepData[6]?.[field] || ""}
                           onChange={(e) => updateStepData(field, e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                           <option value="">Select...</option>
                           {[
@@ -444,7 +444,7 @@ export default function OnboardingContent() {
                           type="date"
                           value={stepData[6]?.[field] || ""}
                           onChange={(e) => updateStepData(field, e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       ) : (
                         <input
@@ -452,7 +452,7 @@ export default function OnboardingContent() {
                           value={stepData[6]?.[field] || ""}
                           onChange={(e) => updateStepData(field, e.target.value)}
                           placeholder={field}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       )}
                     </div>
@@ -467,7 +467,7 @@ export default function OnboardingContent() {
               type="button"
               onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
               disabled={currentStep === 0}
-              className="px-4 py-2 rounded-xl text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-30 flex items-center gap-1"
+              className="px-4 py-2 rounded-xl text-sm font-semibold bg-white border border-slate-200 text-slate-600 disabled:opacity-30 flex items-center gap-1"
             >
               <ChevronLeft size={16} /> Previous
             </button>

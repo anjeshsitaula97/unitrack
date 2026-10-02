@@ -178,7 +178,7 @@ export default function ChatContent() {
       .toUpperCase()
       .slice(0, 2);
     return (
-      <div className="size-9 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300 shrink-0">
+      <div className="size-9 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0">
         {om?.avatar ? (
           <Image
             src={om.avatar}
@@ -201,10 +201,10 @@ export default function ChatContent() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] gap-0 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
+    <div className="flex h-[calc(100vh-7rem)] gap-0 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
       {/* Left panel – conversation list */}
-      <div className="w-80 shrink-0 border-r border-slate-200 dark:border-slate-700 flex flex-col bg-slate-50/50 dark:bg-slate-900">
-        <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
+      <div className="w-80 shrink-0 border-r border-slate-200 flex flex-col bg-slate-50/50">
+        <div className="p-3 border-b border-slate-200 flex items-center gap-2">
           <div className="relative flex-1">
             <Search
               size={15}
@@ -214,7 +214,7 @@ export default function ChatContent() {
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-2 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
+              className="w-full pl-8 pr-2 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
             />
           </div>
           <button
@@ -246,17 +246,17 @@ export default function ChatContent() {
                 type="button"
                 key={room.id}
                 onClick={() => setActiveRoomId(room.id)}
-                className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors border-b border-slate-100 dark:border-slate-800 ${
+                className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors border-b border-slate-100 ${
                   isActive
-                    ? "bg-indigo-50 dark:bg-indigo-900/20"
-                    : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                    ? "bg-indigo-50"
+                    : "hover:bg-slate-100"
                 }`}
               >
                 {roomAvatar(room)}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span
-                      className={`text-sm font-medium truncate ${isActive ? "text-indigo-700 dark:text-indigo-300" : "text-slate-700 dark:text-slate-200"}`}
+                      className={`text-sm font-medium truncate ${isActive ? "text-indigo-700" : "text-slate-700"}`}
                     >
                       {roomName(room)}
                     </span>
@@ -266,7 +266,7 @@ export default function ChatContent() {
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                  <p className="text-[11px] text-slate-400 truncate mt-0.5">
                     {lastMsg
                       ? (lastMsg.senderId === sessionUser?.id ? "You: " : "") + lastMsg.content
                       : "No messages yet"}
@@ -291,10 +291,10 @@ export default function ChatContent() {
         ) : (
           <>
             {/* Header */}
-            <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3 bg-white dark:bg-slate-900">
+            <div className="px-4 py-3 border-b border-slate-200 flex items-center gap-3 bg-white">
               {activeRoom && roomAvatar(activeRoom)}
               <div>
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <h3 className="text-sm font-semibold text-slate-800">
                   {roomName(activeRoom)}
                 </h3>
                 <p className="text-[11px] text-slate-400">
@@ -304,7 +304,7 @@ export default function ChatContent() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-slate-50/30 dark:bg-slate-900/50">
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-slate-50/30">
               {messages.length === 0 && (
                 <div className="flex items-center justify-center h-full text-slate-400">
                   <p className="text-xs">No messages yet. Say hello!</p>
@@ -324,8 +324,8 @@ export default function ChatContent() {
                     <div
                       className={`size-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${
                         isMine
-                          ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300"
-                          : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300"
+                          ? "bg-indigo-100 text-indigo-600"
+                          : "bg-slate-200 text-slate-500"
                       }`}
                     >
                       {msg.sender?.avatar ? (
@@ -347,7 +347,7 @@ export default function ChatContent() {
                         className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${
                           isMine
                             ? "bg-indigo-600 text-white rounded-br-md"
-                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-bl-md"
+                            : "bg-white text-slate-700 border border-slate-200 rounded-bl-md"
                         }`}
                       >
                         {msg.content}
@@ -365,7 +365,7 @@ export default function ChatContent() {
             </div>
 
             {/* Input */}
-            <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+            <div className="px-4 py-3 border-t border-slate-200 bg-white">
               <div className="flex items-center gap-2">
                 <input
                   ref={inputRef}
@@ -374,7 +374,7 @@ export default function ChatContent() {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="flex-1 px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="flex-1 px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
                 />
                 <button
                   type="button"
@@ -405,11 +405,11 @@ export default function ChatContent() {
           }}
         >
           <div
-            className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200 dark:border-slate-700"
+            className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-800">
                 New Conversation
               </h3>
               <button
@@ -430,7 +430,7 @@ export default function ChatContent() {
                   placeholder="Search users..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>
               <div className="max-h-72 overflow-y-auto space-y-0.5">
@@ -442,9 +442,9 @@ export default function ChatContent() {
                     type="button"
                     key={u.id}
                     onClick={() => startDirectChat(u.id)}
-                    className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
                   >
-                    <div className="size-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300 shrink-0">
+                    <div className="size-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0">
                       {u.avatar ? (
                         <Image
                           src={u.avatar}
@@ -463,7 +463,7 @@ export default function ChatContent() {
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      <p className="text-sm font-medium text-slate-700">
                         {u.name}
                       </p>
                       <p className="text-[11px] text-slate-400">

@@ -181,29 +181,29 @@ export default function ReportBuilderContent() {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
           Report Builder
         </h1>
         <button
           type="button"
           onClick={() => setShowSaved(!showSaved)}
-          className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1"
+          className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 flex items-center gap-1"
         >
           <FileText size={14} /> Saved Reports ({savedReports.length})
         </button>
       </div>
 
       {showSaved && savedReports.length > 0 && (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 mb-6">
-          <h3 className="font-bold text-slate-800 dark:text-white mb-3 text-sm">Saved Reports</h3>
+        <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-6">
+          <h3 className="font-bold text-slate-800 mb-3 text-sm">Saved Reports</h3>
           <div className="space-y-1">
             {savedReports.map((r: SavedReport) => (
               <div
                 key={r.id}
-                className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-50"
               >
                 <button type="button" onClick={() => loadReport(r)} className="text-left">
-                  <span className="font-medium text-slate-700 dark:text-slate-300 text-sm">
+                  <span className="font-medium text-slate-700 text-sm">
                     {r.name}
                   </span>
                   <span className="text-[10px] text-slate-400 ml-2">
@@ -230,7 +230,7 @@ export default function ReportBuilderContent() {
 
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-1 space-y-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 p-4">
             <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
               Entity
             </label>
@@ -243,7 +243,7 @@ export default function ReportBuilderContent() {
                     setEntity(e);
                     setSelectedFields([]);
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${entity === e ? "bg-indigo-600 text-white" : "bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${entity === e ? "bg-indigo-600 text-white" : "bg-slate-50 text-slate-600"}`}
                 >
                   {e}
                 </button>
@@ -251,7 +251,7 @@ export default function ReportBuilderContent() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 p-4">
             <div className="flex items-center justify-between mb-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Fields
@@ -267,13 +267,13 @@ export default function ReportBuilderContent() {
                     onChange={() => toggleField(field)}
                     className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <span className="text-xs text-slate-600 dark:text-slate-300">{field}</span>
+                  <span className="text-xs text-slate-600">{field}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 p-4">
             <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
               Chart Type
             </label>
@@ -283,7 +283,7 @@ export default function ReportBuilderContent() {
                   type="button"
                   key={ct}
                   onClick={() => setChartType(ct)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${chartType === ct ? "bg-indigo-600 text-white" : "bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${chartType === ct ? "bg-indigo-600 text-white" : "bg-slate-50 text-slate-600"}`}
                 >
                   {ct === "Table" ? (
                     <Table size={12} />
@@ -300,7 +300,7 @@ export default function ReportBuilderContent() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 p-4">
             <div className="flex items-center justify-between mb-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Filters
@@ -322,7 +322,7 @@ export default function ReportBuilderContent() {
                   <select
                     value={f.field}
                     onChange={(e) => updateFilter(i, "field", e.target.value)}
-                    className="flex-1 text-[10px] px-1.5 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded"
+                    className="flex-1 text-[10px] px-1.5 py-1 bg-slate-50 border border-slate-200 rounded"
                   >
                     {entityFields[entity].map((fld) => (
                       <option key={fld} value={fld}>
@@ -333,7 +333,7 @@ export default function ReportBuilderContent() {
                   <select
                     value={f.op}
                     onChange={(e) => updateFilter(i, "op", e.target.value)}
-                    className="w-16 text-[10px] px-1 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded"
+                    className="w-16 text-[10px] px-1 py-1 bg-slate-50 border border-slate-200 rounded"
                   >
                     {["contains", "equals", "gt", "lt", "startsWith"].map((op) => (
                       <option key={op} value={op}>
@@ -345,7 +345,7 @@ export default function ReportBuilderContent() {
                     type="text"
                     value={f.value}
                     onChange={(e) => updateFilter(i, "value", e.target.value)}
-                    className="flex-1 text-[10px] px-1.5 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded"
+                    className="flex-1 text-[10px] px-1.5 py-1 bg-slate-50 border border-slate-200 rounded"
                   />
                 </div>
               ))}
@@ -368,13 +368,13 @@ export default function ReportBuilderContent() {
               value={reportName}
               onChange={(e) => setReportName(e.target.value)}
               placeholder="Report name..."
-              className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <button
               type="button"
               onClick={handleSave}
               disabled={!reportName.trim()}
-              className="px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-semibold hover:bg-emerald-100 flex items-center gap-1"
+              className="px-3 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-semibold hover:bg-emerald-100 flex items-center gap-1"
             >
               <Save size={14} /> Save
             </button>
@@ -383,16 +383,16 @@ export default function ReportBuilderContent() {
 
         <div className="col-span-2">
           {loading ? (
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-20 flex items-center justify-center">
+            <div className="bg-white rounded-2xl border border-slate-100 p-20 flex items-center justify-center">
               <Loader2 className="animate-spin text-slate-400" size={32} />
             </div>
           ) : reportData.length > 0 ? (
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
               {chartType === "Table" ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                      <tr className="border-b border-slate-100 bg-slate-50">
                         {selectedFields.map((f) => (
                           <th
                             key={f}
@@ -407,7 +407,7 @@ export default function ReportBuilderContent() {
                       {reportData.slice(0, 50).map((row, i) => (
                         <tr
                           key={i}
-                          className="border-b border-slate-50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30"
+                          className="border-b border-slate-50 hover:bg-slate-50"
                         >
                           {selectedFields.map((f) => {
                             const val =
@@ -417,7 +417,7 @@ export default function ReportBuilderContent() {
                             return (
                               <td
                                 key={f}
-                                className="px-4 py-2.5 text-slate-700 dark:text-slate-300"
+                                className="px-4 py-2.5 text-slate-700"
                               >
                                 {display}
                               </td>
@@ -428,7 +428,7 @@ export default function ReportBuilderContent() {
                     </tbody>
                   </table>
                   {reportData.length > 50 && (
-                    <div className="px-4 py-2 text-xs text-slate-400 border-t border-slate-100 dark:border-slate-700">
+                    <div className="px-4 py-2 text-xs text-slate-400 border-t border-slate-100">
                       Showing 50 of {reportData.length} rows
                     </div>
                   )}
@@ -443,7 +443,7 @@ export default function ReportBuilderContent() {
                     return (
                       <div className="p-8 text-center">
                         <BarChart3
-                          className="mx-auto text-slate-200 dark:text-slate-700 mb-3"
+                          className="mx-auto text-slate-200 mb-3"
                           size={48}
                         />
                         <p className="text-slate-500 font-medium">
@@ -463,7 +463,7 @@ export default function ReportBuilderContent() {
                     );
                     return (
                       <div className="p-8">
-                        <h3 className="font-bold text-slate-800 dark:text-white mb-4">
+                        <h3 className="font-bold text-slate-800 mb-4">
                           {chartType} Chart
                         </h3>
                         <div className="flex items-end gap-2 h-48">
@@ -504,7 +504,7 @@ export default function ReportBuilderContent() {
                   ];
                   return (
                     <div className="p-8">
-                      <h3 className="font-bold text-slate-800 dark:text-white mb-4">Pie Chart</h3>
+                      <h3 className="font-bold text-slate-800 mb-4">Pie Chart</h3>
                       <div className="flex flex-wrap gap-4 justify-center">
                         {reportData.slice(0, 10).map((row, i) => {
                           const _pct = reportData.length > 1 ? 100 / reportData.length : 100;
@@ -514,7 +514,7 @@ export default function ReportBuilderContent() {
                                 className="size-4 rounded-full"
                                 style={{ backgroundColor: colors[i % 10] }}
                               />
-                              <span className="text-xs text-slate-600 dark:text-slate-300">
+                              <span className="text-xs text-slate-600">
                                 {String(
                                   row[
                                     selectedFields.find((f) => f !== numField) || selectedFields[0]
@@ -532,8 +532,8 @@ export default function ReportBuilderContent() {
               )}
             </div>
           ) : (
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-20 flex flex-col items-center justify-center text-center">
-              <BarChart3 className="text-slate-200 dark:text-slate-700 mb-3" size={48} />
+            <div className="bg-white rounded-2xl border border-slate-100 p-20 flex flex-col items-center justify-center text-center">
+              <BarChart3 className="text-slate-200 mb-3" size={48} />
               <p className="text-slate-500 font-medium">Select fields and generate a report</p>
               <p className="text-xs text-slate-400 mt-1">
                 Choose an entity, pick fields, add filters, then click Generate Report

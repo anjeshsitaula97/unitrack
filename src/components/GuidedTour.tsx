@@ -140,20 +140,20 @@ export default function GuidedTour({ user }: GuidedTourProps) {
             : { top: "50%", left: "50%", transform: "translate(-50%,-50%)" }
         }
       >
-        <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-5">
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-2 border-8 border-transparent border-r-white dark:border-r-slate-800" />
+        <div className="relative bg-white rounded-2xl shadow-2xl border border-slate-200 p-5">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-2 border-8 border-transparent border-r-white" />
 
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="size-7 rounded-lg bg-indigo-600 flex items-center justify-center">
                 <GraduationCap size={14} className="text-white" />
               </div>
-              <span className="text-sm font-bold text-slate-800 dark:text-white">Quick Tour</span>
+              <span className="text-sm font-bold text-slate-800">Quick Tour</span>
             </div>
             <button
               type="button"
               onClick={skip}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              className="text-slate-400 hover:text-slate-600"
             >
               <X size={16} />
             </button>
@@ -164,12 +164,12 @@ export default function GuidedTour({ user }: GuidedTourProps) {
               {steps.map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1 flex-1 rounded-full ${i === currentStep ? "bg-indigo-500" : i < currentStep ? "bg-emerald-400" : "bg-slate-200 dark:bg-slate-700"}`}
+                  className={`h-1 flex-1 rounded-full ${i === currentStep ? "bg-indigo-500" : i < currentStep ? "bg-emerald-400" : "bg-slate-200"}`}
                 />
               ))}
             </div>
-            <h3 className="font-bold text-slate-800 dark:text-white text-sm mb-1">{step.title}</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            <h3 className="font-bold text-slate-800 text-sm mb-1">{step.title}</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
               {step.content}
             </p>
           </div>
@@ -178,7 +178,7 @@ export default function GuidedTour({ user }: GuidedTourProps) {
             <button
               type="button"
               onClick={skip}
-              className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              className="text-xs text-slate-400 hover:text-slate-600"
             >
               Skip
             </button>
