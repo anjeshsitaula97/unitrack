@@ -78,15 +78,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       ["maritalStatus"],
       ["photoUrl"],
       ["address"],
-      ["permanentProvince"],
-      ["permanentDistrict"],
-      ["permanentMunicipality"],
-      ["permanentWardNo"],
       ["permanentAddress"],
-      ["temporaryProvince"],
-      ["temporaryDistrict"],
-      ["temporaryMunicipality"],
-      ["temporaryWardNo"],
       ["temporaryAddress"],
       ["passportNumber"],
       ["passportNationality"],
@@ -131,6 +123,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       const n = Number(value);
       return Number.isFinite(n) && n > 0 ? String(n) : null;
     };
+    const nullableText = (value: unknown): string | null => {
+      if (value === null || value === undefined || value === "") return null;
+      return String(value);
+    };
 
     // partnerId is a real foreign key on an Int column. The form renders it as
     // an empty string when no partner is chosen, which Prisma rejects outright
@@ -146,22 +142,24 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     for (const [field] of scalarFields) {
-      if (field !== "permanentProvince" && field !== "temporaryProvince" && field in body) {
+      if (field in body) {
         updateData[field] = body[field];
       }
     }
 
-    if ("permanentProvince" in body) {
-      updateData.permanentProvince = toProvince(body.permanentProvince);
-      updateData.permanentDistrict = null;
-      updateData.permanentMunicipality = null;
-      updateData.permanentWardNo = null;
-    }
-    if ("temporaryProvince" in body) {
-      updateData.temporaryProvince = toProvince(body.temporaryProvince);
-      updateData.temporaryDistrict = null;
-      updateData.temporaryMunicipality = null;
-      updateData.temporaryWardNo = null;
+    // District, municipality and ward belong to a province, so they were
+    // cleared on every save. That silently erased a saved address whenever the
+    // form was resubmitted without anyone touching those pickers, which is most
+    // saves. The form already resets all three when the province itself
+    // changes, so the server only normalises what it was sent and lets the
+    // client decide when a cascade is warranted.
+    for (const prefix of ["permanent", "temporary"] as const) {
+      const provinceKey = `${prefix}Province`;
+      if (provinceKey in body) updateData[provinceKey] = toProvince(body[provinceKey]);
+      for (const part of ["District", "Municipality", "WardNo"] as const) {
+        const key = `${prefix}${part}`;
+        if (key in body) updateData[key] = nullableText(body[key]);
+      }
     }
 
     if ("studentPassword" in body && body.studentPassword) {
@@ -193,19 +191,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       updateData.name = body.name || `${body.firstName || ""} ${body.lastName || ""}`.trim();
     }
 
-    if ("documents" in body && body.documents) {
-      updateData.documents = {
-        deleteMany: {},
-        create: body.documents.map(
-          (doc: { type?: string; name: string; url: string; status?: string }) => ({
-            type: doc.type,
-            name: doc.name,
-            url: doc.url,
-            status: doc.status || "Uploaded",
-          })
-        ),
-      };
-    }
+    // Documents used to be replaced wholesale, with deleteMany: {} wiping every
+    // row and recreating the submitted list. Each save therefore renumbered every
+    // document and dropped fileSize, fileType, academicDocumentId and
+    // uploadedAt, because only type/name/url/status were carried across. They
+    // are now reconciled after the student row is written: an incoming entry is
+    // matched to its stored row by id or upload url, and only rows the client
+    // actually dropped are deleted.
+    const incomingDocs = Array.isArray(body.documents) ? body.documents : null;
 
     const existing = await db.student.findUnique({ where: { id: numId } });
 
@@ -213,6 +206,55 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id: numId },
       data: updateData as Prisma.StudentUpdateInput,
     });
+
+    if (incomingDocs) {
+      const stored = await db.studentDocument.findMany({ where: { studentId: numId } });
+      const kept = new Set<number>();
+      for (const doc of incomingDocs as {
+        id?: string | number;
+        type?: string;
+        name?: string;
+        url?: string;
+        status?: string;
+        fileSize?: number;
+        fileType?: string;
+      }[]) {
+        const url = typeof doc?.url === "string" ? doc.url.trim() : "";
+        if (!url || !doc?.name) continue;
+        const idNum = Number(doc.id);
+        const byId = Number.isInteger(idNum) ? stored.find((d) => d.id === idNum) : undefined;
+        const row = byId ?? stored.find((d) => d.url === url);
+        if (row) {
+          kept.add(row.id);
+          const type = doc.type || row.type;
+          const status = doc.status || row.status || "Uploaded";
+          if (row.name !== doc.name || row.type !== type || row.status !== status) {
+            await db.studentDocument.update({
+              where: { id: row.id },
+              data: { name: doc.name, type, status },
+            });
+          }
+        } else {
+          const created = await db.studentDocument.create({
+            data: {
+              studentId: numId,
+              type: doc.type || null,
+              name: doc.name,
+              url,
+              status: doc.status || "Uploaded",
+              fileSize: typeof doc.fileSize === "number" ? doc.fileSize : null,
+              fileType: doc.fileType || null,
+            },
+          });
+          kept.add(created.id);
+        }
+      }
+      // Deletes run last so a failure part way through cannot lose documents.
+      const removed = stored.filter((d) => !kept.has(d.id)).map((d) => d.id);
+      if (removed.length) {
+        await db.studentDocument.deleteMany({ where: { id: { in: removed } } });
+      }
+    }
 
     const changes = diffChanges(existing, student);
     await logActivity({
