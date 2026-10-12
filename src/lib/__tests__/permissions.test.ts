@@ -21,6 +21,25 @@ describe("Permissions", () => {
       expect(hasPermission("staff", "bulk:export")).toBe(true);
     });
 
+    it("covers every enforced module action in the catalog", () => {
+      // dashboard-layout POST, saved-report edits and localization saves are
+      // enforced as dashboard:create / reports:update / settings:create and must
+      // be grantable through the Settings tab.
+      expect(hasPermission("staff", "dashboard:create")).toBe(true);
+      expect(hasPermission("student", "dashboard:create")).toBe(true);
+      expect(hasPermission("staff", "reports:update")).toBe(true);
+      expect(hasPermission("student", "reports:update")).toBe(false);
+      expect(hasPermission("staff", "settings:create")).toBe(true);
+      expect(hasPermission("student", "settings:create")).toBe(false);
+      expect(hasPermission("admin", "settings:create")).toBe(true);
+      // The student-notes communication thread is managed by the staff team;
+      // the "Student" role never touches the admin API surface for notes.
+      expect(hasPermission("admin", "students:notes")).toBe(true);
+      expect(hasPermission("staff", "students:notes")).toBe(true);
+      expect(hasPermission("student", "students:notes")).toBe(false);
+      expect(hasPermission("viewer", "students:notes")).toBe(false);
+    });
+
     it("grants student access to read-only resources", () => {
       // The admin student registry is off-limits to student accounts (moving
       // that to the dedicated /api/student-portal/* surface); other read-only

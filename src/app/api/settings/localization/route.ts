@@ -35,6 +35,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSession();
+    const deniedPOST = checkRoutePermission(session, {
+      url: "/api/settings/localization",
+      method: "POST",
+    });
+    if (deniedPOST) return deniedPOST;
+
     const data = await req.json();
     const existing = await db.systemSettings.findFirst();
     const enabledModules = normalizeEnabledModulesJson(data.enabledModules);
@@ -66,12 +73,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const session = await getSession();
-    const deniedPOST = checkRoutePermission(session, {
-      url: "/api/settings/localization",
-      method: "POST",
-    });
-    if (deniedPOST) return deniedPOST;
     if (session) {
       await db.notification
         .create({

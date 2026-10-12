@@ -413,6 +413,7 @@ model Student {
   payments              Payment[]
   documents             StudentDocument[]
   conversations         StudentConversation[]
+  notes                 StudentNote[]
 }
 
 model Application {
@@ -940,6 +941,34 @@ model StudentMessage {
   conversation   StudentConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
+}
+
+// Threaded notes attached to a student record, used as the shared
+// communication surface between the staff team and the student. A note can be
+// authored by either a staff member ("staff") or the student themselves
+// ("student"). Author identity is snapshotted (name/role/id) so threads keep
+// reading correctly after an account is deleted, and so the student that owns
+// the record and the staff author can live under one lightweight ID column.
+// Replies hang off `parentId`; deleting a parent keeps replies as standalone
+// notes (the route rewrites `parentId` to null before removal).
+model StudentNote {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  content    String   @db.LongText
+  authorType String   @default("staff") // "staff" | "student"
+  authorName String   @default("")
+  authorRole String?
+  authorId   Int?
+  parentId   Int?
+  parent     StudentNote? @relation("NoteReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    StudentNote[] @relation("NoteReplies")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([parentId])
+  @@index([createdAt])
 }
 
 model RateLimitLog {

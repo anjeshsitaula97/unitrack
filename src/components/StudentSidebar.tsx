@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquare,
+  StickyNote,
 } from "lucide-react";
 import { MODULES, getEnabledModuleIds } from "@/lib/modules";
 import { deactivateSession } from "@/lib/client-session";
@@ -37,6 +38,13 @@ const navItems = [
     label: "Messages",
     icon: <MessageSquare size={18} />,
     href: "/student-portal/messages",
+    moduleId: "students",
+  },
+  {
+    id: "notes",
+    label: "Notes",
+    icon: <StickyNote size={18} />,
+    href: "/student-portal/notes",
     moduleId: "students",
   },
   {

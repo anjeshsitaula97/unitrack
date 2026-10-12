@@ -25,10 +25,12 @@ import {
   BookOpen,
   Mail,
   Briefcase,
+  MessageSquare,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { safeJson } from "@/lib/fetch-client";
+import StudentNotesContent from "./StudentNotesContent";
 
 const capitalize = (str: string) => {
   if (!str) return "";
@@ -303,6 +305,7 @@ export default function StudentDetailContent({ id }: { id: string }) {
     { id: "preferences", label: "Preferences", icon: Zap },
     { id: "applications", label: "Applications", icon: Building2 },
     { id: "documents", label: "Documents", icon: FileText },
+    { id: "notes", label: "Notes", icon: MessageSquare },
   ];
 
   return (
@@ -407,7 +410,7 @@ export default function StudentDetailContent({ id }: { id: string }) {
         </div>
 
         <div className="p-6">
-          <div className="flex bg-slate-100/50 p-1.5 rounded-2xl w-fit mb-6">
+          <div className="flex flex-wrap bg-slate-100/50 p-1.5 rounded-2xl w-fit mb-6">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -813,6 +816,10 @@ export default function StudentDetailContent({ id }: { id: string }) {
                 <p className="text-sm text-slate-400">No documents uploaded.</p>
               )}
             </div>
+          )}
+
+          {detailTab === "notes" && (
+            <StudentNotesContent key={student.id} studentId={student.id} />
           )}
         </div>
       </div>

@@ -55,7 +55,7 @@ import {
   getApplicationStatuses,
   type ApplicationStatus,
 } from "@/lib/application-statuses";
-import { PERMISSION_CATALOG } from "@/lib/permissions";
+import { PERMISSION_CATALOG, resolvePermissions } from "@/lib/permissions";
 
 type SettingsTab =
   | "profile"
@@ -324,7 +324,10 @@ function SettingsContentInternal() {
           setRoles(formattedRoles);
           const perms: Record<string, string[]> = {};
           formattedRoles.forEach((r) => {
-            perms[String(r.id)] = r.permissions || [];
+            // Show the *effective* grant set so an empty stored list (e.g. the
+            // seeded Student row) renders the catalog defaults instead of lying
+            // with every box unchecked. Toggling then persists the full list.
+            perms[String(r.id)] = [...resolvePermissions(r.name || "", r.permissions)];
           });
           setRolePermissions(perms);
         }
@@ -752,6 +755,7 @@ function SettingsContentInternal() {
   };
 
   const togglePermission = async (roleId: string, permissionId: string) => {
+    const role = roles.find((r) => String(r.id) === roleId);
     const current = rolePermissions[roleId] || [];
     let updated: string[];
 
@@ -771,6 +775,12 @@ function SettingsContentInternal() {
         body: JSON.stringify({ permissions: updated }),
       });
       if (res.ok) {
+        // Re-resolve so the displayed state always matches enforcement (an
+        // empty persisted list deliberately falls back to the defaults).
+        setRolePermissions((prev) => ({
+          ...prev,
+          [roleId]: [...resolvePermissions(role?.name || "", updated)],
+        }));
         toast.success("Permission updated");
       } else {
         throw new Error();

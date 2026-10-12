@@ -1,10 +1,17 @@
 import { PrismaClient } from "@prisma/client";
+import { PERMISSION_CATALOG, type RoleSlug } from "../src/lib/permission-catalog";
 
 const prisma = new PrismaClient();
+
+/** Catalog-derived grant list for a built-in role slug (stays in sync with the catalog). */
+function catalogDefaultsFor(slug: RoleSlug): string[] {
+  return PERMISSION_CATALOG.filter((p) => p.defaultRoles.includes(slug)).map((p) => p.id);
+}
 
 const ALL_PERMISSIONS = [
   "dashboard:view",
   "dashboard:export",
+  "dashboard:create",
   "universities:read",
   "universities:create",
   "universities:update",
@@ -26,6 +33,7 @@ const ALL_PERMISSIONS = [
   "students:import",
   "students:credentials",
   "students:messages",
+  "students:notes",
   "applications:read",
   "applications:create",
   "applications:update",
@@ -51,6 +59,7 @@ const ALL_PERMISSIONS = [
   "expenses:export",
   "reports:read",
   "reports:create",
+  "reports:update",
   "reports:delete",
   "analytics:read",
   "analytics:export",
@@ -93,6 +102,7 @@ const ALL_PERMISSIONS = [
   "api_keys:create",
   "api_keys:delete",
   "settings:read",
+  "settings:create",
   "settings:update",
   "backups:read",
   "backups:create",
@@ -160,6 +170,18 @@ const INITIAL_ROLES = [
     description: "Full access to all modules and settings.",
     permissions: JSON.stringify(ALL_PERMISSIONS),
     color: "text-rose-600 bg-rose-50 border-rose-200",
+  },
+  {
+    name: "Admin",
+    description: "Full access to all modules and settings.",
+    permissions: JSON.stringify(catalogDefaultsFor("admin")),
+    color: "text-rose-600 bg-rose-50 border-rose-200",
+  },
+  {
+    name: "Staff",
+    description: "Day-to-day operational access across modules.",
+    permissions: JSON.stringify(catalogDefaultsFor("staff")),
+    color: "text-sky-600 bg-sky-50 border-sky-200",
   },
   {
     name: "Moderator",
@@ -249,7 +271,7 @@ const INITIAL_ROLES = [
   {
     name: "Student",
     description: "Student portal access — can view own applications, payments, and documents.",
-    permissions: JSON.stringify([]),
+    permissions: JSON.stringify(catalogDefaultsFor("student")),
     color: "text-amber-600 bg-amber-50 border-amber-200",
   },
 ];
