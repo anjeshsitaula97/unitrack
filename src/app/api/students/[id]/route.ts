@@ -73,7 +73,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       ["lastName"],
       ["email"],
       ["admissionEmail"],
-      ["studentPassword"],
+      // studentPassword is intentionally NOT in this raw-copy list. The form
+      // always submits an empty string (the GET strips the hash), and a raw copy
+      // would persist that empty string and wipe the portal password on every
+      // ordinary edit. It is handled explicitly below.
       ["phone"],
       ["whatsappNumber"],
       ["gender"],

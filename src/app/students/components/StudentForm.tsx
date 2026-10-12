@@ -7,8 +7,8 @@ import {
   GraduationCap,
   Plus,
   Trash2,
-  X,
   Check,
+  ArrowLeft,
   ChevronRight,
   ChevronLeft,
   User,
@@ -835,1234 +835,1219 @@ export default function StudentForm({
 
   return (
     <LazyMotion features={domAnimation}>
-      <div className="min-h-screen bg-slate-50/50">
-        <div className="max-w-6xl mx-auto p-6">
-          <div className="flex items-center gap-4 mb-6">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition-all"
-            >
-              <X size={20} />
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="size-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
-                <Plus size={24} />
-              </div>
-              <div>
-                <h1 className="text-xl font-black text-slate-800">
-                  {isEditing ? "Edit Student" : "Add New Student"}
-                </h1>
-                <p className="text-xs text-slate-500 font-medium uppercase tracking-widest">
-                  Step {step} of {totalSteps}: {STEPS[step - 1].name}
-                </p>
-              </div>
+      <div className="animate-fade-in space-y-6">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 hover:text-slate-600"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">
+              {isEditing ? "Edit Student" : "Add New Student"}
+            </h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Step {step} of {totalSteps}: {STEPS[step - 1].name}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+          <div className="px-6 py-5 border-b border-slate-100 overflow-x-auto no-scrollbar">
+            <div className="flex items-start min-w-max">
+              {STEPS.map((s, i) => {
+                const isCompleted = step > s.id;
+                const isActive = step === s.id;
+                const Icon = s.icon;
+                return (
+                  <React.Fragment key={s.id}>
+                    <button
+                      type="button"
+                      onClick={() => setStep(s.id)}
+                      className="flex flex-col items-center gap-1.5 shrink-0 group"
+                    >
+                      <span
+                        className={`size-8 rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
+                          isActive
+                            ? "bg-indigo-600 text-white ring-4 ring-indigo-100"
+                            : isCompleted
+                              ? "bg-emerald-500 text-white"
+                              : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
+                        }`}
+                      >
+                        {isCompleted ? <Check size={14} /> : <Icon size={14} />}
+                      </span>
+                      <span
+                        className={`text-[10px] font-semibold whitespace-nowrap ${
+                          isActive
+                            ? "text-indigo-600"
+                            : isCompleted
+                              ? "text-emerald-600"
+                              : "text-slate-400"
+                        }`}
+                      >
+                        {s.name}
+                      </span>
+                    </button>
+                    {i < STEPS.length - 1 && (
+                      <div
+                        className={`flex-1 min-w-4 h-0.5 mt-4 mx-1 rounded-full ${
+                          step > s.id ? "bg-emerald-400" : "bg-slate-200"
+                        }`}
+                      />
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
           </div>
 
-          <div
-            className="bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"
-            style={{ minHeight: "calc(100vh - 200px)" }}
-          >
-            <div className="flex flex-1 min-h-0">
-              <div className="w-[220px] shrink-0 border-r border-slate-100 p-3 pt-5 space-y-1">
-                {STEPS.map((s) => {
-                  const isCompleted = step > s.id;
-                  const isActive = step === s.id;
-                  return (
-                    <button
-                      type="button"
-                      key={s.id}
-                      onClick={() => setStep(s.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                        isActive
-                          ? "bg-indigo-50 text-indigo-700 shadow-sm"
-                          : isCompleted
-                            ? "text-emerald-600"
-                            : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-                      }`}
-                    >
-                      <span
-                        className={`size-6 rounded-lg flex items-center justify-center text-[11px] font-bold ${
-                          isActive
-                            ? "bg-indigo-600 text-white"
-                            : isCompleted
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-slate-100 text-slate-400"
-                        }`}
+          <form className="p-6">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={prefersReducedMotion ? false : { opacity: 0, x: 20 }}
+                animate={prefersReducedMotion ? {} : { opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                {step === 1 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4 md:col-span-2">
+                      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        Basic Information
+                      </h3>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="first-name"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
                       >
-                        {isCompleted ? <Check size={12} /> : s.id}
-                      </span>
-                      <span>{s.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
+                        First Name
+                      </label>
+                      <input
+                        id="first-name"
+                        required
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        onBlur={(e) =>
+                          setFormData({ ...formData, firstName: capitalize(e.target.value) })
+                        }
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        placeholder="e.g. John"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="last-name"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Last Name
+                      </label>
+                      <input
+                        id="last-name"
+                        required
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        onBlur={(e) =>
+                          setFormData({ ...formData, lastName: capitalize(e.target.value) })
+                        }
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        placeholder="e.g. Doe"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="primary-email"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Primary Email
+                      </label>
+                      <input
+                        id="primary-email"
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        placeholder="personal@example.com"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="student-status"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Student Status
+                      </label>
+                      <select
+                        id="student-status"
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
+                      >
+                        <option value="In Review">In Review</option>
+                        <option value="Verified">Verified</option>
+                        <option value="New Leads">New Leads</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Applied">Applied</option>
+                        <option value="Enrolled">Enrolled</option>
+                        <option value="Visa Approved">Visa Approved</option>
+                        <option value="Visa Rejected">Visa Rejected</option>
+                      </select>
+                    </div>
 
-              <form className="flex-1 overflow-y-auto p-6 no-scrollbar">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={step}
-                    initial={prefersReducedMotion ? false : { opacity: 0, x: 20 }}
-                    animate={prefersReducedMotion ? {} : { opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
-                    className="space-y-6"
-                  >
-                    {step === 1 && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4 md:col-span-2">
-                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest shadow-[inset_0_0_0_1px_theme(colors.indigo.200)] pl-3">
-                            Basic Information
-                          </h3>
-                        </div>
+                    <div className="space-y-4 md:col-span-2 pt-4">
+                      <h3 className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">
+                        Application Credentials
+                      </h3>
+                      <p className="text-[10px] font-bold text-slate-400 ml-4 italic">
+                        Email created specifically for university applications
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="admission-email"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Admission Email
+                      </label>
+                      <input
+                        id="admission-email"
+                        type="email"
+                        value={formData.admissionEmail}
+                        onChange={(e) =>
+                          setFormData({ ...formData, admissionEmail: e.target.value })
+                        }
+                        className="w-full px-4 py-2.5 bg-amber-50/30 border border-amber-100 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-amber-500"
+                        placeholder="application.id@gmail.com"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="email-password"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Email Password
+                      </label>
+                      <input
+                        id="email-password"
+                        type="text"
+                        value={formData.studentPassword}
+                        onChange={(e) =>
+                          setFormData({ ...formData, studentPassword: e.target.value })
+                        }
+                        className="w-full px-4 py-2.5 bg-amber-50/30 border border-amber-100 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-amber-500"
+                        placeholder="Password for admission email"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="phone-number"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Phone Number
+                      </label>
+                      <div className="flex gap-2">
+                        <select
+                          value={formData.phonePrefix}
+                          onChange={(e) =>
+                            setFormData({ ...formData, phonePrefix: e.target.value })
+                          }
+                          className="w-24 p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-bold appearance-none text-center focus:ring-2 focus:ring-indigo-500"
+                        >
+                          {COUNTRIES.map((c) => (
+                            <option key={c.name} value={c.phoneCode}>
+                              {c.phoneCode}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          id="phone-number"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                          placeholder="9800000000"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="assigned-counselor"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Assigned Counselor (Staff)
+                      </label>
+                      <select
+                        id="assigned-counselor"
+                        value={formData.counselor}
+                        onChange={(e) => setFormData({ ...formData, counselor: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-indigo-50/50 border border-indigo-100 rounded-xl outline-none transition-all text-sm font-bold text-indigo-700 focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="">Select Counselor</option>
+                        {staffUsers.map((u) => (
+                          <option key={u.id} value={u.name}>
+                            {u.name}
+                            {u.role && u.role !== "Super Admin" ? ` (${u.role})` : ""}
+                          </option>
+                        ))}
+                        {staffUsers.length === 0 && (
+                          <option value="" disabled>
+                            No staff available. Add staff in the Staff module.
+                          </option>
+                        )}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="nationality"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Nationality
+                      </label>
+                      <select
+                        id="nationality"
+                        value={formData.nationality}
+                        onChange={(e) => {
+                          const nationality = e.target.value;
+                          const c = COUNTRIES.find((n) => n.name === nationality);
+                          setFormData({
+                            ...formData,
+                            nationality,
+                            phonePrefix: c ? c.phoneCode : "+977",
+                          });
+                        }}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
+                      >
+                        {COUNTRIES.map((c) => (
+                          <option key={c.name} value={c.name}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="dob-ad"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        DOB (AD)
+                      </label>
+                      <input
+                        id="dob-ad"
+                        type="date"
+                        value={formData.dobAd}
+                        onChange={handleAdDobChange}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="dob-bs"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        DOB (BS)
+                      </label>
+                      <input
+                        id="dob-bs"
+                        value={formData.dobBs}
+                        onChange={handleBsDobChange}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        placeholder="YYYY-MM-DD"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="gender"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Gender
+                      </label>
+                      <select
+                        id="gender"
+                        value={formData.gender}
+                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {step === 2 && (
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        Guardian Information
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <label
-                            htmlFor="first-name"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
+                            htmlFor="guardian-name"
+                            className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
                           >
-                            First Name
+                            Guardian Name
                           </label>
                           <input
-                            id="first-name"
-                            required
-                            value={formData.firstName}
+                            id="guardian-name"
+                            value={formData.guardianName}
                             onChange={(e) =>
-                              setFormData({ ...formData, firstName: e.target.value })
+                              setFormData({ ...formData, guardianName: e.target.value })
                             }
                             onBlur={(e) =>
-                              setFormData({ ...formData, firstName: capitalize(e.target.value) })
-                            }
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm"
-                            placeholder="e.g. John"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label
-                            htmlFor="last-name"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
-                          >
-                            Last Name
-                          </label>
-                          <input
-                            id="last-name"
-                            required
-                            value={formData.lastName}
-                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                            onBlur={(e) =>
-                              setFormData({ ...formData, lastName: capitalize(e.target.value) })
-                            }
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm"
-                            placeholder="e.g. Doe"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label
-                            htmlFor="primary-email"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
-                          >
-                            Primary Email
-                          </label>
-                          <input
-                            id="primary-email"
-                            type="email"
-                            required
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm"
-                            placeholder="personal@example.com"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label
-                            htmlFor="student-status"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
-                          >
-                            Student Status
-                          </label>
-                          <select
-                            id="student-status"
-                            value={formData.status}
-                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm appearance-none"
-                          >
-                            <option value="In Review">In Review</option>
-                            <option value="Verified">Verified</option>
-                            <option value="New Leads">New Leads</option>
-                            <option value="Processing">Processing</option>
-                            <option value="Applied">Applied</option>
-                            <option value="Enrolled">Enrolled</option>
-                            <option value="Visa Approved">Visa Approved</option>
-                            <option value="Visa Rejected">Visa Rejected</option>
-                          </select>
-                        </div>
-
-                        <div className="space-y-4 md:col-span-2 pt-4">
-                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest shadow-[inset_0_0_0_1px_theme(colors.amber.200)] pl-3">
-                            Application Credentials
-                          </h3>
-                          <p className="text-[10px] font-bold text-slate-400 ml-4 italic">
-                            Email created specifically for university applications
-                          </p>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <label
-                            htmlFor="admission-email"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
-                          >
-                            Admission Email
-                          </label>
-                          <input
-                            id="admission-email"
-                            type="email"
-                            value={formData.admissionEmail}
-                            onChange={(e) =>
-                              setFormData({ ...formData, admissionEmail: e.target.value })
-                            }
-                            className="w-full px-4 py-3 bg-amber-50/30 border border-amber-100 rounded-xl outline-none transition-all text-sm focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5"
-                            placeholder="application.id@gmail.com"
-                          />
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <label
-                            htmlFor="email-password"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
-                          >
-                            Email Password
-                          </label>
-                          <input
-                            id="email-password"
-                            type="text"
-                            value={formData.studentPassword}
-                            onChange={(e) =>
-                              setFormData({ ...formData, studentPassword: e.target.value })
-                            }
-                            className="w-full px-4 py-3 bg-amber-50/30 border border-amber-100 rounded-xl outline-none transition-all text-sm focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5"
-                            placeholder="Password for admission email"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label
-                            htmlFor="phone-number"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
-                          >
-                            Phone Number
-                          </label>
-                          <div className="flex gap-2">
-                            <select
-                              value={formData.phonePrefix}
-                              onChange={(e) =>
-                                setFormData({ ...formData, phonePrefix: e.target.value })
-                              }
-                              className="w-24 p-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold appearance-none text-center"
-                            >
-                              {COUNTRIES.map((c) => (
-                                <option key={c.name} value={c.phoneCode}>
-                                  {c.phoneCode}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              id="phone-number"
-                              value={formData.phone}
-                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                              className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm"
-                              placeholder="9800000000"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <label
-                            htmlFor="assigned-counselor"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
-                          >
-                            Assigned Counselor (Staff)
-                          </label>
-                          <select
-                            id="assigned-counselor"
-                            value={formData.counselor}
-                            onChange={(e) =>
-                              setFormData({ ...formData, counselor: e.target.value })
-                            }
-                            className="w-full px-4 py-3 bg-indigo-50/50 border border-indigo-100 rounded-2xl outline-none transition-all text-sm font-bold text-indigo-700"
-                          >
-                            <option value="">Select Counselor</option>
-                            {staffUsers.map((u) => (
-                              <option key={u.id} value={u.name}>
-                                {u.name}
-                                {u.role && u.role !== "Super Admin" ? ` (${u.role})` : ""}
-                              </option>
-                            ))}
-                            {staffUsers.length === 0 && (
-                              <option value="" disabled>
-                                No staff available. Add staff in the Staff module.
-                              </option>
-                            )}
-                          </select>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <label
-                            htmlFor="nationality"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
-                          >
-                            Nationality
-                          </label>
-                          <select
-                            id="nationality"
-                            value={formData.nationality}
-                            onChange={(e) => {
-                              const nationality = e.target.value;
-                              const c = COUNTRIES.find((n) => n.name === nationality);
                               setFormData({
                                 ...formData,
-                                nationality,
-                                phonePrefix: c ? c.phoneCode : "+977",
-                              });
-                            }}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm appearance-none"
-                          >
-                            {COUNTRIES.map((c) => (
-                              <option key={c.name} value={c.name}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="space-y-1.5">
-                          <label
-                            htmlFor="dob-ad"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
-                          >
-                            DOB (AD)
-                          </label>
-                          <input
-                            id="dob-ad"
-                            type="date"
-                            value={formData.dobAd}
-                            onChange={handleAdDobChange}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm"
+                                guardianName: capitalize(e.target.value),
+                              })
+                            }
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                            placeholder="Full Name"
                           />
                         </div>
                         <div className="space-y-1.5">
                           <label
-                            htmlFor="dob-bs"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
+                            htmlFor="guardian-relation"
+                            className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
                           >
-                            DOB (BS)
-                          </label>
-                          <input
-                            id="dob-bs"
-                            value={formData.dobBs}
-                            onChange={handleBsDobChange}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm"
-                            placeholder="YYYY-MM-DD"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label
-                            htmlFor="gender"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
-                          >
-                            Gender
+                            Relation
                           </label>
                           <select
-                            id="gender"
-                            value={formData.gender}
-                            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm appearance-none"
+                            id="guardian-relation"
+                            value={formData.guardianRelation}
+                            onChange={(e) =>
+                              setFormData({ ...formData, guardianRelation: e.target.value })
+                            }
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
                           >
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
+                            <option value="">Select Relation</option>
+                            <option value="Father">Father</option>
+                            <option value="Mother">Mother</option>
+                            <option value="Brother">Brother</option>
+                            <option value="Sister">Sister</option>
+                            <option value="Spouse">Spouse</option>
                             <option value="Other">Other</option>
                           </select>
                         </div>
-                      </div>
-                    )}
-
-                    {step === 2 && (
-                      <div className="space-y-8">
-                        <div>
-                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest shadow-[inset_0_0_0_1px_theme(colors.indigo.200)] pl-3 mb-6">
-                            Guardian Information
-                          </h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-1.5">
-                              <label
-                                htmlFor="guardian-name"
-                                className="text-[11px] font-semibold text-slate-500 ml-1"
-                              >
-                                Guardian Name
-                              </label>
-                              <input
-                                id="guardian-name"
-                                value={formData.guardianName}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, guardianName: e.target.value })
-                                }
-                                onBlur={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    guardianName: capitalize(e.target.value),
-                                  })
-                                }
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                                placeholder="Full Name"
-                              />
-                            </div>
-                            <div className="space-y-1.5">
-                              <label
-                                htmlFor="guardian-relation"
-                                className="text-[11px] font-semibold text-slate-500 ml-1"
-                              >
-                                Relation
-                              </label>
-                              <select
-                                id="guardian-relation"
-                                value={formData.guardianRelation}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, guardianRelation: e.target.value })
-                                }
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm appearance-none"
-                              >
-                                <option value="">Select Relation</option>
-                                <option value="Father">Father</option>
-                                <option value="Mother">Mother</option>
-                                <option value="Brother">Brother</option>
-                                <option value="Sister">Sister</option>
-                                <option value="Spouse">Spouse</option>
-                                <option value="Other">Other</option>
-                              </select>
-                            </div>
-                            <div className="space-y-1.5">
-                              <label
-                                htmlFor="guardian-phone"
-                                className="text-[11px] font-semibold text-slate-500 ml-1"
-                              >
-                                Phone Number
-                              </label>
-                              <input
-                                id="guardian-phone"
-                                value={formData.guardianPhone}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, guardianPhone: e.target.value })
-                                }
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                                placeholder="9800000000"
-                              />
-                            </div>
-                            <div className="space-y-1.5">
-                              <label
-                                htmlFor="guardian-email"
-                                className="text-[11px] font-semibold text-slate-500 ml-1"
-                              >
-                                Email Address
-                              </label>
-                              <input
-                                id="guardian-email"
-                                value={formData.guardianEmail}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, guardianEmail: e.target.value })
-                                }
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                                placeholder="guardian@example.com"
-                              />
-                            </div>
-                            <div className="space-y-1.5 md:col-span-2">
-                              <label
-                                htmlFor="guardian-address"
-                                className="text-[11px] font-semibold text-slate-500 ml-1"
-                              >
-                                Guardian Address
-                              </label>
-                              <input
-                                id="guardian-address"
-                                value={formData.guardianAddress}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, guardianAddress: e.target.value })
-                                }
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                                placeholder="Full Address"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest shadow-[inset_0_0_0_1px_theme(colors.amber.200)] pl-3 mb-6">
-                            Marital & Dependent Status
-                          </h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-1.5">
-                              <label
-                                htmlFor="marital-status"
-                                className="text-[11px] font-semibold text-slate-500 ml-1"
-                              >
-                                Marital Status
-                              </label>
-                              <select
-                                id="marital-status"
-                                value={formData.maritalStatus}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    maritalStatus: e.target.value,
-                                    childrenDetails:
-                                      e.target.value === "Single" ? [] : formData.childrenDetails,
-                                  })
-                                }
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm appearance-none"
-                              >
-                                <option value="Single">Single</option>
-                                <option value="Married">Married</option>
-                              </select>
-                            </div>
-
-                            {formData.maritalStatus === "Married" && (
-                              <div className="space-y-1.5">
-                                <label
-                                  htmlFor="spouse-name"
-                                  className="text-[11px] font-semibold text-slate-500 ml-1"
-                                >
-                                  Spouse Name
-                                </label>
-                                <input
-                                  id="spouse-name"
-                                  value={formData.spouseName}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, spouseName: e.target.value })
-                                  }
-                                  onBlur={(e) =>
-                                    setFormData({
-                                      ...formData,
-                                      spouseName: capitalize(e.target.value),
-                                    })
-                                  }
-                                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm"
-                                  placeholder="Spouse Full Name"
-                                />
-                              </div>
-                            )}
-
-                            {formData.maritalStatus === "Married" && (
-                              <div className="md:col-span-2 space-y-4 pt-2">
-                                <div className="flex items-center justify-between">
-                                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                    Children Details ({formData.childrenDetails.length})
-                                  </h4>
-                                  <button
-                                    type="button"
-                                    onClick={addChild}
-                                    className="text-[10px] font-bold text-indigo-600 flex items-center gap-1 hover:underline"
-                                    aria-label="Add"
-                                  >
-                                    {" "}
-                                    <Plus size={12} /> Add Child
-                                  </button>
-                                </div>
-                                <div className="grid grid-cols-1 gap-3">
-                                  {formData.childrenDetails.map((child) => (
-                                    <div
-                                      key={child.id}
-                                      className="flex gap-3 items-end bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"
-                                    >
-                                      <div className="flex-1 space-y-1.5">
-                                        <label
-                                          htmlFor={`child-name-${child.id}`}
-                                          className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1"
-                                        >
-                                          Child Name
-                                        </label>
-                                        <input
-                                          id={`child-name-${child.id}`}
-                                          value={child.name}
-                                          onChange={(e) =>
-                                            updateChild(child.id, "name", e.target.value)
-                                          }
-                                          onBlur={(e) =>
-                                            updateChild(
-                                              child.id,
-                                              "name",
-                                              capitalize(e.target.value)
-                                            )
-                                          }
-                                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-medium"
-                                          placeholder="Child Name"
-                                        />
-                                      </div>
-                                      <div className="w-32 space-y-1.5">
-                                        <label
-                                          htmlFor={`child-gender-${child.id}`}
-                                          className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1"
-                                        >
-                                          Gender
-                                        </label>
-                                        <select
-                                          id={`child-gender-${child.id}`}
-                                          value={child.gender}
-                                          onChange={(e) =>
-                                            updateChild(child.id, "gender", e.target.value)
-                                          }
-                                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-medium appearance-none"
-                                        >
-                                          <option value="Male">Male</option>
-                                          <option value="Female">Female</option>
-                                          <option value="Other">Other</option>
-                                        </select>
-                                      </div>
-                                      <button
-                                        type="button"
-                                        onClick={() => removeChild(child.id)}
-                                        className="p-2 text-slate-300 hover:text-red-500 mb-0.5"
-                                      >
-                                        <Trash2 size={16} />
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {step === 3 && (
-                      <div className="space-y-8">
-                        <div>
-                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest shadow-[inset_0_0_0_1px_theme(colors.indigo.200)] pl-3 mb-6">
-                            Permanent Address
-                          </h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-1.5">
-                              <label
-                                htmlFor="permanent-province"
-                                className="text-[11px] font-semibold text-slate-500 ml-1"
-                              >
-                                Province
-                              </label>
-                              <select
-                                id="permanent-province"
-                                value={formData.permanentProvince}
-                                onChange={(e) => {
-                                  const v = Number(e.target.value);
-                                  setFormData({
-                                    ...formData,
-                                    permanentProvince: v,
-                                    permanentDistrict: "",
-                                    permanentMunicipality: "",
-                                    permanentWardNo: "",
-                                  });
-                                  if (v) {
-                                    fetchDistricts(v, setPermanentDistricts);
-                                  } else {
-                                    setPermanentDistricts([]);
-                                  }
-                                  setPermanentMunicipalities([]);
-                                  setPermanentWards([]);
-                                }}
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                              >
-                                <option value="">Select Province</option>
-                                {provinces.map((p: { id: number; name: string }) => (
-                                  <option key={p.id} value={p.id}>
-                                    {p.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="space-y-1.5">
-                              <label
-                                htmlFor="permanent-district"
-                                className="text-[11px] font-semibold text-slate-500 ml-1"
-                              >
-                                District
-                              </label>
-                              <select
-                                id="permanent-district"
-                                value={formData.permanentDistrict}
-                                onChange={(e) => {
-                                  const v = e.target.value;
-                                  setFormData({
-                                    ...formData,
-                                    permanentDistrict: v,
-                                    permanentMunicipality: "",
-                                    permanentWardNo: "",
-                                  });
-                                  if (v) {
-                                    fetchMunicipalities(v, setPermanentMunicipalities);
-                                  } else {
-                                    setPermanentMunicipalities([]);
-                                  }
-                                  setPermanentWards([]);
-                                }}
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                              >
-                                <option value="">Select District</option>
-                                {permanentDistricts.map((d) => (
-                                  <option key={d} value={d}>
-                                    {capitalize(d)}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="space-y-1.5">
-                              <label
-                                htmlFor="permanent-municipality"
-                                className="text-[11px] font-semibold text-slate-500 ml-1"
-                              >
-                                Municipality / VDC
-                              </label>
-                              <select
-                                id="permanent-municipality"
-                                value={formData.permanentMunicipality}
-                                onChange={(e) => {
-                                  const v = e.target.value;
-                                  setFormData((prev) => {
-                                    const next = {
-                                      ...prev,
-                                      permanentMunicipality: v,
-                                      permanentWardNo: "",
-                                    };
-                                    if (v && prev.permanentDistrict) {
-                                      fetchWards(prev.permanentDistrict, v, setPermanentWards);
-                                    } else {
-                                      setPermanentWards([]);
-                                    }
-                                    return next;
-                                  });
-                                }}
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                              >
-                                <option value="">Select Municipality</option>
-                                {permanentMunicipalities.map((m) => (
-                                  <option key={m} value={m}>
-                                    {capitalize(m)}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="space-y-1.5">
-                              <label
-                                htmlFor="permanent-ward"
-                                className="text-[11px] font-semibold text-slate-500 ml-1"
-                              >
-                                Ward No
-                              </label>
-                              <select
-                                id="permanent-ward"
-                                value={formData.permanentWardNo}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, permanentWardNo: e.target.value })
-                                }
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                              >
-                                <option value="">Select Ward</option>
-                                {permanentWards.map((w) => (
-                                  <option key={w} value={w}>
-                                    {w}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="space-y-1.5 md:col-span-2">
-                              <label
-                                htmlFor="permanent-address"
-                                className="text-[11px] font-semibold text-slate-500 ml-1"
-                              >
-                                Full Address
-                              </label>
-                              <textarea
-                                id="permanent-address"
-                                value={formData.permanentAddress}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, permanentAddress: e.target.value })
-                                }
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm min-h-[80px]"
-                                placeholder="Street, Area, Landmark"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {step === 4 && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4 md:col-span-2">
-                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest shadow-[inset_0_0_0_1px_theme(colors.indigo.200)] pl-3">
-                            Passport Details
-                          </h3>
-                        </div>
                         <div className="space-y-1.5">
                           <label
-                            htmlFor="passport-number"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
+                            htmlFor="guardian-phone"
+                            className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
                           >
-                            Passport Number
+                            Phone Number
                           </label>
                           <input
-                            id="passport-number"
-                            value={formData.passportNumber}
+                            id="guardian-phone"
+                            value={formData.guardianPhone}
                             onChange={(e) =>
-                              setFormData({ ...formData, passportNumber: e.target.value })
+                              setFormData({ ...formData, guardianPhone: e.target.value })
                             }
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                            placeholder="9800000000"
                           />
                         </div>
                         <div className="space-y-1.5">
                           <label
-                            htmlFor="passport-issue-place"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
+                            htmlFor="guardian-email"
+                            className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
                           >
-                            Issue Place
+                            Email Address
                           </label>
                           <input
-                            id="passport-issue-place"
-                            value={formData.passportIssuePlace}
+                            id="guardian-email"
+                            value={formData.guardianEmail}
                             onChange={(e) =>
-                              setFormData({ ...formData, passportIssuePlace: e.target.value })
+                              setFormData({ ...formData, guardianEmail: e.target.value })
                             }
-                            onBlur={(e) =>
-                              setFormData({
-                                ...formData,
-                                passportIssuePlace: capitalize(e.target.value),
-                              })
-                            }
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                            placeholder="guardian@example.com"
                           />
                         </div>
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5 md:col-span-2">
                           <label
-                            htmlFor="passport-issue-date"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
+                            htmlFor="guardian-address"
+                            className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
                           >
-                            Issue Date
+                            Guardian Address
                           </label>
                           <input
-                            id="passport-issue-date"
-                            type="date"
-                            value={formData.passportIssueDate}
+                            id="guardian-address"
+                            value={formData.guardianAddress}
                             onChange={(e) =>
-                              setFormData({ ...formData, passportIssueDate: e.target.value })
+                              setFormData({ ...formData, guardianAddress: e.target.value })
                             }
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label
-                            htmlFor="passport-expiry-date"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
-                          >
-                            Expiry Date
-                          </label>
-                          <input
-                            id="passport-expiry-date"
-                            type="date"
-                            value={formData.passportExpiryDate}
-                            onChange={(e) =>
-                              setFormData({ ...formData, passportExpiryDate: e.target.value })
-                            }
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                            placeholder="Full Address"
                           />
                         </div>
                       </div>
-                    )}
+                    </div>
 
-                    {step === 5 && (
-                      <div className="space-y-8">
-                        <div>
-                          <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest shadow-[inset_0_0_0_1px_theme(colors.indigo.200)] pl-3">
-                              Education History
-                            </h3>
-                            <button
-                              type="button"
-                              onClick={addEducation}
-                              className="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:underline"
-                              aria-label="Add"
-                            >
-                              {" "}
-                              <Plus size={14} /> Add Education
-                            </button>
-                          </div>
-                          <div className="space-y-4">
-                            {formData.education.map((edu) => (
-                              <div
-                                key={edu.id}
-                                className="p-6 rounded-3xl bg-slate-50 border border-slate-100 relative group"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => removeEducation(edu.id)}
-                                  className="absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <select
-                                    value={edu.qualification}
-                                    onChange={(e) =>
-                                      updateEducation(edu.id, "qualification", e.target.value)
-                                    }
-                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm appearance-none"
-                                  >
-                                    <option value="">Select Qualification</option>
-                                    {qualifications.map((q) => (
-                                      <option key={q.id} value={q.name}>
-                                        {q.name}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <div className="relative group/inst">
-                                    <input
-                                      value={edu.institution}
-                                      onChange={(e) =>
-                                        updateEducation(edu.id, "institution", e.target.value)
-                                      }
-                                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm"
-                                      placeholder="Institution"
-                                      list={`colleges-${edu.id}`}
-                                    />
-                                    {(edu.qualification.toLowerCase().includes("+2") ||
-                                      edu.qualification.toLowerCase().includes("grade xii") ||
-                                      edu.qualification.toLowerCase().includes("grade 12")) && (
-                                      <datalist id={`colleges-${edu.id}`}>
-                                        {NEB_INSTITUTES.map((inst) => (
-                                          <option key={inst.name} value={inst.name}>
-                                            {inst.address}
-                                          </option>
-                                        ))}
-                                      </datalist>
-                                    )}
-                                  </div>
-                                  <div className="md:col-span-2">
-                                    <input
-                                      value={edu.institutionAddress}
-                                      onChange={(e) =>
-                                        updateEducation(
-                                          edu.id,
-                                          "institutionAddress",
-                                          e.target.value
-                                        )
-                                      }
-                                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm"
-                                      placeholder="Institution Address"
-                                    />
-                                  </div>
-                                  <input
-                                    value={edu.year}
-                                    onChange={(e) =>
-                                      updateEducation(edu.id, "year", e.target.value)
-                                    }
-                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm"
-                                    placeholder="Year"
-                                  />
-                                  <input
-                                    value={edu.score}
-                                    onChange={(e) =>
-                                      updateEducation(edu.id, "score", e.target.value)
-                                    }
-                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm"
-                                    placeholder="Score/GPA"
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {step === 6 && (
-                      <div className="space-y-8">
-                        <div className="flex items-center justify-between mb-6">
-                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest shadow-[inset_0_0_0_1px_theme(colors.indigo.200)] pl-3">
-                            Work Experience
-                          </h3>
-                          <button
-                            type="button"
-                            onClick={addWork}
-                            className="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:underline"
-                            aria-label="Add"
-                          >
-                            {" "}
-                            <Plus size={14} /> Add Work
-                          </button>
-                        </div>
-                        <div className="space-y-4">
-                          {formData.workExperience.map((work) => (
-                            <div
-                              key={work.id}
-                              className="p-6 rounded-3xl bg-slate-50 border border-slate-100 relative group"
-                            >
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <input
-                                  value={work.jobTitle}
-                                  onChange={(e) => updateWork(work.id, "jobTitle", e.target.value)}
-                                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm"
-                                  placeholder="Job Title"
-                                />
-                                <input
-                                  value={work.company}
-                                  onChange={(e) => updateWork(work.id, "company", e.target.value)}
-                                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm"
-                                  placeholder="Company"
-                                />
-                                <input
-                                  value={work.companyAddress}
-                                  onChange={(e) =>
-                                    updateWork(work.id, "companyAddress", e.target.value)
-                                  }
-                                  className="w-full md:col-span-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm"
-                                  placeholder="Company Address"
-                                />
-                                <div className="space-y-1">
-                                  <label
-                                    htmlFor={`worked-from-${work.id}`}
-                                    className="text-[11px] font-semibold text-slate-500 ml-1"
-                                  >
-                                    Worked From
-                                  </label>
-                                  <input
-                                    id={`worked-from-${work.id}`}
-                                    type="date"
-                                    value={work.startDate}
-                                    onChange={(e) =>
-                                      updateWork(work.id, "startDate", e.target.value)
-                                    }
-                                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl outline-none text-sm"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <label
-                                    htmlFor={`worked-till-${work.id}`}
-                                    className="text-[11px] font-semibold text-slate-500 ml-1"
-                                  >
-                                    Worked Till
-                                  </label>
-                                  <input
-                                    id={`worked-till-${work.id}`}
-                                    type="date"
-                                    disabled={work.currentlyWorking}
-                                    value={work.currentlyWorking ? "" : work.endDate}
-                                    onChange={(e) => updateWork(work.id, "endDate", e.target.value)}
-                                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl outline-none text-sm disabled:bg-slate-50 disabled:text-slate-400"
-                                  />
-                                </div>
-                                <div className="md:col-span-2 flex items-center gap-2 px-1">
-                                  <input
-                                    type="checkbox"
-                                    id={`current-${work.id}`}
-                                    checked={work.currentlyWorking}
-                                    onChange={(e) =>
-                                      updateWork(work.id, "currentlyWorking", e.target.checked)
-                                    }
-                                    className="size-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
-                                  />
-                                  <label
-                                    htmlFor={`current-${work.id}`}
-                                    className="text-xs font-bold text-slate-600 cursor-pointer"
-                                  >
-                                    I am currently working here
-                                  </label>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {step === 7 && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4 md:col-span-2">
-                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest shadow-[inset_0_0_0_1px_theme(colors.indigo.200)] pl-3">
-                            Study Preferences
-                          </h3>
-                        </div>
+                    <div>
+                      <h3 className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">
+                        Marital & Dependent Status
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <label
-                            htmlFor="intended-country"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
+                            htmlFor="marital-status"
+                            className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
                           >
-                            Intended Country
+                            Marital Status
                           </label>
                           <select
-                            id="intended-country"
-                            value={formData.interestedCountry}
+                            id="marital-status"
+                            value={formData.maritalStatus}
                             onChange={(e) =>
                               setFormData({
                                 ...formData,
-                                interestedCountry: e.target.value,
-                                partnerId: "",
+                                maritalStatus: e.target.value,
+                                childrenDetails:
+                                  e.target.value === "Single" ? [] : formData.childrenDetails,
                               })
                             }
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
                           >
-                            <option value="">Select a country</option>
-                            {COUNTRIES.map((country) => (
-                              <option key={country.name} value={country.name}>
-                                {country.name}
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                          </select>
+                        </div>
+
+                        {formData.maritalStatus === "Married" && (
+                          <div className="space-y-1.5">
+                            <label
+                              htmlFor="spouse-name"
+                              className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                            >
+                              Spouse Name
+                            </label>
+                            <input
+                              id="spouse-name"
+                              value={formData.spouseName}
+                              onChange={(e) =>
+                                setFormData({ ...formData, spouseName: e.target.value })
+                              }
+                              onBlur={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  spouseName: capitalize(e.target.value),
+                                })
+                              }
+                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                              placeholder="Spouse Full Name"
+                            />
+                          </div>
+                        )}
+
+                        {formData.maritalStatus === "Married" && (
+                          <div className="md:col-span-2 space-y-4 pt-2">
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                Children Details ({formData.childrenDetails.length})
+                              </h4>
+                              <button
+                                type="button"
+                                onClick={addChild}
+                                className="text-[10px] font-bold text-indigo-600 flex items-center gap-1 hover:underline"
+                                aria-label="Add"
+                              >
+                                {" "}
+                                <Plus size={12} /> Add Child
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3">
+                              {formData.childrenDetails.map((child) => (
+                                <div
+                                  key={child.id}
+                                  className="flex gap-3 items-end bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"
+                                >
+                                  <div className="flex-1 space-y-1.5">
+                                    <label
+                                      htmlFor={`child-name-${child.id}`}
+                                      className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1"
+                                    >
+                                      Child Name
+                                    </label>
+                                    <input
+                                      id={`child-name-${child.id}`}
+                                      value={child.name}
+                                      onChange={(e) =>
+                                        updateChild(child.id, "name", e.target.value)
+                                      }
+                                      onBlur={(e) =>
+                                        updateChild(child.id, "name", capitalize(e.target.value))
+                                      }
+                                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="Child Name"
+                                    />
+                                  </div>
+                                  <div className="w-32 space-y-1.5">
+                                    <label
+                                      htmlFor={`child-gender-${child.id}`}
+                                      className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1"
+                                    >
+                                      Gender
+                                    </label>
+                                    <select
+                                      id={`child-gender-${child.id}`}
+                                      value={child.gender}
+                                      onChange={(e) =>
+                                        updateChild(child.id, "gender", e.target.value)
+                                      }
+                                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
+                                    >
+                                      <option value="Male">Male</option>
+                                      <option value="Female">Female</option>
+                                      <option value="Other">Other</option>
+                                    </select>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeChild(child.id)}
+                                    className="p-2 text-slate-300 hover:text-red-500 mb-0.5"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {step === 3 && (
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        Permanent Address
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label
+                            htmlFor="permanent-province"
+                            className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                          >
+                            Province
+                          </label>
+                          <select
+                            id="permanent-province"
+                            value={formData.permanentProvince}
+                            onChange={(e) => {
+                              const v = Number(e.target.value);
+                              setFormData({
+                                ...formData,
+                                permanentProvince: v,
+                                permanentDistrict: "",
+                                permanentMunicipality: "",
+                                permanentWardNo: "",
+                              });
+                              if (v) {
+                                fetchDistricts(v, setPermanentDistricts);
+                              } else {
+                                setPermanentDistricts([]);
+                              }
+                              setPermanentMunicipalities([]);
+                              setPermanentWards([]);
+                            }}
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value="">Select Province</option>
+                            {provinces.map((p: { id: number; name: string }) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}
                               </option>
                             ))}
                           </select>
                         </div>
                         <div className="space-y-1.5">
                           <label
-                            htmlFor="partner-select"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
+                            htmlFor="permanent-district"
+                            className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
                           >
-                            Partner
+                            District
                           </label>
                           <select
-                            id="partner-select"
-                            value={formData.partnerId || ""}
-                            onChange={(e) =>
-                              setFormData({ ...formData, partnerId: e.target.value || "" })
-                            }
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                            id="permanent-district"
+                            value={formData.permanentDistrict}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setFormData({
+                                ...formData,
+                                permanentDistrict: v,
+                                permanentMunicipality: "",
+                                permanentWardNo: "",
+                              });
+                              if (v) {
+                                fetchMunicipalities(v, setPermanentMunicipalities);
+                              } else {
+                                setPermanentMunicipalities([]);
+                              }
+                              setPermanentWards([]);
+                            }}
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
                           >
-                            <option value="">No partner (Direct)</option>
-                            {allPartners
-                              .filter((p) => {
-                                if (!formData.interestedCountry) return true;
-                                try {
-                                  const countries = JSON.parse(p.countries || "[]");
-                                  return countries.includes(formData.interestedCountry);
-                                } catch {
-                                  return false;
-                                }
-                              })
-                              .map((p) => (
-                                <option key={p.id} value={p.id}>
-                                  {p.name}
-                                </option>
-                              ))}
+                            <option value="">Select District</option>
+                            {permanentDistricts.map((d) => (
+                              <option key={d} value={d}>
+                                {capitalize(d)}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="space-y-1.5">
                           <label
-                            htmlFor="major-course"
-                            className="text-[11px] font-semibold text-slate-500 ml-1"
+                            htmlFor="permanent-municipality"
+                            className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
                           >
-                            Major / Course
+                            Municipality / VDC
                           </label>
-                          <input
-                            id="major-course"
-                            value={formData.major}
-                            onChange={(e) => setFormData({ ...formData, major: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                          <select
+                            id="permanent-municipality"
+                            value={formData.permanentMunicipality}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setFormData((prev) => {
+                                const next = {
+                                  ...prev,
+                                  permanentMunicipality: v,
+                                  permanentWardNo: "",
+                                };
+                                if (v && prev.permanentDistrict) {
+                                  fetchWards(prev.permanentDistrict, v, setPermanentWards);
+                                } else {
+                                  setPermanentWards([]);
+                                }
+                                return next;
+                              });
+                            }}
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value="">Select Municipality</option>
+                            {permanentMunicipalities.map((m) => (
+                              <option key={m} value={m}>
+                                {capitalize(m)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label
+                            htmlFor="permanent-ward"
+                            className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                          >
+                            Ward No
+                          </label>
+                          <select
+                            id="permanent-ward"
+                            value={formData.permanentWardNo}
+                            onChange={(e) =>
+                              setFormData({ ...formData, permanentWardNo: e.target.value })
+                            }
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value="">Select Ward</option>
+                            {permanentWards.map((w) => (
+                              <option key={w} value={w}>
+                                {w}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1.5 md:col-span-2">
+                          <label
+                            htmlFor="permanent-address"
+                            className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                          >
+                            Full Address
+                          </label>
+                          <textarea
+                            id="permanent-address"
+                            value={formData.permanentAddress}
+                            onChange={(e) =>
+                              setFormData({ ...formData, permanentAddress: e.target.value })
+                            }
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
+                            placeholder="Street, Area, Landmark"
                           />
                         </div>
                       </div>
-                    )}
+                    </div>
+                  </div>
+                )}
 
-                    {step === 8 && (
-                      <div className="space-y-8">
-                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest shadow-[inset_0_0_0_1px_theme(colors.indigo.200)] pl-3 mb-6">
-                          Student Documents
+                {step === 4 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4 md:col-span-2">
+                      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        Passport Details
+                      </h3>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="passport-number"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Passport Number
+                      </label>
+                      <input
+                        id="passport-number"
+                        value={formData.passportNumber}
+                        onChange={(e) =>
+                          setFormData({ ...formData, passportNumber: e.target.value })
+                        }
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="passport-issue-place"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Issue Place
+                      </label>
+                      <input
+                        id="passport-issue-place"
+                        value={formData.passportIssuePlace}
+                        onChange={(e) =>
+                          setFormData({ ...formData, passportIssuePlace: e.target.value })
+                        }
+                        onBlur={(e) =>
+                          setFormData({
+                            ...formData,
+                            passportIssuePlace: capitalize(e.target.value),
+                          })
+                        }
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="passport-issue-date"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Issue Date
+                      </label>
+                      <input
+                        id="passport-issue-date"
+                        type="date"
+                        value={formData.passportIssueDate}
+                        onChange={(e) =>
+                          setFormData({ ...formData, passportIssueDate: e.target.value })
+                        }
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="passport-expiry-date"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Expiry Date
+                      </label>
+                      <input
+                        id="passport-expiry-date"
+                        type="date"
+                        value={formData.passportExpiryDate}
+                        onChange={(e) =>
+                          setFormData({ ...formData, passportExpiryDate: e.target.value })
+                        }
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {step === 5 && (
+                  <div className="space-y-8">
+                    <div>
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                          Education History
                         </h3>
-                        <p className="text-xs text-slate-500 ml-1">
-                          Required documents based on highest qualification:{" "}
-                          <span className="font-semibold text-slate-700">
-                            {getRequiredDocsForQualifications(formData.education)
-                              .filter((d) => !commonDocs.includes(d))
-                              .join(", ") || "None specific"}
-                          </span>
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {docTypes
-                            .filter((type) =>
-                              getRequiredDocsForQualifications(formData.education).includes(type)
-                            )
-                            .map((type) => {
-                              const existingDoc = formData.documents.find((d) => d.type === type);
-                              return (
-                                <div
-                                  key={type}
-                                  className={`p-4 rounded-3xl border-2 transition-all ${existingDoc ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}
-                                >
-                                  <div className="flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <div
-                                        className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${existingDoc ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"}`}
-                                      >
-                                        <FileText size={18} />
-                                      </div>
-                                      <div className="min-w-0">
-                                        <p className="text-xs font-black text-slate-800 truncate uppercase tracking-wider">
-                                          {type}
-                                        </p>
-                                        <p className="text-[10px] font-bold text-slate-400 truncate">
-                                          {existingDoc ? existingDoc.name : "Not uploaded yet"}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <label
-                                      htmlFor={`doc-upload-${type}`}
-                                      className="cursor-pointer px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-indigo-600 text-white hover:bg-indigo-700"
-                                    >
-                                      {uploadingDoc === type
-                                        ? "Uploading..."
-                                        : existingDoc
-                                          ? "Replace"
-                                          : "Upload"}
-                                      <input
-                                        id={`doc-upload-${type}`}
-                                        type="file"
-                                        className="hidden"
-                                        disabled={uploadingDoc === type}
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (file) handleFileUpload(type, file);
-                                        }}
-                                      />
-                                    </label>
+                        <button
+                          type="button"
+                          onClick={addEducation}
+                          className="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:underline"
+                          aria-label="Add"
+                        >
+                          {" "}
+                          <Plus size={14} /> Add Education
+                        </button>
+                      </div>
+                      <div className="space-y-4">
+                        {formData.education.map((edu) => (
+                          <div
+                            key={edu.id}
+                            className="p-6 rounded-3xl bg-slate-50 border border-slate-100 relative group"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => removeEducation(edu.id)}
+                              className="absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <select
+                                value={edu.qualification}
+                                onChange={(e) =>
+                                  updateEducation(edu.id, "qualification", e.target.value)
+                                }
+                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
+                              >
+                                <option value="">Select Qualification</option>
+                                {qualifications.map((q) => (
+                                  <option key={q.id} value={q.name}>
+                                    {q.name}
+                                  </option>
+                                ))}
+                              </select>
+                              <div className="relative group/inst">
+                                <input
+                                  value={edu.institution}
+                                  onChange={(e) =>
+                                    updateEducation(edu.id, "institution", e.target.value)
+                                  }
+                                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                                  placeholder="Institution"
+                                  list={`colleges-${edu.id}`}
+                                />
+                                {(edu.qualification.toLowerCase().includes("+2") ||
+                                  edu.qualification.toLowerCase().includes("grade xii") ||
+                                  edu.qualification.toLowerCase().includes("grade 12")) && (
+                                  <datalist id={`colleges-${edu.id}`}>
+                                    {NEB_INSTITUTES.map((inst) => (
+                                      <option key={inst.name} value={inst.name}>
+                                        {inst.address}
+                                      </option>
+                                    ))}
+                                  </datalist>
+                                )}
+                              </div>
+                              <div className="md:col-span-2">
+                                <input
+                                  value={edu.institutionAddress}
+                                  onChange={(e) =>
+                                    updateEducation(edu.id, "institutionAddress", e.target.value)
+                                  }
+                                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                                  placeholder="Institution Address"
+                                />
+                              </div>
+                              <input
+                                value={edu.year}
+                                onChange={(e) => updateEducation(edu.id, "year", e.target.value)}
+                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                                placeholder="Year"
+                              />
+                              <input
+                                value={edu.score}
+                                onChange={(e) => updateEducation(edu.id, "score", e.target.value)}
+                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                                placeholder="Score/GPA"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {step === 6 && (
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        Work Experience
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={addWork}
+                        className="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:underline"
+                        aria-label="Add"
+                      >
+                        {" "}
+                        <Plus size={14} /> Add Work
+                      </button>
+                    </div>
+                    <div className="space-y-4">
+                      {formData.workExperience.map((work) => (
+                        <div
+                          key={work.id}
+                          className="p-6 rounded-3xl bg-slate-50 border border-slate-100 relative group"
+                        >
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input
+                              value={work.jobTitle}
+                              onChange={(e) => updateWork(work.id, "jobTitle", e.target.value)}
+                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                              placeholder="Job Title"
+                            />
+                            <input
+                              value={work.company}
+                              onChange={(e) => updateWork(work.id, "company", e.target.value)}
+                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                              placeholder="Company"
+                            />
+                            <input
+                              value={work.companyAddress}
+                              onChange={(e) =>
+                                updateWork(work.id, "companyAddress", e.target.value)
+                              }
+                              className="w-full md:col-span-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                              placeholder="Company Address"
+                            />
+                            <div className="space-y-1">
+                              <label
+                                htmlFor={`worked-from-${work.id}`}
+                                className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                              >
+                                Worked From
+                              </label>
+                              <input
+                                id={`worked-from-${work.id}`}
+                                type="date"
+                                value={work.startDate}
+                                onChange={(e) => updateWork(work.id, "startDate", e.target.value)}
+                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label
+                                htmlFor={`worked-till-${work.id}`}
+                                className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                              >
+                                Worked Till
+                              </label>
+                              <input
+                                id={`worked-till-${work.id}`}
+                                type="date"
+                                disabled={work.currentlyWorking}
+                                value={work.currentlyWorking ? "" : work.endDate}
+                                onChange={(e) => updateWork(work.id, "endDate", e.target.value)}
+                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400"
+                              />
+                            </div>
+                            <div className="md:col-span-2 flex items-center gap-2 px-1">
+                              <input
+                                type="checkbox"
+                                id={`current-${work.id}`}
+                                checked={work.currentlyWorking}
+                                onChange={(e) =>
+                                  updateWork(work.id, "currentlyWorking", e.target.checked)
+                                }
+                                className="size-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                              />
+                              <label
+                                htmlFor={`current-${work.id}`}
+                                className="text-xs font-bold text-slate-600 cursor-pointer"
+                              >
+                                I am currently working here
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {step === 7 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4 md:col-span-2">
+                      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        Study Preferences
+                      </h3>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="intended-country"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Intended Country
+                      </label>
+                      <select
+                        id="intended-country"
+                        value={formData.interestedCountry}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            interestedCountry: e.target.value,
+                            partnerId: "",
+                          })
+                        }
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="">Select a country</option>
+                        {COUNTRIES.map((country) => (
+                          <option key={country.name} value={country.name}>
+                            {country.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="partner-select"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Partner
+                      </label>
+                      <select
+                        id="partner-select"
+                        value={formData.partnerId || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, partnerId: e.target.value || "" })
+                        }
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="">No partner (Direct)</option>
+                        {allPartners
+                          .filter((p) => {
+                            if (!formData.interestedCountry) return true;
+                            try {
+                              const countries = JSON.parse(p.countries || "[]");
+                              return countries.includes(formData.interestedCountry);
+                            } catch {
+                              return false;
+                            }
+                          })
+                          .map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="major-course"
+                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1"
+                      >
+                        Major / Course
+                      </label>
+                      <input
+                        id="major-course"
+                        value={formData.major}
+                        onChange={(e) => setFormData({ ...formData, major: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {step === 8 && (
+                  <div className="space-y-8">
+                    <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Student Documents
+                    </h3>
+                    <p className="text-xs text-slate-500 ml-1">
+                      Required documents based on highest qualification:{" "}
+                      <span className="font-semibold text-slate-700">
+                        {getRequiredDocsForQualifications(formData.education)
+                          .filter((d) => !commonDocs.includes(d))
+                          .join(", ") || "None specific"}
+                      </span>
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {docTypes
+                        .filter((type) =>
+                          getRequiredDocsForQualifications(formData.education).includes(type)
+                        )
+                        .map((type) => {
+                          const existingDoc = formData.documents.find((d) => d.type === type);
+                          return (
+                            <div
+                              key={type}
+                              className={`p-4 rounded-3xl border-2 transition-all ${existingDoc ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}
+                            >
+                              <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div
+                                    className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${existingDoc ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"}`}
+                                  >
+                                    <FileText size={18} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-black text-slate-800 truncate uppercase tracking-wider">
+                                      {type}
+                                    </p>
+                                    <p className="text-[10px] font-bold text-slate-400 truncate">
+                                      {existingDoc ? existingDoc.name : "Not uploaded yet"}
+                                    </p>
                                   </div>
                                 </div>
-                              );
-                            })}
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-              </form>
-            </div>
+                                <label
+                                  htmlFor={`doc-upload-${type}`}
+                                  className="cursor-pointer px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-indigo-600 text-white hover:bg-indigo-700"
+                                >
+                                  {uploadingDoc === type
+                                    ? "Uploading..."
+                                    : existingDoc
+                                      ? "Replace"
+                                      : "Upload"}
+                                  <input
+                                    id={`doc-upload-${type}`}
+                                    type="file"
+                                    className="hidden"
+                                    disabled={uploadingDoc === type}
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) handleFileUpload(type, file);
+                                    }}
+                                  />
+                                </label>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </form>
 
-            <div className="p-6 bg-slate-50 flex items-center justify-between border-t border-slate-100">
+          <div className="p-6 bg-slate-50 flex items-center justify-between border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setStep((s) => Math.max(1, s - 1))}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${step === 1 ? "invisible" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}
+            >
+              <ChevronLeft size={18} /> Back
+            </button>
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setStep((s) => Math.max(1, s - 1))}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-widest transition-all ${step === 1 ? "invisible" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
+                onClick={() => router.back()}
+                className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all"
               >
-                <ChevronLeft size={18} /> Back
+                Cancel
               </button>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => router.back()}
-                  className="px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (step < totalSteps) setStep((s) => s + 1);
-                    else handleSubmit();
-                  }}
-                  className="flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
-                >
-                  {step === totalSteps ? (isEditing ? "Update Student" : "Create Student") : "Next"}
-                  {step < totalSteps && <ChevronRight size={18} />}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (step < totalSteps) setStep((s) => s + 1);
+                  else handleSubmit();
+                }}
+                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-100"
+              >
+                {step === totalSteps ? (isEditing ? "Update Student" : "Create Student") : "Next"}
+                {step < totalSteps && <ChevronRight size={18} />}
+              </button>
             </div>
           </div>
         </div>

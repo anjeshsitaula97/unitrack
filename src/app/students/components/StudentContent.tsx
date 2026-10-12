@@ -238,6 +238,55 @@ const rainbowGradients = [
   "from-violet-400/20 via-purple-300/10 to-transparent",
 ];
 
+const studentStatusStyles: Record<string, { badge: string; accent: string; avatar: string }> = {
+  "New Leads": {
+    badge: "bg-slate-100 text-slate-600 border-slate-200",
+    accent: "from-slate-300 to-slate-400",
+    avatar: "bg-slate-100 text-slate-500 ring-slate-200",
+  },
+  "In Review": {
+    badge: "bg-blue-50 text-blue-700 border-blue-100",
+    accent: "from-blue-400 to-indigo-400",
+    avatar: "bg-blue-50 text-blue-600 ring-blue-100",
+  },
+  Verified: {
+    badge: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    accent: "from-emerald-400 to-teal-400",
+    avatar: "bg-emerald-50 text-emerald-600 ring-emerald-100",
+  },
+  Processing: {
+    badge: "bg-amber-50 text-amber-700 border-amber-100",
+    accent: "from-amber-400 to-orange-400",
+    avatar: "bg-amber-50 text-amber-600 ring-amber-100",
+  },
+  Applied: {
+    badge: "bg-violet-50 text-violet-700 border-violet-100",
+    accent: "from-violet-400 to-purple-400",
+    avatar: "bg-violet-50 text-violet-600 ring-violet-100",
+  },
+  Enrolled: {
+    badge: "bg-indigo-50 text-indigo-700 border-indigo-100",
+    accent: "from-indigo-400 to-blue-400",
+    avatar: "bg-indigo-50 text-indigo-600 ring-indigo-100",
+  },
+  "Visa Approved": {
+    badge: "bg-teal-50 text-teal-700 border-teal-100",
+    accent: "from-teal-400 to-emerald-400",
+    avatar: "bg-teal-50 text-teal-600 ring-teal-100",
+  },
+  "Visa Rejected": {
+    badge: "bg-rose-50 text-rose-700 border-rose-100",
+    accent: "from-rose-400 to-red-400",
+    avatar: "bg-rose-50 text-rose-600 ring-rose-100",
+  },
+};
+
+const defaultStudentStatusStyle = {
+  badge: "bg-indigo-50 text-indigo-700 border-indigo-100",
+  accent: "from-indigo-400 to-violet-400",
+  avatar: "bg-indigo-50 text-indigo-600 ring-indigo-100",
+};
+
 const kanbanStatuses = [
   {
     key: "New Leads",
@@ -448,27 +497,27 @@ export default function StudentContent() {
       const matchesProvince = provinceFilter === "all" || s.permanentProvince === provinceFilter;
       const matchesGender = genderFilter === "all" || s.gender === genderFilter;
 
-        const matchesAcademic =
-          academicFilter === "all" ||
-          (() => {
-            // Stored education is a JSON string; a malformed value must not break
-            // the list render, so fall back to "no match" rather than throwing.
-            let edu: EducationEntry[] = [];
-            if (Array.isArray(s.education)) {
-              edu = s.education;
-            } else if (s.education) {
-              try {
-                const parsed = JSON.parse(String(s.education));
-                if (Array.isArray(parsed)) edu = parsed;
-              } catch {
-                edu = [];
-              }
+      const matchesAcademic =
+        academicFilter === "all" ||
+        (() => {
+          // Stored education is a JSON string; a malformed value must not break
+          // the list render, so fall back to "no match" rather than throwing.
+          let edu: EducationEntry[] = [];
+          if (Array.isArray(s.education)) {
+            edu = s.education;
+          } else if (s.education) {
+            try {
+              const parsed = JSON.parse(String(s.education));
+              if (Array.isArray(parsed)) edu = parsed;
+            } catch {
+              edu = [];
             }
-            return edu.some((e) => {
-              const score = parseFloat(e.score);
-              return !isNaN(score) && score >= 3.5;
-            });
-          })();
+          }
+          return edu.some((e) => {
+            const score = parseFloat(e.score);
+            return !isNaN(score) && score >= 3.5;
+          });
+        })();
 
       const matchesEnglish =
         englishFilter === "all" ||
@@ -640,106 +689,106 @@ export default function StudentContent() {
               >
                 <div className="min-h-0 overflow-hidden">
                   <div className="pt-4 border-t border-slate-50 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="filter-province"
-                      className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1"
-                    >
-                      Province
-                    </label>
-                    <select
-                      id="filter-province"
-                      value={provinceFilter}
-                      onChange={(e) => setProvinceFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                    >
-                      <option value="all">All Provinces</option>
-                      {(provinces ?? []).map((p) => (
-                        <option key={p} value={p}>
-                          {p}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="filter-province"
+                        className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1"
+                      >
+                        Province
+                      </label>
+                      <select
+                        id="filter-province"
+                        value={provinceFilter}
+                        onChange={(e) => setProvinceFilter(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                      >
+                        <option value="all">All Provinces</option>
+                        {(provinces ?? []).map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="filter-gender"
-                      className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1"
-                    >
-                      Gender
-                    </label>
-                    <select
-                      id="filter-gender"
-                      value={genderFilter}
-                      onChange={(e) => setGenderFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                    >
-                      <option value="all">All Genders</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="filter-gender"
+                        className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1"
+                      >
+                        Gender
+                      </label>
+                      <select
+                        id="filter-gender"
+                        value={genderFilter}
+                        onChange={(e) => setGenderFilter(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                      >
+                        <option value="all">All Genders</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
 
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="filter-academic"
-                      className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1"
-                    >
-                      Academic
-                    </label>
-                    <select
-                      id="filter-academic"
-                      value={academicFilter}
-                      onChange={(e) => setAcademicFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
-                    >
-                      <option value="all">Any GPA</option>
-                      <option value="high_grades">High Grades (3.5+)</option>
-                    </select>
-                  </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="filter-academic"
+                        className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1"
+                      >
+                        Academic
+                      </label>
+                      <select
+                        id="filter-academic"
+                        value={academicFilter}
+                        onChange={(e) => setAcademicFilter(e.target.value)}
+                        className="w-full px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
+                      >
+                        <option value="all">Any GPA</option>
+                        <option value="high_grades">High Grades (3.5+)</option>
+                      </select>
+                    </div>
 
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="filter-english"
-                      className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1"
-                    >
-                      English
-                    </label>
-                    <select
-                      id="filter-english"
-                      value={englishFilter}
-                      onChange={(e) => setEnglishFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
-                    >
-                      <option value="all">Any English Score</option>
-                      <option value="high_english">IELTS 7+ / PTE 65+</option>
-                    </select>
-                  </div>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="filter-english"
+                        className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1"
+                      >
+                        English
+                      </label>
+                      <select
+                        id="filter-english"
+                        value={englishFilter}
+                        onChange={(e) => setEnglishFilter(e.target.value)}
+                        className="w-full px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
+                      >
+                        <option value="all">Any English Score</option>
+                        <option value="high_english">IELTS 7+ / PTE 65+</option>
+                      </select>
+                    </div>
 
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="filter-staff"
-                      className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1"
-                    >
-                      Staff Member
-                    </label>
-                    <select
-                      id="filter-staff"
-                      value={staffFilter}
-                      onChange={(e) => setStaffFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                    >
-                      <option value="all">All Staff</option>
-                      {(allUsers ?? []).map((u) => (
-                        <option key={u.id} value={u.name}>
-                          {u.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="filter-staff"
+                        className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1"
+                      >
+                        Staff Member
+                      </label>
+                      <select
+                        id="filter-staff"
+                        value={staffFilter}
+                        onChange={(e) => setStaffFilter(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                      >
+                        <option value="all">All Staff</option>
+                        {(allUsers ?? []).map((u) => (
+                          <option key={u.id} value={u.name}>
+                            {u.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                </div>
                 </div>
               </motion.div>
             )}
@@ -771,115 +820,125 @@ export default function StudentContent() {
           )
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredStudents.map((student, idx) => (
-              <div
-                key={student.id}
-                className="card p-5 hover:shadow-md transition-all group relative overflow-hidden"
-              >
+            {filteredStudents.map((student, idx) => {
+              const style = studentStatusStyles[student.status] || defaultStudentStatusStyle;
+              return (
                 <div
-                  className={`absolute inset-0 bg-gradient-to-br ${rainbowGradients[idx % rainbowGradients.length]} pointer-events-none`}
-                />
-                <div className="flex justify-between items-start mb-4 relative">
-                  <div className="flex items-center gap-3">
-                    <div className="size-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-sm">
-                      {student.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <button
-                        type="button"
-                        className="font-bold text-slate-800 hover:text-indigo-600 cursor-pointer transition-colors text-left"
-                        onClick={() => router.push(`/students/${student.id}`)}
-                      >
-                        {capitalize(student.name)}
-                      </button>
-                      <div className="flex items-center gap-2">
-                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                          {student.email}
-                        </p>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${
-                            student.status === "In Review"
-                              ? "bg-blue-50 text-blue-700 border-blue-100"
-                              : student.status === "Verified"
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                                : student.status === "New Leads"
-                                  ? "bg-slate-100 text-slate-600 border-slate-200"
-                                  : "bg-indigo-50 text-indigo-700 border-indigo-100"
-                          }`}
+                  key={student.id}
+                  onClick={() => router.push(`/students/${student.id}`)}
+                  className="card group relative cursor-pointer overflow-hidden rounded-2xl p-0 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                >
+                  <div className={`h-1.5 w-full bg-gradient-to-r ${style.accent}`} />
+                  <div
+                    className={`pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-gradient-to-br opacity-40 blur-2xl ${rainbowGradients[idx % rainbowGradients.length]}`}
+                  />
+                  <div className="relative p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div
+                          className={`flex size-11 shrink-0 items-center justify-center rounded-2xl text-base font-black ring-1 ${style.avatar}`}
                         >
-                          {student.status}
-                        </span>
+                          {student.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate font-bold text-slate-800 transition-colors group-hover:text-indigo-600">
+                            {capitalize(student.name)}
+                          </p>
+                          <span
+                            className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter ${style.badge}`}
+                          >
+                            {student.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/students/${student.id}/edit`);
+                          }}
+                          className="rounded-lg p-1.5 text-indigo-800 hover:bg-indigo-50 hover:text-indigo-600"
+                          title="Edit"
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteStudent(student);
+                          }}
+                          className="rounded-lg p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600"
+                          title="Delete"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/students/${student.id}/edit`)}
-                      className="p-1.5 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                      title="Edit"
-                    >
-                      <Edit2 size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteStudent(student)}
-                      className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                      title="Delete"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <Mail size={13} className="text-slate-400" />
-                    {student.email}
-                  </div>
-                  {student.phone && (
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <Phone size={13} className="text-slate-400" />
-                      {student.phone}
-                    </div>
-                  )}
-                  {student.interestedCountry && (
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      {getCountryFlag(student.interestedCountry) && (
-                        <Image
-                          src={getCountryFlag(student.interestedCountry)}
-                          alt=""
-                          width={24}
-                          height={24}
-                          className="w-5 h-3.5 rounded-sm object-cover"
-                        />
+
+                    <div className="mt-4 space-y-2.5">
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <Mail size={13} className="shrink-0 text-slate-400" />
+                        <span className="truncate">{student.email || "No email"}</span>
+                      </div>
+                      {student.phone && (
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <Phone size={13} className="shrink-0 text-slate-400" />
+                          {student.phone}
+                        </div>
                       )}
-                      {student.interestedCountry}
+                      {student.interestedCountry && (
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          {getCountryFlag(student.interestedCountry) && (
+                            <Image
+                              src={getCountryFlag(student.interestedCountry)}
+                              alt=""
+                              width={24}
+                              height={24}
+                              className="w-5 shrink-0 rounded-sm object-cover"
+                            />
+                          )}
+                          {student.interestedCountry}
+                        </div>
+                      )}
+                      {student.university && (
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <GraduationCap size={13} className="shrink-0 text-slate-400" />
+                          <span className="truncate">{student.university}</span>
+                        </div>
+                      )}
+                      {student.counselor && (
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <User size={13} className="shrink-0 text-slate-400" />
+                          <span className="truncate">
+                            <span className="text-slate-400">Counselor:</span>{" "}
+                            <span className="font-bold text-indigo-600">{student.counselor}</span>
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {student.counselor && (
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <User size={13} className="text-slate-400" />
-                      <span className="font-bold text-indigo-600">
-                        Counselor: {student.counselor}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => router.push(`/files?studentId=${student.id}`)}
-                    className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:underline"
-                  >
-                    <FileText size={13} />
-                    {student._count?.documents || 0} Documents
-                  </button>
-                  <div className="text-[10px] text-slate-400">
-                    {new Date(student.createdAt).toLocaleDateString()}
+                  </div>
+
+                  <div className="relative flex items-center justify-between border-t border-slate-100 bg-slate-50/70 px-5 py-3">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/files?studentId=${student.id}`);
+                      }}
+                      className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700"
+                    >
+                      <FileText size={13} />
+                      {student._count?.documents || 0} Documents
+                    </button>
+                    <span className="text-[10px] text-slate-400">
+                      {new Date(student.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : viewMode === "kanban" ? (
           <div className="flex gap-4 overflow-x-auto pb-4">

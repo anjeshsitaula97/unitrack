@@ -26,6 +26,9 @@ export async function POST() {
 
     cookieStore.delete("auth_token");
     cookieStore.delete("enabled_modules");
+    // The student portal authenticates with its own cookie; without this a
+    // student who logs out stays signed in.
+    cookieStore.delete("student_token");
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

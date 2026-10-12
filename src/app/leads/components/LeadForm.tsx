@@ -82,7 +82,10 @@ export default function LeadForm({ leadId }: LeadFormProps) {
   useEffect(() => {
     const init = async () => {
       try {
-        const [userRes, usersRes] = await Promise.all([fetch("/api/auth/me", { credentials: "include" }), fetch("/api/users")]);
+        const [userRes, usersRes] = await Promise.all([
+          fetch("/api/auth/me", { credentials: "include" }),
+          fetch("/api/users"),
+        ]);
         if (userRes.ok) {
           const userData = await userRes.json();
           setCurrentUser(userData);
@@ -165,14 +168,14 @@ export default function LeadForm({ leadId }: LeadFormProps) {
 
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="animate-spin text-indigo-500" size={32} />
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="animate-fade-in space-y-6">
       <div className="flex items-center gap-4">
         <button
           onClick={() => router.back()}
@@ -264,7 +267,9 @@ export default function LeadForm({ leadId }: LeadFormProps) {
               type="date"
               value={formData.nextFollowUp}
               onChange={(e) => update("nextFollowUp", e.target.value)}
-              className="w-full px-4 py-2.5 bg-indigo-50/30 border border-indigo-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-bold text-indigo-700"
+              className={`w-full px-4 py-2.5 bg-indigo-50/30 border border-indigo-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm ${
+                formData.nextFollowUp ? "font-bold text-indigo-700" : "font-medium text-gray-400"
+              }`}
             />
           </div>
         </div>
@@ -354,7 +359,9 @@ export default function LeadForm({ leadId }: LeadFormProps) {
                 type="date"
                 value={formData.assignedDate}
                 onChange={(e) => update("assignedDate", e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                className={`w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium ${
+                  formData.assignedDate ? "" : "text-gray-400"
+                }`}
               />
             </div>
           </div>

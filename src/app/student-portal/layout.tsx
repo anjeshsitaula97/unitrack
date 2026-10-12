@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import StudentSidebar from "@/components/StudentSidebar";
 import StudentTopbar from "@/components/StudentTopbar";
-import { isSessionActive } from "@/lib/client-session";
 import { Loader2 } from "lucide-react";
 
 interface PortalStudent {
@@ -27,34 +26,37 @@ interface PortalStudent {
 export default function StudentPortalLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [student, setStudent] = useState<PortalStudent | null>(null);
-  const [sessionReady] = useState<boolean>(isSessionActive());
+  const [ready, setReady] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    if (!isSessionActive()) {
-      fetch("/api/auth/logout", { method: "POST" })
-        .catch(() => {})
-        .finally(() => {
-          router.replace("/login");
-        });
-      return;
-    }
+    let cancelled = false;
 
-    fetch("/api/student-portal/me")
+    fetch("/api/student-portal/me", { credentials: "include", cache: "no-store" })
       .then((r) => {
         if (!r.ok) {
-          router.push("/login");
+          router.replace("/login");
           return null;
         }
         return r.json();
       })
       .then((s) => {
-        if (s) setStudent(s);
+        if (cancelled) return;
+        if (s) {
+          setStudent(s);
+          setReady(true);
+        }
       })
-      .catch(() => router.push("/login"));
+      .catch(() => {
+        if (!cancelled) router.replace("/login");
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
-  if (!sessionReady) {
+  if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <Loader2 className="animate-spin text-indigo-600" size={32} />

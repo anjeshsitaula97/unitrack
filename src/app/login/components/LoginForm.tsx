@@ -30,12 +30,14 @@ export default function LoginForm() {
 
       if (!res.ok) {
         const errorText = await res.text();
+        let message = `Server responded with ${res.status}. Please check the server logs.`;
         try {
           const errorJson = JSON.parse(errorText);
-          throw new Error(errorJson.error || `Server error: ${res.status}`);
+          if (errorJson?.error) message = errorJson.error;
         } catch {
-          throw new Error(`Server responded with ${res.status}. Please check the server logs.`);
+          // Non-JSON body (e.g. a proxy/HTML error page) — keep the generic message.
         }
+        throw new Error(message);
       }
 
       const data = await res.json();
