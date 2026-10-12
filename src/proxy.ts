@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { getRoleHome } from "@/lib/role-home";
+import { validateCsrfHeaders } from "@/lib/csrf";
 
 const getJwtSecretKey = () => {
   const secret = process.env.JWT_SECRET;
   if (!secret || secret.length === 0) {
     throw new Error("The environment variable JWT_SECRET is not set.");
+  }
+  if (secret.length < 32) {
+    throw new Error(
+      "JWT_SECRET is too weak: use at least 32 random bytes (e.g. `openssl rand -base64 32`)."
+    );
   }
   return secret;
 };
@@ -55,6 +61,26 @@ function isPublicPath(pathname: string): boolean {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Centralised CSRF defence for every cookie-authenticated mutating API call.
+  // A browser always attaches an Origin (or at least Referer) header to a
+  // cross-site state-changing request, so a missing/mismatched origin on a
+  // non-GET call is rejected here instead of relying on each route to remember.
+  // Payment-gateway callbacks are GET redirects (skipped) and non-browser API
+  // clients authenticate with an Authorization: Bearer header.
+  if (pathname.startsWith("/api/")) {
+    const csrf = validateCsrfHeaders(request);
+    if (!csrf.valid) {
+      return NextResponse.json({ error: csrf.error || "CSRF validation failed" }, { status: 403 });
+    }
+  }
+
+  // /api routes authorise their own requests (and /uploads rewrites to /api
+  // where file access is enforced per-file), so the page-shell redirects below
+  // must never apply to them.
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   const isAuthRoute = pathname.startsWith("/login");
 
   const token = request.cookies.get("auth_token")?.value;
@@ -92,5 +118,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?)$).*)",
+  ],
 };

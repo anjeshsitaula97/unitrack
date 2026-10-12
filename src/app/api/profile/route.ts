@@ -1,23 +1,18 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { logError } from "@/lib/logger";
-import { verifyAuth } from "@/lib/session";
 import { db } from "@/lib/db";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
+import { getSession } from "@/lib/api-utils";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
-    if (!token) {
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const payload = await verifyAuth(token);
-    const userId = payload.id;
-
     const user = await db.user.findUnique({
-      where: { id: userId },
+      where: { id: session.id },
       select: {
         id: true,
         name: true,
@@ -40,14 +35,11 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
-    if (!token) {
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const payload = await verifyAuth(token);
-    const userId = payload.id;
+    const userId = session.id;
 
     const body = await request.json();
     const { name, avatar } = body;

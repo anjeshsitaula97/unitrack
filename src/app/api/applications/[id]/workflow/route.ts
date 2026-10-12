@@ -107,6 +107,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { applicationId: Number(id) },
     });
 
+    const existingIds = new Set(existingStages.map((st) => st.id));
+    for (const s of stages as { id: string }[]) {
+      if (!existingIds.has(Number(s.id))) {
+        return apiError(`Stage ${s.id} does not belong to this application`, 400);
+      }
+    }
+
     await db.$transaction(
       stages.map(
         (s: {
@@ -117,7 +124,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           subtasks?: string;
         }) =>
           db.applicationWorkflowStage.update({
-            where: { id: Number(s.id) },
+            where: { id: Number(s.id), applicationId: Number(id) },
             data: {
               ...(s.name !== undefined && { name: s.name }),
               ...(s.description !== undefined && { description: s.description }),
@@ -177,9 +184,22 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     if (!stageId) return apiError("stageId is required", 400);
 
-    const stage = await db.applicationWorkflowStage.findUnique({ where: { id: Number(stageId) } });
+    // The stage must belong to this application; a caller cannot delete another
+    // application's stages by passing a foreign stage id.
+    const application = await db.application.findUnique({
+      where: { id: Number(id) },
+      select: { id: true },
+    });
+    if (!application) return apiError("Application not found", 404);
 
-    await db.applicationWorkflowStage.delete({ where: { id: Number(stageId) } });
+    const stage = await db.applicationWorkflowStage.findUnique({
+      where: { id: Number(stageId), applicationId: Number(id) },
+    });
+    if (!stage) return apiError("Workflow stage not found", 404);
+
+    await db.applicationWorkflowStage.delete({
+      where: { id: Number(stageId), applicationId: Number(id) },
+    });
 
     if (stage) {
       await logActivity({

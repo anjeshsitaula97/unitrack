@@ -60,6 +60,25 @@ export async function softDeleteLead(id: string | number) {
   return lead;
 }
 
+export async function softDeleteApplication(id: string | number) {
+  const numId = Number(id);
+  const [application, student] = await Promise.all([
+    db.application.update({ where: { id: numId }, data: { status: "Deleted" } }),
+    db.application
+      .findUnique({ where: { id: numId }, select: { student: { select: { name: true } } } })
+      .then((row) => row?.student?.name),
+  ]);
+  await db.trashItem.create({
+    data: {
+      entityType: "Application",
+      entityId: String(numId),
+      entityName: student || `Application #${numId}`,
+      expiresAt: new Date(Date.now() + EXPIRY_DAYS * 24 * 60 * 60 * 1000),
+    },
+  });
+  return application;
+}
+
 export async function restoreFromTrash(id: string | number) {
   const item = await db.trashItem.findUnique({ where: { id: Number(id) } });
   if (!item) throw new Error("Trash item not found");
@@ -78,6 +97,9 @@ export async function restoreFromTrash(id: string | number) {
       break;
     case "Lead":
       await db.lead.update({ where: { id: entityIdNum }, data: { status: "New" } });
+      break;
+    case "Application":
+      await db.application.update({ where: { id: entityIdNum }, data: { status: "Submitted" } });
       break;
   }
 
@@ -106,6 +128,9 @@ export async function purgeExpiredTrash() {
           break;
         case "Lead":
           await db.lead.delete({ where: { id: entityIdNum } });
+          break;
+        case "Application":
+          await db.application.delete({ where: { id: entityIdNum } });
           break;
       }
       await db.trashItem.delete({ where: { id: item.id } });

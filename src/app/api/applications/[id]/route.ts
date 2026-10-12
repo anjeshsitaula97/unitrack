@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
+import { softDeleteApplication } from "@/lib/trash";
 import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, diffChanges } from "@/lib/activity";
 import { getApplicationStatuses } from "@/lib/application-statuses";
@@ -102,7 +103,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       method: "DELETE",
     });
     if (deniedDELETE) return deniedDELETE;
-    if (!session) return apiError("Unauthorized", 401);
+    // Deleting an application is a destructive action; require an explicit
+    // Admin gate rather than relying on a permission a custom role could hold.
+    if (!session || !["Admin", "Super Admin"].includes(session.role as string))
+      return apiError("Unauthorized", 401);
 
     const { id } = await params;
 
@@ -116,7 +120,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     if (!existing) return apiError("Application not found", 404);
 
-    await db.application.delete({ where: { id: Number(id) } });
+    // Soft delete (30-day Trash window) like students and leads, so notes and
+    // workflow history are not permanently destroyed on a stray click.
+    await softDeleteApplication(Number(id));
 
     await logActivity({
       actorName: user?.name || existing.student.firstName + " " + existing.student.lastName,

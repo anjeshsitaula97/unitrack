@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { createNotification } from "@/lib/notifications";
 import { softDeleteStudent } from "@/lib/trash";
+import { isBcryptHash } from "@/lib/crypto";
 import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logError } from "@/lib/logger";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
@@ -32,7 +33,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
-    return NextResponse.json(student);
+    // Never expose the stored password hash to the API or the client form,
+    // which would otherwise round-trip it and corrupt the password on the next
+    // save (bcrypt(bcrypt(...))).
+    const { studentPassword: _studentPassword, ...safeStudent } = student;
+
+    return NextResponse.json(safeStudent);
   } catch (error) {
     logError("Fetch student", error);
     return NextResponse.json({ error: "Failed to fetch student" }, { status: 500 });
@@ -163,7 +169,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     if ("studentPassword" in body && body.studentPassword) {
-      updateData.studentPassword = await bcrypt.hash(body.studentPassword, 12);
+      // Guard against re-hashing a hash: the stored bcrypt value is never sent
+      // back by the fixed API, but a cached/stale client could resend it and
+      // silently double-hash the portal password with every save.
+      updateData.studentPassword = isBcryptHash(body.studentPassword)
+        ? undefined
+        : await bcrypt.hash(body.studentPassword, 12);
     }
 
     if ("education" in body) {
@@ -268,19 +279,24 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       changes,
     });
 
-    if ("studentPassword" in updateData && updateData.studentPassword) {
+    if (typeof updateData.studentPassword === "string" && updateData.studentPassword) {
       const existingUser = await db.user.findUnique({ where: { email: student.email } });
       if (existingUser) {
-        await db.user.update({
-          where: { id: existingUser.id },
-          data: { password: updateData.studentPassword as string },
-        });
+        // Only a Student-role portal account may have its login password synced
+        // from the student record. Overwriting an Admin/Staff user's password
+        // this way is account takeover and is refused outright.
+        if (existingUser.role === "Student") {
+          await db.user.update({
+            where: { id: existingUser.id },
+            data: { password: updateData.studentPassword },
+          });
+        }
       } else {
         await db.user.create({
           data: {
             name: student.name,
             email: student.email,
-            password: updateData.studentPassword as string,
+            password: updateData.studentPassword,
             role: "Student",
             status: "Active",
             lastLogin: "Never",

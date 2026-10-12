@@ -22,7 +22,10 @@ describe("Permissions", () => {
     });
 
     it("grants student access to read-only resources", () => {
-      expect(hasPermission("student", "students:read")).toBe(true);
+      // The admin student registry is off-limits to student accounts (moving
+      // that to the dedicated /api/student-portal/* surface); other read-only
+      // resources remain accessible.
+      expect(hasPermission("student", "students:read")).toBe(false);
       expect(hasPermission("student", "courses:read")).toBe(true);
       expect(hasPermission("student", "applications:read")).toBe(true);
       expect(hasPermission("student", "applications:create")).toBe(false);

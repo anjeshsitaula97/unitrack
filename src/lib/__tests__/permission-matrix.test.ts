@@ -26,8 +26,17 @@ describe("permission matrix", () => {
     expect(hasPermission("Staff", "hr:delete")).toBe(false);
   });
 
-  it("treats students as read-only across the matrix", () => {
-    expect(hasPermission("student", "students:read")).toBe(true);
+  it("keeps students out of the admin student registry", () => {
+    // The student portal reads students through /api/student-portal/* with a
+    // dedicated student token. A Student-role CMS account must not enumerate
+    // every student profile (incl. password hashes) via /api/students.
+    expect(hasPermission("student", "students:read")).toBe(false);
+    expect(hasPermission("student", "students:create")).toBe(false);
+    expect(hasPermission("student", "students:update")).toBe(false);
+    expect(hasPermission("student", "students:delete")).toBe(false);
+  });
+
+  it("treats students as read-only across the rest of the matrix", () => {
     expect(hasPermission("student", "courses:read")).toBe(true);
     expect(hasPermission("student", "applications:read")).toBe(true);
     expect(hasPermission("student", "applications:create")).toBe(false);

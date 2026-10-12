@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -179,6 +179,7 @@ export default function StudentDetailContent({ id }: { id: string }) {
   const [generatingCreds, setGeneratingCreds] = useState(false);
   const [apps, setApps] = useState<ApplicationSummary[]>([]);
   const [loadingApps, setLoadingApps] = useState(false);
+  const appsFetchedRef = useRef(false);
 
   useEffect(() => {
     fetch(`/api/students/${id}`)
@@ -253,12 +254,16 @@ export default function StudentDetailContent({ id }: { id: string }) {
   }, [id]);
 
   useEffect(() => {
-    if (detailTab === "applications" && apps.length === 0 && !loadingApps) {
-      queueMicrotask(() => {
-        fetchApps();
-      });
+    appsFetchedRef.current = false;
+    setApps([]);
+  }, [id]);
+
+  useEffect(() => {
+    if (detailTab === "applications" && !appsFetchedRef.current) {
+      appsFetchedRef.current = true;
+      fetchApps();
     }
-  }, [detailTab, apps.length, fetchApps, loadingApps]);
+  }, [detailTab, fetchApps]);
 
   const appGroups = useMemo(() => {
     const map = new Map<string, { app: ApplicationSummary; req: string }[]>();
@@ -643,7 +648,9 @@ export default function StudentDetailContent({ id }: { id: string }) {
                       <p className="text-[9px] font-semibold text-amber-500 uppercase tracking-tighter">
                         Password
                       </p>
-                      <p className="text-sm text-slate-800">{student.studentPassword}</p>
+                      <p className="text-sm text-slate-800">
+                        {student.studentPassword ? "••••••••••" : "—"}
+                      </p>
                     </div>
                   </div>
                 </div>

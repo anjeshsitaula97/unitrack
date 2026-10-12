@@ -442,12 +442,16 @@ export default function StudentForm({
         }
       }
       const s = initialStudent;
+      // A stored bcrypt hash is never a usable/editable password. Keeping the
+      // server-side GET strip as the real guard, but never let a cached hash
+      // round-trip into the form where an unrelated save would re-hash it.
+      const storedPassword = s.studentPassword;
       const nextFormData = {
         firstName: s.firstName || "",
         lastName: s.lastName || "",
         email: s.email || "",
         admissionEmail: s.admissionEmail || "",
-        studentPassword: s.studentPassword || "",
+        studentPassword: storedPassword && !storedPassword.startsWith("$2") ? storedPassword : "",
         phone: phoneMain,
         phonePrefix,
         whatsappNumber: s.whatsappNumber || "",

@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
         intakeTerm: data.intakeTerm,
         major: data.major,
         interestedCountry: data.interestedCountry,
-          partnerId: toPartnerId(data.partnerId),
+        partnerId: toPartnerId(data.partnerId),
         targetUniversities: data.targetUniversities,
         spouseName: data.spouseName,
         childrenDetails:
@@ -211,7 +211,15 @@ export async function POST(req: NextRequest) {
 
     const existingUser = await db.user.findUnique({ where: { email: data.email } });
     if (existingUser) {
-      await db.user.update({ where: { id: existingUser.id }, data: { password: hashedPassword } });
+      // Never overwrite an existing account's password from a student record:
+      // if it collides with an Admin/Staff login that is account takeover.
+      // Only a prior Student-role portal account is re-synched.
+      if (existingUser.role === "Student") {
+        await db.user.update({
+          where: { id: existingUser.id },
+          data: { password: hashedPassword },
+        });
+      }
     } else {
       await db.user.create({
         data: {

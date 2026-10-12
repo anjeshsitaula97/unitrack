@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { logActivity, diffChanges } from "@/lib/activity";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { validateCsrfHeaders } from "@/lib/csrf";
-import { getSession, checkPermission } from "@/lib/api-utils";
+import { getSession, checkPermission, invalidateRoleCache } from "@/lib/api-utils";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -43,10 +43,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const existing = await db.role.findUnique({ where: { id: Number(id) } });
 
-    const role = await db.role.update({
-      where: { id: Number(id) },
-      data: data as Prisma.RoleUpdateInput,
-    });
+      const role = await db.role.update({
+        where: { id: Number(id) },
+        data: data as Prisma.RoleUpdateInput,
+      });
+
+      invalidateRoleCache();
 
     await logActivity({
       actorName: session.name || "System",
@@ -96,7 +98,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const role = await db.role.findUnique({ where: { id: Number(id) } });
     if (!role) return NextResponse.json({ error: "Role not found" }, { status: 404 });
 
-    await db.role.delete({ where: { id: Number(id) } });
+      await db.role.delete({ where: { id: Number(id) } });
+      invalidateRoleCache();
 
     await logActivity({
       actorName: session.name || "System",

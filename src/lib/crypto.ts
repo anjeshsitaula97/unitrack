@@ -6,6 +6,14 @@ const KEY_LENGTH = 32;
 const SALT_LENGTH = 16;
 const IV_LENGTH = 12;
 
+/**
+ * True when the value is already a bcrypt hash ($2a$/$2b$/$2y$). Used to keep a
+ * stored hash from being treated as a plaintext password and re-hashed on edit.
+ */
+export function isBcryptHash(value: unknown): boolean {
+  return typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
+}
+
 export interface EncryptedPayload {
   encrypted: true;
   iv: string;

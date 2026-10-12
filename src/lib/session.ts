@@ -5,6 +5,11 @@ const getJwtSecretKey = () => {
   if (!secret || secret.length === 0) {
     throw new Error("The environment variable JWT_SECRET is not set.");
   }
+  if (secret.length < 32) {
+    throw new Error(
+      "JWT_SECRET is too weak: use at least 32 random bytes (e.g. `openssl rand -base64 32`)."
+    );
+  }
   return secret;
 };
 
@@ -14,6 +19,12 @@ export interface SessionPayload {
   role: string;
   name?: string;
   subject?: "user" | "student";
+  /**
+   * Effective grant set resolved from the Role row for this request. Absent for
+   * student sessions and whenever no stored list applies, in which case the
+   * static catalog matrix is used.
+   */
+  permissions?: string[];
   [key: string]: unknown;
 }
 

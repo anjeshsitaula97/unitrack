@@ -18,14 +18,44 @@ export function apiSuccess<T>(data: T, status: number = 200) {
  * a token issued before a demotion, disablement or deletion would otherwise keep
  * its old authority until it expires. Re-reading the account closes that window.
  * Cached briefly so a single page load does not repeat the lookup per request.
+ *
+ * The same lookup carries the role's stored permission grants so that
+ * Settings > Role Permissions is actually enforced without an extra query.
  */
 const ROLE_CACHE_TTL_MS = 30_000;
-const roleCache = new Map<number, { role: string; expires: number }>();
+const roleCache = new Map<
+  number,
+  { role: string; name: string; permissions?: string[]; expires: number }
+>();
 
-async function getCurrentAccountRole(id: number): Promise<{ role: string; name: string } | null> {
+/**
+ * Reads a Role row's stored grant list. A missing row, empty JSON, malformed
+ * JSON or an unparseable shape all resolve to `undefined`, which makes
+ * `hasPermission` fall back to the catalog defaults instead of denying.
+ */
+function parseStoredPermissions(raw: string | null | undefined): string[] | undefined {
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return undefined;
+    const ids = parsed.filter((id): id is string => typeof id === "string" && id.length > 0);
+    return ids.length > 0 ? ids : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function invalidateRoleCache(userId?: number): void {
+  if (typeof userId === "number") roleCache.delete(userId);
+  else roleCache.clear();
+}
+
+async function getCurrentAccountRole(
+  id: number
+): Promise<{ role: string; name: string; permissions?: string[] } | null> {
   const cached = roleCache.get(id);
   if (cached && cached.expires > Date.now()) {
-    return { role: cached.role, name: "" };
+    return { role: cached.role, name: cached.name, permissions: cached.permissions };
   }
 
   const { db } = await import("./db");
@@ -43,8 +73,22 @@ async function getCurrentAccountRole(id: number): Promise<{ role: string; name: 
     return null;
   }
 
-  roleCache.set(id, { role: user.role, expires: Date.now() + ROLE_CACHE_TTL_MS });
-  return { role: user.role, name: user.name };
+  // Role grants are optional configuration; never let a lookup failure here
+  // revoke access, because the static catalog is a safe fallback.
+  let stored: string[] | undefined;
+  try {
+    const roleRow = await db.role.findUnique({
+      where: { name: user.role },
+      select: { permissions: true },
+    });
+    stored = parseStoredPermissions(roleRow?.permissions);
+  } catch {
+    stored = undefined;
+  }
+
+  const entry = { role: user.role, name: user.name, permissions: stored, expires: Date.now() + ROLE_CACHE_TTL_MS };
+  roleCache.set(id, entry);
+  return { role: entry.role, name: entry.name, permissions: entry.permissions };
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
@@ -60,7 +104,14 @@ export async function getSession(): Promise<SessionPayload | null> {
     const account = await getCurrentAccountRole(session.id);
     if (!account) return null;
 
-    return { ...session, role: account.role, name: session.name || account.name };
+    return {
+      ...session,
+      role: account.role,
+      name: session.name || account.name,
+      // Left undefined when the role has no stored grant list, which makes
+      // `hasPermission` use the catalog defaults.
+      permissions: account.permissions,
+    };
   } catch {
     return null;
   }
