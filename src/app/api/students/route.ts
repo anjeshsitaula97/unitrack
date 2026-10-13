@@ -13,6 +13,7 @@ import {
   checkRoutePermission,
 } from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { generateStrongPassword } from "@/lib/password";
 
 export async function GET(req: NextRequest) {
   try {
@@ -108,11 +109,7 @@ export async function POST(req: NextRequest) {
       return Number.isInteger(n) && n > 0 ? n : null;
     };
 
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-    let generatedPassword = "";
-    for (let i = 0; i < 10; i++) {
-      generatedPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    const generatedPassword = generateStrongPassword();
     const passwordToUse = data.studentPassword || generatedPassword;
     const hashedPassword = await bcrypt.hash(passwordToUse, 12);
 
@@ -184,6 +181,10 @@ export async function POST(req: NextRequest) {
         guardianEmail: data.guardianEmail,
         guardianRelation: data.guardianRelation,
         guardianAddress: data.guardianAddress,
+        otherGuardians:
+          typeof data.otherGuardians === "string"
+            ? data.otherGuardians
+            : JSON.stringify(data.otherGuardians || []),
         status: data.status || "In Review",
         statusColor: data.statusColor,
         initials: data.initials,

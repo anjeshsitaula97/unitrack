@@ -836,9 +836,18 @@ export default function StudentContent() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-3">
                         <div
-                          className={`flex size-11 shrink-0 items-center justify-center rounded-2xl text-base font-black ring-1 ${style.avatar}`}
+                          className={`flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-base font-black ring-1 ${style.avatar}`}
                         >
-                          {student.name.charAt(0).toUpperCase()}
+                          {student.photoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={student.photoUrl}
+                              alt={student.name}
+                              className="size-full object-cover"
+                            />
+                          ) : (
+                            student.name.charAt(0).toUpperCase()
+                          )}
                         </div>
                         <div className="min-w-0">
                           <p className="truncate font-bold text-slate-800 transition-colors group-hover:text-indigo-600">

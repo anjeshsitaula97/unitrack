@@ -172,7 +172,10 @@ export function checkRoutePermission(
 
   if (isSuperAdminRole(session.role)) return null;
 
-  const path = routePath.replace(/^.*\/api\//, "");
+  // Strip any query string / fragment before mapping, otherwise a URL such as
+  // "/api/universities?perPage=100" produced the bogus permission
+  // "universitiesperpage:read" and 403'd every filtered or paginated request.
+  const path = routePath.replace(/^.*\/api\//, "").split(/[?#]/)[0];
   const action = methodToAction(method || "GET");
   const permission = moduleToPermission(path, action);
 

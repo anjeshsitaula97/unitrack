@@ -112,6 +112,15 @@ interface DocumentEntry {
   status?: string;
 }
 
+interface OtherGuardianEntry {
+  id?: number;
+  name?: string;
+  relation?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+}
+
 interface ApplicationSummary {
   id: string;
   status: string;
@@ -137,10 +146,12 @@ interface StudentDetail {
   counselor?: string;
   maritalStatus?: string;
   spouseName?: string;
+  photoUrl?: string;
   guardianName?: string;
   guardianRelation?: string;
   guardianPhone?: string;
   guardianEmail?: string;
+  otherGuardians?: OtherGuardianEntry[] | string;
   passportNumber?: string;
   passportIssuePlace?: string;
   passportIssueDate?: string;
@@ -327,8 +338,13 @@ export default function StudentDetailContent({ id }: { id: string }) {
       <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="size-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg font-bold shadow-lg shadow-indigo-200">
-              {student.name.charAt(0).toUpperCase()}
+            <div className="size-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg font-bold shadow-lg shadow-indigo-200 overflow-hidden">
+              {student.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={student.photoUrl} alt={student.name} className="size-full object-cover" />
+              ) : (
+                student.name.charAt(0).toUpperCase()
+              )}
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-800">{capitalize(student.name)}</h2>
@@ -357,8 +373,17 @@ export default function StudentDetailContent({ id }: { id: string }) {
         <div className="p-6 pb-0">
           <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex flex-wrap items-center gap-x-6 gap-y-2">
             <div className="flex items-center gap-3">
-              <div className="size-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg font-bold shadow-md">
-                {student.name.charAt(0).toUpperCase()}
+              <div className="size-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg font-bold shadow-md overflow-hidden">
+                {student.photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={student.photoUrl}
+                    alt={student.name}
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  student.name.charAt(0).toUpperCase()
+                )}
               </div>
               <div>
                 <p className="text-base font-bold text-slate-800">{capitalize(student.name)}</p>
@@ -509,6 +534,39 @@ export default function StudentDetailContent({ id }: { id: string }) {
                   </p>
                 </div>
               )}
+              {(() => {
+                let parsed: OtherGuardianEntry[] = [];
+                if (typeof student.otherGuardians === "string") {
+                  try {
+                    const value = JSON.parse(student.otherGuardians);
+                    if (Array.isArray(value)) parsed = value;
+                  } catch {
+                    parsed = [];
+                  }
+                } else if (Array.isArray(student.otherGuardians)) {
+                  parsed = student.otherGuardians;
+                }
+                const others = parsed.filter(
+                  (g) => g && (g.name || g.relation || g.phone || g.email)
+                );
+                if (others.length === 0) return null;
+                return others.map((g, idx) => (
+                  <div key={g.id ?? idx} className="p-3 bg-slate-50 rounded-xl">
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      Other Guardian {idx + 1}
+                    </p>
+                    <p className="text-sm font-medium text-slate-800 mt-0.5">
+                      {[g.name, g.relation].filter(Boolean).join(" · ") || "-"}
+                    </p>
+                    {(g.phone || g.email) && (
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {[g.phone, g.email].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    {g.address && <p className="text-xs text-slate-500 mt-0.5">{g.address}</p>}
+                  </div>
+                ));
+              })()}
             </div>
           )}
 

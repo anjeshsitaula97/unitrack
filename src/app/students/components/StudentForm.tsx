@@ -18,6 +18,9 @@ import {
   Briefcase,
   Zap,
   FileText,
+  Camera,
+  Loader2,
+  X,
 } from "lucide-react";
 import {
   LazyMotion,
@@ -34,6 +37,15 @@ interface ChildEntry {
   id: number;
   name: string;
   gender: string;
+}
+
+interface OtherGuardianEntry {
+  id: number;
+  name: string;
+  relation: string;
+  phone: string;
+  email: string;
+  address: string;
 }
 
 interface EducationEntry {
@@ -98,12 +110,14 @@ interface StudentFormData {
   nationality: string;
   maritalStatus: string;
   spouseName: string;
+  photoUrl: string;
   childrenDetails: ChildEntry[];
   guardianName: string;
   guardianPhone: string;
   guardianEmail: string;
   guardianRelation: string;
   guardianAddress: string;
+  otherGuardians: OtherGuardianEntry[];
   status: string;
   permanentProvince: number;
   permanentDistrict: string;
@@ -158,12 +172,14 @@ export interface Student {
   gender?: string;
   maritalStatus?: string;
   spouseName?: string;
+  photoUrl?: string;
   childrenDetails?: ChildEntry[] | string;
   guardianName?: string;
   guardianPhone?: string;
   guardianEmail?: string;
   guardianRelation?: string;
   guardianAddress?: string;
+  otherGuardians?: OtherGuardianEntry[] | string;
   permanentProvince?: number;
   permanentDistrict?: string;
   permanentMunicipality?: string;
@@ -328,6 +344,7 @@ export default function StudentForm({
   const temporaryMunicipalities = useRef<string[]>([]);
   const temporaryWards = useRef<string[]>([]);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   /**
    * Read a stored JSON list without ever throwing.
@@ -366,12 +383,14 @@ export default function StudentForm({
     nationality: "Nepal",
     maritalStatus: "Single",
     spouseName: "",
+    photoUrl: "",
     childrenDetails: [],
     guardianName: "",
     guardianPhone: "",
     guardianEmail: "",
     guardianRelation: "",
     guardianAddress: "",
+    otherGuardians: [],
     status: "In Review",
     permanentProvince: 0,
     permanentDistrict: "",
@@ -461,12 +480,14 @@ export default function StudentForm({
         nationality: s.nationality || "Nepal",
         maritalStatus: s.maritalStatus || "Single",
         spouseName: s.spouseName || "",
+        photoUrl: s.photoUrl || "",
         childrenDetails: parseStoredList<ChildEntry>(s.childrenDetails),
         guardianName: s.guardianName || "",
         guardianPhone: s.guardianPhone || "",
         guardianEmail: s.guardianEmail || "",
         guardianRelation: s.guardianRelation || "",
         guardianAddress: s.guardianAddress || "",
+        otherGuardians: parseStoredList<OtherGuardianEntry>(s.otherGuardians),
         status: s.status || "In Review",
         permanentProvince: Number(s.permanentProvince) || 0,
         permanentDistrict: s.permanentDistrict || "",
@@ -705,6 +726,31 @@ export default function StudentForm({
     }
   };
 
+  const handlePhotoUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be 5MB or smaller");
+      return;
+    }
+    setUploadingPhoto(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      setFormData((prev: StudentFormData) => ({ ...prev, photoUrl: data.url }));
+      toast.success("Photo uploaded successfully");
+    } catch {
+      toast.error("Failed to upload photo");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleAdDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const ad = e.target.value;
     setFormData((prev: StudentFormData) => ({ ...prev, dobAd: ad }));
@@ -761,6 +807,30 @@ export default function StudentForm({
       childrenDetails: prev.childrenDetails.map((c) =>
         c.id === id ? { ...c, [field]: value } : c
       ),
+    }));
+  };
+
+  const addOtherGuardian = () => {
+    setFormData((prev: StudentFormData) => ({
+      ...prev,
+      otherGuardians: [
+        ...prev.otherGuardians,
+        { id: Date.now(), name: "", relation: "", phone: "", email: "", address: "" },
+      ],
+    }));
+  };
+
+  const removeOtherGuardian = (id: number) => {
+    setFormData((prev: StudentFormData) => ({
+      ...prev,
+      otherGuardians: prev.otherGuardians.filter((g) => g.id !== id),
+    }));
+  };
+
+  const updateOtherGuardian = (id: number, field: string, value: string) => {
+    setFormData((prev: StudentFormData) => ({
+      ...prev,
+      otherGuardians: prev.otherGuardians.map((g) => (g.id === id ? { ...g, [field]: value } : g)),
     }));
   };
 
@@ -916,6 +986,69 @@ export default function StudentForm({
               >
                 {step === 1 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+                        Profile Photo
+                      </h3>
+                      <div className="flex items-center gap-5">
+                        <div className="relative shrink-0">
+                          <div className="size-24 rounded-2xl overflow-hidden bg-slate-100 ring-1 ring-slate-200 flex items-center justify-center">
+                            {formData.photoUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={formData.photoUrl}
+                                alt="Student photo"
+                                className="size-full object-cover"
+                              />
+                            ) : (
+                              <User size={32} className="text-slate-300" />
+                            )}
+                          </div>
+                          {formData.photoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, photoUrl: "" })}
+                              className="absolute -top-2 -right-2 size-6 rounded-full bg-white shadow border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500"
+                              aria-label="Remove photo"
+                            >
+                              <X size={13} />
+                            </button>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="student-photo"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-100 transition-colors"
+                          >
+                            {uploadingPhoto ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              <Camera size={16} />
+                            )}
+                            {uploadingPhoto
+                              ? "Uploading..."
+                              : formData.photoUrl
+                                ? "Change Photo"
+                                : "Upload Photo"}
+                          </label>
+                          <input
+                            id="student-photo"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handlePhotoUpload(file);
+                              e.target.value = "";
+                            }}
+                          />
+                          <p className="text-[11px] text-slate-400">
+                            JPG or PNG, up to 5MB. Shown as the student&apos;s avatar.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-4 md:col-span-2">
                       <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                         Basic Information
@@ -1290,6 +1423,142 @@ export default function StudentForm({
                             placeholder="Full Address"
                           />
                         </div>
+                      </div>
+
+                      <div className="mt-6 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                            Other Guardians ({formData.otherGuardians.length})
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={addOtherGuardian}
+                            className="text-[10px] font-bold text-indigo-600 flex items-center gap-1 hover:underline"
+                            aria-label="Add other guardian"
+                          >
+                            <Plus size={12} /> Add Guardian
+                          </button>
+                        </div>
+                        {formData.otherGuardians.map((guardian) => (
+                          <div
+                            key={guardian.id}
+                            className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm space-y-3"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
+                                <div className="space-y-1.5">
+                                  <label
+                                    htmlFor={`other-guardian-name-${guardian.id}`}
+                                    className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1"
+                                  >
+                                    Guardian Name
+                                  </label>
+                                  <input
+                                    id={`other-guardian-name-${guardian.id}`}
+                                    value={guardian.name}
+                                    onChange={(e) =>
+                                      updateOtherGuardian(guardian.id, "name", e.target.value)
+                                    }
+                                    onBlur={(e) =>
+                                      updateOtherGuardian(
+                                        guardian.id,
+                                        "name",
+                                        capitalize(e.target.value)
+                                      )
+                                    }
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="Full Name"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label
+                                    htmlFor={`other-guardian-relation-${guardian.id}`}
+                                    className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1"
+                                  >
+                                    Relation
+                                  </label>
+                                  <select
+                                    id={`other-guardian-relation-${guardian.id}`}
+                                    value={guardian.relation}
+                                    onChange={(e) =>
+                                      updateOtherGuardian(guardian.id, "relation", e.target.value)
+                                    }
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
+                                  >
+                                    <option value="">Select Relation</option>
+                                    <option value="Father">Father</option>
+                                    <option value="Mother">Mother</option>
+                                    <option value="Brother">Brother</option>
+                                    <option value="Sister">Sister</option>
+                                    <option value="Spouse">Spouse</option>
+                                    <option value="Uncle">Uncle</option>
+                                    <option value="Aunt">Aunt</option>
+                                    <option value="Other">Other</option>
+                                  </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label
+                                    htmlFor={`other-guardian-phone-${guardian.id}`}
+                                    className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1"
+                                  >
+                                    Phone Number
+                                  </label>
+                                  <input
+                                    id={`other-guardian-phone-${guardian.id}`}
+                                    value={guardian.phone}
+                                    onChange={(e) =>
+                                      updateOtherGuardian(guardian.id, "phone", e.target.value)
+                                    }
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="9800000000"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label
+                                    htmlFor={`other-guardian-email-${guardian.id}`}
+                                    className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1"
+                                  >
+                                    Email Address
+                                  </label>
+                                  <input
+                                    id={`other-guardian-email-${guardian.id}`}
+                                    value={guardian.email}
+                                    onChange={(e) =>
+                                      updateOtherGuardian(guardian.id, "email", e.target.value)
+                                    }
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="guardian@example.com"
+                                  />
+                                </div>
+                                <div className="space-y-1.5 md:col-span-2">
+                                  <label
+                                    htmlFor={`other-guardian-address-${guardian.id}`}
+                                    className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1"
+                                  >
+                                    Guardian Address
+                                  </label>
+                                  <input
+                                    id={`other-guardian-address-${guardian.id}`}
+                                    value={guardian.address}
+                                    onChange={(e) =>
+                                      updateOtherGuardian(guardian.id, "address", e.target.value)
+                                    }
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="Full Address"
+                                  />
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeOtherGuardian(guardian.id)}
+                                className="p-2 text-slate-300 hover:text-red-500"
+                                aria-label="Remove guardian"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
 

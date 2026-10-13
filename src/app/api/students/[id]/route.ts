@@ -200,6 +200,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
           ? body.childrenDetails
           : JSON.stringify(body.childrenDetails || []);
     }
+    if ("otherGuardians" in body) {
+      updateData.otherGuardians =
+        typeof body.otherGuardians === "string"
+          ? body.otherGuardians
+          : JSON.stringify(body.otherGuardians || []);
+    }
 
     if ("name" in body || "firstName" in body || "lastName" in body) {
       updateData.name = body.name || `${body.firstName || ""} ${body.lastName || ""}`.trim();

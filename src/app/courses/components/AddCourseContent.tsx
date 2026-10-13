@@ -123,7 +123,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
   const loadInitialData = React.useCallback(async () => {
     try {
       const [uRes, fRes, dRes, iRes, qRes, aRes] = await Promise.all([
-        fetch("/api/universities"),
+        fetch("/api/universities?perPage=100"),
         fetch("/api/faculties"),
         fetch("/api/degree-types"),
         fetch("/api/intakes"),
@@ -138,7 +138,18 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
         qRes.json(),
         aRes.json(),
       ]);
-      setUniversities(Array.isArray(uData) ? uData : []);
+
+      // /api/universities returns a paginated object ({ data, totalPages, ... }),
+      // unlike the other catalog endpoints which return bare arrays. Load every
+      // page so a newly added university always appears in the dropdown.
+      const universityList = Array.isArray(uData) ? uData : (uData?.data ?? []);
+      const universityPages = Array.isArray(uData) ? 1 : (uData?.totalPages ?? 1);
+      for (let page = 2; page <= universityPages; page++) {
+        const pageRes = await fetch(`/api/universities?perPage=100&page=${page}`);
+        const pageData = await pageRes.json();
+        universityList.push(...(Array.isArray(pageData) ? pageData : (pageData?.data ?? [])));
+      }
+      setUniversities(universityList);
       setFaculties(Array.isArray(fData) ? fData : []);
       setDegreeTypes(Array.isArray(dData) ? dData : []);
       setIntakes(Array.isArray(iData) ? iData : []);
@@ -357,9 +368,9 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 level: "Undergraduate",
                 credits: "",
                 duration: "",
-startDate: "",
-    intake: "",
-    tuitionFee: "",
+                startDate: "",
+                intake: "",
+                tuitionFee: "",
                 applicationFee: "",
                 currency: "",
                 applicationFeeCurrency: "",

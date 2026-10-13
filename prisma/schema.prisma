@@ -397,6 +397,9 @@ model Student {
   guardianEmail         String?
   guardianRelation      String?
   guardianAddress       String?
+  // Additional guardians beyond the primary one, stored as a JSON array
+  // (LONGTEXT for the same truncation reason as the other list fields above).
+  otherGuardians        String?           @default("[]") @db.LongText
   status                String            @default("New Leads")
   statusColor           String?
   initials              String?

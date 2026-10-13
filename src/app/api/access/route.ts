@@ -12,6 +12,7 @@ import { logError } from "@/lib/logger";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { validateCsrfHeaders } from "@/lib/csrf";
 import { normalizeRecipients } from "@/lib/email-recipients";
+import { generateStrongPassword } from "@/lib/password";
 
 const createUserSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -89,11 +90,16 @@ export async function POST(req: NextRequest) {
     }
     const data = parsed.data;
     let generatedPassword = "";
-    let passwordToHash = data.password || "";
+    let passwordToHash = "";
 
+    // When auto-generating, ignore any password the client sent: a stale or
+    // too-short manual value used to be validated and rejected, and it must
+    // never override the freshly generated credential.
     if (data.autoGeneratePassword) {
-      generatedPassword = crypto.randomBytes(8).toString("hex");
+      generatedPassword = generateStrongPassword();
       passwordToHash = generatedPassword;
+    } else {
+      passwordToHash = data.password || "";
     }
 
     if (!passwordToHash) {

@@ -214,6 +214,10 @@ export default function AccessContent() {
       toast.error("Please provide a password");
       return;
     }
+    if (!autoGeneratePassword && manualPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
 
     try {
       const res = await fetch("/api/access", {
@@ -224,7 +228,9 @@ export default function AccessContent() {
           email: inviteEmail,
           role: inviteRole,
           autoGeneratePassword,
-          password: manualPassword,
+          // Never send a stale manual value while auto-generating; the server
+          // ignores it but sending it used to surface a "min 6 characters" error.
+          password: autoGeneratePassword ? "" : manualPassword,
           generateApiKey,
           sendCredentialsEmail,
         }),
