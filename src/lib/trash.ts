@@ -147,3 +147,42 @@ export async function purgeExpiredTrash() {
 
   return purged;
 }
+
+export async function purgeAllTrash() {
+  const items = await db.trashItem.findMany({
+    where: { restoredAt: null },
+  });
+
+  let purged = 0;
+  for (const item of items) {
+    try {
+      const entityIdNum = Number(item.entityId);
+      switch (item.entityType) {
+        case "Student":
+          await db.student.delete({ where: { id: entityIdNum } });
+          break;
+        case "University":
+          await db.university.delete({ where: { id: entityIdNum } });
+          break;
+        case "Course":
+          await db.course.delete({ where: { id: entityIdNum } });
+          break;
+        case "Lead":
+          await db.lead.delete({ where: { id: entityIdNum } });
+          break;
+        case "Application":
+          await db.application.delete({ where: { id: entityIdNum } });
+          break;
+      }
+      await db.trashItem.delete({ where: { id: item.id } });
+      purged++;
+    } catch (error) {
+      console.error(
+        `Failed to purge ${item.entityType} ${item.entityId}:`,
+        error instanceof Error ? error.message : error
+      );
+    }
+  }
+
+  return purged;
+}

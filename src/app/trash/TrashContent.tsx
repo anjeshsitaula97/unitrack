@@ -93,10 +93,39 @@ export default function TrashContent() {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-          Recycle Bin
-        </h1>
-        <span className="text-sm text-slate-400">{total} items</span>
+        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">Recycle Bin</h1>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-400">{total} items</span>
+          {items.length > 0 && (
+            <button
+              type="button"
+              onClick={async () => {
+                if (
+                  !confirm(
+                    "Permanently delete all items in the recycle bin? This cannot be undone."
+                  )
+                )
+                  return;
+                try {
+                  const res = await fetch("/api/trash/empty", { method: "POST" });
+                  if (res.ok) {
+                    toast.success("Recycle bin emptied");
+                    fetchTrash();
+                  } else {
+                    const err = await res.json().catch(() => null);
+                    toast.error(err?.error || "Failed to empty recycle bin");
+                  }
+                } catch {
+                  toast.error("Failed to empty recycle bin");
+                }
+              }}
+              className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1"
+            >
+              <Trash2 size={12} />
+              Empty Recycle Bin
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-3 mb-6">
@@ -150,9 +179,7 @@ export default function TrashContent() {
                     <Icon size={20} />
                   </div>
                   <div>
-                    <div className="font-medium text-slate-800 text-sm">
-                      {item.entityName}
-                    </div>
+                    <div className="font-medium text-slate-800 text-sm">{item.entityName}</div>
                     <div className="text-xs text-slate-400">
                       {item.entityType} &middot; Deleted{" "}
                       {new Date(item.deletedAt).toLocaleDateString()}

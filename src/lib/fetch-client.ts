@@ -60,6 +60,61 @@ export async function safeJson(res: Response) {
   }
 }
 
+export interface UploadProgress {
+  loaded: number;
+  total: number;
+}
+
+export function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / Math.pow(1024, i);
+  const decimals = i === 0 ? 0 : value >= 100 ? 0 : value >= 10 ? 1 : 2;
+  return `${value.toFixed(decimals)} ${units[i]}`;
+}
+
+export function uploadWithProgress<T = unknown>(
+  url: string,
+  formData: FormData,
+  onProgress?: (progress: UploadProgress) => void
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.withCredentials = true;
+
+    xhr.upload.onprogress = (event) => {
+      if (onProgress && event.lengthComputable) {
+        onProgress({ loaded: event.loaded, total: event.total });
+      }
+    };
+
+    xhr.onload = () => {
+      let data: unknown = null;
+      if (xhr.responseText) {
+        try {
+          data = JSON.parse(xhr.responseText);
+        } catch {
+          data = null;
+        }
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data as T);
+      } else {
+        const message =
+          (data as { error?: string } | null)?.error || `Upload failed (${xhr.status})`;
+        reject(new Error(message));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("Network error during upload"));
+    xhr.onabort = () => reject(new Error("Upload cancelled"));
+
+    xhr.send(formData);
+  });
+}
+
 export const api = {
   get: <T = unknown>(url: string, options?: FetchOptions) =>
     apiFetch<T>(url, { method: "GET", ...options }),

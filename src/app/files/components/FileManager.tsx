@@ -31,6 +31,8 @@ import {
 import JSZip from "jszip";
 import NextImage from "next/image";
 import { SkeletonTable } from "@/components/Skeleton";
+import UploadProgressBar from "@/components/UploadProgressBar";
+import { uploadWithProgress, type UploadProgress } from "@/lib/fetch-client";
 import { toast } from "sonner";
 
 const softShadow = { boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.03)" } as const;
@@ -234,12 +236,18 @@ function AddFileDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onSubmit: (file: File, academicDocumentId?: string) => Promise<void>;
+  onSubmit: (
+    file: File,
+    academicDocumentId?: string,
+    onProgress?: (progress: UploadProgress) => void
+  ) => Promise<void>;
   academicDocs: { id: string; name: string }[];
 }) {
   const [loading, setLoading] = useState(false);
   const [academicDocumentId, setAcademicDocumentId] = useState("");
   const [error, setError] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -259,13 +267,16 @@ function AddFileDialog({
     if (!file) return;
     setLoading(true);
     setError("");
+    setFileName(file.name);
+    setProgress({ loaded: 0, total: file.size });
     try {
-      await onSubmit(file, academicDocumentId || undefined);
+      await onSubmit(file, academicDocumentId || undefined, setProgress);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setLoading(false);
+      setProgress(null);
       e.target.value = "";
     }
   };
@@ -324,8 +335,9 @@ function AddFileDialog({
           )}
           <div className="text-center">
             {loading ? (
-              <div className="flex flex-col items-center gap-2">
-                <Loader2 size={32} className="animate-spin text-indigo-600" />
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 size={28} className="animate-spin text-indigo-600" />
+                <UploadProgressBar fileName={fileName} progress={progress} />
                 <p className="text-sm text-slate-500">Uploading file&hellip;</p>
               </div>
             ) : (
@@ -371,7 +383,12 @@ function ScanDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onSubmit: (blob: Blob, filename: string, academicDocumentId?: string) => Promise<void>;
+  onSubmit: (
+    blob: Blob,
+    filename: string,
+    academicDocumentId?: string,
+    onProgress?: (progress: UploadProgress) => void
+  ) => Promise<void>;
   folderName: string;
   academicDocs: { id: string; name: string }[];
 }) {
@@ -394,6 +411,7 @@ function ScanDialog({
   );
   const [scannerError, setScannerError] = useState<string | null>(null);
   const [academicDocumentId, setAcademicDocumentId] = useState("");
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
 
   useEffect(() => {
     if (open && !prevOpenRef.current) {
@@ -504,16 +522,19 @@ function ScanDialog({
   const handleUploadCapture = async () => {
     if (!capturedImage) return;
     setIsUploading(true);
+    setUploadProgress({ loaded: 0, total: 0 });
     try {
       const blob = await (await fetch(capturedImage)).blob();
       const filename = `scan_${Date.now()}.jpg`;
-      await onSubmit(blob, filename, academicDocumentId || undefined);
+      setUploadProgress({ loaded: 0, total: blob.size });
+      await onSubmit(blob, filename, academicDocumentId || undefined, setUploadProgress);
       toast.success("Document scanned successfully");
       onClose();
     } catch {
       toast.error("Failed to upload scanned document");
     } finally {
       setIsUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -680,6 +701,12 @@ function ScanDialog({
                 )}
                 <canvas ref={canvasRef} className="hidden" />
               </div>
+
+              {isUploading && uploadProgress && (
+                <div className="mt-4 rounded-lg bg-white/5 p-3">
+                  <UploadProgressBar progress={uploadProgress} />
+                </div>
+              )}
 
               <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
                 <div className="flex items-center gap-2">
@@ -1029,20 +1056,21 @@ export default function FileManager() {
     }
   };
 
-  const handleAddFile = async (file: File, academicDocumentId?: string) => {
+  const handleAddFile = async (
+    file: File,
+    academicDocumentId?: string,
+    onProgress?: (progress: UploadProgress) => void
+  ) => {
     if (!selectedFolder) return;
     const formData = new FormData();
     formData.append("file", file);
     if (academicDocumentId) formData.append("academicDocumentId", academicDocumentId);
-    const res = await fetch(`/api/files/upload?folderId=${selectedFolder.id}`, {
-      method: "POST",
-      body: formData,
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => null);
-      throw new Error(body?.error || "Upload failed");
-    }
-    const newFile = normalizeFile(await res.json());
+    const data = await uploadWithProgress(
+      `/api/files/upload?folderId=${selectedFolder.id}`,
+      formData,
+      onProgress
+    );
+    const newFile = normalizeFile(data);
     setFiles((prev) => [newFile, ...(prev ?? [])]);
     setFolders((prev) =>
       (prev ?? []).map((f) =>
@@ -1052,20 +1080,22 @@ export default function FileManager() {
     toast.success("File uploaded");
   };
 
-  const handleScanSubmit = async (blob: Blob, filename: string, academicDocumentId?: string) => {
+  const handleScanSubmit = async (
+    blob: Blob,
+    filename: string,
+    academicDocumentId?: string,
+    onProgress?: (progress: UploadProgress) => void
+  ) => {
     if (!selectedFolder) return;
     const formData = new FormData();
     formData.append("file", blob, filename);
     if (academicDocumentId) formData.append("academicDocumentId", academicDocumentId);
-    const res = await fetch(`/api/files/upload?folderId=${selectedFolder.id}`, {
-      method: "POST",
-      body: formData,
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => null);
-      throw new Error(body?.error || "Upload failed");
-    }
-    const newFile = normalizeFile(await res.json());
+    const data = await uploadWithProgress(
+      `/api/files/upload?folderId=${selectedFolder.id}`,
+      formData,
+      onProgress
+    );
+    const newFile = normalizeFile(data);
     setFiles((prev) => [newFile, ...(prev ?? [])]);
     setFolders((prev) =>
       (prev ?? []).map((f) =>
