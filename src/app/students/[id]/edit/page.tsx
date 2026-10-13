@@ -25,10 +25,10 @@ export default function EditStudentPage() {
       })
       .catch(() => {
         toast.error("Failed to load student");
-        router.push("/students");
+        window.location.replace("/students");
       })
       .finally(() => setLoading(false));
-  }, [studentId, router]);
+  }, [studentId]);
 
   if (loading) {
     return (

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import StudentSidebar from "@/components/StudentSidebar";
 import StudentTopbar from "@/components/StudentTopbar";
 import { Loader2 } from "lucide-react";
@@ -27,34 +26,35 @@ export default function StudentPortalLayout({ children }: { children: React.Reac
   const [collapsed, setCollapsed] = useState(false);
   const [student, setStudent] = useState<PortalStudent | null>(null);
   const [ready, setReady] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
 
-    fetch("/api/student-portal/me", { credentials: "include", cache: "no-store" })
-      .then((r) => {
+    const load = async () => {
+      try {
+        const r = await fetch("/api/student-portal/me", {
+          credentials: "include",
+          cache: "no-store",
+        });
         if (!r.ok) {
-          router.replace("/login");
-          return null;
+          window.location.replace("/login");
+          return;
         }
-        return r.json();
-      })
-      .then((s) => {
+        const s = await r.json();
         if (cancelled) return;
-        if (s) {
-          setStudent(s);
-          setReady(true);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) router.replace("/login");
-      });
+        setStudent(s);
+        setReady(true);
+      } catch {
+        if (!cancelled) window.location.replace("/login");
+      }
+    };
+
+    load();
 
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
   if (!ready) {
     return (

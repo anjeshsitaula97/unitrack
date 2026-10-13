@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import AppLayout from "./AppLayout";
 import { getRoleHome, isDashboardRoute } from "@/lib/role-home";
 import { Loader2 } from "lucide-react";
@@ -56,7 +56,6 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
   const [role, setRole] = useState<string>(cached?.role || "");
   const [user, setUser] = useState<AppUser | null>(cached?.user ?? null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -67,7 +66,7 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
       setLoading(false);
       cached = state;
       if (!state) {
-        router.replace("/login");
+        window.location.replace("/login");
         return;
       }
       setUser(state.user);
@@ -75,7 +74,7 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
       if (isDashboardRoute(pathname)) {
         const home = getRoleHome(state.user?.role);
         if (home !== pathname) {
-          router.replace(home);
+          window.location.replace(home);
         }
       }
     };
@@ -88,7 +87,7 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
         .catch(() => {
           if (!cancelled) {
             setLoading(false);
-            router.replace("/login");
+            window.location.replace("/login");
           }
         });
     }
@@ -96,7 +95,7 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
     return () => {
       cancelled = true;
     };
-  }, [pathname, router]);
+  }, [pathname]);
 
   if (loading) {
     return (

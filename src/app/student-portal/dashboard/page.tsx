@@ -64,22 +64,31 @@ export default function StudentDashboard() {
   const [loadingTimeline, setLoadingTimeline] = useState(false);
 
   useEffect(() => {
-    fetch("/api/student-portal/me")
-      .then((r) => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const r = await fetch("/api/student-portal/me", { cache: "no-store" });
         if (!r.ok) {
-          router.push("/login");
-          return null;
+          window.location.replace("/login");
+          return;
         }
-        return r.json();
-      })
-      .then((s) => {
-        if (s) {
-          setStudent(s);
-          setLoading(false);
-        }
-      })
-      .catch(() => router.push("/login"));
-  }, [router]);
+        const s = await r.json();
+        if (cancelled) return;
+        setStudent(s);
+      } catch {
+        if (!cancelled) window.location.replace("/login");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const interestedCountry = student?.interestedCountry;
   const [prevCountry, setPrevCountry] = useState(interestedCountry);
