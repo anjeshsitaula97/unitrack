@@ -22,6 +22,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { COUNTRIES } from "@/lib/data/countries";
 import { safeParseArray } from "@/lib/json";
+import { annualTuition } from "@/lib/tuition";
 
 interface SelectOption {
   id: number;
@@ -87,6 +88,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
     startDate: "",
     intake: "",
     tuitionFee: "",
+    tuitionFeePeriod: "Year",
     applicationFee: "",
     currency: "",
     applicationFeeCurrency: "",
@@ -106,6 +108,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
     englishWritingScore: "",
     englishListeningScore: "",
     englishSpeakingScore: "",
+    englishTestStage: "Before Application",
     quickFilters: [] as string[],
     requirements: [] as string[],
     intakesData: [] as { name: string; startDate: string; openDate: string; deadline: string }[],
@@ -173,6 +176,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
             duration: data.duration?.toString() || "",
             startDate: data.startDate ? new Date(data.startDate).toISOString().split("T")[0] : "",
             tuitionFee: data.tuitionFee || "",
+            tuitionFeePeriod: data.tuitionFeePeriod || "Year",
             applicationFee: data.applicationFee || "",
             currency: data.currency || "",
             applicationFeeCurrency: data.applicationFeeCurrency || "",
@@ -195,6 +199,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
             englishWritingScore: data.englishWritingScore || "",
             englishListeningScore: data.englishListeningScore || "",
             englishSpeakingScore: data.englishSpeakingScore || "",
+            englishTestStage: data.englishTestStage || "Before Application",
             prerequisites: safeParseArray(data.prerequisites),
             quickFilters: safeParseArray(data.quickFilters),
             requirements: safeParseArray(data.requirements),
@@ -371,6 +376,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 startDate: "",
                 intake: "",
                 tuitionFee: "",
+                tuitionFeePeriod: "Year",
                 applicationFee: "",
                 currency: "",
                 applicationFeeCurrency: "",
@@ -390,6 +396,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 englishWritingScore: "",
                 englishListeningScore: "",
                 englishSpeakingScore: "",
+                englishTestStage: "Before Application",
                 quickFilters: [],
                 requirements: [],
                 intakesData: [],
@@ -801,9 +808,28 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                   onChange={(e) => update("tuitionFee", e.target.value)}
                   placeholder="e.g. 15,000"
                   aria-label="Tuition fee amount"
-                  className="flex-1 px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className="flex-1 min-w-[100px] px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 />
+                <div className="w-36">
+                  <select
+                    value={form.tuitionFeePeriod}
+                    onChange={(e) => update("tuitionFeePeriod", e.target.value)}
+                    aria-label="Tuition fee period"
+                    className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
+                  >
+                    <option value="Year">Per Year</option>
+                    <option value="Semester">Per Semester</option>
+                  </select>
+                </div>
               </div>
+              {form.tuitionFeePeriod === "Semester" &&
+                annualTuition(form.tuitionFee, form.tuitionFeePeriod) !== null && (
+                  <p className="text-[11px] text-slate-400 mt-1.5">
+                    Annualised: {form.currency || "—"}{" "}
+                    {annualTuition(form.tuitionFee, form.tuitionFeePeriod)?.toLocaleString()} per
+                    year (2 semesters)
+                  </p>
+                )}
             </div>
             <div>
               <label
@@ -1285,6 +1311,29 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 aria-label="GPA required"
                 className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300"
               />
+            </div>
+            <div className="md:col-span-2">
+              <label
+                htmlFor="english-test-stage"
+                className="block text-xs font-semibold text-slate-600 mb-1.5"
+              >
+                English Proficiency Submission
+              </label>
+              <select
+                id="english-test-stage"
+                value={form.englishTestStage}
+                onChange={(e) => update("englishTestStage", e.target.value)}
+                aria-label="English proficiency submission stage"
+                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
+              >
+                <option value="Before Application">Before Application</option>
+                <option value="After Application">After Application (before visa lodgement)</option>
+              </select>
+              <p className="text-[11px] text-slate-400 mt-1">
+                {form.englishTestStage === "After Application"
+                  ? "Students without an English score stay eligible — the score must be provided before visa lodgement."
+                  : "Students must submit a qualifying English score before the application is accepted."}
+              </p>
             </div>
             <div className="md:col-span-2 mt-4">
               <div className="flex items-center justify-between mb-4">

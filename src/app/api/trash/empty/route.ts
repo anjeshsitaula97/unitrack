@@ -13,7 +13,7 @@ export async function POST() {
     if (!["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Forbidden", 403);
 
-    const purged = await purgeAllTrash();
+    const { purged, failed } = await purgeAllTrash();
 
     await logActivity({
       actorName: await getActorName(session?.id),
@@ -22,7 +22,7 @@ export async function POST() {
       target: "Trash",
     });
 
-    return NextResponse.json({ success: true, purged });
+    return NextResponse.json({ success: failed === 0, purged, failed });
   } catch (error) {
     logError("Empty trash error:", error);
     return apiError("Failed to empty trash");

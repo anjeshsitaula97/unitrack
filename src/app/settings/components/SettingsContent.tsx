@@ -56,9 +56,11 @@ import {
   type ApplicationStatus,
 } from "@/lib/application-statuses";
 import { PERMISSION_CATALOG, resolvePermissions } from "@/lib/permissions";
+import CompanyProfileSettings from "./CompanyProfileSettings";
 
 type SettingsTab =
   | "profile"
+  | "company"
   | "roles"
   | "permissions"
   | "localization"
@@ -70,6 +72,19 @@ type SettingsTab =
   | "academics"
   | "modules"
   | "statuses";
+
+function parsePermissionList(value: unknown): string[] {
+  if (Array.isArray(value)) return value as string[];
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
 
 interface EmailSetting {
   id: string;
@@ -319,7 +334,7 @@ function SettingsContentInternal() {
             ...role,
             id: Number(role.id),
             userCount: role.userCount || 0,
-            permissions: JSON.parse(role.permissions || "[]"),
+            permissions: parsePermissionList(role.permissions),
           }));
           setRoles(formattedRoles);
           const perms: Record<string, string[]> = {};
@@ -813,7 +828,7 @@ function SettingsContentInternal() {
           ...data,
           id: Number(data.id),
           userCount: 0,
-          permissions: JSON.parse(data.permissions || "[]"),
+          permissions: parsePermissionList(data.permissions),
         };
         setRoles([...roles, newRoleData]);
         setRolePermissions({ ...rolePermissions, [String(data.id)]: [] });
@@ -865,7 +880,7 @@ function SettingsContentInternal() {
           ...data,
           id: Number(data.id),
           userCount: data.userCount || 0,
-          permissions: JSON.parse(data.permissions || "[]"),
+          permissions: parsePermissionList(data.permissions),
         };
         setRoles(roles.map((r) => (r.id === editingRole.id ? updatedRole : r)));
         setEditingRole(null);
@@ -1209,6 +1224,7 @@ function SettingsContentInternal() {
             const groups: Record<string, { id: string; label: string; icon: React.ReactNode; desc: string }[]> = {
               "Account & Access": [
                 { id: "profile", label: "Profile", icon: <User size={26} />, desc: "Edit your name, email and contact details" },
+                { id: "company", label: "Company Profile", icon: <Building2 size={26} />, desc: "Branding, logo and contact details" },
                 { id: "roles", label: "Roles", icon: <Shield size={26} />, desc: "Create and manage admin & staff roles" },
                 { id: "permissions", label: "Role Permissions", icon: <ShieldCheck size={26} />, desc: "Granular capability controls per role" },
                 { id: "email", label: "Email Settings", icon: <Mail size={26} />, desc: "SMTP, sender identity and template" },
@@ -1266,6 +1282,7 @@ function SettingsContentInternal() {
           
           {/* Content Sections - Full Width */}
           <div className="space-y-6 max-w-5xl">
+          {activeTab === "company" && <CompanyProfileSettings />}
           {activeTab === "localization" && (
             <div className="space-y-6 max-w-2xl animate-fade-in">
               <div className="flex items-center gap-3">

@@ -68,6 +68,7 @@ interface AppUser {
   subscriptionPackage?: string | null;
   subscriptionExpiry?: string | null;
   isFirstLogin?: boolean | null;
+  consultancy?: { id: number; code: string; name: string; logoUrl: string | null } | null;
 }
 
 interface DashboardStats {
@@ -108,6 +109,12 @@ const navSections: NavSection[] = [
         label: "Dashboard",
         icon: <LayoutDashboard size={18} />,
         href: "/dashboard",
+      },
+      {
+        id: "nav-console",
+        label: "SA Console",
+        icon: <ShieldCheck size={18} />,
+        href: "/om",
       },
     ],
   },
@@ -256,6 +263,12 @@ const navSections: NavSection[] = [
     items: [
       { id: "nav-staff", label: "User Access", icon: <ShieldCheck size={18} />, href: "/access" },
       { id: "nav-apikeys", label: "API Keys", icon: <Key size={18} />, href: "/api-keys" },
+      {
+        id: "nav-consultancies",
+        label: "Consultancies",
+        icon: <Building2 size={18} />,
+        href: "/consultancies",
+      },
       {
         id: "nav-backups",
         label: "Database Backups",
@@ -462,12 +475,15 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
     enabledRoutes.add("/dashboard");
 
     const dashboardHref = getRoleHome(user?.role);
+    const isSuperAdmin = (user?.role || "").trim().toLowerCase() === "super admin";
 
     const sectionsWithModules = navSections
       .map((section) => ({
         ...section,
         items: section.items
           .filter((item) => {
+            if (item.id === "nav-consultancies" && !isSuperAdmin) return false;
+            if (item.id === "nav-console" && !isSuperAdmin) return false;
             const matchingModule = MODULES.find((m) => m.routes.includes(item.href));
             if (matchingModule && !enabledModuleIds.includes(matchingModule.id)) return false;
             if (!matchingModule) return true;
@@ -505,10 +521,10 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
         className={`flex items-center h-14 border-b border-slate-100 px-3 ${collapsed ? "justify-center" : "justify-between"}`}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <AppLogo size={28} />
+          <AppLogo size={28} src={user?.consultancy?.logoUrl || undefined} />
           {!collapsed && (
             <span className="font-bold text-slate-800 text-base tracking-tight truncate">
-              UniTrack
+              {user?.consultancy?.name || "UniTrack"}
             </span>
           )}
         </div>

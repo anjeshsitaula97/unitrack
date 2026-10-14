@@ -33,6 +33,8 @@ import Link from "next/link";
 import { REQUIREMENTS_LIST } from "@/lib/constants";
 import { getLatestRates, convertToNPR, formatNPR } from "@/lib/forex";
 import { safeJson } from "@/lib/fetch-client";
+import { annualTuition, isSemesterPeriod } from "@/lib/tuition";
+import { evaluateCourseEligibility, type EligibilityResult } from "@/lib/eligibility";
 
 const categoryColors: Record<string, string> = {
   "Computer Science": "bg-indigo-50 text-indigo-700",
@@ -83,11 +85,14 @@ interface Course {
   gpaRequired?: string;
   englishOverallScore?: string;
   englishLanguageType?: string;
+  englishTestStage?: string;
+  tuitionFeePeriod?: string;
 }
 
 interface EnrollModalProps {
   course: Course;
   onClose: () => void;
+  defaultStudentId?: string;
 }
 
 interface GuestDetails {
@@ -281,11 +286,11 @@ function GuestCheckModal({
   );
 }
 
-function EnrollModal({ course, onClose }: EnrollModalProps) {
+function EnrollModal({ course, onClose, defaultStudentId }: EnrollModalProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [students, setStudents] = useState<StudentSummary[] | undefined>(undefined);
-  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [selectedStudentId, setSelectedStudentId] = useState(defaultStudentId || "");
   const [selectedStudentProfile, setSelectedStudentProfile] = useState<StudentProfile | null>(null);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [done, setDone] = useState(false);
@@ -310,6 +315,25 @@ function EnrollModal({ course, onClose }: EnrollModalProps) {
     fetchStudents();
   }, []);
 
+  // Hydrate the student the results were filtered by (pre-selected in the list).
+  useEffect(() => {
+    if (!defaultStudentId) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/students/${defaultStudentId}`);
+        if (res.ok) {
+          const profile = (await res.json()) as StudentProfile & {
+            name?: string;
+            email?: string;
+          };
+          setSelectedStudentProfile(profile);
+          setName(profile.name || "");
+          setEmail(profile.email || "");
+        }
+      } catch {}
+    })();
+  }, [defaultStudentId]);
+
   const handleStudentSelect = async (studentId: string) => {
     setSelectedStudentId(studentId);
     setSelectedStudentProfile(null);
@@ -318,7 +342,7 @@ function EnrollModal({ course, onClose }: EnrollModalProps) {
       setEmail("");
       return;
     }
-    const student = (students ?? []).find((s) => s.id === studentId);
+    const student = (students ?? []).find((s) => String(s.id) === String(studentId));
     if (student) {
       setName(student.name);
       setEmail(student.email || "");
@@ -335,101 +359,24 @@ function EnrollModal({ course, onClose }: EnrollModalProps) {
       s.email?.toLowerCase().includes(searchStudent.toLowerCase())
   );
 
-  const checkResult = useMemo(() => {
+  const checkResult: EligibilityResult | null = useMemo(() => {
     const profile = selectedStudentProfile;
     if (!profile) return null;
-
-    const studentEdu =
-      typeof profile.education === "string"
-        ? (() => {
-            try {
-              return JSON.parse(profile.education) as EducationEntry[];
-            } catch {
-              return [];
-            }
-          })()
-        : profile.education || [];
-    const hasPlus2 = studentEdu.some(
-      (e) =>
-        e.qualification?.toLowerCase().includes("+2") ||
-        e.qualification?.toLowerCase().includes("grade xii")
+    return evaluateCourseEligibility(
+      {
+        level: course.level,
+        prerequisites: course.prerequisites,
+        gpaRequired: course.gpaRequired,
+        englishOverallScore: course.englishOverallScore,
+        englishLanguageType: course.englishLanguageType,
+        englishTestStage: course.englishTestStage,
+      },
+      {
+        education: profile.education,
+        testType: profile.testType,
+        overallScore: profile.overallScore,
+      }
     );
-    const hasBachelor = studentEdu.some((e) => e.qualification?.toLowerCase().includes("bachelor"));
-
-    const checks: { label: string; pass: boolean; detail?: string }[] = [];
-
-    // 1. Prerequisites (subjects)
-    if (course.prerequisites.length > 0) {
-      checks.push({
-        label: `Prerequisites: ${course.prerequisites.join(", ")}`,
-        pass: true,
-        detail: "Info only — verify manually",
-      });
-    }
-
-    // 2. Level check
-    if (course.level === "Undergraduate") {
-      checks.push({
-        label: "Undergraduate level",
-        pass: hasPlus2,
-        detail: hasPlus2 ? "+2 completed" : "+2 required",
-      });
-    } else if (course.level === "Postgraduate") {
-      checks.push({
-        label: "Postgraduate level",
-        pass: hasBachelor,
-        detail: hasBachelor ? "Bachelor completed" : "Bachelor required",
-      });
-    }
-
-    // 3. GPA check
-    if (course.gpaRequired) {
-      const reqGpa = parseFloat(course.gpaRequired);
-      if (!isNaN(reqGpa)) {
-        const relevantEdu =
-          course.level === "Undergraduate"
-            ? studentEdu.find(
-                (e) =>
-                  e.qualification?.toLowerCase().includes("+2") ||
-                  e.qualification?.toLowerCase().includes("grade xii")
-              )
-            : studentEdu.find((e) => e.qualification?.toLowerCase().includes("bachelor"));
-        const studentGpa = parseFloat(relevantEdu?.score || "0");
-        const pass = !isNaN(studentGpa) && studentGpa >= reqGpa;
-        checks.push({
-          label: `Min GPA: ${course.gpaRequired}`,
-          pass,
-          detail: pass
-            ? `Student GPA: ${studentGpa}`
-            : `Student GPA: ${isNaN(studentGpa) ? "N/A" : studentGpa}`,
-        });
-      }
-    }
-
-    // 4. English proficiency
-    if (course.englishOverallScore) {
-      const reqScore = parseFloat(course.englishOverallScore);
-      if (!isNaN(reqScore)) {
-        let pass = false;
-        let detail = `Required: ${course.englishLanguageType || "IELTS"} ${course.englishOverallScore}`;
-        if (profile.testType === course.englishLanguageType) {
-          const studentScore = parseFloat(profile.overallScore || "0");
-          pass = !isNaN(studentScore) && studentScore >= reqScore;
-          detail = pass
-            ? `${profile.testType} ${profile.overallScore} — meets requirement`
-            : `${profile.testType} ${profile.overallScore || "N/A"} — below ${course.englishOverallScore}`;
-        } else {
-          detail = `${profile.testType || "No test"} — expected ${course.englishLanguageType}`;
-        }
-        checks.push({
-          label: `English: ${course.englishLanguageType || "IELTS"} ${course.englishOverallScore}`,
-          pass,
-          detail,
-        });
-      }
-    }
-
-    return { checks, allPass: checks.every((c) => c.pass) };
   }, [selectedStudentProfile, course]);
 
   // Manual-entry can't verify prerequisites, so allow submission
@@ -500,32 +447,79 @@ function EnrollModal({ course, onClose }: EnrollModalProps) {
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md animate-slide-up overflow-hidden border border-white/20">
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg animate-slide-up overflow-hidden border border-white/20">
         <div className="h-2 w-full" style={{ backgroundColor: course.color }} />
-        <div className="p-8">
+        <div className="p-7">
           {!done ? (
             <>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-start justify-between mb-5">
                 <div className="flex items-center gap-4">
                   <div
-                    className="size-12 rounded-2xl flex items-center justify-center text-white text-sm font-black shadow-lg"
+                    className="size-14 rounded-2xl flex items-center justify-center text-white text-base font-black shadow-lg shrink-0"
                     style={{ backgroundColor: course.color }}
                   >
                     {course.initials}
                   </div>
-                  <div>
-                    <h3 className="text-lg font-black text-slate-800 leading-tight">
-                      {course.name}
-                    </h3>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-black text-slate-800 leading-tight truncate">
+                        {course.name}
+                      </h3>
+                      {course.id && (
+                        <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tight shrink-0">
+                          {course.level}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                       {course.university}
                     </p>
                   </div>
                 </div>
-                <button type="button" aria-label="Close" onClick={onClose}>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  onClick={onClose}
+                  className="shrink-0 ml-2"
+                >
                   <X size={20} />
                 </button>
               </div>
+
+              {/* Course / fee summary */}
+              <div className="grid grid-cols-3 gap-2 mb-5">
+                <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-2.5">
+                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+                    Duration
+                  </span>
+                  <span className="text-sm font-black text-slate-700">{course.duration} yrs</span>
+                </div>
+                <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-2.5">
+                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+                    Tuition / yr
+                  </span>
+                  <span className="text-sm font-black text-indigo-600">
+                    {course.currency || "USD"}{" "}
+                    {annualTuition(course.tuitionFee, course.tuitionFeePeriod)?.toLocaleString() ??
+                      course.tuitionFee}
+                  </span>
+                </div>
+                <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-2.5">
+                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+                    App. Fee
+                  </span>
+                  <span className="text-sm font-black text-emerald-600">
+                    {course.applicationFee
+                      ? `${course.currency || "USD"} ${course.applicationFee}`
+                      : "—"}
+                  </span>
+                </div>
+              </div>
+              {isSemesterPeriod(course.tuitionFeePeriod) && (
+                <p className="-mt-3 mb-4 text-[10px] font-bold text-slate-400">
+                  {course.currency || "USD"} {course.tuitionFee} per semester (2 semesters/year)
+                </p>
+              )}
 
               <div className="space-y-4">
                 <div>
@@ -611,42 +605,46 @@ function EnrollModal({ course, onClose }: EnrollModalProps) {
               </div>
 
               {checkResult && (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Prerequisite Check
-                  </p>
-                  <div className="bg-slate-50 rounded-xl p-3 space-y-1.5">
+                <div className="mt-5 rounded-2xl border border-slate-200 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Admission Criteria
+                    </span>
+                    {checkResult.allPass ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black ring-1 ring-emerald-500/20">
+                        <CheckCircle size={11} />
+                        {checkResult.pending > 0 ? "Met — score pending" : "All criteria met"}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-rose-50 text-rose-600 text-[10px] font-black ring-1 ring-rose-500/20">
+                        <XCircle size={11} />
+                        Not eligible
+                      </span>
+                    )}
+                  </div>
+                  <div className="divide-y divide-slate-50">
                     {checkResult.checks.map((c, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        {c.pass ? (
-                          <CheckCircle size={12} className="text-emerald-500 flex-shrink-0" />
+                      <div key={i} className="flex items-start gap-3 px-4 py-2.5">
+                        {c.pending ? (
+                          <Clock size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                        ) : c.pass ? (
+                          <CheckCircle size={14} className="text-emerald-500 shrink-0 mt-0.5" />
                         ) : (
-                          <XCircle size={12} className="text-red-500 flex-shrink-0" />
+                          <XCircle size={14} className="text-rose-500 shrink-0 mt-0.5" />
                         )}
-                        <span
-                          className={`text-[11px] ${c.pass ? "text-slate-600" : "text-red-600 font-medium"}`}
-                        >
-                          {c.label}
-                        </span>
-                        {c.detail && (
-                          <span className="text-[10px] text-slate-400 ml-auto">{c.detail}</span>
-                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-bold text-slate-700">{c.label}</p>
+                          {c.detail && (
+                            <p className="text-[10px] font-medium text-slate-400">{c.detail}</p>
+                          )}
+                        </div>
                       </div>
                     ))}
-                    {checkResult.allPass ? (
-                      <p className="text-[10px] font-bold text-emerald-600 mt-1">
-                        All prerequisites met
-                      </p>
-                    ) : (
-                      <p className="text-[10px] font-bold text-red-500 mt-1">
-                        Not all prerequisites met
-                      </p>
-                    )}
                   </div>
                 </div>
               )}
 
-              <div className="flex gap-3 mt-4">
+              <div className="flex gap-3 mt-5">
                 <button
                   type="button"
                   onClick={onClose}
@@ -661,7 +659,11 @@ function EnrollModal({ course, onClose }: EnrollModalProps) {
                   className="flex-[1.5] px-5 py-3 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all uppercase tracking-widest font-sans disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {submitting && <Loader2 className="animate-spin" size={14} />}
-                  {submitting ? "Submitting..." : "Confirm Enrollment"}
+                  {submitting
+                    ? "Submitting..."
+                    : checkResult !== null && !checkResult.allPass
+                      ? "Not Eligible"
+                      : "Confirm Enrollment"}
                 </button>
               </div>
             </>
@@ -836,57 +838,23 @@ export default function SearchContent() {
               testType: guestDetails.testType,
               overallScore: guestDetails.overallScore,
             }
-          : (students ?? []).find((s) => s.id === selectedStudentId);
+          : (students ?? []).find((s) => String(s.id) === String(selectedStudentId));
 
       if (student) {
-        data = data.filter((c) => {
-          // 1. Level Check
-          const studentEdu =
-            typeof student.education === "string"
-              ? (JSON.parse(student.education) as EducationEntry[])
-              : student.education || [];
-          const hasPlus2 = studentEdu.some(
-            (e) =>
-              e.qualification.toLowerCase().includes("+2") ||
-              e.qualification.toLowerCase().includes("grade xii")
-          );
-          const hasBachelor = studentEdu.some((e) =>
-            e.qualification.toLowerCase().includes("bachelor")
-          );
-
-          if (c.level === "Undergraduate" && !hasPlus2) return false;
-          if (c.level === "Postgraduate" && !hasBachelor) return false;
-
-          // 2. GPA Check
-          if (c.gpaRequired) {
-            const reqGpa = parseFloat(c.gpaRequired);
-            if (!isNaN(reqGpa)) {
-              const relevantEdu =
-                c.level === "Undergraduate"
-                  ? studentEdu.find(
-                      (e) =>
-                        e.qualification.toLowerCase().includes("+2") ||
-                        e.qualification.toLowerCase().includes("grade xii")
-                    )
-                  : studentEdu.find((e) => e.qualification.toLowerCase().includes("bachelor"));
-
-              const studentGpa = parseFloat(relevantEdu?.score || "0");
-              if (isNaN(studentGpa) || studentGpa < reqGpa) return false;
-            }
-          }
-
-          // 3. English Proficiency Check
-          if (c.englishOverallScore) {
-            const reqScore = parseFloat(c.englishOverallScore);
-            if (!isNaN(reqScore)) {
-              if (student.testType !== c.englishLanguageType) return false;
-              const studentScore = parseFloat(student.overallScore || "0");
-              if (isNaN(studentScore) || studentScore < reqScore) return false;
-            }
-          }
-
-          return true;
-        });
+        data = data.filter(
+          (c) =>
+            evaluateCourseEligibility(
+              {
+                level: c.level,
+                prerequisites: c.prerequisites,
+                gpaRequired: c.gpaRequired,
+                englishOverallScore: c.englishOverallScore,
+                englishLanguageType: c.englishLanguageType,
+                englishTestStage: c.englishTestStage,
+              },
+              student
+            ).allPass
+        );
       }
     }
 
@@ -1117,7 +1085,15 @@ export default function SearchContent() {
       </div>
 
       {enrollingCourse && (
-        <EnrollModal course={enrollingCourse} onClose={() => setEnrollingCourse(null)} />
+        <EnrollModal
+          course={enrollingCourse}
+          onClose={() => setEnrollingCourse(null)}
+          defaultStudentId={
+            selectedStudentId !== "all" && selectedStudentId !== "guest"
+              ? selectedStudentId
+              : undefined
+          }
+        />
       )}
 
       {showGuestModal && (
@@ -1278,9 +1254,24 @@ function SearchResultCard({
           <div className="text-right min-w-0 shrink-0 max-w-[50%]">
             <div className="text-[11px] font-bold text-indigo-600 truncate">
               {showInNPR
-                ? formatNPR(convertToNPR(course.tuitionFee || "0", course.currency || "USD", rates))
-                : `${course.currency || "USD"} ${course.tuitionFee?.toLocaleString()}`}
+                ? formatNPR(
+                    convertToNPR(
+                      String(annualTuition(course.tuitionFee, course.tuitionFeePeriod) ?? 0),
+                      course.currency || "USD",
+                      rates
+                    )
+                  )
+                : `${course.currency || "USD"} ${
+                    annualTuition(course.tuitionFee, course.tuitionFeePeriod)?.toLocaleString() ??
+                    "—"
+                  }`}
+              <span className="text-slate-400 font-semibold"> /yr</span>
             </div>
+            {isSemesterPeriod(course.tuitionFeePeriod) && (
+              <div className="text-[9px] font-bold text-slate-400 truncate">
+                {course.currency || "USD"} {course.tuitionFee} /sem
+              </div>
+            )}
             {course.applicationFee && (
               <div className="text-[9px] font-bold text-emerald-600 mt-0.5 truncate">
                 App. Fee:{" "}

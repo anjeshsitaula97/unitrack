@@ -36,20 +36,18 @@ export async function PUT(req: Request) {
     const body = await req.json();
 
     const existing = await db.systemSettings.findFirst();
+    const officeValues = {
+      officeLatitude: body.officeLatitude != null ? parseFloat(body.officeLatitude) : null,
+      officeLongitude: body.officeLongitude != null ? parseFloat(body.officeLongitude) : null,
+      officeRadius: body.officeRadius != null ? parseFloat(body.officeRadius) : 100,
+    };
 
-    await db.systemSettings.upsert({
-      where: { id: 1 },
-      update: {
-        officeLatitude: body.officeLatitude != null ? parseFloat(body.officeLatitude) : null,
-        officeLongitude: body.officeLongitude != null ? parseFloat(body.officeLongitude) : null,
-        officeRadius: body.officeRadius != null ? parseFloat(body.officeRadius) : 100,
-      },
-      create: {
-        officeLatitude: body.officeLatitude != null ? parseFloat(body.officeLatitude) : null,
-        officeLongitude: body.officeLongitude != null ? parseFloat(body.officeLongitude) : null,
-        officeRadius: body.officeRadius != null ? parseFloat(body.officeRadius) : 100,
-      },
-    });
+    // One SystemSettings row per consultancy; never upsert a hardcoded id.
+    if (existing) {
+      await db.systemSettings.update({ where: { id: existing.id }, data: officeValues });
+    } else {
+      await db.systemSettings.create({ data: officeValues });
+    }
 
     await logActivity({
       actorName: await getActorName(session?.id),

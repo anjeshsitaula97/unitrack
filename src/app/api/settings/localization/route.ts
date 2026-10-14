@@ -45,33 +45,23 @@ export async function POST(req: NextRequest) {
     const data = await req.json();
     const existing = await db.systemSettings.findFirst();
     const enabledModules = normalizeEnabledModulesJson(data.enabledModules);
-    const settings = await db.systemSettings.upsert({
-      where: { id: 1 },
-      update: {
-        country: data.country,
-        currencyCode: data.currencyCode,
-        phoneCode: data.phoneCode,
-        language: data.language,
-        enableBranches: data.enableBranches,
-        showBSDate: data.showBSDate ?? false,
-        officeLatitude: data.officeLatitude != null ? parseFloat(data.officeLatitude) : null,
-        officeLongitude: data.officeLongitude != null ? parseFloat(data.officeLongitude) : null,
-        officeRadius: data.officeRadius != null ? parseFloat(data.officeRadius) : 100,
-        enabledModules,
-      },
-      create: {
-        country: data.country,
-        currencyCode: data.currencyCode,
-        phoneCode: data.phoneCode,
-        language: data.language,
-        enableBranches: data.enableBranches || false,
-        showBSDate: data.showBSDate ?? false,
-        officeLatitude: data.officeLatitude != null ? parseFloat(data.officeLatitude) : null,
-        officeLongitude: data.officeLongitude != null ? parseFloat(data.officeLongitude) : null,
-        officeRadius: data.officeRadius != null ? parseFloat(data.officeRadius) : 100,
-        enabledModules,
-      },
-    });
+    const settingsValues = {
+      country: data.country,
+      currencyCode: data.currencyCode,
+      phoneCode: data.phoneCode,
+      language: data.language,
+      enableBranches: data.enableBranches || false,
+      showBSDate: data.showBSDate ?? false,
+      officeLatitude: data.officeLatitude != null ? parseFloat(data.officeLatitude) : null,
+      officeLongitude: data.officeLongitude != null ? parseFloat(data.officeLongitude) : null,
+      officeRadius: data.officeRadius != null ? parseFloat(data.officeRadius) : 100,
+      enabledModules,
+    };
+    // One SystemSettings row per consultancy (the query extension scopes the
+    // findFirst/create), so never upsert against a hardcoded id.
+    const settings = existing
+      ? await db.systemSettings.update({ where: { id: existing.id }, data: settingsValues })
+      : await db.systemSettings.create({ data: settingsValues });
 
     if (session) {
       await db.notification

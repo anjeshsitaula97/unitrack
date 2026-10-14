@@ -5,7 +5,7 @@ import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { z } from "zod";
 import { createNotification } from "@/lib/notifications";
-import { getSession, apiError, checkPermission, invalidateRoleCache } from "@/lib/api-utils";
+import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { validateRoleAssignment } from "@/lib/role-assignment";
 import { logActivity, getActorName } from "@/lib/activity";
 import { logError } from "@/lib/logger";
@@ -13,6 +13,7 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { validateCsrfHeaders } from "@/lib/csrf";
 import { normalizeRecipients } from "@/lib/email-recipients";
 import { generateStrongPassword } from "@/lib/password";
+import { runWithConsultancy } from "@/lib/consultancy";
 
 const createUserSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -28,6 +29,9 @@ const createUserSchema = z.object({
   // Opt-in: when omitted the invite is created without emailing anything.
   sendCredentialsEmail: z.boolean().optional(),
   avatar: z.string().optional(),
+  // Only honoured for a Super Admin; ordinary admins always invite into their
+  // own consultancy.
+  consultancyId: z.number().int().positive().optional(),
 });
 
 const escapeHtml = (value: string) =>
@@ -111,51 +115,69 @@ export async function POST(req: NextRequest) {
     // The invite form's role list comes from the Role table, so validate against
     // it. Previously a hardcoded list was used and any other role silently fell
     // back to "Viewer", handing out the wrong access level without any error.
-const knownRoles = await db.role.findMany({ select: { name: true } });
-      const validRoles = Array.from(
-        new Set([
-          ...knownRoles.map((r) => r.name),
-          "Super Admin",
-          "Admin",
-          "Staff",
-          "B2B Partner",
-          "Student",
-          "Viewer",
-          "Editor",
-        ])
+    const knownRoles = await db.role.findMany({ select: { name: true } });
+    const validRoles = Array.from(
+      new Set([
+        ...knownRoles.map((r) => r.name),
+        "Super Admin",
+        "Admin",
+        "Staff",
+        "B2B Partner",
+        "Student",
+        "Viewer",
+        "Editor",
+      ])
+    );
+    const requestedRole = (data.role || "Viewer").trim();
+    const resolvedRole = validRoles.find((r) => r.toLowerCase() === requestedRole.toLowerCase());
+    if (!resolvedRole) {
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    }
+    const roleError = await validateRoleAssignment(session.role, resolvedRole);
+    if (roleError) {
+      return NextResponse.json({ error: roleError }, { status: 403 });
+    }
+
+    // Resolve which consultancy the invite lands in. A Super Admin may pass an
+    // explicit target (or rely on the currently selected one); everyone else is
+    // always confined to their own consultancy, and any client-supplied value is
+    // ignored so it cannot be used to write across tenants.
+    const isSuperAdmin = (session.role as string) === "Super Admin";
+    const targetConsultancyId = isSuperAdmin
+      ? (data.consultancyId ?? session.consultancyId)
+      : session.consultancyId;
+    if (!targetConsultancyId) {
+      return NextResponse.json(
+        { error: "Select a consultancy before inviting a user." },
+        { status: 400 }
       );
-      const requestedRole = (data.role || "Viewer").trim();
-      const resolvedRole = validRoles.find((r) => r.toLowerCase() === requestedRole.toLowerCase());
-      if (!resolvedRole) {
-        return NextResponse.json({ error: "Invalid role" }, { status: 400 });
-      }
-      const roleError = await validateRoleAssignment(session.role, resolvedRole);
-      if (roleError) {
-        return NextResponse.json({ error: roleError }, { status: 403 });
-      }
+    }
 
-    const newUser = await db.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        password: hashedPassword,
-        role: resolvedRole,
-        status: "Pending",
-        lastLogin: "Never",
-        avatar: data.avatar || data.name.substring(0, 2).toUpperCase(),
-      },
-    });
-
+    const newUser = await runWithConsultancy({ consultancyId: targetConsultancyId }, async () =>
+      db.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          password: hashedPassword,
+          role: resolvedRole,
+          status: "Pending",
+          lastLogin: "Never",
+          avatar: data.avatar || data.name.substring(0, 2).toUpperCase(),
+        },
+      })
+    );
     let apiKeyRaw = null;
     if (data.generateApiKey) {
       const raw = "uk_" + crypto.randomBytes(16).toString("hex");
       const hash = crypto.createHash("sha256").update(raw).digest("hex");
-      await db.apiKey.create({
-        data: {
-          name: `${data.name}'s Auto-key`,
-          tokenHash: hash,
-        },
-      });
+      await runWithConsultancy({ consultancyId: targetConsultancyId }, async () =>
+        db.apiKey.create({
+          data: {
+            name: `${data.name}'s Auto-key`,
+            tokenHash: hash,
+          },
+        })
+      );
       apiKeyRaw = raw;
     }
 

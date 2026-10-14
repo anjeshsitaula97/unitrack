@@ -61,7 +61,12 @@ export async function GET(req: NextRequest) {
       db.student.count({ where: where as Prisma.StudentWhereInput }),
     ]);
 
-    return NextResponse.json(paginatedResponse(students, total, params));
+    // Never expose the portal password hash to the client. The list is rendered
+    // in tables and detail modals that only need the plaintext application-email
+    // password, so the bcrypt hash is stripped here.
+    const safeStudents = students.map(({ studentPassword: _studentPassword, ...rest }) => rest);
+
+    return NextResponse.json(paginatedResponse(safeStudents, total, params));
   } catch (error) {
     logError("Fetch students", error);
     return apiError("Failed to fetch students");
@@ -121,6 +126,7 @@ export async function POST(req: NextRequest) {
         email: data.email,
         admissionEmail: data.admissionEmail,
         studentPassword: hashedPassword,
+        applicationEmailPassword: data.applicationEmailPassword || null,
         phone: data.phone,
         whatsappNumber: data.whatsappNumber,
         gender: data.gender,

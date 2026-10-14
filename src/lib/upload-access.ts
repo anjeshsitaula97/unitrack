@@ -41,13 +41,14 @@ async function isSharedAsset(relativePath: string): Promise<boolean> {
   // ("/uploads/<name>") while the route resolves a bare relative path. Comparing
   // for equality never matched, which denied every shared logo and avatar.
   const match = { endsWith: relativePath };
-  const [university, branch, avatar, resource] = await Promise.all([
+  const [university, branch, avatar, resource, consultancy] = await Promise.all([
     db.university.findFirst({ where: { logo: match }, select: { id: true } }),
     db.branch.findFirst({ where: { logo: match }, select: { id: true } }),
     db.user.findFirst({ where: { avatar: match }, select: { id: true } }),
     db.learningResource.findFirst({ where: { url: match }, select: { id: true } }),
+    db.consultancy.findFirst({ where: { logoUrl: match }, select: { id: true } }),
   ]);
-  return Boolean(university || branch || avatar || resource);
+  return Boolean(university || branch || avatar || resource || consultancy);
 }
 
 export async function authorizeUploadAccess(

@@ -12,6 +12,7 @@ import {
   checkRoutePermission,
 } from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { isSuperAdminRole } from "@/lib/permission-catalog";
 
 export async function GET(req: NextRequest) {
   try {
@@ -92,6 +93,14 @@ export async function GET(req: NextRequest) {
       };
     });
 
+    // The application link is a platform-only field; never expose it in the
+    // list to consultancy users.
+    if (!isSuperAdminRole(session?.role)) {
+      transformed.forEach((u) => {
+        delete (u as { applicationLink?: string | null }).applicationLink;
+      });
+    }
+
     return NextResponse.json(paginatedResponse(transformed, total, params));
   } catch (error) {
     logError("Fetch universities", error);
@@ -152,6 +161,7 @@ export async function POST(req: NextRequest) {
         ranking: data.ranking ? parseInt(data.ranking.toString()) : null,
         logo: data.logo || null,
         banner: data.banner || null,
+        applicationLink: isSuperAdminRole(session?.role) ? data.applicationLink || null : null,
         images: data.images || (data.imagesList ? JSON.stringify(data.imagesList) : null),
         requirements: data.requirements
           ? typeof data.requirements === "string"

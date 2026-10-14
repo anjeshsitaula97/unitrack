@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyAuth } from "./session";
 import type { SessionPayload } from "./session";
+import { isSuperAdminRole } from "./permission-catalog";
 
 export type { SessionPayload } from "./session";
 
@@ -25,7 +26,13 @@ export function apiSuccess<T>(data: T, status: number = 200) {
 const ROLE_CACHE_TTL_MS = 30_000;
 const roleCache = new Map<
   number,
-  { role: string; name: string; permissions?: string[]; expires: number }
+  {
+    role: string;
+    name: string;
+    permissions?: string[];
+    consultancyId: number | null;
+    expires: number;
+  }
 >();
 
 /**
@@ -50,18 +57,26 @@ export function invalidateRoleCache(userId?: number): void {
   else roleCache.clear();
 }
 
-async function getCurrentAccountRole(
-  id: number
-): Promise<{ role: string; name: string; permissions?: string[] } | null> {
+async function getCurrentAccountRole(id: number): Promise<{
+  role: string;
+  name: string;
+  permissions?: string[];
+  consultancyId: number | null;
+} | null> {
   const cached = roleCache.get(id);
   if (cached && cached.expires > Date.now()) {
-    return { role: cached.role, name: cached.name, permissions: cached.permissions };
+    return {
+      role: cached.role,
+      name: cached.name,
+      permissions: cached.permissions,
+      consultancyId: cached.consultancyId,
+    };
   }
 
-  const { db } = await import("./db");
-  const user = await db.user.findUnique({
+  const { baseDb } = await import("./base-db");
+  const user = await baseDb.user.findUnique({
     where: { id },
-    select: { role: true, name: true, status: true },
+    select: { role: true, name: true, status: true, consultancyId: true },
   });
 
   if (!user) {
@@ -73,12 +88,14 @@ async function getCurrentAccountRole(
     return null;
   }
 
+  const consultancyId = user.consultancyId ?? null;
+
   // Role grants are optional configuration; never let a lookup failure here
   // revoke access, because the static catalog is a safe fallback.
   let stored: string[] | undefined;
   try {
-    const roleRow = await db.role.findUnique({
-      where: { name: user.role },
+    const roleRow = await baseDb.role.findFirst({
+      where: { name: user.role, consultancyId },
       select: { permissions: true },
     });
     stored = parseStoredPermissions(roleRow?.permissions);
@@ -86,9 +103,20 @@ async function getCurrentAccountRole(
     stored = undefined;
   }
 
-  const entry = { role: user.role, name: user.name, permissions: stored, expires: Date.now() + ROLE_CACHE_TTL_MS };
+  const entry = {
+    role: user.role,
+    name: user.name,
+    permissions: stored,
+    consultancyId,
+    expires: Date.now() + ROLE_CACHE_TTL_MS,
+  };
   roleCache.set(id, entry);
-  return { role: entry.role, name: entry.name, permissions: entry.permissions };
+  return {
+    role: entry.role,
+    name: entry.name,
+    permissions: entry.permissions,
+    consultancyId: entry.consultancyId,
+  };
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
@@ -104,10 +132,25 @@ export async function getSession(): Promise<SessionPayload | null> {
     const account = await getCurrentAccountRole(session.id);
     if (!account) return null;
 
+    // A Super Admin owns the platform and may switch which consultancy they are
+    // viewing. The choice lives in a non-HttpOnly cookie; absent or "all" means
+    // platform scope (every consultancy).
+    let consultancyId = account.consultancyId;
+    if (isSuperAdminRole(account.role)) {
+      const selected = cookieStore.get("active_consultancy")?.value;
+      if (selected && selected !== "all") {
+        const parsed = Number(selected);
+        if (Number.isInteger(parsed) && parsed > 0) consultancyId = parsed;
+      } else {
+        consultancyId = null;
+      }
+    }
+
     return {
       ...session,
       role: account.role,
       name: session.name || account.name,
+      consultancyId,
       // Left undefined when the role has no stored grant list, which makes
       // `hasPermission` use the catalog defaults.
       permissions: account.permissions,
@@ -127,14 +170,14 @@ export async function getStudentSession(): Promise<SessionPayload | null> {
 
     // Same staleness problem as staff: drop the session if the student record
     // has since been removed.
-    const { db } = await import("./db");
-    const student = await db.student.findUnique({
+    const { baseDb } = await import("./base-db");
+    const student = await baseDb.student.findUnique({
       where: { id: session.id },
-      select: { id: true },
+      select: { id: true, consultancyId: true },
     });
     if (!student) return null;
 
-    return session;
+    return { ...session, consultancyId: student.consultancyId ?? null };
   } catch {
     return null;
   }

@@ -7,6 +7,7 @@ import { softDeleteUniversity } from "@/lib/trash";
 import { getSession, apiError, checkRoutePermission, checkPermission } from "@/lib/api-utils";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { isSuperAdminRole } from "@/lib/permission-catalog";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -68,6 +69,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       }
       groupedCourses[faculty].push(course);
     });
+
+    // The application link is platform-only: strip it for consultancy users so
+    // it never reaches their browser.
+    if (!isSuperAdminRole(session.role)) {
+      delete (transformed as { applicationLink?: string | null }).applicationLink;
+    }
 
     return NextResponse.json({
       ...transformed,
@@ -163,6 +170,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         country: data.country,
         city: data.city || "",
         website: data.websiteUrl || data.website || null,
+        // Platform-only field: consultancy users may save the rest of the
+        // record without clearing a Super Admin's application link.
+        applicationLink: isSuperAdminRole(session.role) ? data.applicationLink || null : undefined,
         founded: parseSafeInt(data.establishedYear || data.foundedYear),
         accreditation: data.accreditationBody
           ? typeof data.accreditationBody === "string"
@@ -212,6 +222,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       target: updated.name,
       changes,
     });
+
+    // Keep the platform-only field out of the response for consultancy users.
+    if (!isSuperAdminRole(session.role)) {
+      delete (updated as { applicationLink?: string | null }).applicationLink;
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

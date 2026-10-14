@@ -15,6 +15,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { safeJson } from "@/lib/fetch-client";
 import { clearAuthCache } from "./AppLayoutWrapper";
 import { deactivateSession } from "@/lib/client-session";
+import ConsultancySwitcher from "./ConsultancySwitcher";
 
 interface AppUser {
   id: number;
@@ -25,6 +26,7 @@ interface AppUser {
   subscriptionPackage?: string | null;
   subscriptionExpiry?: string | null;
   isFirstLogin?: boolean | null;
+  consultancy?: { id: number; code: string; name: string; logoUrl: string | null } | null;
 }
 
 interface TopbarProps {
@@ -209,6 +211,8 @@ export default function Topbar({
         <ShieldCheck size={13} />
         {user?.role || role}
       </div>
+
+      <ConsultancySwitcher role={user?.role || role} />
 
       <div className="relative">
         <button

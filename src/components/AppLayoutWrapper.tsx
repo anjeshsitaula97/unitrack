@@ -15,6 +15,7 @@ interface AppUser {
   subscriptionPackage?: string | null;
   subscriptionExpiry?: string | null;
   isFirstLogin?: boolean | null;
+  consultancy?: { id: number; code: string; name: string; logoUrl: string | null } | null;
 }
 
 interface AuthState {
@@ -96,6 +97,28 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
       cancelled = true;
     };
   }, [pathname]);
+
+  // A long-lived tab can hold a stale role (e.g. signed in as a different user
+  // elsewhere, or upgraded to Super Admin). Revalidate whenever the tab becomes
+  // visible again so role-gated UI like the consultancy switcher self-corrects.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      fetchAuthState()
+        .then((state) => {
+          cached = state;
+          if (!state) {
+            window.location.replace("/login");
+            return;
+          }
+          setUser(state.user);
+          setRole(state.role);
+        })
+        .catch(() => {});
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   if (loading) {
     return (

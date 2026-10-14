@@ -16,6 +16,7 @@ interface AppUser {
   subscriptionPackage?: string | null;
   subscriptionExpiry?: string | null;
   isFirstLogin?: boolean | null;
+  consultancy?: { id: number; code: string; name: string; logoUrl: string | null } | null;
 }
 
 interface AppLayoutProps {

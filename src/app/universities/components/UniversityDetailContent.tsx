@@ -10,6 +10,7 @@ import {
   Award,
   BookOpen,
   ExternalLink,
+  FileText,
   Mail,
   Phone,
   Info,
@@ -109,6 +110,7 @@ interface University {
   phone?: string;
   address?: string;
   website?: string;
+  applicationLink?: string;
   founded?: number;
   ranking?: number;
   accreditation?: string | string[];
@@ -501,6 +503,40 @@ function AboutCard({ university }: { university: University }) {
               </div>
             </div>
             <ExternalLink size={14} className="text-slate-300 group-hover:text-indigo-500" />
+          </a>
+        )}
+
+        {university.applicationLink && (
+          <a
+            href={
+              university.applicationLink.startsWith("http")
+                ? university.applicationLink
+                : `https://${university.applicationLink}`
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-amber-50/60 border border-amber-100 hover:border-amber-300 hover:bg-amber-50 transition-all group"
+          >
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="size-10 shrink-0 rounded-xl bg-white border border-amber-200 flex items-center justify-center text-amber-500 shadow-sm">
+                <FileText size={16} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black text-amber-500 uppercase tracking-tight mb-0.5">
+                  Application Link (Super Admin)
+                </p>
+                <p
+                  className="text-xs font-bold text-slate-700 truncate"
+                  title={university.applicationLink}
+                >
+                  {university.applicationLink}
+                </p>
+              </div>
+            </div>
+            <ExternalLink
+              size={14}
+              className="shrink-0 text-amber-300 group-hover:text-amber-500"
+            />
           </a>
         )}
 

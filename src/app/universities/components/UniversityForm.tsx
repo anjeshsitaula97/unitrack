@@ -46,6 +46,7 @@ const INITIAL_FORM = {
   email: "",
   phone: "",
   address: "",
+  applicationLink: "",
   ranking: "",
   foundedYear: "",
   description: "",
@@ -81,6 +82,7 @@ export interface UniversityFormData {
   email: string;
   phone: string;
   address: string;
+  applicationLink: string;
   ranking: string;
   foundedYear: string;
   description: string;
@@ -133,9 +135,13 @@ function pageReducer(
 
 interface UniversityFormProps {
   universityId?: string;
+  isSuperAdmin?: boolean;
 }
 
-export default function UniversityForm({ universityId }: UniversityFormProps) {
+export default function UniversityForm({
+  universityId,
+  isSuperAdmin = false,
+}: UniversityFormProps) {
   const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
   const [accInput, setAccInput] = useState("");
@@ -190,6 +196,7 @@ export default function UniversityForm({ universityId }: UniversityFormProps) {
               email: data.email || "",
               phone: data.phone || "",
               address: data.address || "",
+              applicationLink: data.applicationLink || "",
               ranking: data.ranking?.toString() || "",
               foundedYear: data.founded?.toString() || "",
               description: data.description || "",
@@ -360,7 +367,7 @@ export default function UniversityForm({ universityId }: UniversityFormProps) {
           setAccInput={setAccInput}
         />
 
-        <ContactCard form={form} update={update} />
+        <ContactCard form={form} update={update} isSuperAdmin={isSuperAdmin} />
 
         <MediaCard form={form} update={update} dispatch={dispatch} toast={toast} />
 

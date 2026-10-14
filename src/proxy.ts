@@ -25,6 +25,7 @@ const getJwtSecretKey = () => {
 const PUBLIC_PATHS = [
   "/",
   "/login",
+  "/om/login",
   "/forgot-password",
   "/reset-password",
   "/join-our-network",
@@ -81,7 +82,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isAuthRoute = pathname.startsWith("/login");
+  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/om/login");
 
   const token = request.cookies.get("auth_token")?.value;
   let verified = false;
@@ -103,14 +104,23 @@ export async function proxy(request: NextRequest) {
 
   if (isAuthRoute) {
     if (verified) {
-      return NextResponse.redirect(new URL(getRoleHome(role), request.url));
+      // A signed-in visitor never needs the form. A Super Admin landing on the
+      // console login goes to the console; everyone else to their role home.
+      const isConsoleLogin = pathname.startsWith("/om/login");
+      const isSuperAdmin = (role || "").trim().toLowerCase() === "super admin";
+      const target = isConsoleLogin && isSuperAdmin ? "/om" : getRoleHome(role);
+      return NextResponse.redirect(new URL(target, request.url));
     }
     return NextResponse.next();
   }
 
   if (!verified && !isPublicPath(pathname)) {
-    const url = new URL("/login", request.url);
-    if (pathname !== "/") url.searchParams.set("from", pathname);
+    // The Super Admin console has its own branded login.
+    const loginPath = pathname === "/om" || pathname.startsWith("/om/") ? "/om/login" : "/login";
+    const url = new URL(loginPath, request.url);
+    if (loginPath === "/login" && pathname !== "/") {
+      url.searchParams.set("from", pathname);
+    }
     return NextResponse.redirect(url);
   }
 
@@ -118,7 +128,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?)$).*)",
-  ],
+  matcher: "/((?!_next|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?)$).*)",
 };

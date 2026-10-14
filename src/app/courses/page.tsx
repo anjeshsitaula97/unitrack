@@ -2,6 +2,7 @@ import React, { Suspense } from "react";
 import AppLayoutWrapper from "@/components/AppLayoutWrapper";
 import CoursesContent from "./components/CoursesContent";
 import { db } from "@/lib/db";
+import { getSession } from "@/lib/api-utils";
 import { safeParseArray } from "@/lib/json";
 
 export const metadata = {
@@ -11,7 +12,14 @@ export const metadata = {
 
 async function getCourses() {
   try {
+    // Establish the tenancy scope for this request; without a session the
+    // Prisma extension would fall back to platform scope and list every
+    // consultancy's courses.
+    const session = await getSession();
+    if (!session) return [];
+
     const courses = await db.course.findMany({
+      where: { status: { not: "Deleted" } },
       orderBy: { name: "asc" },
       include: { university: true },
     });

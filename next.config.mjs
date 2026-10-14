@@ -4,6 +4,11 @@ import { imageHosts } from './image-hosts.config.mjs';
 const nextConfig = {
   productionBrowserSourceMaps: false,
   distDir: process.env.DIST_DIR || '.next',
+  // Next 16 blocks cross-origin requests to dev-only resources (e.g. the
+  // /_next/hmr socket) unless the request hostname is listed here. Without
+  // this, opening the app from a LAN IP or 127.0.0.1 loads the HTML but the
+  // client runtime never hydrates, so client forms fall back to native submits.
+  allowedDevOrigins: ['127.0.0.1', '192.168.*.*', '10.*.*.*', '*.local', '**.local'],
   experimental: {
     turbopackFileSystemCacheForDev: false,
   },

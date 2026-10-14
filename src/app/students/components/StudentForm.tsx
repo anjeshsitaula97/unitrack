@@ -100,6 +100,7 @@ interface StudentFormData {
   lastName: string;
   email: string;
   admissionEmail: string;
+  applicationEmailPassword: string;
   studentPassword: string;
   phone: string;
   phonePrefix: string;
@@ -165,6 +166,7 @@ export interface Student {
   phone: string | null;
   status: string;
   admissionEmail?: string;
+  applicationEmailPassword?: string;
   studentPassword?: string;
   dobAd?: string;
   dobBs?: string;
@@ -373,6 +375,7 @@ export default function StudentForm({
     lastName: "",
     email: "",
     admissionEmail: "",
+    applicationEmailPassword: "",
     studentPassword: "",
     phone: "",
     phonePrefix: "+977",
@@ -470,6 +473,7 @@ export default function StudentForm({
         lastName: s.lastName || "",
         email: s.email || "",
         admissionEmail: s.admissionEmail || "",
+        applicationEmailPassword: s.applicationEmailPassword || "",
         studentPassword: storedPassword && !storedPassword.startsWith("$2") ? storedPassword : "",
         phone: phoneMain,
         phonePrefix,
@@ -1171,9 +1175,9 @@ export default function StudentForm({
                       <input
                         id="email-password"
                         type="text"
-                        value={formData.studentPassword}
+                        value={formData.applicationEmailPassword}
                         onChange={(e) =>
-                          setFormData({ ...formData, studentPassword: e.target.value })
+                          setFormData({ ...formData, applicationEmailPassword: e.target.value })
                         }
                         className="w-full px-4 py-2.5 bg-amber-50/30 border border-amber-100 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-amber-500"
                         placeholder="Password for admission email"

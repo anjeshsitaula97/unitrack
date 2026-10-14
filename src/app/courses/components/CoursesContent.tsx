@@ -21,6 +21,7 @@ import {
   User,
   ListChecks,
   Info,
+  XCircle,
   Edit2,
   Trash2,
   LayoutGrid,
@@ -37,6 +38,8 @@ import {
 } from "lucide-react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { toast } from "sonner";
+import { annualTuition, isSemesterPeriod } from "@/lib/tuition";
+import { evaluateCourseEligibility, type EligibilityResult } from "@/lib/eligibility";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { buildXlsx, downloadBlob } from "@/lib/spreadsheet";
@@ -142,6 +145,7 @@ interface Course {
   tuitionFee?: string | null;
   applicationFee?: string | null;
   currency?: string | null;
+  tuitionFeePeriod?: string | null;
   quickFilters?: string[];
   universityLogo?: string | null;
   applicationDeadline?: string | Date | null;
@@ -149,6 +153,7 @@ interface Course {
   country?: string | null;
   englishOverallScore?: string | null;
   englishLanguageType?: string | null;
+  englishTestStage?: string | null;
 }
 
 interface Intake {
@@ -189,6 +194,7 @@ interface EnrollmentModalProps {
   onClose: () => void;
   quickFilters: QuickFilter[];
   students: Student[];
+  defaultStudentId?: string;
 }
 
 function GuestCheckModal({
@@ -327,12 +333,15 @@ function EnrollmentModal({
   onClose,
   quickFilters: _quickFilters,
   students,
+  defaultStudentId,
 }: EnrollmentModalProps) {
   const router = useRouter();
   const [step, setStep] = useState<"details" | "confirm" | "success">("details");
-  const [studentName, setStudentName] = useState("");
-  const [studentEmail, setStudentEmail] = useState("");
-  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const preselectedStudent =
+    students.find((s) => String(s.id) === String(defaultStudentId)) || null;
+  const [studentName, setStudentName] = useState(preselectedStudent?.name || "");
+  const [studentEmail, setStudentEmail] = useState(preselectedStudent?.email || "");
+  const [selectedStudentId, setSelectedStudentId] = useState(defaultStudentId || "");
   const [refNo, setRefNo] = useState("");
 
   const courseIntakes = useMemo<Intake[]>(() => {
@@ -363,6 +372,38 @@ function EnrollmentModal({
   const levelStyle = levelConfig[course.level] || { className: "bg-slate-50 text-slate-600" };
   const facultyStyle = facultyColors[course.faculty] || "bg-slate-50 text-slate-600";
 
+  const semesterFee = isSemesterPeriod(course.tuitionFeePeriod);
+  const yearlyTuition = annualTuition(course.tuitionFee, course.tuitionFeePeriod);
+  const yearlyTuitionLabel = semesterFee
+    ? yearlyTuition !== null
+      ? yearlyTuition.toLocaleString()
+      : course.tuitionFee
+    : course.tuitionFee;
+
+  const selectedStudent = useMemo(
+    () => students.find((s) => String(s.id) === String(selectedStudentId)) || null,
+    [students, selectedStudentId]
+  );
+
+  const eligibility: EligibilityResult | null = useMemo(() => {
+    if (!selectedStudent) return null;
+    return evaluateCourseEligibility(
+      {
+        level: course.level,
+        prerequisites: course.prerequisites,
+        gpaRequired: course.gpaRequired,
+        englishOverallScore: course.englishOverallScore,
+        englishLanguageType: course.englishLanguageType,
+        englishTestStage: course.englishTestStage,
+      },
+      {
+        education: selectedStudent.education,
+        testType: selectedStudent.testType,
+        overallScore: selectedStudent.overallScore,
+      }
+    );
+  }, [selectedStudent, course]);
+
   const handleStudentSelect = (studentId: string) => {
     setSelectedStudentId(studentId);
     if (studentId === "manual") {
@@ -370,16 +411,22 @@ function EnrollmentModal({
       setStudentEmail("");
       return;
     }
-    const student = students.find((s) => s.id === studentId);
+    const student = students.find((s) => String(s.id) === String(studentId));
     if (student) {
       setStudentName(student.name);
       setStudentEmail(student.email || "");
     }
   };
 
+  const criteriaBlocked = eligibility ? !eligibility.allPass : false;
+
   const handleEnroll = () => {
     if (!studentName.trim() || !studentEmail.trim()) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+    if (criteriaBlocked) {
+      toast.error("Student does not meet all admission criteria");
       return;
     }
     setRefNo(`ENR-${Date.now().toString().slice(-8)}`);
@@ -558,8 +605,14 @@ function EnrollmentModal({
                       Tuition Fee
                     </span>
                     <span className="text-lg font-black text-indigo-600">
-                      {course.currency} {course.tuitionFee}
+                      {course.currency} {yearlyTuitionLabel}
+                      <span className="text-xs font-bold text-slate-400"> /yr</span>
                     </span>
+                    {semesterFee && (
+                      <span className="block text-[10px] font-bold text-slate-400 mt-0.5">
+                        {course.currency} {course.tuitionFee} per semester (2 semesters/year)
+                      </span>
+                    )}
                   </div>
                   {course.applicationFee && (
                     <div className="pt-2 border-t border-slate-100">
@@ -680,6 +733,56 @@ function EnrollmentModal({
                 </div>
               </div>
 
+              {eligibility && (
+                <div className="rounded-2xl border border-slate-200 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <ListChecks size={15} className="text-slate-400" />
+                      <span className="text-xs font-black text-slate-700 uppercase tracking-wide">
+                        Admission Criteria
+                      </span>
+                    </div>
+                    {eligibility.allPass ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black ring-1 ring-emerald-500/20">
+                        <CheckCircle size={11} />
+                        {eligibility.pending > 0 ? "Met — score pending" : "All criteria met"}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 text-[10px] font-black ring-1 ring-rose-500/20">
+                        <XCircle size={11} />
+                        Not eligible
+                      </span>
+                    )}
+                  </div>
+                  <div className="divide-y divide-slate-50">
+                    {eligibility.checks.map((check) => (
+                      <div key={check.key} className="flex items-start gap-3 px-4 py-2.5">
+                        {check.pending ? (
+                          <Clock size={15} className="text-amber-500 shrink-0 mt-0.5" />
+                        ) : check.pass ? (
+                          <CheckCircle size={15} className="text-emerald-500 shrink-0 mt-0.5" />
+                        ) : (
+                          <XCircle size={15} className="text-rose-500 shrink-0 mt-0.5" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-700">{check.label}</p>
+                          {check.detail && (
+                            <p className="text-[10px] font-medium text-slate-400">{check.detail}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!eligibility && selectedStudentId === "manual" && (
+                <p className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
+                  <Info size={12} />
+                  Eligibility can&apos;t be auto-verified for manually entered students.
+                </p>
+              )}
+
               <div className="flex gap-3 mt-8">
                 <button
                   type="button"
@@ -691,9 +794,10 @@ function EnrollmentModal({
                 <button
                   type="button"
                   onClick={handleEnroll}
-                  className="flex-[2] px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-black hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all text-xs uppercase tracking-widest"
+                  disabled={criteriaBlocked}
+                  className="flex-[2] px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-black hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all text-xs uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Confirm Enrollment
+                  {criteriaBlocked ? "Criteria Not Met" : "Confirm Enrollment"}
                 </button>
               </div>
             </div>
@@ -939,6 +1043,9 @@ function CourseCard({
   const facultyStyle = facultyColors[course.faculty] || "bg-slate-50 text-slate-600";
   const hasPrereqs = Array.isArray(course.prerequisites) && course.prerequisites.length > 0;
   const appStatus = getAppStatus(course);
+  const tuitionIsSemester = isSemesterPeriod(course.tuitionFeePeriod);
+  const yearlyTuition = annualTuition(course.tuitionFee, course.tuitionFeePeriod);
+  const courseCurrency = course.currency || "USD";
 
   return (
     <div className="card overflow-hidden group hover:shadow-md transition-all duration-200 relative">
@@ -1067,19 +1174,25 @@ function CourseCard({
           <div className="text-center min-w-0 space-y-0.5">
             <p className="text-xs font-bold text-indigo-600 font-tabular leading-tight">
               {showInNPR
-                ? formatNPR(convertToNPR(course.tuitionFee || "0", course.currency || "USD", rates))
-                : `${course.currency} ${course.tuitionFee || "—"}`}
+                ? formatNPR(convertToNPR(String(yearlyTuition ?? 0), courseCurrency, rates))
+                : `${courseCurrency} ${yearlyTuition !== null ? yearlyTuition.toLocaleString() : "—"}`}
+              <span className="text-slate-400 font-semibold"> /yr</span>
             </p>
+            {tuitionIsSemester && course.tuitionFee ? (
+              <p className="text-[10px] text-slate-400 leading-tight">
+                {courseCurrency} {course.tuitionFee} /sem
+              </p>
+            ) : null}
             {course.applicationFee ? (
               <p className="text-[10px] font-bold text-emerald-600 leading-tight">
                 App. Fee:{" "}
                 {showInNPR
-                  ? formatNPR(convertToNPR(course.applicationFee, course.currency || "USD", rates))
-                  : `${course.currency} ${course.applicationFee}`}
+                  ? formatNPR(convertToNPR(course.applicationFee, courseCurrency, rates))
+                  : `${courseCurrency} ${course.applicationFee}`}
               </p>
-            ) : (
-              <p className="text-[10px] text-slate-400">Tuition</p>
-            )}
+            ) : !tuitionIsSemester ? (
+              <p className="text-[10px] text-slate-400">Tuition / yr</p>
+            ) : null}
           </div>
         </div>
 
@@ -1340,59 +1453,23 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
               testType: guestDetails.testType,
               overallScore: guestDetails.overallScore,
             }
-          : students.find((s) => s.id === selectedStudentId);
+          : students.find((s) => String(s.id) === String(selectedStudentId));
 
       if (student) {
-        data = data.filter((c) => {
-          // 1. Level Check
-          const studentEdu =
-            typeof student.education === "string"
-              ? JSON.parse(student.education)
-              : student.education || [];
-          const hasPlus2 = studentEdu.some(
-            (e: EducationEntry) =>
-              e.qualification.toLowerCase().includes("+2") ||
-              e.qualification.toLowerCase().includes("grade xii")
-          );
-          const hasBachelor = studentEdu.some((e: EducationEntry) =>
-            e.qualification.toLowerCase().includes("bachelor")
-          );
-
-          if (c.level === "Undergraduate" && !hasPlus2) return false;
-          if (c.level === "Postgraduate" && !hasBachelor) return false;
-
-          // 2. GPA Check
-          if (c.gpaRequired) {
-            const reqGpa = parseFloat(c.gpaRequired);
-            if (!isNaN(reqGpa)) {
-              const relevantEdu =
-                c.level === "Undergraduate"
-                  ? studentEdu.find(
-                      (e: EducationEntry) =>
-                        e.qualification.toLowerCase().includes("+2") ||
-                        e.qualification.toLowerCase().includes("grade xii")
-                    )
-                  : studentEdu.find((e: EducationEntry) =>
-                      e.qualification.toLowerCase().includes("bachelor")
-                    );
-
-              const studentGpa = parseFloat(relevantEdu?.score || "0");
-              if (isNaN(studentGpa) || studentGpa < reqGpa) return false;
-            }
-          }
-
-          // 3. English Proficiency Check
-          if (c.englishOverallScore) {
-            const reqScore = parseFloat(c.englishOverallScore);
-            if (!isNaN(reqScore)) {
-              if (student.testType !== c.englishLanguageType) return false;
-              const studentScore = parseFloat(student.overallScore || "0");
-              if (isNaN(studentScore) || studentScore < reqScore) return false;
-            }
-          }
-
-          return true;
-        });
+        data = data.filter(
+          (c) =>
+            evaluateCourseEligibility(
+              {
+                level: c.level,
+                prerequisites: c.prerequisites,
+                gpaRequired: c.gpaRequired,
+                englishOverallScore: c.englishOverallScore,
+                englishLanguageType: c.englishLanguageType,
+                englishTestStage: c.englishTestStage,
+              },
+              student
+            ).allPass
+        );
       }
     }
 
@@ -1937,15 +2014,24 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
                             {showInNPR
                               ? formatNPR(
                                   convertToNPR(
-                                    course.tuitionFee || "0",
+                                    String(
+                                      annualTuition(course.tuitionFee, course.tuitionFeePeriod) ?? 0
+                                    ),
                                     course.currency || "USD",
                                     rates
                                   )
                                 )
-                              : `${course.currency || "USD"} ${course.tuitionFee?.toLocaleString()}`}
+                              : `${course.currency || "USD"} ${
+                                  annualTuition(
+                                    course.tuitionFee,
+                                    course.tuitionFeePeriod
+                                  )?.toLocaleString() ?? "—"
+                                }`}
                           </span>
                           <span className="text-[10px] font-bold text-slate-400 uppercase">
-                            per year
+                            {isSemesterPeriod(course.tuitionFeePeriod)
+                              ? "per year (2 sem)"
+                              : "per year"}
                           </span>
                         </div>
                       </td>
@@ -2129,6 +2215,11 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
           onClose={() => setEnrollingCourse(null)}
           quickFilters={quickFilters}
           students={students}
+          defaultStudentId={
+            selectedStudentId !== "all" && selectedStudentId !== "guest"
+              ? selectedStudentId
+              : undefined
+          }
         />
       )}
 

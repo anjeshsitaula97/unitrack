@@ -60,13 +60,13 @@ const QUALIFICATIONS = [
 async function main() {
   console.log("Seeding qualifications...");
   await Promise.all(
-    QUALIFICATIONS.map((q) =>
-      prisma.qualification.upsert({
-        where: { name: q.name },
-        update: { level: q.level },
-        create: q,
-      })
-    )
+    QUALIFICATIONS.map(async (q) => {
+      const existing = await prisma.qualification.findFirst({ where: { name: q.name } });
+      if (existing) {
+        return prisma.qualification.update({ where: { id: existing.id }, data: { level: q.level } });
+      }
+      return prisma.qualification.create({ data: q });
+    })
   );
   console.log("Qualifications seeded successfully.");
 }

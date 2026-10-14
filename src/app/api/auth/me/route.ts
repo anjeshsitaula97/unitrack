@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
 import { db } from "@/lib/db";
+import { baseDb } from "@/lib/base-db";
 import { normalizeEnabledModulesJson } from "@/lib/modules";
+import { isSuperAdminRole } from "@/lib/permission-catalog";
 
 export async function GET() {
   try {
@@ -14,7 +16,7 @@ export async function GET() {
 
     const payload = await verifyAuth(token);
 
-    let user = await db.user.findUnique({
+    let user = await baseDb.user.findUnique({
       where: { id: payload.id },
 
       select: {
@@ -26,13 +28,14 @@ export async function GET() {
         subscriptionPackage: true,
         subscriptionExpiry: true,
         isFirstLogin: true,
+        consultancyId: true,
       },
     });
 
     if (!user) {
-      const student = await db.student.findUnique({
+      const student = await baseDb.student.findUnique({
         where: { id: Number(payload.id) },
-        select: { id: true, name: true, email: true },
+        select: { id: true, name: true, email: true, consultancyId: true },
       });
       if (student) {
         user = {
@@ -50,10 +53,27 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // The branding shown in the app shell follows the session's consultancy. A
+    // Super Admin follows the active_consultancy switch; everyone else is bound
+    // to their own consultancy. "All Consultancies" (null) has no branding.
+    let consultancyId = user.consultancyId ?? null;
+    if (isSuperAdminRole(user.role)) {
+      const selected = cookieStore.get("active_consultancy")?.value;
+      const parsed = Number(selected);
+      consultancyId =
+        selected && selected !== "all" && Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+    }
+    const consultancy = consultancyId
+      ? await baseDb.consultancy.findUnique({
+          where: { id: consultancyId },
+          select: { id: true, code: true, name: true, logoUrl: true },
+        })
+      : null;
+
     const settings = await db.systemSettings.findFirst();
     const enabledModules = normalizeEnabledModulesJson(settings?.enabledModules);
 
-    const response = NextResponse.json(user);
+    const response = NextResponse.json({ ...user, consultancy });
     response.cookies.set("enabled_modules", enabledModules, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

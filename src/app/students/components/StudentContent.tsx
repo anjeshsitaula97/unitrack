@@ -61,6 +61,7 @@ interface Student {
   createdAt: string;
 
   admissionEmail?: string;
+  applicationEmailPassword?: string;
   studentPassword?: string;
   dobAd?: string;
   dobBs?: string;
@@ -1233,7 +1234,7 @@ export default function StudentContent() {
               </div>
               <div className="p-6">
                 {/* Credentials Section */}
-                {(selectedStudent.admissionEmail || selectedStudent.studentPassword) && (
+                {(selectedStudent.admissionEmail || selectedStudent.applicationEmailPassword) && (
                   <div className="mb-6 p-4 bg-amber-50 rounded-2xl border border-amber-100">
                     <h4 className="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-3 flex items-center gap-2">
                       <ShieldCheck size={12} /> Application Credentials
@@ -1252,7 +1253,7 @@ export default function StudentContent() {
                           Password
                         </p>
                         <p className="text-sm text-slate-800">
-                          {selectedStudent.studentPassword || "N/A"}
+                          {selectedStudent.applicationEmailPassword || "N/A"}
                         </p>
                       </div>
                     </div>

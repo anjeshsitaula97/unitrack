@@ -4,16 +4,22 @@ import { z } from "zod";
 import { signToken } from "@/lib/session";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { baseDb } from "@/lib/base-db";
+import { runWithConsultancy } from "@/lib/consultancy";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { logError } from "@/lib/logger";
 import { normalizeEnabledModulesJson } from "@/lib/modules";
 import { logActivity } from "@/lib/activity";
+import { isSuperAdminRole } from "@/lib/permission-catalog";
 
 const prisma = db;
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(1, "Password is required."),
+  // Used by the dedicated Super Admin console entry point (/om/login) to
+  // refuse non-Super-Admin accounts. Omitted for the standard staff login.
+  portal: z.enum(["super-admin"]).optional(),
 });
 
 export async function POST(req: Request) {
@@ -36,7 +42,7 @@ export async function POST(req: Request) {
 
     const { email, password } = parsed.data;
 
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { email },
     });
 
@@ -50,72 +56,87 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
 
-    // Set token
-    const token = await signToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    // The dedicated Super Admin portal only admits Super Administrators.
+    if (parsed.data.portal === "super-admin" && !isSuperAdminRole(user.role)) {
+      return NextResponse.json(
+        { error: "This portal is for Super Administrators only." },
+        { status: 403 }
+      );
+    }
 
-    const cookieStore = await cookies();
-    const isDev = process.env.NODE_ENV !== "production";
-    cookieStore.set({
-      name: "auth_token",
-      value: token,
-      httpOnly: true,
-      path: "/",
-      secure: !isDev,
-      sameSite: isDev ? "lax" : "strict",
-    });
+    // Bind the rest of this request to the account's consultancy so the login
+    // log, activity trail and settings cookie are attributed to the right
+    // tenant. A null id is the Super Admin platform scope. The scope is entered
+    // explicitly because the session cookie is not readable from cookies() until
+    // the response is sent.
+    return await runWithConsultancy({ consultancyId: user.consultancyId ?? null }, async () => {
+      // Set token
+      const token = await signToken({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      });
 
-    // Update last login & seen
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        lastLogin: new Date().toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
-        lastSeenAt: new Date(),
-      },
-    });
+      const cookieStore = await cookies();
+      const isDev = process.env.NODE_ENV !== "production";
+      cookieStore.set({
+        name: "auth_token",
+        value: token,
+        httpOnly: true,
+        path: "/",
+        secure: !isDev,
+        sameSite: isDev ? "lax" : "strict",
+      });
 
-    // Record login log
-    await prisma.loginLog.create({
-      data: {
+      // Update last login & seen
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          lastLogin: new Date().toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          }),
+          lastSeenAt: new Date(),
+        },
+      });
+
+      // Record login log
+      await prisma.loginLog.create({
+        data: {
+          userId: user.id,
+          ipAddress: getClientIp(req),
+          userAgent: req.headers.get("user-agent") || "Unknown",
+        },
+      });
+
+      await logActivity({
+        actorName: user.name,
         userId: user.id,
-        ipAddress: getClientIp(req),
-        userAgent: req.headers.get("user-agent") || "Unknown",
-      },
-    });
+        action: "logged in",
+        target: user.email,
+      });
 
-    await logActivity({
-      actorName: user.name,
-      userId: user.id,
-      action: "logged in",
-      target: user.email,
-    });
+      // Fetch enabled modules and set cookie
+      const settings = await prisma.systemSettings.findFirst();
+      const enabledModules = normalizeEnabledModulesJson(settings?.enabledModules);
 
-    // Fetch enabled modules and set cookie
-    const settings = await prisma.systemSettings.findFirst();
-    const enabledModules = normalizeEnabledModulesJson(settings?.enabledModules);
-
-    const response = NextResponse.json(
-      { success: true, isFirstLogin: user.isFirstLogin },
-      { status: 200 }
-    );
-    response.cookies.set("enabled_modules", enabledModules, {
-      httpOnly: true,
-      path: "/",
-      secure: !isDev,
-      sameSite: isDev ? "lax" : "strict",
-      maxAge: 86400,
+      const response = NextResponse.json(
+        { success: true, isFirstLogin: user.isFirstLogin },
+        { status: 200 }
+      );
+      response.cookies.set("enabled_modules", enabledModules, {
+        httpOnly: true,
+        path: "/",
+        secure: !isDev,
+        sameSite: isDev ? "lax" : "strict",
+        maxAge: 86400,
+      });
+      return response;
     });
-    return response;
   } catch (error) {
     logError("Login Route", error);
     return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 });

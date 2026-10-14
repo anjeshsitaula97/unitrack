@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { annualTuition, isSemesterPeriod } from "@/lib/tuition";
 
 const _formatIntake = (intakeStr: string | undefined) => {
   if (!intakeStr) return "TBA";
@@ -73,9 +74,13 @@ interface CourseDetail {
   percentageRequired?: string;
   gpaRequired?: string;
   tuitionFee?: string;
+  tuitionFeePeriod?: string;
   applicationFee?: string;
   currency?: string;
   courseCode?: string;
+  englishOverallScore?: string;
+  englishLanguageType?: string;
+  englishTestStage?: string;
 }
 
 export default function CourseDetailContent({ id }: { id: string }) {
@@ -286,6 +291,28 @@ export default function CourseDetailContent({ id }: { id: string }) {
                   <span className="text-sm font-bold text-slate-700">{course.gpaRequired}</span>
                 </div>
               )}
+              {course.englishOverallScore && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    {course.englishLanguageType || "IELTS"}
+                  </span>
+                  <span className="text-sm font-bold text-slate-700">
+                    {course.englishOverallScore}
+                  </span>
+                </div>
+              )}
+              {course.englishOverallScore && (
+                <div className="pt-2 border-t border-slate-100">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                    English Score Submission
+                  </span>
+                  <span className="text-xs font-bold text-indigo-600">
+                    {course.englishTestStage === "After Application"
+                      ? "After application — before visa lodgement"
+                      : "Before application"}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -293,13 +320,27 @@ export default function CourseDetailContent({ id }: { id: string }) {
             <h2 className="text-sm font-bold text-slate-900 mb-4">Fees</h2>
             <div className="space-y-3">
               {course.tuitionFee && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Tuition
-                  </span>
-                  <span className="text-sm font-bold text-indigo-600">
-                    {course.currency || "USD"} {course.tuitionFee}
-                  </span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Tuition
+                    </span>
+                    <span className="text-sm font-bold text-indigo-600">
+                      {course.currency || "USD"}{" "}
+                      {isSemesterPeriod(course.tuitionFeePeriod)
+                        ? annualTuition(
+                            course.tuitionFee,
+                            course.tuitionFeePeriod
+                          )?.toLocaleString()
+                        : course.tuitionFee}
+                      <span className="text-slate-400 font-semibold"> /yr</span>
+                    </span>
+                  </div>
+                  {isSemesterPeriod(course.tuitionFeePeriod) && (
+                    <span className="text-[11px] text-slate-400 text-right">
+                      {course.currency || "USD"} {course.tuitionFee} per semester
+                    </span>
+                  )}
                 </div>
               )}
               {course.applicationFee && (

@@ -20,6 +20,11 @@ export interface SessionPayload {
   name?: string;
   subject?: "user" | "student";
   /**
+   * The consultancy this session is bound to. `null` denotes the platform scope
+   * used by a Super Admin who is viewing every consultancy.
+   */
+  consultancyId?: number | null;
+  /**
    * Effective grant set resolved from the Role row for this request. Absent for
    * student sessions and whenever no stored list applies, in which case the
    * static catalog matrix is used.

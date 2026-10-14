@@ -108,12 +108,21 @@ export default function TrashContent() {
                   return;
                 try {
                   const res = await fetch("/api/trash/empty", { method: "POST" });
-                  if (res.ok) {
-                    toast.success("Recycle bin emptied");
+                  const data = await res.json().catch(() => null);
+                  if (res.ok && (!data || data.failed === 0)) {
+                    toast.success(
+                      data?.purged
+                        ? `Recycle bin emptied (${data.purged} deleted)`
+                        : "Recycle bin emptied"
+                    );
+                    fetchTrash();
+                  } else if (res.ok) {
+                    toast.error(
+                      `${data?.purged ?? 0} deleted, ${data.failed} could not be deleted`
+                    );
                     fetchTrash();
                   } else {
-                    const err = await res.json().catch(() => null);
-                    toast.error(err?.error || "Failed to empty recycle bin");
+                    toast.error(data?.error || "Failed to empty recycle bin");
                   }
                 } catch {
                   toast.error("Failed to empty recycle bin");

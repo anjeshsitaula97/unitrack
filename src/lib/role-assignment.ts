@@ -43,7 +43,7 @@ export async function validateRoleAssignment(
   if (roleSlugFor(target)) return null;
 
   try {
-    const existing = await db.role.findUnique({
+    const existing = await db.role.findFirst({
       where: { name: target },
       select: { id: true },
     });

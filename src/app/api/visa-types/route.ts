@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Label is required" }, { status: 400 });
     }
 
-    const existing = await prisma.visaType.findUnique({
+    const existing = await prisma.visaType.findFirst({
       where: { label },
     });
 

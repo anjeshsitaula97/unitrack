@@ -103,6 +103,7 @@ export async function GET(req: Request) {
             counselor: true,
             lead: true,
             admissionEmail: true,
+            applicationEmailPassword: true,
             branchId: true,
             createdAt: true,
             updatedAt: true,

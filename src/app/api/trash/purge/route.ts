@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     if (!["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Forbidden", 403);
 
-    const purged = await purgeExpiredTrash();
+    const { purged, failed } = await purgeExpiredTrash();
 
     let target = "Trash";
     try {
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       target,
     });
 
-    return NextResponse.json({ success: true, purged });
+    return NextResponse.json({ success: failed === 0, purged, failed });
   } catch (error) {
     logError("Purge error:", error);
     return apiError("Failed to purge expired trash");

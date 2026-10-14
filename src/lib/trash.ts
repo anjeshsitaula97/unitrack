@@ -1,62 +1,57 @@
+import { Prisma } from "@prisma/client";
 import { db } from "./db";
 
 const EXPIRY_DAYS = 30;
+
+export interface PurgeResult {
+  purged: number;
+  failed: number;
+}
+
+async function recordTrashItem(entityType: string, entityId: string | number, entityName: string) {
+  const idStr = String(entityId);
+  // Replace any stale, not-yet-restored row for the same entity so repeated
+  // delete cycles don't pile up duplicate recycle-bin entries.
+  await db.trashItem.deleteMany({
+    where: { entityType, entityId: idStr, restoredAt: null },
+  });
+  await db.trashItem.create({
+    data: {
+      entityType,
+      entityId: idStr,
+      entityName,
+      expiresAt: new Date(Date.now() + EXPIRY_DAYS * 24 * 60 * 60 * 1000),
+    },
+  });
+}
 
 export async function softDeleteStudent(id: string) {
   const numId = Number(id);
   const student = await db.student.update({ where: { id: numId }, data: { status: "Deleted" } });
   const displayName =
     student.name || `${student.firstName || ""} ${student.lastName || ""}`.trim() || "Unknown";
-  await db.trashItem.create({
-    data: {
-      entityType: "Student",
-      entityId: String(numId),
-      entityName: displayName,
-      expiresAt: new Date(Date.now() + EXPIRY_DAYS * 24 * 60 * 60 * 1000),
-    },
-  });
+  await recordTrashItem("Student", numId, displayName);
   return student;
 }
 
 export async function softDeleteUniversity(id: string | number) {
   const numId = Number(id);
   const uni = await db.university.update({ where: { id: numId }, data: { status: "Deleted" } });
-  await db.trashItem.create({
-    data: {
-      entityType: "University",
-      entityId: String(numId),
-      entityName: uni.name || "Unknown University",
-      expiresAt: new Date(Date.now() + EXPIRY_DAYS * 24 * 60 * 60 * 1000),
-    },
-  });
+  await recordTrashItem("University", numId, uni.name || "Unknown University");
   return uni;
 }
 
 export async function softDeleteCourse(id: string | number) {
   const numId = Number(id);
   const course = await db.course.update({ where: { id: numId }, data: { status: "Deleted" } });
-  await db.trashItem.create({
-    data: {
-      entityType: "Course",
-      entityId: String(numId),
-      entityName: course.name || "Unknown Course",
-      expiresAt: new Date(Date.now() + EXPIRY_DAYS * 24 * 60 * 60 * 1000),
-    },
-  });
+  await recordTrashItem("Course", numId, course.name || "Unknown Course");
   return course;
 }
 
 export async function softDeleteLead(id: string | number) {
   const numId = Number(id);
   const lead = await db.lead.update({ where: { id: numId }, data: { status: "Deleted" } });
-  await db.trashItem.create({
-    data: {
-      entityType: "Lead",
-      entityId: String(numId),
-      entityName: lead.name || "Unknown Lead",
-      expiresAt: new Date(Date.now() + EXPIRY_DAYS * 24 * 60 * 60 * 1000),
-    },
-  });
+  await recordTrashItem("Lead", numId, lead.name || "Unknown Lead");
   return lead;
 }
 
@@ -68,14 +63,7 @@ export async function softDeleteApplication(id: string | number) {
       .findUnique({ where: { id: numId }, select: { student: { select: { name: true } } } })
       .then((row) => row?.student?.name),
   ]);
-  await db.trashItem.create({
-    data: {
-      entityType: "Application",
-      entityId: String(numId),
-      entityName: student || `Application #${numId}`,
-      expiresAt: new Date(Date.now() + EXPIRY_DAYS * 24 * 60 * 60 * 1000),
-    },
-  });
+  await recordTrashItem("Application", numId, student || `Application #${numId}`);
   return application;
 }
 
@@ -107,82 +95,86 @@ export async function restoreFromTrash(id: string | number) {
   return item;
 }
 
-export async function purgeExpiredTrash() {
+function isRecordMissing(error: unknown): boolean {
+  // P2025 = "Record to delete does not exist" — the entity was already removed
+  // elsewhere, leaving an orphaned recycle-bin row we can safely drop.
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025";
+}
+
+async function permanentlyDeleteEntity(entityType: string, entityId: number): Promise<void> {
+  switch (entityType) {
+    case "Student":
+      await db.student.delete({ where: { id: entityId } });
+      break;
+    case "University":
+      await db.university.delete({ where: { id: entityId } });
+      break;
+    case "Course":
+      await db.course.delete({ where: { id: entityId } });
+      break;
+    case "Lead":
+      await db.lead.delete({ where: { id: entityId } });
+      break;
+    case "Application":
+      await db.application.delete({ where: { id: entityId } });
+      break;
+  }
+}
+
+async function purgeItems(
+  items: Array<{ id: number; entityType: string; entityId: string }>
+): Promise<PurgeResult> {
+  let purged = 0;
+  let failed = 0;
+
+  for (const item of items) {
+    const entityIdNum = Number(item.entityId);
+
+    try {
+      await permanentlyDeleteEntity(item.entityType, entityIdNum);
+    } catch (error) {
+      if (!isRecordMissing(error)) {
+        console.error(
+          `Failed to purge ${item.entityType} ${item.entityId}:`,
+          error instanceof Error ? error.message : error
+        );
+        failed++;
+        continue;
+      }
+      // The underlying record was already removed elsewhere; the trash row is
+      // simply an orphan, so fall through and remove it.
+    }
+
+    try {
+      await db.trashItem.delete({ where: { id: item.id } });
+    } catch (error) {
+      if (!isRecordMissing(error)) {
+        console.error(
+          `Failed to remove trash row ${item.id}:`,
+          error instanceof Error ? error.message : error
+        );
+        failed++;
+        continue;
+      }
+    }
+    purged++;
+  }
+
+  return { purged, failed };
+}
+
+export async function purgeExpiredTrash(): Promise<PurgeResult> {
   const expired = await db.trashItem.findMany({
     where: { expiresAt: { lt: new Date() }, restoredAt: null },
   });
 
-  let purged = 0;
-  for (const item of expired) {
-    try {
-      const entityIdNum = Number(item.entityId);
-      switch (item.entityType) {
-        case "Student":
-          await db.student.delete({ where: { id: entityIdNum } });
-          break;
-        case "University":
-          await db.university.delete({ where: { id: entityIdNum } });
-          break;
-        case "Course":
-          await db.course.delete({ where: { id: entityIdNum } });
-          break;
-        case "Lead":
-          await db.lead.delete({ where: { id: entityIdNum } });
-          break;
-        case "Application":
-          await db.application.delete({ where: { id: entityIdNum } });
-          break;
-      }
-      await db.trashItem.delete({ where: { id: item.id } });
-      purged++;
-    } catch (error) {
-      // Keep the TrashItem so the purge is retried on the next run instead of
-      // orphaning a row that is still flagged as deleted.
-      console.error(
-        `Failed to purge ${item.entityType} ${item.entityId}:`,
-        error instanceof Error ? error.message : error
-      );
-    }
-  }
-
-  return purged;
+  return purgeItems(expired);
 }
 
-export async function purgeAllTrash() {
+export async function purgeAllTrash(): Promise<PurgeResult> {
   const items = await db.trashItem.findMany({
     where: { restoredAt: null },
   });
 
-  let purged = 0;
-  for (const item of items) {
-    try {
-      const entityIdNum = Number(item.entityId);
-      switch (item.entityType) {
-        case "Student":
-          await db.student.delete({ where: { id: entityIdNum } });
-          break;
-        case "University":
-          await db.university.delete({ where: { id: entityIdNum } });
-          break;
-        case "Course":
-          await db.course.delete({ where: { id: entityIdNum } });
-          break;
-        case "Lead":
-          await db.lead.delete({ where: { id: entityIdNum } });
-          break;
-        case "Application":
-          await db.application.delete({ where: { id: entityIdNum } });
-          break;
-      }
-      await db.trashItem.delete({ where: { id: item.id } });
-      purged++;
-    } catch (error) {
-      console.error(
-        `Failed to purge ${item.entityType} ${item.entityId}:`,
-        error instanceof Error ? error.message : error
-      );
-    }
-  }
-
-  return purged;
+  return purgeItems(items);
 }

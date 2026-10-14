@@ -164,6 +164,7 @@ interface StudentDetail {
   moi?: string;
   education?: EducationEntry[] | string;
   admissionEmail?: string;
+  applicationEmailPassword?: string;
   studentPassword?: string;
   interestedCountry?: string;
   targetUniversities?: string;
@@ -693,7 +694,7 @@ export default function StudentDetailContent({ id }: { id: string }) {
                   } catch {}
                   return null;
                 })()}
-              {(student.admissionEmail || student.studentPassword) && (
+              {(student.admissionEmail || student.applicationEmailPassword) && (
                 <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-100">
                   <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-2">
                     Application Credentials
@@ -703,14 +704,14 @@ export default function StudentDetailContent({ id }: { id: string }) {
                       <p className="text-[9px] font-bold text-amber-500 uppercase tracking-tighter">
                         Admission Email
                       </p>
-                      <p className="text-sm text-slate-800">{student.admissionEmail}</p>
+                      <p className="text-sm text-slate-800">{student.admissionEmail || "—"}</p>
                     </div>
                     <div>
                       <p className="text-[9px] font-semibold text-amber-500 uppercase tracking-tighter">
                         Password
                       </p>
                       <p className="text-sm text-slate-800">
-                        {student.studentPassword ? "••••••••••" : "—"}
+                        {student.applicationEmailPassword || "—"}
                       </p>
                     </div>
                   </div>

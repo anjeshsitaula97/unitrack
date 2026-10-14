@@ -279,17 +279,20 @@ const INITIAL_ROLES = [
 async function main() {
   console.log("Seeding roles...");
   await Promise.all(
-    INITIAL_ROLES.map((role) =>
-      prisma.role.upsert({
-        where: { name: role.name },
-        update: {
-          description: role.description,
-          permissions: role.permissions,
-          color: role.color,
-        },
-        create: role,
-      })
-    )
+    INITIAL_ROLES.map(async (role) => {
+      const existing = await prisma.role.findFirst({ where: { name: role.name } });
+      if (existing) {
+        return prisma.role.update({
+          where: { id: existing.id },
+          data: {
+            description: role.description,
+            permissions: role.permissions,
+            color: role.color,
+          },
+        });
+      }
+      return prisma.role.create({ data: role });
+    })
   );
   console.log("Roles seeded successfully.");
 }

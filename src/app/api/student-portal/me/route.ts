@@ -19,7 +19,13 @@ export async function GET() {
 
     if (!student) return apiError("Student not found", 404);
 
-    const { studentPassword: _studentPassword, ...safeStudent } = student;
+    // Neither the portal login hash nor the staff-facing application-email
+    // password should be exposed through the student portal.
+    const {
+      studentPassword: _studentPassword,
+      applicationEmailPassword: _applicationEmailPassword,
+      ...safeStudent
+    } = student;
     return NextResponse.json(safeStudent);
   } catch (error) {
     logError("Student fetch error:", error);

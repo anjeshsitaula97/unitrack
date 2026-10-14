@@ -48,11 +48,12 @@ export async function PUT(req: NextRequest) {
 
     const existing = await db.systemSettings.findFirst();
 
-    await db.systemSettings.upsert({
-      where: { id: 1 },
-      update: { applicationStatuses },
-      create: { applicationStatuses },
-    });
+    // One SystemSettings row per consultancy; never upsert a hardcoded id.
+    if (existing) {
+      await db.systemSettings.update({ where: { id: existing.id }, data: { applicationStatuses } });
+    } else {
+      await db.systemSettings.create({ data: { applicationStatuses } });
+    }
 
     await logActivity({
       actorName: await getActorName(session?.id),

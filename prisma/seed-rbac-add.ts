@@ -26,7 +26,7 @@ async function main() {
   ];
 
   for (const role of add) {
-    const existing = await prisma.role.findUnique({ where: { name: role.name } });
+    const existing = await prisma.role.findFirst({ where: { name: role.name } });
     if (existing) {
       console.log(`EXISTS (skipped): ${role.name} (id ${existing.id}, ${role.permissions.length} chars)`);
       continue;

@@ -10,260 +10,308 @@ datasource db {
 }
 
 model QuickFilter {
-  id        Int      @id @default(autoincrement())
-  label     String   @unique
-  icon      String   @default("Filter")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  label         String
+  icon          String   @default("Filter")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([consultancyId, label])
+  @@index([consultancyId])
 }
 
 model University {
-  id        Int      @id @default(autoincrement())
-  name          String
-  shortName     String?
-  country       String
-  city          String?
-  type          String        @default("Public")
-  email         String?
-  phone         String?
-  address       String?
-  website       String?
-  founded       Int?
-  accreditation String?       @db.LongText
-  ranking       Int?
-  description   String?
-  status        String        @default("Active")
-  isFeatured    Boolean       @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  banner        String?
-  images        String?       @db.LongText
-  logo          String?
-  requirements  String?       @db.LongText
-  partnerId     Int?
-  partner       Partner?      @relation(fields: [partnerId], references: [id])
-  partnershipAmount Float?
-  commissionType    String?    @default("Percentage") // "Percentage" or "Flat"
-  commissionValue   Float?
+  consultancyId      Int?
+  id                 Int           @id @default(autoincrement())
+  name               String
+  shortName          String?
+  country            String
+  city               String?
+  type               String        @default("Public")
+  email              String?
+  phone              String?
+  address            String?
+  website            String?
+  // Direct application/apply URL for the university. Platform-only: it is
+  // visible to Super Admins and hidden from consultancy users.
+  applicationLink    String?
+  founded            Int?
+  accreditation      String?       @db.LongText
+  ranking            Int?
+  description        String?
+  status             String        @default("Active")
+  isFeatured         Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  banner             String?
+  images             String?       @db.LongText
+  logo               String?
+  requirements       String?       @db.LongText
+  partnerId          Int?
+  partner            Partner?      @relation(fields: [partnerId], references: [id])
+  partnershipAmount  Float?
+  commissionType     String?       @default("Percentage") // "Percentage" or "Flat"
+  commissionValue    Float?
   commissionCurrency String?
-  applications  Application[]
-  courses       Course[]
+  applications       Application[]
+  courses            Course[]
+
+  @@index([consultancyId])
 }
 
 model Partner {
-  id        Int      @id @default(autoincrement())
+  consultancyId Int?
+  id            Int          @id @default(autoincrement())
   name          String
   contactPerson String?
   email         String?
   phone         String?
   address       String?
   description   String?
-  countries     String?       @default("[]") @db.LongText // JSON array of country names
+  countries     String?      @default("[]") @db.LongText // JSON array of country names
   universities  University[]
   students      Student[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([consultancyId])
 }
 
 model Course {
-  id        Int      @id @default(autoincrement())
-  name                  String
-  universityId          Int
-  faculty               String
-  degreeType            String
-  level                 String
-  credits               Int
-  duration              String
-  enrolled              Int           @default(0)
-  status                String        @default("Active")
-  isFeatured            Boolean       @default(false)
-  startDate             DateTime?
-  color                 String        @default("#6366f1")
-  initials              String
-  instructor            String
-  description           String
-  prerequisites         String        @db.LongText
-  intake                String?
-  language              String        @default("English")
-  mode                  String        @default("Online")
-  academicRequirement   String?
-  percentageRequired    String?
-  gpaRequired           String?
-  englishLanguageType   String        @default("IELTS")
-  englishOverallScore   String?
-  englishReadingScore   String?
-  englishWritingScore   String?
-  englishListeningScore String?
-  englishSpeakingScore  String?
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-  courseCode            String?
-  currency              String?
-  tuitionFee            String?
-  applicationFee        String?
+  consultancyId          Int?
+  id                     Int           @id @default(autoincrement())
+  name                   String
+  universityId           Int
+  faculty                String
+  degreeType             String
+  level                  String
+  credits                Int
+  duration               String
+  enrolled               Int           @default(0)
+  status                 String        @default("Active")
+  isFeatured             Boolean       @default(false)
+  startDate              DateTime?
+  color                  String        @default("#6366f1")
+  initials               String
+  instructor             String
+  description            String
+  prerequisites          String        @db.LongText
+  intake                 String?
+  language               String        @default("English")
+  mode                   String        @default("Online")
+  academicRequirement    String?
+  percentageRequired     String?
+  gpaRequired            String?
+  englishLanguageType    String        @default("IELTS")
+  englishOverallScore    String?
+  englishReadingScore    String?
+  englishWritingScore    String?
+  englishListeningScore  String?
+  englishSpeakingScore   String?
+  englishTestStage       String?       @default("Before Application") // "Before Application" or "After Application"
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  courseCode             String?
+  currency               String?
+  tuitionFee             String?
+  tuitionFeePeriod       String?       @default("Year") // "Year" or "Semester"
+  applicationFee         String?
   applicationFeeCurrency String?
-  quickFilters          String?       @db.LongText
-  requirements          String?       @db.LongText
-  applicationDeadline   DateTime?
-  englishTests          String?       @db.LongText
-  commissionType        String?    @default("Percentage") // "Percentage" or "Flat"
-  commissionValue       Float?
-  commissionCurrency    String?
-  applications          Application[]
-  university            University    @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  quickFilters           String?       @db.LongText
+  requirements           String?       @db.LongText
+  applicationDeadline    DateTime?
+  englishTests           String?       @db.LongText
+  commissionType         String?       @default("Percentage") // "Percentage" or "Flat"
+  commissionValue        Float?
+  commissionCurrency     String?
+  applications           Application[]
+  university             University    @relation(fields: [universityId], references: [id], onDelete: Cascade)
 
   @@index([universityId])
   @@index([faculty])
   @@index([degreeType])
   @@index([level])
   @@index([status])
+  @@index([consultancyId])
 }
 
 model Faculty {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  name          String
+  createdAt     DateTime @default(now())
+
+  @@unique([consultancyId, name])
+  @@index([consultancyId])
 }
 
 model DegreeType {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  name          String
+  createdAt     DateTime @default(now())
+
+  @@unique([consultancyId, name])
+  @@index([consultancyId])
 }
 
 model Intake {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  name          String
+  createdAt     DateTime @default(now())
+
+  @@unique([consultancyId, name])
+  @@index([consultancyId])
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name                String
-  email               String        @unique
-  password            String?
-  role                String        @default("Viewer")
-  status              String        @default("Active")
-  avatar              String?
-  lastLogin           String        @default("Never")
-  lastSeenAt          DateTime?
-  isFirstLogin        Boolean       @default(true)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  subscriptionPackage String?       @default("Basic")
-  subscriptionExpiry  DateTime?
-  loginLogs           LoginLog[]
-  activities          ActivityLog[]
-  tasks               Task[]
-  tickets             Ticket[]
-  chatRooms           ChatRoom[]          @relation("ChatRoomMembers")
-  chatMessages        ChatMessage[]
-  branch              Branch?             @relation(fields: [branchId], references: [id])
-  branchId            Int?
-  department          Department?         @relation(fields: [departmentId], references: [id])
-  departmentId        Int?
-  headedDepartment    Department?         @relation("DepartmentHead")
-  designationId       Int?
-  designation         Designation?        @relation(fields: [designationId], references: [id])
-  employeeId          String?             @unique
-  phone               String?
-  alternatePhone      String?
-  dateOfBirth         String?
-  gender              String?
-  address             String?
-  city                String?
-  state               String?
-  zipCode             String?
-  country             String?
-  emergencyContact    String?
-  emergencyPhone      String?
-  bankName            String?
-  bankAccount         String?
-  bankIfsc            String?
-  panNumber           String?
-  basicSalary         Float?              @default(0)
-  hireDate            String?
-  employmentType      String?             @default("Full-Time")
-  attendances         Attendance[]
-  leaveBalances       LeaveBalance[]
-  leaveRequests       LeaveRequest[]
-  approvedLeaves      LeaveRequest[]      @relation("ApprovedLeaves")
-  payrolls            Payroll[]
-  documents           EmployeeDocument[]
-  scannedDocuments    ScannedDocument[]
-  fileFolders         FileFolder[]
-  fileItems           FileItem[]
-  faceDescriptor      String?
-  studentConversations StudentConversation[]
-  applicationNotes     ApplicationNote[]
-  marketingRequests    MarketingRequest[]      @relation("MarketingRequestRequester")
-  assignedMarketingRequests MarketingRequest[] @relation("MarketingRequestAssignee")
-  uploadedMaterials    MarketingMaterial[]     @relation("MarketingMaterialUploader")
+  consultancyId             Int?
+  id                        Int                   @id @default(autoincrement())
+  name                      String
+  email                     String                @unique
+  password                  String?
+  role                      String                @default("Viewer")
+  status                    String                @default("Active")
+  avatar                    String?
+  lastLogin                 String                @default("Never")
+  lastSeenAt                DateTime?
+  isFirstLogin              Boolean               @default(true)
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
+  subscriptionPackage       String?               @default("Basic")
+  subscriptionExpiry        DateTime?
+  loginLogs                 LoginLog[]
+  activities                ActivityLog[]
+  tasks                     Task[]
+  tickets                   Ticket[]
+  chatRooms                 ChatRoom[]            @relation("ChatRoomMembers")
+  chatMessages              ChatMessage[]
+  branch                    Branch?               @relation(fields: [branchId], references: [id])
+  branchId                  Int?
+  department                Department?           @relation(fields: [departmentId], references: [id])
+  departmentId              Int?
+  headedDepartment          Department?           @relation("DepartmentHead")
+  designationId             Int?
+  designation               Designation?          @relation(fields: [designationId], references: [id])
+  employeeId                String?               @unique
+  phone                     String?
+  alternatePhone            String?
+  dateOfBirth               String?
+  gender                    String?
+  address                   String?
+  city                      String?
+  state                     String?
+  zipCode                   String?
+  country                   String?
+  emergencyContact          String?
+  emergencyPhone            String?
+  bankName                  String?
+  bankAccount               String?
+  bankIfsc                  String?
+  panNumber                 String?
+  basicSalary               Float?                @default(0)
+  hireDate                  String?
+  employmentType            String?               @default("Full-Time")
+  attendances               Attendance[]
+  leaveBalances             LeaveBalance[]
+  leaveRequests             LeaveRequest[]
+  approvedLeaves            LeaveRequest[]        @relation("ApprovedLeaves")
+  payrolls                  Payroll[]
+  documents                 EmployeeDocument[]
+  scannedDocuments          ScannedDocument[]
+  fileFolders               FileFolder[]
+  fileItems                 FileItem[]
+  faceDescriptor            String?
+  studentConversations      StudentConversation[]
+  applicationNotes          ApplicationNote[]
+  marketingRequests         MarketingRequest[]    @relation("MarketingRequestRequester")
+  assignedMarketingRequests MarketingRequest[]    @relation("MarketingRequestAssignee")
+  uploadedMaterials         MarketingMaterial[]   @relation("MarketingMaterialUploader")
+
+  @@index([consultancyId])
 }
 
 model LoginLog {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  @@index([consultancyId])
 }
 
 model ApiKey {
-  id        Int      @id @default(autoincrement())
-  name      String
-  tokenHash String   @unique
-  created   DateTime @default(now())
-  lastUsed  String   @default("Never")
-  createdAt DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  name          String
+  tokenHash     String   @unique
+  created       DateTime @default(now())
+  lastUsed      String   @default("Never")
+  createdAt     DateTime @default(now())
+
+  @@index([consultancyId])
 }
 
 model PasswordResetToken {
-  id        Int      @id @default(autoincrement())
-  email     String
-  otp       String
-  expiresAt DateTime
-  verified  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  email         String
+  otp           String
+  expiresAt     DateTime
+  verified      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([consultancyId])
 }
 
 model SystemSettings {
-  id              Int      @id @default(autoincrement())
-  country         String   @default("Nepal")
-  currencyCode    String   @default("NPR")
-  phoneCode       String   @default("+977")
-  language        String   @default("English")
-  enableBranches  Boolean  @default(false)
-  showBSDate      Boolean  @default(false)
-  officeLatitude  Float?
-  officeLongitude Float?
-  officeRadius    Float?   @default(100)
-  enabledModules  String   @default("[]")
-  applicationStatuses String @default("[]")
-  updatedAt       DateTime @updatedAt
+  consultancyId       Int?
+  id                  Int      @id @default(autoincrement())
+  country             String   @default("Nepal")
+  currencyCode        String   @default("NPR")
+  phoneCode           String   @default("+977")
+  language            String   @default("English")
+  enableBranches      Boolean  @default(false)
+  showBSDate          Boolean  @default(false)
+  officeLatitude      Float?
+  officeLongitude     Float?
+  officeRadius        Float?   @default(100)
+  enabledModules      String   @default("[]")
+  applicationStatuses String   @default("[]")
+  updatedAt           DateTime @updatedAt
+
+  @@index([consultancyId])
 }
 
 model Branch {
-  id        Int      @id @default(autoincrement())
-  name         String
-  location     String?
-  manager      String?
-  phone        String?
-  email        String?
-  status       String        @default("Active")
-  logo         String?
-  latitude     Float?
-  longitude    Float?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  tasks        Task[]
-  emailSetting EmailSetting?
-  users        User[]
+  consultancyId Int?
+  id            Int           @id @default(autoincrement())
+  name          String
+  location      String?
+  manager       String?
+  phone         String?
+  email         String?
+  status        String        @default("Active")
+  logo          String?
+  latitude      Float?
+  longitude     Float?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  tasks         Task[]
+  emailSetting  EmailSetting?
+  users         User[]
+
+  @@index([consultancyId])
 }
 
 model EmailSetting {
-  id        Int      @id @default(autoincrement())
+  consultancyId  Int?
+  id             Int      @id @default(autoincrement())
   type           String   @default("Global") // "Global" or "Branch"
   branchId       Int?     @unique
   smtpHost       String
@@ -277,12 +325,15 @@ model EmailSetting {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   branch         Branch?  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([consultancyId])
 }
 
 model Lead {
-  id        Int      @id @default(autoincrement())
+  consultancyId     Int?
+  id                Int       @id @default(autoincrement())
   name              String
-  email             String    @unique
+  email             String
   phone             String?
   source            String?   @default("Website")
   status            String    @default("New")
@@ -299,20 +350,28 @@ model Lead {
   referenceName     String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+
+  @@unique([consultancyId, email])
+  @@index([consultancyId])
 }
 
 model Role {
-  id        Int      @id @default(autoincrement())
-  name        String   @unique
-  description String?
-  permissions String   @db.LongText
-  color       String?  @default("text-slate-600 bg-slate-50 border-slate-200")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  permissions   String   @db.LongText
+  color         String?  @default("text-slate-600 bg-slate-50 border-slate-200")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([consultancyId, name])
+  @@index([consultancyId])
 }
 
 model ActivityLog {
-  id        Int      @id @default(autoincrement())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
   actorName     String
   actorInitials String?
   actorColor    String?
@@ -323,26 +382,36 @@ model ActivityLog {
   userId        Int?
   user          User?    @relation(fields: [userId], references: [id])
   createdAt     DateTime @default(now())
+
+  @@index([consultancyId])
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
-  userId    String?
-  title     String
-  message   String
-  type      String   @default("Info")
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  userId        String?
+  title         String
+  message       String
+  type          String   @default("Info")
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([consultancyId])
 }
 
 model Student {
-  id                    Int               @id @default(autoincrement())
+  consultancyId         Int?
+  id                    Int                   @id @default(autoincrement())
   name                  String
   firstName             String?
   lastName              String?
-  email                 String            @unique
+  email                 String                @unique
   admissionEmail        String?
   studentPassword       String?
+  // Plaintext password for the admission (application) email. This is a shared
+  // credential shown back to staff in the student detail view, unlike
+  // studentPassword which is a bcrypt hash for the student portal login.
+  applicationEmailPassword String?
   phone                 String?
   whatsappNumber        String?
   gender                String?
@@ -371,9 +440,9 @@ model Student {
   // These hold JSON arrays written by the form. A bare String? maps to
   // VARCHAR(191) on MySQL, which silently truncated longer histories and left
   // unparseable values behind, so they are explicitly LONGTEXT.
-  education             String?           @db.LongText
-  workExperience        String?           @db.LongText
-  training              String?           @db.LongText
+  education             String?               @db.LongText
+  workExperience        String?               @db.LongText
+  training              String?               @db.LongText
   testType              String?
   overallScore          String?
   readingScore          String?
@@ -388,10 +457,10 @@ model Student {
   major                 String?
   interestedCountry     String?
   partnerId             Int?
-  partner               Partner?        @relation(fields: [partnerId], references: [id], onDelete: SetNull)
-  targetUniversities    String?           @db.LongText
+  partner               Partner?              @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  targetUniversities    String?               @db.LongText
   spouseName            String?
-  childrenDetails       String?           @default("[]") @db.LongText
+  childrenDetails       String?               @default("[]") @db.LongText
   guardianName          String?
   guardianPhone         String?
   guardianEmail         String?
@@ -399,8 +468,8 @@ model Student {
   guardianAddress       String?
   // Additional guardians beyond the primary one, stored as a JSON array
   // (LONGTEXT for the same truncation reason as the other list fields above).
-  otherGuardians        String?           @default("[]") @db.LongText
-  status                String            @default("New Leads")
+  otherGuardians        String?               @default("[]") @db.LongText
+  status                String                @default("New Leads")
   statusColor           String?
   initials              String?
   color                 String?
@@ -410,36 +479,41 @@ model Student {
   counselor             String?
   lead                  String?
   branchId              String?
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
   applications          Application[]
   payments              Payment[]
   documents             StudentDocument[]
   conversations         StudentConversation[]
   notes                 StudentNote[]
+
+  @@index([consultancyId])
 }
 
 model Application {
-  id           Int        @id @default(autoincrement())
-  studentId    Int
-  universityId Int
-  courseId     Int
-  status       String     @default("Submitted")
-  appliedDate  DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  course       Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
-  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  consultancyId  Int?
+  id             Int                        @id @default(autoincrement())
+  studentId      Int
+  universityId   Int
+  courseId       Int
+  status         String                     @default("Submitted")
+  appliedDate    DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+  course         Course                     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  university     University                 @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  student        Student                    @relation(fields: [studentId], references: [id], onDelete: Cascade)
   workflowStages ApplicationWorkflowStage[]
-  notes           ApplicationNote[]
+  notes          ApplicationNote[]
 
   @@index([studentId])
   @@index([universityId])
   @@index([courseId])
+  @@index([consultancyId])
 }
 
 model ApplicationNote {
-  id        Int      @id @default(autoincrement())
+  consultancyId Int?
+  id            Int         @id @default(autoincrement())
   applicationId Int
   content       String
   authorId      Int?
@@ -448,75 +522,91 @@ model ApplicationNote {
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([applicationId])
+  @@index([consultancyId])
 }
 
 model ApplicationWorkflowStage {
-  id           Int      @id @default(autoincrement())
+  consultancyId Int?
+  id            Int         @id @default(autoincrement())
   applicationId Int
-  name         String
-  order        Int
-  description  String?
-  subtasks     String   @default("[]") // JSON array of {id, title, done}
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  application  Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  name          String
+  order         Int
+  description   String?
+  subtasks      String      @default("[]") // JSON array of {id, title, done}
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([applicationId])
+  @@index([consultancyId])
 }
 
 model StudentDocument {
-  id        Int      @id @default(autoincrement())
+  consultancyId      Int?
+  id                 Int               @id @default(autoincrement())
   studentId          Int
   type               String?
   name               String
   url                String
-  status             String?          @default("Uploaded")
+  status             String?           @default("Uploaded")
   fileSize           Int?
   fileType           String?
   academicDocumentId Int?
-  uploadedAt         DateTime         @default(now())
-  student            Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  uploadedAt         DateTime          @default(now())
+  student            Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
   academicDocument   AcademicDocument? @relation(fields: [academicDocumentId], references: [id])
 
   @@index([studentId])
   @@index([academicDocumentId])
+  @@index([consultancyId])
 }
 
 model Qualification {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  level     Int      @default(0) // 1=SEE/SLC/Grade10, 2=+2/PCL/Grade12, 3=Bachelor, 4=Master, 5=PhD
-  createdAt DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  name          String
+  level         Int      @default(0) // 1=SEE/SLC/Grade10, 2=+2/PCL/Grade12, 3=Bachelor, 4=Master, 5=PhD
+  createdAt     DateTime @default(now())
+
+  @@unique([consultancyId, name])
+  @@index([consultancyId])
 }
 
 model AcademicDocument {
-  id        Int      @id @default(autoincrement())
-  name      String           @unique
-  createdAt DateTime         @default(now())
-  files     FileItem[]
+  consultancyId    Int?
+  id               Int               @id @default(autoincrement())
+  name             String
+  createdAt        DateTime          @default(now())
+  files            FileItem[]
   studentDocuments StudentDocument[]
+
+  @@unique([consultancyId, name])
+  @@index([consultancyId])
 }
 
 model Payment {
-  id        Int      @id @default(autoincrement())
-  studentId   Int
-  amount      Float
-  currency    String   @default("NPR")
-  status      String   @default("Pending")
-  method      String?
-  date        DateTime @default(now())
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  proofUrl    String?
-  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  studentId     Int
+  amount        Float
+  currency      String   @default("NPR")
+  status        String   @default("Pending")
+  method        String?
+  date          DateTime @default(now())
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  proofUrl      String?
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
   @@index([status])
+  @@index([consultancyId])
 }
 
 model Expense {
-  id        Int      @id @default(autoincrement())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
   category      String
   amount        Float
   currency      String   @default("NPR")
@@ -529,158 +619,201 @@ model Expense {
   screenshot    String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([consultancyId])
 }
 
 model Task {
-  id        Int      @id @default(autoincrement())
-  title       String
-  description String?
-  status      String    @default("Todo")
-  priority    String    @default("Medium")
-  dueDate     DateTime?
-  type        String    @default("Manual")
-  country     String?
-  visaType    String?
-  assigneeId  Int?
-  branchId    Int?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  branch      Branch?   @relation(fields: [branchId], references: [id])
-  assignee    User?     @relation(fields: [assigneeId], references: [id])
+  consultancyId Int?
+  id            Int       @id @default(autoincrement())
+  title         String
+  description   String?
+  status        String    @default("Todo")
+  priority      String    @default("Medium")
+  dueDate       DateTime?
+  type          String    @default("Manual")
+  country       String?
+  visaType      String?
+  assigneeId    Int?
+  branchId      Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  branch        Branch?   @relation(fields: [branchId], references: [id])
+  assignee      User?     @relation(fields: [assigneeId], references: [id])
+
+  @@index([consultancyId])
 }
 
 model Country {
-  id        Int      @id @default(autoincrement())
-  name      String             @unique
-  code      String?
-  createdAt DateTime           @default(now())
-  resources LearningResource[]
+  consultancyId Int?
+  id            Int                @id @default(autoincrement())
+  name          String
+  code          String?
+  createdAt     DateTime           @default(now())
+  resources     LearningResource[]
+
+  @@unique([consultancyId, name])
+  @@index([consultancyId])
 }
 
 model LearningCategory {
-  id        Int      @id @default(autoincrement())
-  name      String             @unique
-  createdAt DateTime           @default(now())
-  resources LearningResource[]
+  consultancyId Int?
+  id            Int                @id @default(autoincrement())
+  name          String
+  createdAt     DateTime           @default(now())
+  resources     LearningResource[]
+
+  @@unique([consultancyId, name])
+  @@index([consultancyId])
 }
 
 model LearningResource {
-  id        Int      @id @default(autoincrement())
-  title       String
-  description String?
-  type        String            @default("Document")
-  url         String
-  thumbnail   String?
-  fileSize    String?
-  countryId   Int?
-  categoryId  Int?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  category    LearningCategory? @relation(fields: [categoryId], references: [id])
-  country     Country?          @relation(fields: [countryId], references: [id])
+  consultancyId Int?
+  id            Int               @id @default(autoincrement())
+  title         String
+  description   String?
+  type          String            @default("Document")
+  url           String
+  thumbnail     String?
+  fileSize      String?
+  countryId     Int?
+  categoryId    Int?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  category      LearningCategory? @relation(fields: [categoryId], references: [id])
+  country       Country?          @relation(fields: [countryId], references: [id])
+
+  @@index([consultancyId])
 }
 
 model Ticket {
-  id        Int      @id @default(autoincrement())
-  title       String
-  description String
-  type        String   @default("Technical") // Technical (Bug) or Feature Request
-  priority    String   @default("Medium") // Low, Medium, High, Urgent
-  status      String   @default("Open") // Open, In Progress, Resolved, Closed
-  creatorId   Int
-  creator     User     @relation(fields: [creatorId], references: [id])
-  screenshot  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String
+  type          String   @default("Technical") // Technical (Bug) or Feature Request
+  priority      String   @default("Medium") // Low, Medium, High, Urgent
+  status        String   @default("Open") // Open, In Progress, Resolved, Closed
+  creatorId     Int
+  creator       User     @relation(fields: [creatorId], references: [id])
+  screenshot    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([creatorId])
+  @@index([consultancyId])
 }
 
 model VisaType {
-  id        Int      @id @default(autoincrement())
-  label       String   @unique
-  description String?
-  createdAt   DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  label         String
+  description   String?
+  createdAt     DateTime @default(now())
+
+  @@unique([consultancyId, label])
+  @@index([consultancyId])
 }
 
 model EmbassyDetail {
-  id        Int      @id @default(autoincrement())
-  country     String
-  visaType    String
-  name        String
-  address     String?
-  phone       String?
-  email       String?
-  website     String?
-  workingHours String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  country       String
+  visaType      String
+  name          String
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  workingHours  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([consultancyId])
 }
 
 model VisaChecklist {
-  id        Int      @id @default(autoincrement())
-  country     String
-  visaType    String
-  title       String
-  description String?
-  isRequired  Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  country       String
+  visaType      String
+  title         String
+  description   String?
+  isRequired    Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([consultancyId])
 }
 
 model WorkflowStage {
-  id        Int      @id @default(autoincrement())
-  country     String
-  visaType    String
-  name        String
-  order       Int
-  description String?
-  subtasks    String   @default("[]") // JSON array of {id, title, done}
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  country       String
+  visaType      String
+  name          String
+  order         Int
+  description   String?
+  subtasks      String   @default("[]") // JSON array of {id, title, done}
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([consultancyId])
 }
 
 model Department {
-  id        Int      @id @default(autoincrement())
-  name        String   @unique
-  description String?
-  headId      Int?     @unique
-  head        User?    @relation("DepartmentHead", fields: [headId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  members     User[]
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  headId        Int?     @unique
+  head          User?    @relation("DepartmentHead", fields: [headId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  members       User[]
+
+  @@unique([consultancyId, name])
+  @@index([consultancyId])
 }
 
 model Designation {
-  id        Int      @id @default(autoincrement())
-  title       String   @unique
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  members     User[]
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  members       User[]
+
+  @@unique([consultancyId, title])
+  @@index([consultancyId])
 }
 
 model EmployeeDocument {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String?
-  name      String
-  url       String
-  status    String   @default("Uploaded")
-  fileSize  Int?
-  fileType  String?
-  createdAt DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String?
+  name          String
+  url           String
+  status        String   @default("Uploaded")
+  fileSize      Int?
+  fileType      String?
+  createdAt     DateTime @default(now())
+
+  @@index([consultancyId])
 }
 
 model Attendance {
-  id        Int      @id @default(autoincrement())
+  consultancyId Int?
+  id            Int       @id @default(autoincrement())
   userId        Int
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   date          DateTime
   checkIn       DateTime?
   checkOut      DateTime?
-  status        String   @default("Present")
+  status        String    @default("Present")
   notes         String?
   checkInPhoto  String?
   checkOutPhoto String?
@@ -688,262 +821,304 @@ model Attendance {
   checkInLng    Float?
   checkOutLat   Float?
   checkOutLng   Float?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@unique([userId, date])
   @@index([userId])
   @@index([date])
+  @@index([consultancyId])
 }
 
 model LeaveType {
-  id        Int      @id @default(autoincrement())
-  name        String   @unique
-  description String?
-  daysPerYear Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  balances    LeaveBalance[]
-  requests    LeaveRequest[]
+  consultancyId Int?
+  id            Int            @id @default(autoincrement())
+  name          String
+  description   String?
+  daysPerYear   Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  balances      LeaveBalance[]
+  requests      LeaveRequest[]
+
+  @@unique([consultancyId, name])
+  @@index([consultancyId])
 }
 
 model LeaveBalance {
-  id        Int      @id @default(autoincrement())
-  userId      Int
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  leaveTypeId Int
-  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
-  totalDays   Int       @default(0)
-  usedDays    Int       @default(0)
-  year        Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  consultancyId Int?
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaveTypeId   Int
+  leaveType     LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  totalDays     Int       @default(0)
+  usedDays      Int       @default(0)
+  year          Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@unique([userId, leaveTypeId, year])
   @@index([userId])
+  @@index([consultancyId])
 }
 
 model LeaveRequest {
-  id        Int      @id @default(autoincrement())
-  userId      Int
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  leaveTypeId Int
-  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
-  startDate   DateTime
-  endDate     DateTime
-  reason      String
-  status      String    @default("Pending")
-  approvedBy  Int?
-  approver    User?     @relation("ApprovedLeaves", fields: [approvedBy], references: [id])
-  notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  consultancyId Int?
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaveTypeId   Int
+  leaveType     LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  startDate     DateTime
+  endDate       DateTime
+  reason        String
+  status        String    @default("Pending")
+  approvedBy    Int?
+  approver      User?     @relation("ApprovedLeaves", fields: [approvedBy], references: [id])
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([userId])
   @@index([status])
+  @@index([consultancyId])
 }
 
 model Payroll {
-  id        Int      @id @default(autoincrement())
+  consultancyId Int?
+  id            Int           @id @default(autoincrement())
   userId        Int
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   month         Int
   year          Int
-  basicSalary   Float          @default(0)
-  allowances    Float          @default(0)
-  deductions    Float          @default(0)
-  bonus         Float          @default(0)
-  netSalary     Float          @default(0)
-  status        String         @default("Draft")
+  basicSalary   Float         @default(0)
+  allowances    Float         @default(0)
+  deductions    Float         @default(0)
+  bonus         Float         @default(0)
+  netSalary     Float         @default(0)
+  status        String        @default("Draft")
   paidAt        DateTime?
   paymentMethod String?
   notes         String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   items         PayrollItem[]
 
   @@unique([userId, month, year])
   @@index([userId])
   @@index([month, year])
+  @@index([consultancyId])
 }
 
 model PayrollItem {
-  id        Int      @id @default(autoincrement())
-  payrollId Int
-  payroll   Payroll  @relation(fields: [payrollId], references: [id], onDelete: Cascade)
-  label     String
-  type      String
-  amount    Float    @default(0)
-  createdAt DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  payrollId     Int
+  payroll       Payroll  @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  label         String
+  type          String
+  amount        Float    @default(0)
+  createdAt     DateTime @default(now())
 
   @@index([payrollId])
+  @@index([consultancyId])
 }
 
 model ScannedDocument {
-  id        Int      @id @default(autoincrement())
-  userId     Int
-  filename   String
-  url        String
-  fileSize   Int
-  dpi        Int      @default(200)
-  pageCount  Int      @default(1)
-  createdAt  DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  filename      String
+  url           String
+  fileSize      Int
+  dpi           Int      @default(200)
+  pageCount     Int      @default(1)
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
+  @@index([consultancyId])
 }
 
 model FileFolder {
-  id        Int      @id @default(autoincrement())
-  name      String
-  userId    Int
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  files     FileItem[]
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consultancyId Int?
+  id            Int        @id @default(autoincrement())
+  name          String
+  userId        Int
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  files         FileItem[]
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([consultancyId])
 }
 
 model FileItem {
-  id        Int      @id @default(autoincrement())
+  consultancyId      Int?
+  id                 Int               @id @default(autoincrement())
   name               String
   url                String
-  fileSize           Int              @default(0)
-  fileType           String           @default("application/octet-stream")
+  fileSize           Int               @default(0)
+  fileType           String            @default("application/octet-stream")
   academicDocumentId Int?
   folderId           Int
   userId             Int
-  createdAt          DateTime         @default(now())
-  folder             FileFolder       @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime          @default(now())
+  folder             FileFolder        @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   academicDocument   AcademicDocument? @relation(fields: [academicDocumentId], references: [id])
 
   @@index([folderId])
   @@index([userId])
   @@index([academicDocumentId])
+  @@index([consultancyId])
 }
 
 model Holiday {
-  id        Int      @id @default(autoincrement())
-  name      String
-  date      DateTime
-  type      String   @default("Public") // Public, Optional, Company
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  name          String
+  date          DateTime
+  type          String   @default("Public") // Public, Optional, Company
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  @@unique([date])
+  @@unique([consultancyId, date])
+  @@index([consultancyId])
 }
 
 model ChatRoom {
-  id        Int      @id @default(autoincrement())
-  name      String?
-  type      String        @default("DIRECT")
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  messages  ChatMessage[]
-  members   User[]        @relation("ChatRoomMembers")
+  consultancyId Int?
+  id            Int           @id @default(autoincrement())
+  name          String?
+  type          String        @default("DIRECT")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  messages      ChatMessage[]
+  members       User[]        @relation("ChatRoomMembers")
+
+  @@index([consultancyId])
 }
 
 model ChatMessage {
-  id        Int      @id @default(autoincrement())
-  roomId    Int
-  senderId  Int
-  content   String
-  createdAt DateTime @default(now())
-  room      ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  roomId        Int
+  senderId      Int
+  content       String
+  createdAt     DateTime @default(now())
+  room          ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender        User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([roomId])
   @@index([senderId])
+  @@index([consultancyId])
 }
 
 model TrashItem {
-  id        Int      @id @default(autoincrement())
-  entityType String
-  entityId   String
-  entityName String
-  deletedAt  DateTime  @default(now())
-  expiresAt  DateTime
-  restoredAt DateTime?
-  deletedBy  String?
-  createdAt  DateTime  @default(now())
+  consultancyId Int?
+  id            Int       @id @default(autoincrement())
+  entityType    String
+  entityId      String
+  entityName    String
+  deletedAt     DateTime  @default(now())
+  expiresAt     DateTime
+  restoredAt    DateTime?
+  deletedBy     String?
+  createdAt     DateTime  @default(now())
 
   @@index([entityType])
   @@index([entityId])
   @@index([expiresAt])
+  @@index([consultancyId])
 }
 
 model SavedReport {
-  id        Int      @id @default(autoincrement())
-  name        String
-  description String?
-  type        String   @default("tabular")
-  config      String
-  createdBy   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  type          String   @default("tabular")
+  config        String
+  createdBy     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([consultancyId])
 }
 
 model DashboardLayout {
-  id        Int      @id @default(autoincrement())
-  userId    String   @unique
-  layout    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  userId        String   @unique
+  layout        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
+  @@index([consultancyId])
 }
 
 model OnboardingProgress {
-  id        Int      @id @default(autoincrement())
-  studentId Int      @unique
-  step      Int      @default(1)
-  completed Boolean  @default(false)
-  data      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  studentId     Int      @unique
+  step          Int      @default(1)
+  completed     Boolean  @default(false)
+  data          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([consultancyId])
 }
 
 model ComparisonList {
-  id        Int      @id @default(autoincrement())
-  userId    String
-  name      String   @default("My Comparison")
-  items     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  userId        String
+  name          String   @default("My Comparison")
+  items         String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([userId])
+  @@index([consultancyId])
 }
 
 model StudentConversation {
-  id        Int      @id @default(autoincrement())
-  studentId  Int
-  staffId    Int
-  subject    String?
-  lastMessage String?
+  consultancyId Int?
+  id            Int              @id @default(autoincrement())
+  studentId     Int
+  staffId       Int
+  subject       String?
+  lastMessage   String?
   lastMessageAt DateTime?
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-  messages   StudentMessage[]
-  student    Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  staff      User             @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  messages      StudentMessage[]
+  student       Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  staff         User             @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, staffId])
   @@index([studentId])
   @@index([staffId])
+  @@index([consultancyId])
 }
 
 model StudentMessage {
-  id        Int      @id @default(autoincrement())
+  consultancyId  Int?
+  id             Int                 @id @default(autoincrement())
   conversationId Int
   senderId       String
   content        String
-  read           Boolean            @default(false)
-  createdAt      DateTime           @default(now())
+  read           Boolean             @default(false)
+  createdAt      DateTime            @default(now())
   conversation   StudentConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
+  @@index([consultancyId])
 }
 
 // Threaded notes attached to a student record, used as the shared
@@ -955,35 +1130,40 @@ model StudentMessage {
 // Replies hang off `parentId`; deleting a parent keeps replies as standalone
 // notes (the route rewrites `parentId` to null before removal).
 model StudentNote {
-  id         Int      @id @default(autoincrement())
-  studentId  Int
-  content    String   @db.LongText
-  authorType String   @default("staff") // "staff" | "student"
-  authorName String   @default("")
-  authorRole String?
-  authorId   Int?
-  parentId   Int?
-  parent     StudentNote? @relation("NoteReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies    StudentNote[] @relation("NoteReplies")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  consultancyId Int?
+  id            Int           @id @default(autoincrement())
+  studentId     Int
+  content       String        @db.LongText
+  authorType    String        @default("staff") // "staff" | "student"
+  authorName    String        @default("")
+  authorRole    String?
+  authorId      Int?
+  parentId      Int?
+  parent        StudentNote?  @relation("NoteReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       StudentNote[] @relation("NoteReplies")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
   @@index([parentId])
   @@index([createdAt])
+  @@index([consultancyId])
 }
 
 model RateLimitLog {
-  id        Int      @id @default(autoincrement())
-  key       String
-  createdAt DateTime @default(now())
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  key           String
+  createdAt     DateTime @default(now())
 
   @@index([key, createdAt])
   @@index([createdAt])
+  @@index([consultancyId])
 }
 
 model CheckoutOrder {
+  consultancyId  Int?
   id             String    @id @default(cuid())
   reference      String    @unique
   planId         String
@@ -1006,49 +1186,75 @@ model CheckoutOrder {
 
   @@index([status])
   @@index([createdAt])
+  @@index([consultancyId])
 }
 
 model MarketingRequest {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  type        String   @default("Graphic Design") // "Graphic Design", "Social Media Post", "Video", "Other"
-  status      String   @default("Pending") // "Pending", "In Progress", "Completed", "Cancelled"
-  priority    String   @default("Medium") // "Low", "Medium", "High", "Urgent"
-  requestedBy Int
-  assignedTo  Int?
-  dueDate     DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  completedAt DateTime?
+  consultancyId Int?
+  id            Int       @id @default(autoincrement())
+  title         String
+  description   String
+  type          String    @default("Graphic Design") // "Graphic Design", "Social Media Post", "Video", "Other"
+  status        String    @default("Pending") // "Pending", "In Progress", "Completed", "Cancelled"
+  priority      String    @default("Medium") // "Low", "Medium", "High", "Urgent"
+  requestedBy   Int
+  assignedTo    Int?
+  dueDate       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  completedAt   DateTime?
 
-  requester   User     @relation("MarketingRequestRequester", fields: [requestedBy], references: [id], onDelete: Cascade)
-  assignee    User?    @relation("MarketingRequestAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
-  materials   MarketingMaterial[]
+  requester User                @relation("MarketingRequestRequester", fields: [requestedBy], references: [id], onDelete: Cascade)
+  assignee  User?               @relation("MarketingRequestAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  materials MarketingMaterial[]
 
   @@index([status])
   @@index([requestedBy])
   @@index([assignedTo])
   @@index([createdAt])
+  @@index([consultancyId])
 }
 
 model MarketingMaterial {
-  id           Int      @id @default(autoincrement())
-  requestId    Int
-  fileName     String
-  fileUrl      String
-  fileType     String   // "image", "video", "document"
-  fileSize     Int
-  uploadedBy   Int
-  description  String?
-  isFinal      Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  requestId     Int
+  fileName      String
+  fileUrl       String
+  fileType      String // "image", "video", "document"
+  fileSize      Int
+  uploadedBy    Int
+  description   String?
+  isFinal       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  request      MarketingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  uploader     User             @relation("MarketingMaterialUploader", fields: [uploadedBy], references: [id], onDelete: Cascade)
+  request  MarketingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  uploader User             @relation("MarketingMaterialUploader", fields: [uploadedBy], references: [id], onDelete: Cascade)
 
   @@index([requestId])
   @@index([uploadedBy])
   @@index([createdAt])
+  @@index([consultancyId])
+}
+
+model Consultancy {
+  id                Int       @id @default(autoincrement())
+  code              String    @unique
+  name              String
+  status            String    @default("Active")
+  email             String?
+  phone             String?
+  website           String?
+  address           String?
+  logoUrl           String?
+  // Subscription / package the platform owner has assigned to this workspace.
+  packageName       String?
+  packageStartDate  DateTime?
+  packageExpiryDate DateTime?
+  maxUsers          Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([status])
 }
