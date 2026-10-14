@@ -14,7 +14,15 @@ export async function GET() {
     if (!session) return apiError("Unauthorized", 401);
 
     const layout = await db.dashboardLayout.findUnique({ where: { userId: String(session.id) } });
-    return NextResponse.json({ layout: layout ? JSON.parse(layout.layout) : null });
+    let parsed: unknown = null;
+    if (layout) {
+      try {
+        parsed = JSON.parse(layout.layout);
+      } catch {
+        parsed = null;
+      }
+    }
+    return NextResponse.json({ layout: parsed });
   } catch (error) {
     logError("Dashboard layout fetch", error);
     return apiError("Failed to fetch layout");

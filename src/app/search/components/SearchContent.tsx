@@ -21,7 +21,6 @@ import {
   MapPin,
   BookOpen,
   Zap,
-  Calendar,
   Edit2,
   Check,
   Bookmark,
@@ -1067,7 +1066,7 @@ export default function SearchContent() {
             <p className="text-xs text-slate-400">Try different keywords or adjust your filters</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {filteredCourses.map((course) => (
               <SearchResultCard
                 key={course.id}
@@ -1186,137 +1185,165 @@ function SearchResultCard({
       suppressHydrationWarning
     >
       <div className="h-1 w-full" style={{ backgroundColor: course.color }} />
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div
-              className="size-9 rounded-xl flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-              style={{ backgroundColor: course.color }}
-            >
-              {course.initials}
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-bold text-slate-800 truncate">{course.name}</h3>
-              <p className="text-xs text-slate-500">{course.university}</p>
-            </div>
-          </div>
-          <span className={`badge ${status.className} flex-shrink-0 ml-2`}>{status.label}</span>
-        </div>
-
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${levelStyle}`}
-          >
-            {course.level}
-          </span>
-          <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold ${catStyle}`}
-          >
-            <Tag size={8} />
-            {course.category}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 mb-2">
-          <User size={11} className="text-slate-400" />
-          <span className="text-xs text-slate-500 truncate">{course.instructor}</span>
-        </div>
-
-        <div className="flex items-center gap-3 mb-3 text-xs text-slate-500">
-          <span className="flex items-center gap-1">
-            <Clock size={11} />
-            {course.duration}
-          </span>
-          <span className="flex items-center gap-1">
-            <GraduationCap size={11} />
-            {course.credits} cr.
-          </span>
-          <span className="flex items-center gap-1 min-w-0">
-            <Globe size={11} className="flex-shrink-0" />
-            <span className="truncate">{course.country}</span>
-          </span>
-        </div>
-
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight min-w-0 flex-shrink">
-            <Calendar size={11} className="text-indigo-400 shrink-0" />
-            <span className="flex flex-wrap gap-1">
-              {(course.intake || "").split(",").map((s, i) => (
-                <span
-                  key={i}
-                  className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[9px] font-bold whitespace-nowrap"
-                >
-                  {s.trim()}
-                </span>
-              ))}
-            </span>
-          </div>
-          <div className="text-right min-w-0 shrink-0 max-w-[50%]">
-            <div className="text-[11px] font-bold text-indigo-600 truncate">
-              {showInNPR
-                ? formatNPR(
-                    convertToNPR(
-                      String(annualTuition(course.tuitionFee, course.tuitionFeePeriod) ?? 0),
-                      course.currency || "USD",
-                      rates
-                    )
-                  )
-                : `${course.currency || "USD"} ${
-                    annualTuition(course.tuitionFee, course.tuitionFeePeriod)?.toLocaleString() ??
-                    "—"
-                  }`}
-              <span className="text-slate-400 font-semibold"> /yr</span>
-            </div>
-            {isSemesterPeriod(course.tuitionFeePeriod) && (
-              <div className="text-[9px] font-bold text-slate-400 truncate">
-                {course.currency || "USD"} {course.tuitionFee} /sem
-              </div>
-            )}
-            {course.applicationFee && (
-              <div className="text-[9px] font-bold text-emerald-600 mt-0.5 truncate">
-                App. Fee:{" "}
-                {showInNPR
-                  ? formatNPR(convertToNPR(course.applicationFee, course.currency || "USD", rates))
-                  : `${course.currency || "USD"} ${course.applicationFee}`}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="mb-3">
-          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${enrollPct}%`,
-                backgroundColor:
-                  enrollPct > 90 ? "#ef4444" : enrollPct > 70 ? "#f59e0b" : "#10b981",
-              }}
-            />
-          </div>
-        </div>
-
-        {course.requirements && course.requirements.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {course.requirements.map((req) => (
-              <span
-                key={req}
-                className="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[9px] font-bold rounded-md border border-blue-100"
+      <div className="p-5">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-5">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div
+                className="size-7 rounded-lg flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
+                style={{ backgroundColor: course.color }}
               >
-                {req}
-              </span>
-            ))}
-          </div>
-        )}
+                {course.initials}
+              </div>
+              <h3 className="text-sm font-black text-slate-800 truncate">{course.name}</h3>
+              <span className={`badge ${status.className} flex-shrink-0`}>{status.label}</span>
+            </div>
 
-        <button
-          type="button"
-          onClick={onToggle}
-          className="w-full flex items-center justify-between text-xs text-indigo-600 hover:text-indigo-700 font-medium py-1 transition-colors"
-        >
-          <span>{expanded ? "Hide details" : "View details"}</span>
-          {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-        </button>
+            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-500 flex-wrap">
+              <span className="font-bold text-slate-600 truncate max-w-[45%]">
+                {course.university}
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="flex items-center gap-1 text-slate-400 font-semibold flex-shrink-0">
+                <Globe size={11} /> {course.country}
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="flex items-center gap-1 text-slate-400 font-semibold flex-shrink-0">
+                <Clock size={11} /> {course.duration}
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="flex items-center gap-1 text-slate-400 font-semibold flex-shrink-0">
+                <GraduationCap size={11} /> {course.credits} cr.
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="flex items-center gap-1 text-slate-400 font-semibold truncate">
+                <User size={11} className="flex-shrink-0" /> {course.instructor}
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
+              {course.description}
+            </p>
+
+            <div className="flex flex-wrap gap-1.5 mt-2.5">
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${levelStyle}`}
+              >
+                {course.level}
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold ${catStyle}`}
+              >
+                <Tag size={8} />
+                {course.category}
+              </span>
+              {course.requirements &&
+                course.requirements.slice(0, 3).map((req) => (
+                  <span
+                    key={req}
+                    className="inline-flex items-center px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-semibold rounded-md border border-blue-100"
+                  >
+                    {req}
+                  </span>
+                ))}
+            </div>
+          </div>
+
+          <div className="lg:w-64 flex-shrink-0 flex flex-col gap-3 lg:border-l lg:border-slate-100 lg:pl-6">
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                  Tuition / yr
+                </p>
+                <p className="text-lg font-black text-indigo-600 leading-tight">
+                  {showInNPR
+                    ? formatNPR(
+                        convertToNPR(
+                          String(annualTuition(course.tuitionFee, course.tuitionFeePeriod) ?? 0),
+                          course.currency || "USD",
+                          rates
+                        )
+                      )
+                    : `${course.currency || "USD"} ${
+                        annualTuition(
+                          course.tuitionFee,
+                          course.tuitionFeePeriod
+                        )?.toLocaleString() ?? "—"
+                      }`}
+                </p>
+                {isSemesterPeriod(course.tuitionFeePeriod) && (
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    {course.currency || "USD"} {course.tuitionFee} /sem
+                  </p>
+                )}
+                {course.applicationFee && (
+                  <p className="text-[10px] font-bold text-emerald-600 leading-tight">
+                    App. Fee:{" "}
+                    {showInNPR
+                      ? formatNPR(
+                          convertToNPR(course.applicationFee, course.currency || "USD", rates)
+                        )
+                      : `${course.currency || "USD"} ${course.applicationFee}`}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                {course.intake && (
+                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[9px] font-bold whitespace-nowrap">
+                    {course.intake.split(",")[0]?.trim()}
+                  </span>
+                )}
+                <span className="text-[9px] font-bold text-slate-400">
+                  {course.enrolled}/{course.capacity} enrolled
+                </span>
+                <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${enrollPct}%`,
+                      backgroundColor:
+                        enrollPct > 90 ? "#ef4444" : enrollPct > 70 ? "#f59e0b" : "#10b981",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {course.applicationDeadline && (
+              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tight">
+                <span className="text-slate-400 flex items-center gap-1">
+                  <Clock size={10} /> Deadline
+                </span>
+                <span className={deadlinePassed ? "text-red-500" : "text-slate-600"}>
+                  {deadlineDate?.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onEnroll}
+                disabled={course.status !== "Active" || deadlinePassed}
+                className="flex-1 btn-primary text-xs py-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deadlinePassed ? "Applications Closed" : "Enroll Now"}
+              </button>
+              <button
+                type="button"
+                onClick={onToggle}
+                className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                title={expanded ? "Hide details" : "View details"}
+              >
+                {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            </div>
+          </div>
+        </div>
 
         {expanded && (
           <div className="mt-3 pt-3 border-t border-slate-100 space-y-2.5 animate-fade-in">
@@ -1372,46 +1399,6 @@ function SearchResultCard({
             )}
           </div>
         )}
-
-        {course.applicationDeadline && (
-          <div className="flex items-center justify-between mt-3 mb-1 px-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight flex items-center gap-1">
-              <Clock size={10} className="text-slate-400" /> Deadline
-            </span>
-            <span
-              className={`text-[10px] font-black ${deadlinePassed ? "text-red-500" : "text-slate-600"}`}
-            >
-              {deadlineDate?.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
-          </div>
-        )}
-
-        <div className="mt-3 pt-3 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={onEnroll}
-            disabled={course.status !== "Active" || deadlinePassed}
-            className="w-full btn-primary text-xs py-1.5 justify-center disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
-          >
-            <span className="relative z-10 flex items-center gap-1.5">
-              {deadlinePassed ? (
-                <>
-                  <X size={14} className="text-white/70" />
-                  Deadline Passed
-                </>
-              ) : (
-                "Quick Enroll"
-              )}
-            </span>
-            {!deadlinePassed && (
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
-            )}
-          </button>
-        </div>
       </div>
     </div>
   );

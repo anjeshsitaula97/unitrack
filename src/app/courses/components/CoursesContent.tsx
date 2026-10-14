@@ -1053,164 +1053,215 @@ function CourseCard({
       {/* Color top bar */}
       <div className="h-1.5 w-full relative" style={{ backgroundColor: course.color }} />
 
-      <div className="p-5">
-        {/* Header - Name on Top */}
-        <div className="mb-4">
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex-1 min-w-0">
+      <div className="p-6">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+          <div className="flex-1 min-w-0">
+            {/* Header - Name on Top */}
+            <div className="flex items-center gap-2 flex-wrap">
               <h3
-                className="text-base font-black text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors cursor-pointer"
+                className="text-base font-black text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors cursor-pointer truncate"
                 onClick={() => router.push(`/courses/${course.id}`)}
                 title="View course details"
               >
                 {course.name}
               </h3>
+              <span className={`badge ${status.className} flex-shrink-0`}>{status.label}</span>
               {course.courseCode && (
-                <span className="inline-block mt-1 text-[9px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                <span className="text-[9px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">
                   {course.courseCode}
                 </span>
               )}
             </div>
-            <span className={`badge ${status.className} flex-shrink-0 ml-2`}>{status.label}</span>
-          </div>
 
-          <div className="flex items-center gap-2 mt-3 p-2 bg-slate-50/50 rounded-xl border border-slate-100/50">
-            <div className="size-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 overflow-hidden border border-slate-100 bg-white shadow-sm relative">
-              {course.universityLogo ? (
-                <Image
-                  src={course.universityLogo}
-                  alt=""
-                  fill
-                  className="object-contain p-1"
-                  sizes="32px"
-                />
-              ) : (
-                <div
-                  className="w-full h-full flex items-center justify-center"
-                  style={{ backgroundColor: course.color }}
-                >
-                  {course.initials}
-                </div>
-              )}
+            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-500 flex-wrap">
+              <div className="size-5 rounded-md flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0 overflow-hidden border border-slate-100 bg-white relative">
+                {course.universityLogo ? (
+                  <Image
+                    src={course.universityLogo}
+                    alt=""
+                    fill
+                    className="object-contain"
+                    sizes="20px"
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ backgroundColor: course.color }}
+                  >
+                    {course.initials}
+                  </div>
+                )}
+              </div>
+              <span className="font-bold text-slate-600 truncate max-w-[45%]">
+                {course.university}
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="flex items-center gap-1 text-slate-400 font-semibold flex-shrink-0">
+                {getCountryFlag(course.country) && (
+                  <Image
+                    src={getCountryFlag(course.country)}
+                    alt=""
+                    width={16}
+                    height={16}
+                    className="w-3.5 h-2.5 rounded-sm object-cover"
+                  />
+                )}
+                {course.country || "Global"}
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="flex items-center gap-1 text-slate-400 font-semibold truncate">
+                <User size={11} className="flex-shrink-0" />
+                {course.instructor}
+              </span>
             </div>
-            <p className="text-xs font-bold text-slate-500 truncate">{course.university}</p>
-            <div className="flex items-center gap-1 mt-0.5 text-[10px] text-slate-400 font-bold">
-              {getCountryFlag(course.country) && (
-                <Image
-                  src={getCountryFlag(course.country)}
-                  alt=""
-                  width={24}
-                  height={24}
-                  className="w-4 h-3 rounded-sm object-cover"
-                />
-              )}
-              {course.country || "Global"}
-            </div>
-          </div>
-        </div>
 
-        {/* Short Description */}
-        <div className="text-xs text-slate-500 mb-3 h-[90px] overflow-y-auto pr-1 leading-relaxed custom-scrollbar">
-          {course.description}
-        </div>
+            {/* Short Description */}
+            <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
+              {course.description}
+            </p>
 
-        {/* Badges */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${levelStyle.className}`}
-          >
-            {course.level}
-          </span>
-          <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700`}
-          >
-            <GraduationCap size={8} />
-            {course.degreeType}
-          </span>
-          <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold ${facultyStyle}`}
-          >
-            <Tag size={8} />
-            {course.faculty}
-          </span>
-          {course.intake && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700">
-              <Calendar size={8} />
-              {formatIntake(course.intake)}
-            </span>
-          )}
-          {course.quickFilters &&
-            course.quickFilters.slice(0, 3).map((f, i) => {
-              const filterInfo = quickFilters.find((q) => q.label === f);
-              return (
-                <span
-                  key={`card-qf-${f}-${i}`}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-100"
-                >
-                  <Zap size={8} />
-                  {filterInfo?.label || f}
+            {/* Badges */}
+            <div className="flex flex-wrap gap-1.5 mt-2.5">
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${levelStyle.className}`}
+              >
+                {course.level}
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700`}
+              >
+                <GraduationCap size={8} />
+                {course.degreeType}
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold ${facultyStyle}`}
+              >
+                <Tag size={8} />
+                {course.faculty}
+              </span>
+              {course.intake && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+                  <Calendar size={8} />
+                  {formatIntake(course.intake)}
                 </span>
-              );
-            })}
-          {course.quickFilters && course.quickFilters.length > 3 && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-50 text-slate-400 border border-slate-100">
-              +{course.quickFilters.length - 3} more
-            </span>
-          )}
-        </div>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-[1fr_1fr_1.6fr] gap-2 mb-3">
-          <div className="text-center min-w-0">
-            <p className="text-xs font-bold text-slate-700 font-tabular truncate">
-              {course.credits}
-            </p>
-            <p className="text-[10px] text-slate-400">Credits</p>
+              )}
+              {course.quickFilters &&
+                course.quickFilters.slice(0, 2).map((f, i) => {
+                  const filterInfo = quickFilters.find((q) => q.label === f);
+                  return (
+                    <span
+                      key={`card-qf-${f}-${i}`}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-100"
+                    >
+                      <Zap size={8} />
+                      {filterInfo?.label || f}
+                    </span>
+                  );
+                })}
+              {course.quickFilters && course.quickFilters.length > 2 && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-50 text-slate-400 border border-slate-100">
+                  +{course.quickFilters.length - 2} more
+                </span>
+              )}
+            </div>
           </div>
-          <div className="text-center border-x border-slate-100 min-w-0">
-            <p className="text-xs font-bold text-slate-700 truncate">{course.duration} Yrs</p>
-            <p className="text-[10px] text-slate-400">Duration</p>
-          </div>
-          <div className="text-center min-w-0 space-y-0.5">
-            <p className="text-xs font-bold text-indigo-600 font-tabular leading-tight">
-              {showInNPR
-                ? formatNPR(convertToNPR(String(yearlyTuition ?? 0), courseCurrency, rates))
-                : `${courseCurrency} ${yearlyTuition !== null ? yearlyTuition.toLocaleString() : "—"}`}
-              <span className="text-slate-400 font-semibold"> /yr</span>
-            </p>
-            {tuitionIsSemester && course.tuitionFee ? (
-              <p className="text-[10px] text-slate-400 leading-tight">
-                {courseCurrency} {course.tuitionFee} /sem
-              </p>
-            ) : null}
-            {course.applicationFee ? (
-              <p className="text-[10px] font-bold text-emerald-600 leading-tight">
-                App. Fee:{" "}
-                {showInNPR
-                  ? formatNPR(convertToNPR(course.applicationFee, courseCurrency, rates))
-                  : `${courseCurrency} ${course.applicationFee}`}
-              </p>
-            ) : !tuitionIsSemester ? (
-              <p className="text-[10px] text-slate-400">Tuition / yr</p>
-            ) : null}
+
+          <div className="lg:w-72 flex-shrink-0 flex flex-col gap-3 lg:border-l lg:border-slate-100 lg:pl-6">
+            {/* Fee + key metrics */}
+            <div className="flex items-end justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                  Tuition / yr
+                </p>
+                <p className="text-lg font-black text-indigo-600 leading-tight">
+                  {showInNPR
+                    ? formatNPR(convertToNPR(String(yearlyTuition ?? 0), courseCurrency, rates))
+                    : `${courseCurrency} ${yearlyTuition !== null ? yearlyTuition.toLocaleString() : "—"}`}
+                </p>
+                {tuitionIsSemester && course.tuitionFee ? (
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    {courseCurrency} {course.tuitionFee} /sem
+                  </p>
+                ) : course.applicationFee ? (
+                  <p className="text-[10px] font-bold text-emerald-600 leading-tight">
+                    App. Fee:{" "}
+                    {showInNPR
+                      ? formatNPR(convertToNPR(course.applicationFee, courseCurrency, rates))
+                      : `${courseCurrency} ${course.applicationFee}`}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex gap-3 text-center flex-shrink-0">
+                <div>
+                  <p className="text-sm font-black text-slate-700 leading-tight">
+                    {course.credits}
+                  </p>
+                  <p className="text-[10px] text-slate-400">Credits</p>
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-700 leading-tight">
+                    {course.duration}
+                  </p>
+                  <p className="text-[10px] text-slate-400">Years</p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-bold ${appStatus.label === "Applications Open" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}
+            >
+              <span
+                className={`size-1.5 rounded-full ${appStatus.label === "Applications Open" ? "bg-emerald-500" : "bg-red-500"}`}
+              />
+              {appStatus.label}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onEnroll(course)}
+                className="flex-1 btn-primary text-xs py-2 justify-center"
+              >
+                Quick Enroll
+              </button>
+              {hasPrereqs && (
+                <button
+                  type="button"
+                  onClick={() => onPrerequisites(course)}
+                  className="p-1.5 rounded-lg border border-slate-200 hover:bg-indigo-50 text-indigo-500 hover:text-indigo-700 transition-colors"
+                  title="View prerequisites"
+                >
+                  <ListChecks size={13} />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => router.push(`/courses/edit/${course.id}`)}
+                className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors"
+                title="Edit"
+              >
+                <Edit2 size={13} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(course.id, course.name)}
+                className="p-1.5 rounded-lg border border-slate-200 hover:bg-red-50 text-red-800 hover:text-red-500 transition-colors"
+                title="Delete"
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={onToggle}
+              className="w-full flex items-center justify-center gap-1 text-[11px] text-slate-500 hover:text-indigo-600 font-semibold transition-colors"
+            >
+              <span>{expanded ? "Hide details" : "Show details"}</span>
+              {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
           </div>
         </div>
-
-        {/* Instructor */}
-        <div className="flex items-center gap-1.5 mb-3">
-          <User size={11} className="text-slate-400 flex-shrink-0" />
-          <span className="text-xs text-slate-500 truncate">{course.instructor}</span>
-        </div>
-
-        {/* Expand toggle */}
-        <button
-          type="button"
-          onClick={onToggle}
-          className="w-full flex items-center justify-between text-xs text-indigo-600 hover:text-indigo-700 font-medium py-1 transition-colors"
-        >
-          <span>{expanded ? "Hide details" : "Show details"}</span>
-          {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-        </button>
 
         {/* Expanded details */}
         {expanded && (
@@ -1339,49 +1390,6 @@ function CourseCard({
             )}
           </div>
         )}
-
-        {/* Actions */}
-        <div
-          className={`mb-3 w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${appStatus.label === "Applications Open" ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-red-600 text-white hover:bg-red-700"}`}
-        >
-          <span className="size-1.5 rounded-full bg-white" />
-          {appStatus.label}
-        </div>
-        <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={() => onEnroll(course)}
-            className="flex-1 btn-primary text-xs py-1.5 justify-center"
-          >
-            Quick Enroll
-          </button>
-          {hasPrereqs && (
-            <button
-              type="button"
-              onClick={() => onPrerequisites(course)}
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-indigo-50 text-indigo-500 hover:text-indigo-700 transition-colors"
-              title="View prerequisites"
-            >
-              <ListChecks size={13} />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => router.push(`/courses/edit/${course.id}`)}
-            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors"
-            title="Edit"
-          >
-            <Edit2 size={13} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(course.id, course.name)}
-            className="p-1.5 rounded-lg border border-slate-200 hover:bg-red-50 text-red-800 hover:text-red-500 transition-colors"
-            title="Delete"
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -2091,7 +2099,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
+        <div className="grid grid-cols-1 gap-4 mb-5">
           {paginated.map((course) => (
             <CourseCard
               key={course.id}

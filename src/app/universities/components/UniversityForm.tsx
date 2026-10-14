@@ -232,7 +232,8 @@ export default function UniversityForm({
           dispatch({ type: "loadError" });
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err?.name === "AbortError") return;
         toast.error("Failed to load university data");
         dispatch({ type: "loadError" });
       });

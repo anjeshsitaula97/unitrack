@@ -10,6 +10,7 @@ const db = vi.hoisted(() => ({
   scannedDocument: { findFirst: vi.fn() },
   employeeDocument: { findFirst: vi.fn() },
   marketingMaterial: { findFirst: vi.fn() },
+  consultancy: { findFirst: vi.fn() },
 }));
 
 vi.mock("../db", () => ({ db }));
@@ -69,13 +70,18 @@ describe("authorizeUploadAccess", () => {
     expect(await authorizeUploadAccess("a.png", staff(4, "Viewer"), none())).toBe("allow");
   });
 
-  it("denies a file that no record claims", async () => {
-    expect(await authorizeUploadAccess("orphan.png", staff(2, "Super Admin"), none())).toBe("deny");
+  it("allows an unclaimed image so a just-uploaded logo can be previewed", async () => {
+    expect(await authorizeUploadAccess("orphan.png", staff(2, "Super Admin"), none())).toBe("allow");
+    expect(await authorizeUploadAccess("orphan.svg", staff(4, "Staff"), none())).toBe("allow");
+  });
+
+  it("denies an unclaimed non-image document", async () => {
+    expect(await authorizeUploadAccess("orphan.pdf", staff(2, "Super Admin"), none())).toBe("deny");
   });
 
   it("does not match a file whose owner stores a different path", async () => {
-    db.fileItem.findFirst.mockResolvedValue({ userId: 3, url: "/uploads/other.png" });
-    expect(await authorizeUploadAccess("a.png", staff(3, "Staff"), none())).toBe("deny");
+    db.fileItem.findFirst.mockResolvedValue({ userId: 3, url: "/uploads/other.pdf" });
+    expect(await authorizeUploadAccess("a.pdf", staff(3, "Staff"), none())).toBe("deny");
   });
 
   describe("path matching", () => {

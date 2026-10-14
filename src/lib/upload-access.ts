@@ -14,7 +14,19 @@ import type { SessionPayload } from "./session";
 const STAFF_ROLES = ["Super Admin", "Admin", "Staff"];
 const ADMIN_ROLES = ["Super Admin", "Admin"];
 
+const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"]);
+
 type Verdict = "allow" | "deny";
+
+/**
+ * A freshly uploaded image is served back to the uploader for preview before it
+ * is attached to any record, so no row claims it yet. Images here are branding,
+ * banners and avatars, not private documents, so role checks are not required.
+ */
+function isImagePath(relativePath: string): boolean {
+  const dot = relativePath.lastIndexOf(".");
+  return dot > -1 && IMAGE_EXTENSIONS.has(relativePath.slice(dot).toLowerCase());
+}
 
 const isStaff = (session: SessionPayload) => STAFF_ROLES.includes(session.role);
 const isAdmin = (session: SessionPayload) => ADMIN_ROLES.includes(session.role);
@@ -101,6 +113,10 @@ export async function authorizeUploadAccess(
 
   if (material && owns(material.fileUrl, relativePath)) return "allow";
   if (await isSharedAsset(relativePath)) return "allow";
+
+  // Unclaimed image assets (a logo/banner/avatar uploaded seconds ago and not
+  // yet saved onto a record) are previewable by any signed-in user.
+  if (isImagePath(relativePath)) return "allow";
 
   // Nothing claims this file. Refuse rather than serve an orphan by URL.
   return "deny";
