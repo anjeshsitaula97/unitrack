@@ -14,7 +14,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import { clearAuthCache } from "@/components/AppLayoutWrapper";
+import { clearAuthCache } from "@/lib/auth-state";
 import { deactivateSession } from "@/lib/client-session";
 
 interface OmUser {
@@ -48,6 +48,7 @@ export default function OmShell({ user, children }: { user: OmUser; children: Re
     exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
   const handleLogout = async () => {
+    if (loggingOut) return;
     try {
       setLoggingOut(true);
       const res = await fetch("/api/auth/logout", { method: "POST" });

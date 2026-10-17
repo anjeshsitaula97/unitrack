@@ -33,13 +33,20 @@ export default function StudentPayments() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/student-portal/payments")
-      .then(safeJson)
+    const ac = new AbortController();
+    fetch("/api/student-portal/payments", { signal: ac.signal })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return (await safeJson(res)) as PaymentSummary | null;
+      })
       .then((d) => {
         setData(d);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        if (err?.name !== "AbortError") setLoading(false);
+      });
+    return () => ac.abort();
   }, []);
 
   return (

@@ -4,14 +4,31 @@ import React, { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Briefcase, Loader2, X, Users, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { fetchDesignations, type Designation } from "./designations-api";
 
-interface Designation {
-  id: number;
-  title: string;
-  description: string | null;
-  _count: { members: number };
-  createdAt: string;
-  updatedAt: string;
+function DesignationsPageHeader({ count, onAdd }: { count: number; onAdd: () => void }) {
+  return (
+    <div className="flex items-start justify-between mb-6">
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <Link href="/hr" className="text-slate-400 hover:text-slate-600">
+            <ArrowLeft size={16} />
+          </Link>
+          <h1 className="text-2xl font-bold text-slate-800">Designations</h1>
+        </div>
+        <p className="text-sm text-slate-400">{count} job titles</p>
+      </div>
+      <button
+        type="button"
+        onClick={onAdd}
+        className="btn-primary flex items-center gap-2"
+        aria-label="Add Designation"
+      >
+        {" "}
+        <Plus size={15} /> Add Designation
+      </button>
+    </div>
+  );
 }
 
 export default function DesignationsContent() {
@@ -24,8 +41,7 @@ export default function DesignationsContent() {
 
   const fetchData = async () => {
     try {
-      const res = await fetch("/api/hr/designations");
-      if (res.ok) setItems(await res.json());
+      setItems(await fetchDesignations());
     } catch {
       toast.error("Failed to load data");
     } finally {
@@ -34,9 +50,20 @@ export default function DesignationsContent() {
   };
 
   useEffect(() => {
-    queueMicrotask(() => {
-      fetchData();
-    });
+    let cancelled = false;
+    fetchDesignations()
+      .then((data) => {
+        if (!cancelled) setItems(data);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Failed to load data");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const openAdd = () => {
@@ -102,26 +129,7 @@ export default function DesignationsContent() {
 
       {!loading && (
         <>
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Link href="/hr" className="text-slate-400 hover:text-slate-600">
-                  <ArrowLeft size={16} />
-                </Link>
-                <h1 className="text-2xl font-bold text-slate-800">Designations</h1>
-              </div>
-              <p className="text-sm text-slate-400">{items?.length ?? 0} job titles</p>
-            </div>
-            <button
-              type="button"
-              onClick={openAdd}
-              className="btn-primary flex items-center gap-2"
-              aria-label="Add"
-            >
-              {" "}
-              <Plus size={15} /> Add Designation
-            </button>
-          </div>
+          <DesignationsPageHeader count={items?.length ?? 0} onAdd={openAdd} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {(items ?? []).map((item) => (
@@ -135,6 +143,7 @@ export default function DesignationsContent() {
                       type="button"
                       onClick={() => openEdit(item)}
                       className="p-1.5 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                      aria-label={`Edit ${item.title}`}
                     >
                       <Edit2 size={14} />
                     </button>
@@ -142,6 +151,7 @@ export default function DesignationsContent() {
                       type="button"
                       onClick={() => handleDelete(item.id)}
                       className="p-1.5 text-red-800 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                      aria-label={`Delete ${item.title}`}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -176,6 +186,7 @@ export default function DesignationsContent() {
                 type="button"
                 onClick={() => setShowModal(false)}
                 className="text-slate-400 hover:text-slate-600 p-1"
+                aria-label="Close dialog"
               >
                 <X size={20} />
               </button>
@@ -195,7 +206,7 @@ export default function DesignationsContent() {
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="e.g. Senior Developer"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
                 />
               </div>
               <div>
@@ -210,7 +221,7 @@ export default function DesignationsContent() {
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="Role description"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
                   rows={3}
                 />
               </div>

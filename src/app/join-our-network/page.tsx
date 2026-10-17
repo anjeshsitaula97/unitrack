@@ -143,13 +143,13 @@ export default function JoinOurNetworkPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <a
                   href="#agent-form"
-                  className="bg-white text-[#2d3259] px-8 py-4 rounded-2xl font-extrabold text-lg shadow-2xl hover:bg-[#f0f0ff] transition-all active:scale-95 inline-block"
+                  className="bg-white text-[#2d3259] px-8 py-4 rounded-2xl font-extrabold text-lg shadow-2xl hover:bg-[#f0f0ff] transition active:scale-95 inline-block"
                 >
                   Join Our Network
                 </a>
                 <a
                   href="#how-it-works"
-                  className="bg-white/10 border border-white/25 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition-all inline-block"
+                  className="bg-white/10 border border-white/25 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition inline-block"
                 >
                   How It Works
                 </a>
@@ -167,6 +167,7 @@ export default function JoinOurNetworkPage() {
                   fill
                   className="object-cover"
                   priority
+                  sizes="(max-width: 1023px) 100vw, 50vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-tr from-[#0A1628]/40 via-transparent to-transparent" />
               </div>
@@ -205,7 +206,7 @@ export default function JoinOurNetworkPage() {
               {BENEFITS.map((b) => (
                 <div
                   key={b.title}
-                  className="bg-white rounded-2xl p-7 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 group hover:-translate-y-1"
+                  className="bg-white rounded-2xl p-7 shadow-sm hover:shadow-xl transition duration-300 border border-slate-100 group hover:-translate-y-1"
                 >
                   <div className="w-12 h-12 bg-[#EEEEF5] rounded-xl flex items-center justify-center mb-5 group-hover:bg-[#585d75] transition-colors duration-300">
                     <span className="material-symbols-outlined text-[#585d75] text-2xl group-hover:text-white transition-colors duration-300">
@@ -298,7 +299,7 @@ export default function JoinOurNetworkPage() {
                       value={formData.agencyName}
                       onChange={handleChange}
                       placeholder="e.g. Global Pathways Agency"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition"
                     />
                   </div>
                   <div>
@@ -311,7 +312,7 @@ export default function JoinOurNetworkPage() {
                       value={formData.country}
                       onChange={handleChange}
                       placeholder="e.g. Nepal"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition"
                     />
                   </div>
                   <div>
@@ -323,7 +324,7 @@ export default function JoinOurNetworkPage() {
                       required
                       value={formData.agencyType}
                       onChange={handleChange}
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition-all bg-white"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition bg-white"
                     >
                       <option value="">Select type</option>
                       <option>Independent Education Agent</option>
@@ -344,7 +345,7 @@ export default function JoinOurNetworkPage() {
                       value={formData.website}
                       onChange={handleChange}
                       placeholder="https://www.youragency.com"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition"
                     />
                   </div>
                   <div>
@@ -355,7 +356,7 @@ export default function JoinOurNetworkPage() {
                       name="studentsPerYear"
                       value={formData.studentsPerYear}
                       onChange={handleChange}
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition-all bg-white"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition bg-white"
                     >
                       <option value="">Select range</option>
                       <option>Under 20 students</option>
@@ -374,7 +375,7 @@ export default function JoinOurNetworkPage() {
                       value={formData.primaryMarkets}
                       onChange={handleChange}
                       placeholder="e.g. South Asia, Southeast Asia"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition"
                     />
                   </div>
                 </div>
@@ -392,7 +393,7 @@ export default function JoinOurNetworkPage() {
                       value={formData.contactName}
                       onChange={handleChange}
                       placeholder="John Doe"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition"
                     />
                   </div>
                   <div>
@@ -406,7 +407,7 @@ export default function JoinOurNetworkPage() {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="john@youragency.com"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -419,7 +420,7 @@ export default function JoinOurNetworkPage() {
                       value={formData.phone}
                       onChange={handleChange}
                       placeholder="+977 98XXXXXXXX"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition"
                     />
                   </div>
                 </div>
@@ -433,13 +434,13 @@ export default function JoinOurNetworkPage() {
                     value={formData.message}
                     onChange={handleChange}
                     placeholder="Tell us about your agency, where your students are going, or any questions you have about the network..."
-                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition-all resize-none"
+                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#585d75] focus:border-transparent transition resize-none"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#585d75] text-white py-4 rounded-xl font-extrabold text-base hover:bg-[#454a5e] transition-all shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-3"
+                  className="w-full bg-[#585d75] text-white py-4 rounded-xl font-extrabold text-base hover:bg-[#454a5e] transition shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-3"
                 >
                   {loading ? (
                     <>
@@ -469,7 +470,7 @@ export default function JoinOurNetworkPage() {
             </p>
             <a
               href="mailto:agents@unitrack.com"
-              className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white px-6 py-3 rounded-xl font-bold hover:bg-white/20 transition-all text-sm"
+              className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white px-6 py-3 rounded-xl font-bold hover:bg-white/20 transition text-sm"
             >
               <span className="material-symbols-outlined text-lg">mail</span>
               agents@unitrack.com

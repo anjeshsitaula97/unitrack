@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { MODULES, getEnabledModuleIds } from "@/lib/modules";
 import { deactivateSession } from "@/lib/client-session";
+import { api } from "@/lib/fetch-client";
 
 const navItems = [
   {
@@ -63,6 +64,17 @@ const navItems = [
   },
 ];
 
+async function loadEnabledModuleIds(): Promise<string[] | null> {
+  try {
+    const data = await api.get<{ enabledModules?: string }>("/api/settings/localization", {
+      showError: false,
+    });
+    return data?.enabledModules ? getEnabledModuleIds(data.enabledModules) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function StudentSidebar({
   collapsed,
   onToggle,
@@ -77,14 +89,15 @@ export default function StudentSidebar({
   );
 
   useEffect(() => {
-    fetch("/api/settings/localization")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.enabledModules) {
-          setEnabledModuleIds(getEnabledModuleIds(data.enabledModules));
-        }
+    let active = true;
+    loadEnabledModuleIds()
+      .then((ids) => {
+        if (active && ids) setEnabledModuleIds(ids);
       })
       .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
 
   const filteredNavItems = navItems.filter((item) => {
@@ -100,7 +113,7 @@ export default function StudentSidebar({
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-full bg-white border-r border-slate-200 z-30 flex flex-col transition-all duration-300 ease-in-out ${collapsed ? "w-16" : "w-60"}`}
+      className={`fixed left-0 top-0 h-full bg-white border-r border-slate-200 z-30 flex flex-col transition duration-300 ease-in-out ${collapsed ? "w-16" : "w-60"}`}
     >
       <div
         className={`flex items-center h-14 border-b border-slate-100 px-3 ${collapsed ? "justify-center" : "justify-between"}`}
@@ -119,7 +132,7 @@ export default function StudentSidebar({
           <button
             type="button"
             onClick={onToggle}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all duration-150"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition duration-150"
             aria-label="Collapse sidebar"
           >
             <ChevronLeft size={16} />
@@ -136,7 +149,7 @@ export default function StudentSidebar({
               key={item.id}
               href={item.href}
               title={collapsed ? item.label : undefined}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${collapsed ? "justify-center" : ""} ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition duration-150 ${collapsed ? "justify-center" : ""} ${
                 isActive
                   ? "bg-indigo-50 text-indigo-700"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -156,7 +169,7 @@ export default function StudentSidebar({
           <button
             type="button"
             onClick={onToggle}
-            className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all duration-150 mb-1"
+            className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition duration-150 mb-1"
             aria-label="Expand sidebar"
           >
             <ChevronRight size={16} />
@@ -165,7 +178,7 @@ export default function StudentSidebar({
         <button
           type="button"
           onClick={handleLogout}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-150 ${collapsed ? "justify-center" : ""}`}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition duration-150 ${collapsed ? "justify-center" : ""}`}
           title={collapsed ? "Sign Out" : undefined}
         >
           <LogOut size={18} />

@@ -35,6 +35,8 @@ import {
   FileText,
   Sparkles,
   PartyPopper,
+  Languages,
+  ClipboardList,
 } from "lucide-react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { toast } from "sonner";
@@ -46,6 +48,7 @@ import { buildXlsx, downloadBlob } from "@/lib/spreadsheet";
 import { getLatestRates, convertToNPR, formatNPR } from "@/lib/forex";
 import { safeParseArray } from "@/lib/json";
 import { getCountryFlag } from "@/lib/country-flags";
+import { fetchStudents } from "@/lib/students-api";
 
 const formatIntake = (intakeStr: string | null | undefined) => {
   if (!intakeStr) return "TBA";
@@ -154,6 +157,24 @@ interface Course {
   englishOverallScore?: string | null;
   englishLanguageType?: string | null;
   englishTestStage?: string | null;
+  englishReadingScore?: string | null;
+  englishWritingScore?: string | null;
+  englishListeningScore?: string | null;
+  englishSpeakingScore?: string | null;
+  englishTests?: EnglishTestEntry[];
+  requirements?: string[];
+  academicRequirement?: string | null;
+  language?: string | null;
+  mode?: string | null;
+}
+
+interface EnglishTestEntry {
+  type?: string;
+  overall?: string;
+  reading?: string;
+  writing?: string;
+  listening?: string;
+  speaking?: string;
 }
 
 interface Intake {
@@ -180,6 +201,11 @@ interface Student {
   education?: string | EducationEntry[] | null;
   testType?: string | null;
   overallScore?: string | null;
+  readingScore?: string | null;
+  writingScore?: string | null;
+  listeningScore?: string | null;
+  speakingScore?: string | null;
+  moi?: string | null;
 }
 
 interface GuestDetails {
@@ -237,7 +263,7 @@ function GuestCheckModal({
                 id="guest-qualification"
                 value={details.qualification}
                 onChange={(e) => setDetails({ ...details, qualification: e.target.value })}
-                className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all cursor-pointer"
+                className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition cursor-pointer"
               >
                 <option value="">Select Qualification…</option>
                 <option value="+2/Grade XII">+2 / Grade XII</option>
@@ -259,7 +285,7 @@ function GuestCheckModal({
                 value={details.score}
                 onChange={(e) => setDetails({ ...details, score: e.target.value })}
                 placeholder="e.g. 3.5 or 75%"
-                className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all"
+                className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition"
               />
             </div>
 
@@ -275,7 +301,7 @@ function GuestCheckModal({
                   id="guest-test-type"
                   value={details.testType}
                   onChange={(e) => setDetails({ ...details, testType: e.target.value })}
-                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all cursor-pointer"
+                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition cursor-pointer"
                 >
                   <option value="">Select Test…</option>
                   <option value="IELTS">IELTS</option>
@@ -297,7 +323,7 @@ function GuestCheckModal({
                   value={details.overallScore}
                   onChange={(e) => setDetails({ ...details, overallScore: e.target.value })}
                   placeholder="e.g. 7.0 or 65"
-                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all"
+                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition"
                 />
               </div>
             </div>
@@ -307,7 +333,7 @@ function GuestCheckModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-8 py-4 border border-slate-200 rounded-2xl font-black text-slate-500 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest"
+              className="flex-1 px-8 py-4 border border-slate-200 rounded-2xl font-black text-slate-500 hover:bg-slate-50 transition text-xs uppercase tracking-widest"
             >
               Cancel
             </button>
@@ -317,7 +343,7 @@ function GuestCheckModal({
                 onSave(details);
                 onClose();
               }}
-              className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-200 transition-all text-xs uppercase tracking-widest"
+              className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-200 transition text-xs uppercase tracking-widest"
             >
               Save & Check
             </button>
@@ -391,15 +417,27 @@ function EnrollmentModal({
       {
         level: course.level,
         prerequisites: course.prerequisites,
+        requirements: course.requirements,
+        academicRequirement: course.academicRequirement,
+        percentageRequired: course.percentageRequired,
         gpaRequired: course.gpaRequired,
         englishOverallScore: course.englishOverallScore,
         englishLanguageType: course.englishLanguageType,
         englishTestStage: course.englishTestStage,
+        englishReadingScore: course.englishReadingScore,
+        englishWritingScore: course.englishWritingScore,
+        englishListeningScore: course.englishListeningScore,
+        englishSpeakingScore: course.englishSpeakingScore,
+        englishTests: course.englishTests,
       },
       {
         education: selectedStudent.education,
         testType: selectedStudent.testType,
         overallScore: selectedStudent.overallScore,
+        readingScore: selectedStudent.readingScore,
+        writingScore: selectedStudent.writingScore,
+        listeningScore: selectedStudent.listeningScore,
+        speakingScore: selectedStudent.speakingScore,
       }
     );
   }, [selectedStudent, course]);
@@ -448,10 +486,10 @@ function EnrollmentModal({
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl animate-slide-up overflow-hidden border border-white/20">
-        <div className="h-2 w-full" style={{ backgroundColor: course.color }} />
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-slide-up overflow-hidden border border-white/20">
+        <div className="h-2 w-full shrink-0" style={{ backgroundColor: course.color }} />
 
-        <div className="p-8">
+        <div className="p-8 overflow-y-auto custom-scrollbar">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="size-14 rounded-2xl flex items-center justify-center text-white text-base font-black shadow-lg overflow-hidden border border-slate-100 bg-white relative">
@@ -493,7 +531,7 @@ function EnrollmentModal({
             {steps.map((s, i) => (
               <React.Fragment key={s.id}>
                 <div
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition ${
                     i <= stepIndex
                       ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
                       : "bg-slate-100 text-slate-400"
@@ -555,9 +593,9 @@ function EnrollmentModal({
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {course.prerequisites.map((p, i) => (
+                      {course.prerequisites.map((p) => (
                         <span
-                          key={`prereq-${p}-${i}`}
+                          key={`prereq-${p}`}
                           className="px-2 py-0.5 bg-slate-50 text-slate-600 rounded-md text-[10px] font-bold border border-slate-200"
                         >
                           {p}
@@ -584,12 +622,13 @@ function EnrollmentModal({
                     </span>
                     {courseIntakes.length > 0 ? (
                       <select
+                        aria-label="Select intake"
                         value={selectedIntake}
                         onChange={(e) => setSelectedIntake(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-300 transition-all cursor-pointer"
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-300 transition cursor-pointer"
                       >
-                        {courseIntakes.map((intake, idx: number) => (
-                          <option key={`intake-opt-${intake.name}-${idx}`} value={intake.name}>
+                        {courseIntakes.map((intake) => (
+                          <option key={`intake-opt-${intake.name}`} value={intake.name}>
                             {intake.name}
                           </option>
                         ))}
@@ -631,7 +670,7 @@ function EnrollmentModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-5 py-2.5 border border-slate-200 rounded-xl font-black text-slate-500 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest"
+                  className="flex-1 px-5 py-2.5 border border-slate-200 rounded-xl font-black text-slate-500 hover:bg-slate-50 transition text-xs uppercase tracking-widest"
                 >
                   Cancel
                 </button>
@@ -639,7 +678,7 @@ function EnrollmentModal({
                   type="button"
                   onClick={() => setStep("confirm")}
                   disabled={course.status !== "Active"}
-                  className="flex-[2] px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-black hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all text-xs uppercase tracking-widest disabled:opacity-50"
+                  className="flex-[2] px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-black hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition text-xs uppercase tracking-widest disabled:opacity-50"
                 >
                   Proceed to Enrollment
                 </button>
@@ -672,7 +711,7 @@ function EnrollmentModal({
                         id="select-student"
                         value={selectedStudentId}
                         onChange={(e) => handleStudentSelect(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all cursor-pointer appearance-none"
+                        className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition cursor-pointer appearance-none"
                       >
                         <option value="">Choose an existing student…</option>
                         <option value="manual">Enter details manually</option>
@@ -710,7 +749,7 @@ function EnrollmentModal({
                         value={studentName}
                         onChange={(e) => setStudentName(e.target.value)}
                         placeholder="Student full name"
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all"
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition"
                       />
                     </div>
                     <div>
@@ -726,7 +765,7 @@ function EnrollmentModal({
                         value={studentEmail}
                         onChange={(e) => setStudentEmail(e.target.value)}
                         placeholder="student@example.com"
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all"
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition"
                       />
                     </div>
                   </div>
@@ -754,10 +793,12 @@ function EnrollmentModal({
                       </span>
                     )}
                   </div>
-                  <div className="divide-y divide-slate-50">
+                  <div className="divide-y divide-slate-50 max-h-72 overflow-y-auto custom-scrollbar">
                     {eligibility.checks.map((check) => (
                       <div key={check.key} className="flex items-start gap-3 px-4 py-2.5">
-                        {check.pending ? (
+                        {check.informational ? (
+                          <Info size={15} className="text-slate-400 shrink-0 mt-0.5" />
+                        ) : check.pending ? (
                           <Clock size={15} className="text-amber-500 shrink-0 mt-0.5" />
                         ) : check.pass ? (
                           <CheckCircle size={15} className="text-emerald-500 shrink-0 mt-0.5" />
@@ -765,7 +806,11 @@ function EnrollmentModal({
                           <XCircle size={15} className="text-rose-500 shrink-0 mt-0.5" />
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-slate-700">{check.label}</p>
+                          <p
+                            className={`text-xs font-bold ${check.informational ? "text-slate-600" : "text-slate-700"}`}
+                          >
+                            {check.label}
+                          </p>
                           {check.detail && (
                             <p className="text-[10px] font-medium text-slate-400">{check.detail}</p>
                           )}
@@ -787,7 +832,7 @@ function EnrollmentModal({
                 <button
                   type="button"
                   onClick={() => setStep("details")}
-                  className="flex-1 px-5 py-2.5 border border-slate-200 rounded-xl font-black text-slate-500 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest"
+                  className="flex-1 px-5 py-2.5 border border-slate-200 rounded-xl font-black text-slate-500 hover:bg-slate-50 transition text-xs uppercase tracking-widest"
                 >
                   Back
                 </button>
@@ -795,7 +840,7 @@ function EnrollmentModal({
                   type="button"
                   onClick={handleEnroll}
                   disabled={criteriaBlocked}
-                  className="flex-[2] px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-black hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all text-xs uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-[2] px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-black hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition text-xs uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {criteriaBlocked ? "Criteria Not Met" : "Confirm Enrollment"}
                 </button>
@@ -887,14 +932,14 @@ function EnrollmentModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-5 py-2.5 border border-slate-200 rounded-xl font-black text-slate-500 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest"
+                  className="flex-1 px-5 py-2.5 border border-slate-200 rounded-xl font-black text-slate-500 hover:bg-slate-50 transition text-xs uppercase tracking-widest"
                 >
                   Done
                 </button>
                 <button
                   type="button"
                   onClick={() => router.push("/applications")}
-                  className="flex-[2] px-5 py-2.5 bg-slate-900 text-white rounded-xl font-black hover:bg-slate-800 transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                  className="flex-[2] px-5 py-2.5 bg-slate-900 text-white rounded-xl font-black hover:bg-slate-800 transition text-xs uppercase tracking-widest flex items-center justify-center gap-2"
                 >
                   <PartyPopper size={14} /> View Applications
                 </button>
@@ -907,12 +952,81 @@ function EnrollmentModal({
   );
 }
 
+function ModalSection({
+  icon,
+  title,
+  count,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  count?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="size-6 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+          {icon}
+        </span>
+        <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{title}</h4>
+        {typeof count === "number" && count > 0 && (
+          <span className="ml-auto text-[10px] font-black text-slate-400 bg-slate-100 rounded-full px-2 py-0.5">
+            {count}
+          </span>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 function PrerequisiteModal({ course, onClose }: { course: Course; onClose: () => void }) {
+  const prerequisites = useMemo(
+    () => (Array.isArray(course.prerequisites) ? course.prerequisites.filter(Boolean) : []),
+    [course]
+  );
+
   const requirements = useMemo(() => {
-    const vals: string[] = [];
-    if (Array.isArray(course.prerequisites)) vals.push(...course.prerequisites);
-    return vals;
+    const raw = Array.isArray(course.requirements)
+      ? course.requirements
+      : safeParseArray<string>(course.requirements);
+    return raw.filter(Boolean).map((r) => (typeof r === "string" ? r : String(r)));
   }, [course]);
+
+  const englishTests = useMemo(() => {
+    const raw = Array.isArray(course.englishTests)
+      ? course.englishTests
+      : safeParseArray<EnglishTestEntry>(course.englishTests);
+    return raw.filter(
+      (t) => t && (t.type || t.overall || t.reading || t.writing || t.listening || t.speaking)
+    );
+  }, [course]);
+
+  const subScores = [
+    { label: "Reading", value: course.englishReadingScore },
+    { label: "Writing", value: course.englishWritingScore },
+    { label: "Listening", value: course.englishListeningScore },
+    { label: "Speaking", value: course.englishSpeakingScore },
+  ].filter((s) => s.value);
+
+  const hasEnglish =
+    Boolean(course.englishLanguageType) ||
+    Boolean(course.englishOverallScore) ||
+    subScores.length > 0 ||
+    englishTests.length > 0;
+
+  const hasAcademic =
+    Boolean(course.academicRequirement) ||
+    Boolean(course.percentageRequired) ||
+    Boolean(course.gpaRequired);
+
+  const hasAnything =
+    prerequisites.length > 0 || requirements.length > 0 || hasEnglish || hasAcademic;
+
+  const hasLeftColumn = hasAcademic || hasEnglish;
+  const hasRightColumn = prerequisites.length > 0 || requirements.length > 0;
+  const twoColumn = hasLeftColumn && hasRightColumn;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -922,92 +1036,266 @@ function PrerequisiteModal({ course, onClose }: { course: Course; onClose: () =>
         className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg animate-slide-up overflow-hidden border border-white/20">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col animate-slide-up overflow-hidden border border-white/20">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 p-6 pb-4 border-b border-slate-100 bg-slate-50/60">
+          <div className="flex items-start gap-3 min-w-0">
+            <span className="size-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+              <ListChecks size={20} />
+            </span>
             <div className="min-w-0">
-              <h3 className="text-lg font-black text-slate-800 truncate">{course.name}</h3>
-              <p className="text-xs font-semibold text-slate-400 mt-0.5">{course.university}</p>
+              <h3 className="text-base font-black text-slate-800 leading-tight truncate">
+                Prerequisites &amp; Requirements
+              </h3>
+              <p className="text-xs font-bold text-slate-500 mt-1 truncate">{course.name}</p>
+              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                <span className="text-[11px] text-slate-400 truncate">{course.university}</span>
+                {course.level && (
+                  <span className="text-[10px] font-black text-slate-500 bg-white border border-slate-200 rounded-full px-2 py-0.5">
+                    {course.level}
+                  </span>
+                )}
+                {course.degreeType && (
+                  <span className="text-[10px] font-black text-slate-500 bg-white border border-slate-200 rounded-full px-2 py-0.5">
+                    {course.degreeType}
+                  </span>
+                )}
+                {course.duration && (
+                  <span className="text-[10px] font-black text-slate-500 bg-white border border-slate-200 rounded-full px-2 py-0.5">
+                    {course.duration}
+                  </span>
+                )}
+                {course.country && (
+                  <span className="text-[10px] font-black text-slate-500 bg-white border border-slate-200 rounded-full px-2 py-0.5">
+                    {course.country}
+                  </span>
+                )}
+              </div>
             </div>
-            <button type="button" aria-label="Close" onClick={onClose} className="shrink-0 ml-3">
-              <X size={20} />
-            </button>
           </div>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
-          <div className="space-y-5">
-            {/* Prerequisites / Requirements */}
-            <div>
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-                Prerequisites & Requirements
-              </h4>
-              {requirements.length === 0 ? (
-                <div className="bg-slate-50 rounded-xl p-6 text-center">
-                  <p className="text-sm text-slate-400 font-medium">
-                    No prerequisites for this course.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {requirements.map((req, i) => (
-                    <div
-                      key={`prereq-${i}`}
-                      className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100"
-                    >
-                      <div className="size-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
-                        <FileText size={16} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-slate-700 truncate">{req}</p>
-                        <p className="text-[10px] text-slate-400 font-medium">Required document</p>
-                      </div>
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+          <div
+            className={
+              twoColumn
+                ? "grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6 items-start"
+                : "space-y-6"
+            }
+          >
+            {(hasLeftColumn || !hasAnything) && (
+              <div className="space-y-6">
+                {!hasAnything && (
+                  <div className="bg-slate-50 rounded-2xl p-8 text-center">
+                    <Info className="mx-auto text-slate-300 mb-2" size={28} />
+                    <p className="text-sm text-slate-400 font-medium">
+                      No prerequisites or requirements listed for this course.
+                    </p>
+                  </div>
+                )}
+
+                {/* Academic Requirements */}
+                {hasAcademic && (
+                  <ModalSection icon={<GraduationCap size={14} />} title="Academic Requirements">
+                    <div className="space-y-3">
+                      {course.academicRequirement && (
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          {course.academicRequirement}
+                        </p>
+                      )}
+                      {(course.percentageRequired || course.gpaRequired) && (
+                        <div className="grid grid-cols-2 gap-3">
+                          {course.percentageRequired && (
+                            <div className="bg-indigo-50/60 rounded-xl p-3 border border-indigo-100">
+                              <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">
+                                Min. Percentage
+                              </p>
+                              <p className="text-sm font-bold text-slate-700">
+                                {course.percentageRequired}
+                              </p>
+                            </div>
+                          )}
+                          {course.gpaRequired && (
+                            <div className="bg-indigo-50/60 rounded-xl p-3 border border-indigo-100">
+                              <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">
+                                Min. GPA
+                              </p>
+                              <p className="text-sm font-bold text-slate-700">
+                                {course.gpaRequired}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                  </ModalSection>
+                )}
 
-            {/* Additional info */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-50 rounded-xl p-3">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  Level
-                </p>
-                <p className="text-sm font-bold text-slate-700">{course.level}</p>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-3">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  Degree
-                </p>
-                <p className="text-sm font-bold text-slate-700">{course.degreeType}</p>
-              </div>
-              {course.percentageRequired && (
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    Min. Percentage
-                  </p>
-                  <p className="text-sm font-bold text-slate-700">{course.percentageRequired}</p>
-                </div>
-              )}
-              {course.gpaRequired && (
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    Min. GPA
-                  </p>
-                  <p className="text-sm font-bold text-slate-700">{course.gpaRequired}</p>
-                </div>
-              )}
-            </div>
-          </div>
+                {/* English Language Requirements */}
+                {hasEnglish && (
+                  <ModalSection
+                    icon={<Languages size={14} />}
+                    title="English Language Requirements"
+                  >
+                    <div className="space-y-3">
+                      <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">
+                              {course.englishLanguageType || "IELTS"}
+                            </p>
+                            <p className="text-xs font-semibold text-slate-500">
+                              Minimum overall requirement
+                            </p>
+                          </div>
+                          <span className="text-2xl font-black text-indigo-700 shrink-0">
+                            {course.englishOverallScore || "—"}
+                          </span>
+                        </div>
+                        {subScores.length > 0 && (
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-4 border-t border-indigo-100">
+                            {subScores.map((s) => (
+                              <div key={s.label} className="text-center">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+                                  {s.label}
+                                </p>
+                                <p className="text-sm font-bold text-slate-700">{s.value}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-indigo-100">
+                          <ClipboardList size={13} className="text-slate-400 shrink-0" />
+                          <p className="text-[11px] font-semibold text-slate-500">
+                            {course.englishTestStage === "After Application"
+                              ? "Score may be submitted before visa lodgement."
+                              : "Score must be submitted before the application is accepted."}
+                          </p>
+                        </div>
+                      </div>
 
-          <div className="flex gap-3 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-6 py-3 bg-slate-900 text-white rounded-2xl font-black hover:bg-slate-800 transition-all text-xs uppercase tracking-widest"
-            >
-              Close
-            </button>
+                      {englishTests.length > 0 && (
+                        <div className="space-y-2">
+                          {englishTests.map((test) => {
+                            const rows = [
+                              { label: "Reading", value: test.reading },
+                              { label: "Writing", value: test.writing },
+                              { label: "Listening", value: test.listening },
+                              { label: "Speaking", value: test.speaking },
+                            ].filter((r) => r.value);
+                            return (
+                              <div
+                                key={`english-test-${test.type || "test"}-${test.overall || ""}`}
+                                className="rounded-xl border border-slate-100 bg-slate-50 p-3"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-xs font-black text-slate-700">
+                                    {test.type || "English Test"}
+                                  </span>
+                                  {test.overall && (
+                                    <span className="text-[11px] font-black text-indigo-700 bg-indigo-100 rounded-full px-2 py-0.5">
+                                      Overall {test.overall}
+                                    </span>
+                                  )}
+                                </div>
+                                {rows.length > 0 && (
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+                                    {rows.map((r) => (
+                                      <div key={r.label} className="text-center">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+                                          {r.label}
+                                        </p>
+                                        <p className="text-xs font-bold text-slate-700">
+                                          {r.value}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </ModalSection>
+                )}
+              </div>
+            )}
+            {hasRightColumn && (
+              <div className="space-y-6">
+                {/* Prerequisites */}
+                {prerequisites.length > 0 && (
+                  <ModalSection
+                    icon={<FileText size={14} />}
+                    title="Prerequisites"
+                    count={prerequisites.length}
+                  >
+                    <div className="space-y-2">
+                      {prerequisites.map((req) => (
+                        <div
+                          key={`prereq-${req}`}
+                          className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100"
+                        >
+                          <div className="size-6 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 mt-0.5">
+                            <FileText size={13} />
+                          </div>
+                          <p className="text-sm font-semibold text-slate-700 flex-1 min-w-0 break-words">
+                            {req}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </ModalSection>
+                )}
+
+                {/* Other Requirements */}
+                {requirements.length > 0 && (
+                  <ModalSection
+                    icon={<CheckCircle size={14} />}
+                    title="Other Requirements"
+                    count={requirements.length}
+                  >
+                    <div className="space-y-2">
+                      {requirements.map((req) => (
+                        <div
+                          key={`requirement-${req}`}
+                          className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100"
+                        >
+                          <div className="size-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle size={13} />
+                          </div>
+                          <p className="text-sm font-semibold text-slate-700 flex-1 min-w-0 break-words">
+                            {req}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </ModalSection>
+                )}
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end p-6 pt-4 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-10 py-3 bg-slate-900 text-white rounded-2xl font-black hover:bg-slate-800 transition text-xs uppercase tracking-widest"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>
@@ -1041,14 +1329,22 @@ function CourseCard({
   const status = statusConfig[course.status] || statusConfig["Draft"];
   const levelStyle = levelConfig[course.level] || { className: "bg-slate-50 text-slate-600" };
   const facultyStyle = facultyColors[course.faculty] || "bg-slate-50 text-slate-600";
-  const hasPrereqs = Array.isArray(course.prerequisites) && course.prerequisites.length > 0;
+  const hasPrereqs =
+    (Array.isArray(course.prerequisites) && course.prerequisites.length > 0) ||
+    (Array.isArray(course.requirements) && course.requirements.length > 0) ||
+    (Array.isArray(course.englishTests) && course.englishTests.length > 0) ||
+    Boolean(course.englishOverallScore) ||
+    Boolean(course.englishLanguageType) ||
+    Boolean(course.gpaRequired) ||
+    Boolean(course.percentageRequired) ||
+    Boolean(course.academicRequirement);
   const appStatus = getAppStatus(course);
   const tuitionIsSemester = isSemesterPeriod(course.tuitionFeePeriod);
   const yearlyTuition = annualTuition(course.tuitionFee, course.tuitionFeePeriod);
   const courseCurrency = course.currency || "USD";
 
   return (
-    <div className="card overflow-hidden group hover:shadow-md transition-all duration-200 relative">
+    <div className="card overflow-hidden group hover:shadow-md transition duration-200 relative">
       <div className="absolute inset-0 bg-gradient-to-br from-sky-400/20 via-blue-300/10 to-transparent pointer-events-none" />
       {/* Color top bar */}
       <div className="h-1.5 w-full relative" style={{ backgroundColor: course.color }} />
@@ -1058,13 +1354,14 @@ function CourseCard({
           <div className="flex-1 min-w-0">
             {/* Header - Name on Top */}
             <div className="flex items-center gap-2 flex-wrap">
-              <h3
-                className="text-base font-black text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors cursor-pointer truncate"
+              <button
+                type="button"
+                className="text-2xl font-bold text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors truncate text-left"
                 onClick={() => router.push(`/courses/${course.id}`)}
                 title="View course details"
               >
                 {course.name}
-              </h3>
+              </button>
               <span className={`badge ${status.className} flex-shrink-0`}>{status.label}</span>
               {course.courseCode && (
                 <span className="text-[9px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">
@@ -1073,15 +1370,15 @@ function CourseCard({
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-500 flex-wrap">
-              <div className="size-5 rounded-md flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0 overflow-hidden border border-slate-100 bg-white relative">
+            <div className="flex items-center gap-3 mt-2">
+              <div className="size-16 rounded-xl flex items-center justify-center text-white text-base font-bold flex-shrink-0 overflow-hidden border border-slate-100 bg-white relative">
                 {course.universityLogo ? (
                   <Image
                     src={course.universityLogo}
                     alt=""
                     fill
-                    className="object-contain"
-                    sizes="20px"
+                    className="object-contain p-0.5"
+                    sizes="64px"
                   />
                 ) : (
                   <div
@@ -1092,10 +1389,10 @@ function CourseCard({
                   </div>
                 )}
               </div>
-              <span className="font-bold text-slate-600 truncate max-w-[45%]">
-                {course.university}
-              </span>
-              <span className="text-slate-300">•</span>
+              <span className="text-xl font-bold text-slate-800 truncate">{course.university}</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-500 flex-wrap">
               <span className="flex items-center gap-1 text-slate-400 font-semibold flex-shrink-0">
                 {getCountryFlag(course.country) && (
                   <Image
@@ -1121,45 +1418,46 @@ function CourseCard({
             </p>
 
             {/* Badges */}
-            <div className="flex flex-wrap gap-1.5 mt-2.5">
+            <div className="flex flex-wrap gap-2 mt-3">
               <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${levelStyle.className}`}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm ring-1 ring-inset ring-black/5 ${levelStyle.className}`}
               >
+                <span className="size-1.5 rounded-full bg-current opacity-70" />
                 {course.level}
               </span>
               <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700`}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm ring-1 ring-inset ring-black/5 bg-blue-50 text-blue-700`}
               >
-                <GraduationCap size={8} />
+                <GraduationCap size={13} />
                 {course.degreeType}
               </span>
               <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold ${facultyStyle}`}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm ring-1 ring-inset ring-black/5 ${facultyStyle}`}
               >
-                <Tag size={8} />
+                <Tag size={13} />
                 {course.faculty}
               </span>
               {course.intake && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700">
-                  <Calendar size={8} />
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm ring-1 ring-inset ring-black/5 bg-emerald-50 text-emerald-700">
+                  <Calendar size={13} />
                   {formatIntake(course.intake)}
                 </span>
               )}
               {course.quickFilters &&
-                course.quickFilters.slice(0, 2).map((f, i) => {
+                course.quickFilters.slice(0, 2).map((f) => {
                   const filterInfo = quickFilters.find((q) => q.label === f);
                   return (
                     <span
-                      key={`card-qf-${f}-${i}`}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-100"
+                      key={`card-qf-${f}`}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm ring-1 ring-inset ring-black/5 bg-purple-50 text-purple-700"
                     >
-                      <Zap size={8} />
+                      <Zap size={13} />
                       {filterInfo?.label || f}
                     </span>
                   );
                 })}
               {course.quickFilters && course.quickFilters.length > 2 && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-50 text-slate-400 border border-slate-100">
+                <span className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm ring-1 ring-inset ring-black/5 bg-slate-50 text-slate-500">
                   +{course.quickFilters.length - 2} more
                 </span>
               )}
@@ -1229,7 +1527,7 @@ function CourseCard({
                   type="button"
                   onClick={() => onPrerequisites(course)}
                   className="p-1.5 rounded-lg border border-slate-200 hover:bg-indigo-50 text-indigo-500 hover:text-indigo-700 transition-colors"
-                  title="View prerequisites"
+                  title="View prerequisites & requirements"
                 >
                   <ListChecks size={13} />
                 </button>
@@ -1279,9 +1577,9 @@ function CourseCard({
                 Prerequisites
               </p>
               <div className="flex flex-wrap gap-1">
-                {course.prerequisites.map((p, i) => (
+                {course.prerequisites.map((p) => (
                   <span
-                    key={`card-prereq-${p}-${i}`}
+                    key={`card-prereq-${p}`}
                     className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-medium"
                   >
                     {p}
@@ -1295,11 +1593,11 @@ function CourseCard({
                   Quick Filters
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  {course.quickFilters.map((f, i) => {
+                  {course.quickFilters.map((f) => {
                     const filterInfo = quickFilters.find((q) => q.label === f);
                     return (
                       <span
-                        key={`expanded-qf-${i}`}
+                        key={`expanded-qf-${f}`}
                         className="px-1.5 py-0.5 bg-purple-50 text-purple-600 border border-purple-100 rounded text-[10px] font-medium"
                       >
                         {filterInfo?.label || f}
@@ -1336,11 +1634,11 @@ function CourseCard({
                     if (Array.isArray(intakes) && intakes.length > 0) {
                       return (
                         <div className="space-y-2">
-                          {intakes.map((intakeItem, idx) => {
+                          {intakes.map((intakeItem) => {
                             const status = getIntakeStatus(intakeItem);
                             return (
                               <div
-                                key={`intake-list-${intakeItem.name}-${idx}`}
+                                key={`intake-list-${intakeItem.name}-${intakeItem.openDate}`}
                                 className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100"
                               >
                                 <div className="flex items-center gap-2">
@@ -1384,6 +1682,7 @@ function CourseCard({
                     month: "short",
                     day: "numeric",
                     year: "numeric",
+                    timeZone: "UTC",
                   })}
                 </span>
               </div>
@@ -1430,12 +1729,15 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   useEffect(() => {
-    fetch("/api/students?perPage=500")
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.data) setStudents(json.data);
+    const controller = new AbortController();
+    fetchStudents({ perPage: 500 }, controller.signal)
+      .then((data) => {
+        if (data) setStudents(data);
       })
       .catch(() => {});
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   const _universities = Array.from(new Set(COURSES_DATA.map((c) => c.university))).sort();
@@ -1444,6 +1746,14 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
   const countries = Array.from(new Set(COURSES_DATA.map((c) => c.country)))
     .filter((c): c is string => !!c)
     .sort();
+
+  const universityOptions = useMemo(() => {
+    const source =
+      countryFilter !== "all"
+        ? COURSES_DATA.filter((c) => c.country === countryFilter)
+        : COURSES_DATA;
+    return Array.from(new Set(source.map((c) => c.university))).sort();
+  }, [COURSES_DATA, countryFilter]);
 
   const filtered = useMemo(() => {
     let data = [...COURSES_DATA];
@@ -1470,10 +1780,18 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
               {
                 level: c.level,
                 prerequisites: c.prerequisites,
+                requirements: c.requirements,
+                academicRequirement: c.academicRequirement,
+                percentageRequired: c.percentageRequired,
                 gpaRequired: c.gpaRequired,
                 englishOverallScore: c.englishOverallScore,
                 englishLanguageType: c.englishLanguageType,
                 englishTestStage: c.englishTestStage,
+                englishReadingScore: c.englishReadingScore,
+                englishWritingScore: c.englishWritingScore,
+                englishListeningScore: c.englishListeningScore,
+                englishSpeakingScore: c.englishSpeakingScore,
+                englishTests: c.englishTests,
               },
               student
             ).allPass
@@ -1640,7 +1958,9 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
               const newVal = !showInNPR;
               setShowInNPR(newVal);
               if (newVal && Object.keys(rates).length <= 1) {
-                getLatestRates().then(setRates);
+                getLatestRates()
+                  .then(setRates)
+                  .catch(() => {});
               }
             }}
             className={`btn-secondary ${showInNPR ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700" : ""}`}
@@ -1709,23 +2029,25 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
+              aria-label="Search courses"
               placeholder="Search courses, universities, countries..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-11 pr-4 py-2.5 text-sm border border-slate-100 rounded-xl bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium placeholder:text-slate-400"
+              className="input pl-11 w-full"
             />
           </div>
           <div className="flex items-center flex-wrap gap-2">
             <select
+              aria-label="Status filter"
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="text-xs font-bold border border-slate-100 rounded-xl px-4 py-2.5 bg-white text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 cursor-pointer hover:border-slate-200 transition-all appearance-none pr-8 relative bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[position:right_8px_center] bg-no-repeat"
+              className="text-xs font-bold border border-slate-100 rounded-xl px-4 py-2.5 bg-white text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 cursor-pointer hover:border-slate-200 transition appearance-none pr-8 relative bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[position:right_8px_center] bg-no-repeat"
             >
               <option value="all">All Status</option>
               <option value="Active">Active</option>
@@ -1734,12 +2056,13 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
             </select>
 
             <select
+              aria-label="Level filter"
               value={levelFilter}
               onChange={(e) => {
                 setLevelFilter(e.target.value);
                 setPage(1);
               }}
-              className="text-xs font-bold border border-slate-100 rounded-xl px-4 py-2.5 bg-white text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 cursor-pointer hover:border-slate-200 transition-all appearance-none pr-8 relative bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[position:right_8px_center] bg-no-repeat"
+              className="text-xs font-bold border border-slate-100 rounded-xl px-4 py-2.5 bg-white text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 cursor-pointer hover:border-slate-200 transition appearance-none pr-8 relative bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[position:right_8px_center] bg-no-repeat"
             >
               <option value="all">All Levels</option>
               <option value="Undergraduate">Undergraduate</option>
@@ -1748,17 +2071,47 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
             </select>
 
             <select
+              aria-label="Country filter"
               value={countryFilter}
               onChange={(e) => {
-                setCountryFilter(e.target.value);
+                const value = e.target.value;
+                setCountryFilter(value);
                 setPage(1);
+                if (
+                  universityFilter !== "all" &&
+                  !COURSES_DATA.some(
+                    (c) =>
+                      c.university === universityFilter && (value === "all" || c.country === value)
+                  )
+                ) {
+                  setUniversityFilter("all");
+                }
               }}
-              className="text-xs font-bold border border-slate-100 rounded-xl px-4 py-2.5 bg-white text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 cursor-pointer hover:border-slate-200 transition-all appearance-none pr-8 relative bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[position:right_8px_center] bg-no-repeat"
+              className="text-xs font-bold border border-slate-100 rounded-xl px-4 py-2.5 bg-white text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 cursor-pointer hover:border-slate-200 transition appearance-none pr-8 relative bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[position:right_8px_center] bg-no-repeat"
             >
               <option value="all">All Countries</option>
               {countries.map((c) => (
                 <option key={`country-${c}`} value={c}>
                   {c}
+                </option>
+              ))}
+            </select>
+
+            <select
+              aria-label="University filter"
+              value={universityFilter}
+              onChange={(e) => {
+                setUniversityFilter(e.target.value);
+                setPage(1);
+              }}
+              className="text-xs font-bold border border-slate-100 rounded-xl px-4 py-2.5 bg-white text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 cursor-pointer hover:border-slate-200 transition appearance-none pr-8 relative bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[position:right_8px_center] bg-no-repeat"
+            >
+              <option value="all">
+                {countryFilter === "all" ? "All Universities" : `Universities in ${countryFilter}`}
+              </option>
+              {universityOptions.map((u) => (
+                <option key={`university-${u}`} value={u}>
+                  {u}
                 </option>
               ))}
             </select>
@@ -1770,7 +2123,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
                 setPage(1);
               }}
               title="Sort courses"
-              className="text-xs font-bold border border-slate-100 rounded-xl px-4 py-2.5 bg-white text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 cursor-pointer hover:border-slate-200 transition-all appearance-none pr-8 relative bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[position:right_8px_center] bg-no-repeat"
+              className="text-xs font-bold border border-slate-100 rounded-xl px-4 py-2.5 bg-white text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 cursor-pointer hover:border-slate-200 transition appearance-none pr-8 relative bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[position:right_8px_center] bg-no-repeat"
             >
               <option value="best">Sort: Best Match</option>
               <option value="tuition-asc">Tuition: Low to High</option>
@@ -1786,13 +2139,14 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"
               />
               <select
+                aria-label="Check eligibility for"
                 value={selectedStudentId}
                 onChange={(e) => {
                   setSelectedStudentId(e.target.value);
                   if (e.target.value === "guest") setShowGuestModal(true);
                   setPage(1);
                 }}
-                className="text-xs font-bold pl-9 pr-8 py-2.5 border border-slate-100 rounded-xl bg-white text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 cursor-pointer hover:border-slate-200 transition-all appearance-none min-w-[180px] relative bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[position:right_8px_center] bg-no-repeat"
+                className="text-xs font-bold pl-9 pr-8 py-2.5 border border-slate-100 rounded-xl bg-white text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 cursor-pointer hover:border-slate-200 transition appearance-none min-w-[180px] relative bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[position:right_8px_center] bg-no-repeat"
               >
                 <option value="all">Check Eligibility For…</option>
                 <option value="guest" className="font-bold text-indigo-600">
@@ -1818,7 +2172,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
 
             <button
               type="button"
-              className="flex items-center gap-2 px-4 py-2.5 border border-slate-100 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all duration-150"
+              className="flex items-center gap-2 px-4 py-2.5 border border-slate-100 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition duration-150"
             >
               <Filter size={15} />
               Filters
@@ -1828,7 +2182,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-lg transition-all ${viewMode === "list" ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:bg-slate-50"}`}
+                className={`p-1.5 rounded-lg transition ${viewMode === "list" ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:bg-slate-50"}`}
                 title="List view"
               >
                 <List size={18} />
@@ -1836,7 +2190,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
               <button
                 type="button"
                 onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-lg transition-all ${viewMode === "grid" ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:bg-slate-50"}`}
+                className={`p-1.5 rounded-lg transition ${viewMode === "grid" ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:bg-slate-50"}`}
                 title="Grid view"
               >
                 <LayoutGrid size={18} />
@@ -1878,6 +2232,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
                   <th className="py-4 px-5 w-10">
                     <input
                       type="checkbox"
+                      aria-label="Select all courses"
                       className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
                   </th>
@@ -1923,11 +2278,12 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
                   return (
                     <tr
                       key={course.id}
-                      className="group hover:bg-slate-50/50 transition-all duration-200"
+                      className="group hover:bg-slate-50/50 transition duration-200"
                     >
                       <td className="py-4 px-5">
                         <input
                           type="checkbox"
+                          aria-label={`Select ${course.name}`}
                           className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                         />
                       </td>
@@ -1953,13 +2309,14 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <p
-                                className="text-sm font-black text-slate-800 truncate group-hover:text-indigo-600 transition-colors cursor-pointer"
+                              <button
+                                type="button"
+                                className="text-sm font-black text-slate-800 truncate group-hover:text-indigo-600 transition-colors text-left"
                                 onClick={() => router.push(`/courses/${course.id}`)}
                                 title="View course details"
                               >
                                 {course.name}
-                              </p>
+                              </button>
                               {course.courseCode && (
                                 <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase">
                                   {course.courseCode}
@@ -2064,11 +2421,11 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
                         </span>
                       </td>
                       <td className="py-4 px-5 text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition transform translate-x-2 group-hover:translate-x-0">
                           <button
                             type="button"
                             onClick={() => router.push(`/courses/edit/${course.id}`)}
-                            className="p-2 rounded-xl text-indigo-600 hover:bg-indigo-50 transition-all"
+                            className="p-2 rounded-xl text-indigo-600 hover:bg-indigo-50 transition"
                             title="Edit Course"
                           >
                             <Edit2 size={16} />
@@ -2076,7 +2433,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
                           <button
                             type="button"
                             onClick={() => setEnrollingCourse(course)}
-                            className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition-all"
+                            className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition"
                             title="Quick Enroll"
                           >
                             <Zap size={16} fill="currentColor" />
@@ -2084,7 +2441,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
                           <button
                             type="button"
                             onClick={() => handleDelete(course.id, course.name)}
-                            className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-all"
+                            className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 transition"
                             title="Delete Course"
                           >
                             <Trash2 size={16} />
@@ -2105,7 +2462,9 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
               key={course.id}
               course={{
                 ...course,
-                prerequisites: safeParseArray(course.prerequisites),
+                prerequisites: safeParseArray<string>(course.prerequisites),
+                requirements: safeParseArray<string>(course.requirements),
+                englishTests: safeParseArray<EnglishTestEntry>(course.englishTests),
                 quickFilters: safeParseArray(course.quickFilters),
               }}
               expanded={expandedId === course.id}
@@ -2130,6 +2489,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
             </span>
             <div className="relative">
               <select
+                aria-label="Courses per page"
                 className="pl-3 pr-8 py-1.5 bg-white border border-slate-100 rounded-lg text-xs font-black text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 appearance-none cursor-pointer"
                 value={perPage}
                 onChange={(e) => {
@@ -2154,9 +2514,10 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
           <div className="flex items-center gap-1">
             <button
               type="button"
+              aria-label="Previous page"
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="size-8 rounded-xl flex items-center justify-center border border-slate-100 text-slate-400 hover:bg-white hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="size-8 rounded-xl flex items-center justify-center border border-slate-100 text-slate-400 hover:bg-white hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition"
             >
               <ChevronLeft size={16} />
             </button>
@@ -2177,7 +2538,7 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
                         <button
                           type="button"
                           onClick={() => setPage(p)}
-                          className={`size-8 rounded-xl text-xs font-black transition-all ${
+                          className={`size-8 rounded-xl text-xs font-black transition ${
                             page === p
                               ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-110"
                               : "text-slate-400 hover:bg-white hover:text-slate-600"
@@ -2196,9 +2557,10 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
 
             <button
               type="button"
+              aria-label="Next page"
               onClick={() => setPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
-              className="size-8 rounded-xl flex items-center justify-center border border-slate-100 text-slate-400 hover:bg-white hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="size-8 rounded-xl flex items-center justify-center border border-slate-100 text-slate-400 hover:bg-white hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition"
             >
               <ChevronRight size={16} />
             </button>

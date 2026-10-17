@@ -40,7 +40,10 @@ export default function FeaturedContent() {
   useEffect(() => {
     const ac = new AbortController();
     fetch("/api/featured", { signal: ac.signal })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((json) => {
         setData(json);
       })
@@ -96,7 +99,7 @@ export default function FeaturedContent() {
             data.universities.map((u) => (
               <div
                 key={u.id}
-                className="group relative bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                className="group relative bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300 overflow-hidden"
               >
                 <div className="h-32 bg-gradient-to-br from-indigo-500 to-violet-600 relative overflow-hidden">
                   <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_100%)] animate-pulse"></div>
@@ -163,7 +166,7 @@ export default function FeaturedContent() {
             data.courses.map((c) => (
               <div
                 key={c.id}
-                className="group flex flex-col sm:flex-row bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
+                className="group flex flex-col sm:flex-row bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition duration-300 overflow-hidden"
               >
                 <div className="w-full sm:w-48 h-40 sm:h-auto bg-slate-50 flex items-center justify-center p-6 border-b sm:border-b-0 sm:border-r border-slate-100 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-tr from-indigo-50/50 to-emerald-50/50 opacity-100 group-hover:scale-110 transition-transform duration-500"></div>

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { createNotification } from "@/lib/notifications";
 import { logActivity, getActorName } from "@/lib/activity";
+import { sendTemplatedEmail } from "@/lib/email-templates";
 import {
   getPaginationParams,
   paginatedResponse,
@@ -253,6 +254,20 @@ export async function POST(req: NextRequest) {
       action: "created a student",
       target: name,
     });
+
+    // Welcome the student. Never blocks creation; the password is deliberately
+    // not included, staff share the generated credential separately.
+    if (student.email) {
+      await sendTemplatedEmail({
+        key: "student-created",
+        to: student.email,
+        vars: {
+          studentName: name,
+          studentEmail: student.email,
+          actorName: await getActorName(session!.id),
+        },
+      });
+    }
 
     return NextResponse.json({ ...student, generatedPassword: passwordToUse });
   } catch (error) {

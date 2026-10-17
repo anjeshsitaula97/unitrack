@@ -285,7 +285,7 @@ export default function PartnershipContent() {
                 value={newPartner.name}
                 onChange={(e) => setNewPartner({ ...newPartner, name: e.target.value })}
                 placeholder="e.g. UniPath International"
-                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all"
+                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition"
               />
             </div>
             <div>
@@ -301,7 +301,7 @@ export default function PartnershipContent() {
                 value={newPartner.contactPerson}
                 onChange={(e) => setNewPartner({ ...newPartner, contactPerson: e.target.value })}
                 placeholder="e.g. John Doe"
-                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all"
+                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition"
               />
             </div>
             <div>
@@ -317,7 +317,7 @@ export default function PartnershipContent() {
                 value={newPartner.email}
                 onChange={(e) => setNewPartner({ ...newPartner, email: e.target.value })}
                 placeholder="partner@example.com"
-                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all"
+                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition"
               />
             </div>
             <div>
@@ -333,7 +333,7 @@ export default function PartnershipContent() {
                 value={newPartner.phone}
                 onChange={(e) => setNewPartner({ ...newPartner, phone: e.target.value })}
                 placeholder="+977 9800 000 000"
-                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all"
+                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition"
               />
             </div>
             <div>
@@ -349,7 +349,7 @@ export default function PartnershipContent() {
                 value={newPartner.address}
                 onChange={(e) => setNewPartner({ ...newPartner, address: e.target.value })}
                 placeholder="Kathmandu, Nepal"
-                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all"
+                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition"
               />
             </div>
             <div>
@@ -393,7 +393,7 @@ export default function PartnershipContent() {
                       countries: [...newPartner.countries, e.target.value],
                     });
                 }}
-                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition-all"
+                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition"
               >
                 <option value="">Select a country...</option>
                 {COUNTRIES.filter((c) => !newPartner.countries.includes(c.name)).map((c) => (
@@ -442,7 +442,7 @@ export default function PartnershipContent() {
           <button
             type="button"
             onClick={() => setTab("partnerships")}
-            className={`px-4 py-1.5 rounded-md text-xs transition-all ${
+            className={`px-4 py-1.5 rounded-md text-xs transition ${
               tab === "partnerships"
                 ? "font-bold bg-white shadow-sm text-slate-800"
                 : "font-semibold text-slate-500 hover:bg-white/50"
@@ -453,7 +453,7 @@ export default function PartnershipContent() {
           <button
             type="button"
             onClick={() => setTab("partners")}
-            className={`px-4 py-1.5 rounded-md text-xs transition-all ${
+            className={`px-4 py-1.5 rounded-md text-xs transition ${
               tab === "partners"
                 ? "font-bold bg-white shadow-sm text-slate-800"
                 : "font-semibold text-slate-500 hover:bg-white/50"
@@ -471,7 +471,7 @@ export default function PartnershipContent() {
             }
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-slate-100 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium placeholder:text-slate-400"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-slate-100 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition font-medium placeholder:text-slate-400"
           />
         </div>
       </div>
@@ -580,10 +580,7 @@ export default function PartnershipContent() {
               const countries = parseCountries(partner.countries);
               const univCount = universityCountByPartner[partner.id] || 0;
               return (
-                <div
-                  key={partner.id}
-                  className="card p-5 hover:shadow-md transition-all duration-200"
-                >
+                <div key={partner.id} className="card p-5 hover:shadow-md transition duration-200">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="size-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
                       <Handshake size={18} />

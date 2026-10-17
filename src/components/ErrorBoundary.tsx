@@ -43,7 +43,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
           <button
             type="button"
             onClick={this.handleRetry}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition"
           >
             <RefreshCw size={16} />
             Try again

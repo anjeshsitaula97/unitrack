@@ -277,7 +277,8 @@ export default function UniversitiesContent() {
       const failed = results.length - deleted.length;
 
       if (deleted.length > 0) {
-        setUniversitiesData((prev) => prev.filter((u) => !deleted.includes(u.id)));
+        const deletedIds = new Set(deleted);
+        setUniversitiesData((prev) => prev.filter((u) => !deletedIds.has(u.id)));
       }
       setSelected([]);
 
@@ -545,18 +546,20 @@ function SearchFilters({
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
+          aria-label="Search universities"
           placeholder="Search universities, countries..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition-all"
+          className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition"
         />
       </div>
 
       <div className="flex items-center gap-2">
         <select
+          aria-label="Status filter"
           value={statusFilter}
           onChange={(e) => {
             setStatusFilter(e.target.value);
@@ -571,6 +574,7 @@ function SearchFilters({
         </select>
 
         <select
+          aria-label="Type filter"
           value={typeFilter}
           onChange={(e) => {
             setTypeFilter(e.target.value);
@@ -584,6 +588,7 @@ function SearchFilters({
         </select>
 
         <select
+          aria-label="Country filter"
           value={countryFilter}
           onChange={(e) => {
             setCountryFilter(e.target.value);
@@ -602,7 +607,7 @@ function SearchFilters({
         <button
           type="button"
           onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-1.5 px-3 py-2 border rounded-lg text-xs font-medium transition-all duration-150 ${showFilters ? "bg-indigo-50 border-indigo-300 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+          className={`flex items-center gap-1.5 px-3 py-2 border rounded-lg text-xs font-medium transition duration-150 ${showFilters ? "bg-indigo-50 border-indigo-300 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
         >
           <Filter size={13} />
           Filters
@@ -612,7 +617,7 @@ function SearchFilters({
           <button
             type="button"
             onClick={() => setViewMode("list")}
-            className={`p-1.5 rounded-md transition-all ${viewMode === "list" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+            className={`p-1.5 rounded-md transition ${viewMode === "list" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
             title="List View"
           >
             <List size={14} />
@@ -620,7 +625,7 @@ function SearchFilters({
           <button
             type="button"
             onClick={() => setViewMode("grid")}
-            className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+            className={`p-1.5 rounded-md transition ${viewMode === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
             title="Grid View"
           >
             <LayoutGrid size={14} />
@@ -696,6 +701,7 @@ function UniversityTable({
   handleDelete: (id: string, name: string) => void;
   onClearFilters: () => void;
 }) {
+  const selectedIds = new Set(selected);
   return (
     <div className="overflow-x-auto scrollbar-thin">
       <table className="w-full min-w-[900px]">
@@ -704,6 +710,7 @@ function UniversityTable({
             <th className="text-left py-3 px-5 w-8">
               <input
                 type="checkbox"
+                aria-label="Select all universities"
                 checked={selected.length === paginated.length && paginated.length > 0}
                 onChange={toggleAll}
                 className="size-3.5 rounded border-slate-300 text-indigo-600 cursor-pointer"
@@ -721,11 +728,16 @@ function UniversityTable({
                 { key: "addedDate", label: "Added", sortable: true },
                 { key: null, label: "", sortable: false },
               ] as { key: SortField | null; label: string; sortable: boolean }[]
-            ).map((col, i) => (
+            ).map((col) => (
               <th
-                key={`col-univ-${col.label || i}`}
+                key={`col-univ-${col.key || col.label || "actions"}`}
                 className={`text-left p-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap ${col.sortable ? "cursor-pointer hover:text-slate-600 select-none" : ""}`}
                 onClick={() => col.sortable && col.key && toggleSort(col.key)}
+                onKeyDown={(e) => {
+                  if (col.sortable && col.key && (e.key === "Enter" || e.key === " ")) {
+                    toggleSort(col.key);
+                  }
+                }}
               >
                 <div className="flex items-center gap-1">
                   {col.label}
@@ -757,16 +769,17 @@ function UniversityTable({
           ) : (
             paginated.map((univ) => {
               const status = statusConfig[univ.status] || statusConfig["Active"];
-              const isSelected = selected.includes(univ.id);
+              const isSelected = selectedIds.has(univ.id);
               const isDeleting = deletingId === univ.id;
               return (
                 <tr
                   key={univ.id}
-                  className={`group transition-all duration-200 ${isDeleting ? "opacity-0 scale-95" : "opacity-100"} ${isSelected ? "bg-indigo-50/40" : "hover:bg-slate-50"}`}
+                  className={`group transition duration-200 ${isDeleting ? "opacity-0 scale-95" : "opacity-100"} ${isSelected ? "bg-indigo-50/40" : "hover:bg-slate-50"}`}
                 >
                   <td className="py-3 px-5">
                     <input
                       type="checkbox"
+                      aria-label={`Select ${univ.name}`}
                       checked={isSelected}
                       onChange={() => toggleRow(univ.id)}
                       className="size-3.5 rounded border-slate-300 text-indigo-600 cursor-pointer"
@@ -872,6 +885,7 @@ function UniversityTable({
                         month: "short",
                         day: "numeric",
                         year: "numeric",
+                        timeZone: "UTC",
                       })}
                     </span>
                   </td>
@@ -879,7 +893,7 @@ function UniversityTable({
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
                       <Link
                         href={`/universities/${univ.id}`}
-                        className="p-1.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                        className="p-1.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition"
                         title="View university profile"
                       >
                         <ExternalLink size={13} />
@@ -893,6 +907,7 @@ function UniversityTable({
                       </Link>
                       <button
                         type="button"
+                        aria-label={`Delete ${univ.name}`}
                         className="p-1.5 rounded-lg hover:bg-red-100 transition-colors"
                         title="Move university to trash (restorable for 30 days)"
                         onClick={() => handleDelete(univ.id, univ.name)}
@@ -901,6 +916,7 @@ function UniversityTable({
                       </button>
                       <button
                         type="button"
+                        aria-label={`More actions for ${univ.name}`}
                         className="p-1.5 rounded-lg hover:bg-slate-200 transition-colors"
                       >
                         <MoreHorizontal size={13} className="text-slate-400" />
@@ -949,7 +965,7 @@ function UniversityGrid({
           return (
             <article
               key={`grid-${univ.id}`}
-              className="group card relative flex flex-col overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-indigo-200 focus-within:border-indigo-300"
+              className="group card relative flex flex-col overflow-hidden transition duration-200 hover:shadow-lg hover:border-indigo-200 focus-within:border-indigo-300"
             >
               {/* Status is carried by a single colour cue in the top rail, so the
                   eye reads state before it reads text. */}
@@ -1071,7 +1087,7 @@ function UniversityGrid({
                       type="button"
                       aria-label={`More actions for ${univ.name}`}
                       aria-expanded={activeDropdown === univ.id}
-                      className={`p-2 rounded-lg border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${activeDropdown === univ.id ? "bg-indigo-50 border-indigo-200 text-indigo-600" : "border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50"}`}
+                      className={`p-2 rounded-lg border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${activeDropdown === univ.id ? "bg-indigo-50 border-indigo-200 text-indigo-600" : "border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50"}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveDropdown(activeDropdown === univ.id ? null : univ.id);
@@ -1143,6 +1159,7 @@ function UniversityPagination({
       <div className="flex items-center gap-2 text-xs text-slate-500">
         <span>Show</span>
         <select
+          aria-label="Items per page"
           value={perPage}
           onChange={(e) => {
             setPerPage(Number(e.target.value));
@@ -1163,30 +1180,29 @@ function UniversityPagination({
       <div className="flex items-center gap-1">
         <button
           type="button"
+          aria-label="Previous page"
           onClick={() => setPage(Math.max(1, page - 1))}
           disabled={page === 1}
-          className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150"
+          className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition duration-150"
         >
           <ChevronLeft size={14} />
         </button>
-        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-          const p = i + 1;
-          return (
-            <button
-              type="button"
-              key={`page-btn-${p}`}
-              onClick={() => setPage(p)}
-              className={`w-7 h-7 rounded-lg text-xs font-semibold transition-all duration-150 ${page === p ? "bg-indigo-600 text-white" : "border border-slate-200 text-slate-500 hover:bg-slate-50"}`}
-            >
-              {p}
-            </button>
-          );
-        })}
+        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
+          <button
+            type="button"
+            key={`page-btn-${p}`}
+            onClick={() => setPage(p)}
+            className={`w-7 h-7 rounded-lg text-xs font-semibold transition duration-150 ${page === p ? "bg-indigo-600 text-white" : "border border-slate-200 text-slate-500 hover:bg-slate-50"}`}
+          >
+            {p}
+          </button>
+        ))}
         <button
           type="button"
+          aria-label="Next page"
           onClick={() => setPage(Math.min(totalPages, page + 1))}
           disabled={page === totalPages || totalPages === 0}
-          className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150"
+          className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition duration-150"
         >
           <ChevronRight size={14} />
         </button>

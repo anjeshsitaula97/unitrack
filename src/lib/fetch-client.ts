@@ -26,15 +26,16 @@ async function apiFetch<T = unknown>(url: string, options: FetchOptions = {}): P
       ...fetchOptions,
     });
 
-    const data = await res.json().catch(() => null);
-
     if (!res.ok) {
-      const errorMsg = data?.error || `Request failed with status ${res.status}`;
+      const errorData = await res.json().catch(() => null);
+      const errorMsg = errorData?.error || `Request failed with status ${res.status}`;
       if (showError) {
         toast.error(errorMsg);
       }
-      throw new FetchError(res.status, errorMsg, data);
+      throw new FetchError(res.status, errorMsg, errorData);
     }
+
+    const data = await res.json().catch(() => null);
 
     if (showSuccess) {
       toast.success(successMessage || "Operation completed successfully");

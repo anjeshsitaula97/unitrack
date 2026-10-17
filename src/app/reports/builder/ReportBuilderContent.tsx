@@ -69,21 +69,98 @@ interface SavedReport {
   config: unknown;
 }
 
+interface ReportFilter {
+  id: string;
+  field: string;
+  op: string;
+  value: string;
+}
+
+const makeFilterId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `filter-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+function readConfig(config: unknown): Record<string, unknown> {
+  if (!config) return {};
+  if (typeof config === "string") {
+    try {
+      const parsed = JSON.parse(config);
+      return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+    } catch {
+      return {};
+    }
+  }
+  return typeof config === "object" ? (config as Record<string, unknown>) : {};
+}
+
+function reportRowKey(row: Record<string, unknown>, fields: string[]) {
+  return fields.map((f) => String(row[f] ?? "")).join("|");
+}
+
+function SavedReportsPanel({
+  reports,
+  onLoad,
+  onDelete,
+}: {
+  reports: SavedReport[];
+  onLoad: (report: SavedReport) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-6">
+      <h3 className="font-bold text-slate-800 mb-3 text-sm">Saved Reports</h3>
+      <div className="space-y-1">
+        {reports.map((r) => {
+          const cfg = readConfig(r.config);
+          return (
+            <div
+              key={r.id}
+              className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-50"
+            >
+              <button type="button" onClick={() => onLoad(r)} className="text-left">
+                <span className="font-medium text-slate-700 text-sm">{r.name}</span>
+                <span className="text-[10px] text-slate-400 ml-2">
+                  {(cfg.entity as string) || "?"} &middot;{" "}
+                  {(cfg.fields as unknown[] | undefined)?.length || 0} fields
+                </span>
+              </button>
+              <button
+                type="button"
+                aria-label={`Delete ${r.name}`}
+                onClick={() => onDelete(r.id)}
+                className="text-red-400 hover:text-red-600"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ReportBuilderContent() {
   const [entity, setEntity] = useState<string>("Student");
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
-  const [filters, setFilters] = useState<{ field: string; op: string; value: string }[]>([]);
+  const [filters, setFilters] = useState<ReportFilter[]>([]);
   const [chartType, setChartType] = useState("Table");
   const [reportData, setReportData] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
   const [reportName, setReportName] = useState("");
   const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
   const [showSaved, setShowSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const selectedFieldSet = new Set(selectedFields);
 
   const fetchSaved = async () => {
     try {
       const res = await fetch("/api/reports/saved");
-      setSavedReports(await res.json());
+      if (!res.ok) return;
+      const data = await res.json();
+      setSavedReports(Array.isArray(data) ? data : []);
     } catch {
       /* ignore */
     }
@@ -95,12 +172,13 @@ export default function ReportBuilderContent() {
   }, []);
 
   const addFilter = () =>
-    setFilters([...filters, { field: entityFields[entity][0] || "id", op: "contains", value: "" }]);
-  const removeFilter = (i: number) => setFilters(filters.filter((_, idx) => idx !== i));
-  const updateFilter = (i: number, key: "field" | "op" | "value", val: string) => {
-    const copy = [...filters];
-    copy[i] = { ...copy[i], [key]: val };
-    setFilters(copy);
+    setFilters([
+      ...filters,
+      { id: makeFilterId(), field: entityFields[entity][0] || "id", op: "contains", value: "" },
+    ]);
+  const removeFilter = (id: string) => setFilters(filters.filter((f) => f.id !== id));
+  const updateFilter = (id: string, key: "field" | "op" | "value", val: string) => {
+    setFilters(filters.map((f) => (f.id === id ? { ...f, [key]: val } : f)));
   };
 
   const toggleField = (field: string) => {
@@ -138,6 +216,8 @@ export default function ReportBuilderContent() {
       toast.error("Enter a report name");
       return;
     }
+    if (saving) return;
+    setSaving(true);
     try {
       const res = await fetch("/api/reports/saved", {
         method: "POST",
@@ -155,15 +235,24 @@ export default function ReportBuilderContent() {
       }
     } catch {
       toast.error("Save failed");
+    } finally {
+      setSaving(false);
     }
   };
 
   const loadReport = async (report: SavedReport) => {
-    const cfg = typeof report.config === "string" ? JSON.parse(report.config) : report.config || {};
-    setEntity(cfg.entity || "Student");
-    setSelectedFields(cfg.fields || []);
-    setFilters(cfg.filters || []);
-    setChartType(cfg.chartType || "Table");
+    const cfg = readConfig(report.config);
+    setEntity((cfg.entity as string) || "Student");
+    setSelectedFields((cfg.fields as string[]) || []);
+    setFilters(
+      ((cfg.filters as ReportFilter[]) || []).map((f) => ({
+        id: f.id || makeFilterId(),
+        field: f.field,
+        op: f.op,
+        value: f.value,
+      }))
+    );
+    setChartType((cfg.chartType as string) || "Table");
     setShowSaved(false);
     toast.success("Report loaded");
   };
@@ -194,46 +283,15 @@ export default function ReportBuilderContent() {
       </div>
 
       {showSaved && savedReports.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-6">
-          <h3 className="font-bold text-slate-800 mb-3 text-sm">Saved Reports</h3>
-          <div className="space-y-1">
-            {savedReports.map((r: SavedReport) => (
-              <div
-                key={r.id}
-                className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-50"
-              >
-                <button type="button" onClick={() => loadReport(r)} className="text-left">
-                  <span className="font-medium text-slate-700 text-sm">
-                    {r.name}
-                  </span>
-                  <span className="text-[10px] text-slate-400 ml-2">
-                    {(typeof r.config === "string" ? JSON.parse(r.config || "{}") : r.config || {})
-                      .entity || "?"}{" "}
-                    &middot;{" "}
-                    {(typeof r.config === "string" ? JSON.parse(r.config || "{}") : r.config || {})
-                      .fields?.length || 0}{" "}
-                    fields
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => deleteReport(r.id)}
-                  className="text-red-400 hover:text-red-600"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        <SavedReportsPanel reports={savedReports} onLoad={loadReport} onDelete={deleteReport} />
       )}
 
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-1 space-y-4">
           <div className="bg-white rounded-2xl border border-slate-100 p-4">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+            <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
               Entity
-            </label>
+            </span>
             <div className="flex flex-wrap gap-1">
               {Object.keys(entityFields).map((e) => (
                 <button
@@ -253,9 +311,9 @@ export default function ReportBuilderContent() {
 
           <div className="bg-white rounded-2xl border border-slate-100 p-4">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Fields
-              </label>
+              </span>
               <span className="text-[10px] text-slate-400">{selectedFields.length} selected</span>
             </div>
             <div className="space-y-0.5 max-h-48 overflow-y-auto">
@@ -263,7 +321,7 @@ export default function ReportBuilderContent() {
                 <label key={field} className="flex items-center gap-2 py-1 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={selectedFields.includes(field)}
+                    checked={selectedFieldSet.has(field)}
                     onChange={() => toggleField(field)}
                     className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                   />
@@ -274,9 +332,9 @@ export default function ReportBuilderContent() {
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-100 p-4">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+            <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
               Chart Type
-            </label>
+            </span>
             <div className="flex flex-wrap gap-1">
               {chartTypes.map((ct) => (
                 <button
@@ -302,9 +360,9 @@ export default function ReportBuilderContent() {
 
           <div className="bg-white rounded-2xl border border-slate-100 p-4">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Filters
-              </label>
+              </span>
               <button
                 type="button"
                 onClick={addFilter}
@@ -314,14 +372,20 @@ export default function ReportBuilderContent() {
               </button>
             </div>
             <div className="space-y-2">
-              {filters.map((f, i) => (
-                <div key={i} className="flex gap-1 items-center">
-                  <button type="button" onClick={() => removeFilter(i)} className="text-red-400">
+              {filters.map((f) => (
+                <div key={f.id} className="flex gap-1 items-center">
+                  <button
+                    type="button"
+                    onClick={() => removeFilter(f.id)}
+                    aria-label="Remove filter"
+                    className="text-red-400"
+                  >
                     <X size={12} />
                   </button>
                   <select
+                    aria-label="Filter field"
                     value={f.field}
-                    onChange={(e) => updateFilter(i, "field", e.target.value)}
+                    onChange={(e) => updateFilter(f.id, "field", e.target.value)}
                     className="flex-1 text-[10px] px-1.5 py-1 bg-slate-50 border border-slate-200 rounded"
                   >
                     {entityFields[entity].map((fld) => (
@@ -331,8 +395,9 @@ export default function ReportBuilderContent() {
                     ))}
                   </select>
                   <select
+                    aria-label="Filter operator"
                     value={f.op}
-                    onChange={(e) => updateFilter(i, "op", e.target.value)}
+                    onChange={(e) => updateFilter(f.id, "op", e.target.value)}
                     className="w-16 text-[10px] px-1 py-1 bg-slate-50 border border-slate-200 rounded"
                   >
                     {["contains", "equals", "gt", "lt", "startsWith"].map((op) => (
@@ -343,8 +408,9 @@ export default function ReportBuilderContent() {
                   </select>
                   <input
                     type="text"
+                    aria-label="Filter value"
                     value={f.value}
-                    onChange={(e) => updateFilter(i, "value", e.target.value)}
+                    onChange={(e) => updateFilter(f.id, "value", e.target.value)}
                     className="flex-1 text-[10px] px-1.5 py-1 bg-slate-50 border border-slate-200 rounded"
                   />
                 </div>
@@ -363,7 +429,11 @@ export default function ReportBuilderContent() {
           </button>
 
           <div className="flex gap-2">
+            <label className="sr-only" htmlFor="reportName">
+              Report name
+            </label>
             <input
+              id="reportName"
               type="text"
               value={reportName}
               onChange={(e) => setReportName(e.target.value)}
@@ -373,8 +443,8 @@ export default function ReportBuilderContent() {
             <button
               type="button"
               onClick={handleSave}
-              disabled={!reportName.trim()}
-              className="px-3 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-semibold hover:bg-emerald-100 flex items-center gap-1"
+              disabled={!reportName.trim() || saving}
+              className="px-3 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-semibold hover:bg-emerald-100 flex items-center gap-1 disabled:opacity-50"
             >
               <Save size={14} /> Save
             </button>
@@ -404,9 +474,9 @@ export default function ReportBuilderContent() {
                       </tr>
                     </thead>
                     <tbody>
-                      {reportData.slice(0, 50).map((row, i) => (
+                      {reportData.slice(0, 50).map((row) => (
                         <tr
-                          key={i}
+                          key={reportRowKey(row, selectedFields)}
                           className="border-b border-slate-50 hover:bg-slate-50"
                         >
                           {selectedFields.map((f) => {
@@ -415,10 +485,7 @@ export default function ReportBuilderContent() {
                             const display =
                               val === null || val === undefined ? "-" : String(val) || "-";
                             return (
-                              <td
-                                key={f}
-                                className="px-4 py-2.5 text-slate-700"
-                              >
+                              <td key={f} className="px-4 py-2.5 text-slate-700">
                                 {display}
                               </td>
                             );
@@ -442,10 +509,7 @@ export default function ReportBuilderContent() {
                   if (!numField) {
                     return (
                       <div className="p-8 text-center">
-                        <BarChart3
-                          className="mx-auto text-slate-200 mb-3"
-                          size={48}
-                        />
+                        <BarChart3 className="mx-auto text-slate-200 mb-3" size={48} />
                         <p className="text-slate-500 font-medium">
                           No numeric field found for chart
                         </p>
@@ -463,16 +527,17 @@ export default function ReportBuilderContent() {
                     );
                     return (
                       <div className="p-8">
-                        <h3 className="font-bold text-slate-800 mb-4">
-                          {chartType} Chart
-                        </h3>
+                        <h3 className="font-bold text-slate-800 mb-4">{chartType} Chart</h3>
                         <div className="flex items-end gap-2 h-48">
-                          {reportData.slice(0, 15).map((row, i) => {
+                          {reportData.slice(0, 15).map((row) => {
                             const h = (Number(row[numField]) / maxVal) * 100;
                             return (
-                              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                              <div
+                                key={reportRowKey(row, selectedFields)}
+                                className="flex-1 flex flex-col items-center gap-1"
+                              >
                                 <div
-                                  className="w-full bg-indigo-500 rounded-t transition-all"
+                                  className="w-full bg-indigo-500 rounded-t transition"
                                   style={{ height: `${Math.max(h, 2)}%` }}
                                 />
                                 <span className="text-[8px] text-slate-400 text-center truncate w-full">
@@ -507,9 +572,11 @@ export default function ReportBuilderContent() {
                       <h3 className="font-bold text-slate-800 mb-4">Pie Chart</h3>
                       <div className="flex flex-wrap gap-4 justify-center">
                         {reportData.slice(0, 10).map((row, i) => {
-                          const _pct = reportData.length > 1 ? 100 / reportData.length : 100;
                           return (
-                            <div key={i} className="flex items-center gap-2">
+                            <div
+                              key={reportRowKey(row, selectedFields)}
+                              className="flex items-center gap-2"
+                            >
                               <div
                                 className="size-4 rounded-full"
                                 style={{ backgroundColor: colors[i % 10] }}

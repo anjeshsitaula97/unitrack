@@ -1,13 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { logActivity, getActorName } from "@/lib/activity";
-import { getPaginationParams, paginatedResponse, apiError, getSession, checkRoutePermission } from "@/lib/api-utils";
+import {
+  getPaginationParams,
+  paginatedResponse,
+  apiError,
+  getSession,
+  checkRoutePermission,
+} from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import {
+  parseJson,
+  zodResponse,
+  emailField,
+  optionalTrimmedString,
+  isoDateOrNull,
+} from "@/lib/validate";
 
 const prisma = db;
+
+// Server-side contract for a lead. Replaces the previous "destructure the raw
+// body, check name/email exist, pass everything else through" pattern so that
+// free-form fields are trimmed/bounded and dates are actually validated before
+// they reach Prisma.
+const createLeadSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(200),
+  email: emailField,
+  phone: optionalTrimmedString(40),
+  source: optionalTrimmedString(80),
+  status: optionalTrimmedString(60),
+  notes: optionalTrimmedString(4000),
+  uploadedBy: optionalTrimmedString(120),
+  uploaderNotes: optionalTrimmedString(2000),
+  counselor: optionalTrimmedString(120),
+  counselorNotes: optionalTrimmedString(2000),
+  assignedDate: isoDateOrNull,
+  nextFollowUp: isoDateOrNull,
+  interestedCountry: optionalTrimmedString(120),
+  maritalStatus: optionalTrimmedString(40),
+  childrenCount: z.coerce.number().int().min(0).max(50).optional().default(0),
+  referenceName: optionalTrimmedString(120),
+});
 
 export async function GET(req: NextRequest) {
   try {
@@ -65,10 +102,15 @@ export async function POST(req: NextRequest) {
     // Rate limit lead creation
     const rl = await checkRateLimit(`create-lead:${getClientIp(req)}`, 30, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
-    const body = await req.json();
+    const parsed = await parseJson(req, createLeadSchema);
+    if (!parsed.ok) return zodResponse(parsed.error);
+
     const {
       name,
       email,
@@ -86,11 +128,7 @@ export async function POST(req: NextRequest) {
       maritalStatus,
       childrenCount,
       referenceName,
-    } = body;
-
-    if (!name || !email) {
-      return NextResponse.json({ error: "Name and email are required" }, { status: 400 });
-    }
+    } = parsed.data;
 
     const lead = await prisma.lead.create({
       data: {
@@ -104,11 +142,11 @@ export async function POST(req: NextRequest) {
         uploaderNotes,
         counselor,
         counselorNotes,
-        assignedDate: assignedDate ? new Date(assignedDate) : null,
-        nextFollowUp: nextFollowUp ? new Date(nextFollowUp) : null,
+        assignedDate,
+        nextFollowUp,
         interestedCountry,
         maritalStatus: maritalStatus || "Single",
-        childrenCount: childrenCount ? parseInt(childrenCount) : 0,
+        childrenCount,
         referenceName,
       },
     });

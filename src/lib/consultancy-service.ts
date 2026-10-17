@@ -52,18 +52,20 @@ export async function nextConsultancyCode(): Promise<string> {
  */
 export async function seedConsultancyDefaults(consultancyId: number): Promise<void> {
   await runWithConsultancy({ consultancyId }, async () => {
-    for (const seed of DEFAULT_ROLE_SEEDS) {
-      const existing = await db.role.findFirst({ where: { name: seed.name } });
-      if (existing) continue;
-      await db.role.create({
-        data: {
-          name: seed.name,
-          description: seed.description,
-          permissions: JSON.stringify(catalogDefaultsFor(seed.slug)),
-          color: seed.color,
-        },
-      });
-    }
+    await Promise.all(
+      DEFAULT_ROLE_SEEDS.map(async (seed) => {
+        const existing = await db.role.findFirst({ where: { name: seed.name } });
+        if (existing) return;
+        await db.role.create({
+          data: {
+            name: seed.name,
+            description: seed.description,
+            permissions: JSON.stringify(catalogDefaultsFor(seed.slug)),
+            color: seed.color,
+          },
+        });
+      })
+    );
 
     const settings = await db.systemSettings.findFirst();
     if (!settings) {

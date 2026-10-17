@@ -226,168 +226,23 @@ export default function StaffContent() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-1">Staff Management</h1>
-          <p className="text-sm text-slate-400">
-            {filtered.length.toLocaleString()} staff members matching your current filters
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowAddModal(true)}
-          className="btn-primary flex items-center gap-2"
-        >
-          <UserPlus size={15} />
-          Add New Staff
-        </button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5" suppressHydrationWarning>
-        {[
-          {
-            label: "Total Staff",
-            value: staff?.length ?? 0,
-            color: "text-indigo-600",
-            bg: "bg-indigo-50",
-            icon: <Users size={14} />,
-          },
-          {
-            label: "Admins",
-            value: (staff ?? []).filter((s) => s.role === "Admin").length,
-            color: "text-rose-600",
-            bg: "bg-rose-50",
-            icon: <ShieldCheck size={14} />,
-          },
-          {
-            label: "Moderators",
-            value: (staff ?? []).filter((s) => s.role === "Moderator").length,
-            color: "text-emerald-600",
-            bg: "bg-emerald-50",
-            icon: <CheckCircle2 size={14} />,
-          },
-          {
-            label: "New This Month",
-            value: (staff ?? []).filter(
-              (s) => new Date(s.createdAt).getMonth() === new Date().getMonth()
-            ).length,
-            color: "text-blue-600",
-            bg: "bg-blue-50",
-            icon: <Plus size={14} />,
-          },
-        ].map((s, _i) => (
-          <div key={s.label} className="card px-4 py-3 flex items-center gap-3">
-            <div
-              className={`size-8 rounded-lg ${s.bg} ${s.color} flex items-center justify-center flex-shrink-0`}
-            >
-              {s.icon}
-            </div>
-            <div>
-              <div className="text-xs text-slate-400 font-medium">{s.label}</div>
-              <div className={`text-lg font-bold ${s.color}`}>{s.value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
+      <StaffHeader filteredCount={filtered.length} onAdd={() => setShowAddModal(true)} />
+      <StaffStats staff={staff} />
       {/* Filters */}
       <div className="card overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search staff by name or email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all"
-            />
-          </div>
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          >
-            <option value="all">All Roles</option>
-            {(availableRoles ?? []).map((r) => (
-              <option key={r.id} value={r.name}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50/60 border-b border-slate-100">
-              <tr>
-                <th className="py-3 px-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  User
-                </th>
-                <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Role
-                </th>
-                <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right pr-5">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {paginated.length === 0 && !isLoading && (
-                <tr>
-                  <td colSpan={3} className="py-12 text-center text-slate-400 text-sm">
-                    No team members found.
-                  </td>
-                </tr>
-              )}
-              {paginated.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="py-4 px-5">
-                    <div className="flex items-center gap-3">
-                      <div className="size-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs uppercase shadow-sm border-2 border-white">
-                        {user.name.substring(0, 2)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800">{user.name}</p>
-                        <p className="text-[10px] text-slate-400">{user.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-3">
-                    <div
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide ${roleConfig[user.role]?.className || ""}`}
-                    >
-                      {roleConfig[user.role]?.icon}
-                      {roleConfig[user.role]?.label || user.role}
-                    </div>
-                  </td>
-                  <td className="py-4 px-3 text-right pr-5">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(user)}
-                        className="p-1.5 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteStaff(user.id)}
-                        className="p-1.5 text-red-800 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
+        <StaffFilters
+          search={search}
+          setSearch={setSearch}
+          roleFilter={roleFilter}
+          setRoleFilter={setRoleFilter}
+          availableRoles={availableRoles}
+        />
+        <StaffTable
+          paginated={paginated}
+          isLoading={isLoading}
+          onEdit={openEditModal}
+          onDelete={handleDeleteStaff}
+        />
         {/* Pagination */}
         <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
           <p className="text-xs text-slate-500">
@@ -443,6 +298,201 @@ export default function StaffContent() {
   );
 }
 
+function StaffHeader({ filteredCount, onAdd }: { filteredCount: number; onAdd: () => void }) {
+  return (
+    <div className="flex items-start justify-between mb-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-800 mb-1">Staff Management</h1>
+        <p className="text-sm text-slate-400">
+          {filteredCount.toLocaleString()} staff members matching your current filters
+        </p>
+      </div>
+      <button type="button" onClick={onAdd} className="btn-primary flex items-center gap-2">
+        <UserPlus size={15} />
+        Add New Staff
+      </button>
+    </div>
+  );
+}
+
+function StaffStats({ staff }: { staff: StaffMember[] | undefined }) {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5" suppressHydrationWarning>
+      {[
+        {
+          label: "Total Staff",
+          value: staff?.length ?? 0,
+          color: "text-indigo-600",
+          bg: "bg-indigo-50",
+          icon: <Users size={14} />,
+        },
+        {
+          label: "Admins",
+          value: (staff ?? []).filter((s) => s.role === "Admin").length,
+          color: "text-rose-600",
+          bg: "bg-rose-50",
+          icon: <ShieldCheck size={14} />,
+        },
+        {
+          label: "Moderators",
+          value: (staff ?? []).filter((s) => s.role === "Moderator").length,
+          color: "text-emerald-600",
+          bg: "bg-emerald-50",
+          icon: <CheckCircle2 size={14} />,
+        },
+        {
+          label: "New This Month",
+          value: (staff ?? []).filter(
+            (s) => new Date(s.createdAt).getMonth() === new Date().getMonth()
+          ).length,
+          color: "text-blue-600",
+          bg: "bg-blue-50",
+          icon: <Plus size={14} />,
+        },
+      ].map((s) => (
+        <div key={s.label} className="card px-4 py-3 flex items-center gap-3">
+          <div
+            className={`size-8 rounded-lg ${s.bg} ${s.color} flex items-center justify-center flex-shrink-0`}
+          >
+            {s.icon}
+          </div>
+          <div>
+            <div className="text-xs text-slate-400 font-medium">{s.label}</div>
+            <div className={`text-lg font-bold ${s.color}`}>{s.value}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StaffFilters({
+  search,
+  setSearch,
+  roleFilter,
+  setRoleFilter,
+  availableRoles,
+}: {
+  search: string;
+  setSearch: (v: string) => void;
+  roleFilter: string;
+  setRoleFilter: (v: string) => void;
+  availableRoles: RoleOption[] | undefined;
+}) {
+  return (
+    <div className="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center gap-3">
+      <div className="relative flex-1 min-w-[200px]">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search staff by name or email..."
+          aria-label="Search staff by name or email"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
+        />
+      </div>
+      <select
+        value={roleFilter}
+        aria-label="Filter by role"
+        onChange={(e) => setRoleFilter(e.target.value)}
+        className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+      >
+        <option value="all">All Roles</option>
+        {(availableRoles ?? []).map((r) => (
+          <option key={r.id} value={r.name}>
+            {r.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function StaffTable({
+  paginated,
+  isLoading,
+  onEdit,
+  onDelete,
+}: {
+  paginated: StaffMember[];
+  isLoading: boolean;
+  onEdit: (user: StaffMember) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left">
+        <thead className="bg-slate-50/60 border-b border-slate-100">
+          <tr>
+            <th className="py-3 px-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              User
+            </th>
+            <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              Role
+            </th>
+            <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right pr-5">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-50">
+          {paginated.length === 0 && !isLoading && (
+            <tr>
+              <td colSpan={3} className="py-12 text-center text-slate-400 text-sm">
+                No team members found.
+              </td>
+            </tr>
+          )}
+          {paginated.map((user) => (
+            <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+              <td className="py-4 px-5">
+                <div className="flex items-center gap-3">
+                  <div className="size-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs uppercase shadow-sm border-2 border-white">
+                    {user.name.substring(0, 2)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">{user.name}</p>
+                    <p className="text-[10px] text-slate-400">{user.email}</p>
+                  </div>
+                </div>
+              </td>
+              <td className="py-4 px-3">
+                <div
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide ${roleConfig[user.role]?.className || ""}`}
+                >
+                  {roleConfig[user.role]?.icon}
+                  {roleConfig[user.role]?.label || user.role}
+                </div>
+              </td>
+              <td className="py-4 px-3 text-right pr-5">
+                <div className="flex items-center justify-end gap-1">
+                  <button
+                    type="button"
+                    aria-label="Edit staff member"
+                    onClick={() => onEdit(user)}
+                    className="p-1.5 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Delete staff member"
+                    onClick={() => onDelete(user.id)}
+                    className="p-1.5 text-red-800 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function AddStaffModal({
   showAddModal: _showAddModal,
   setShowAddModal,
@@ -467,6 +517,7 @@ function AddStaffModal({
           <h3 className="font-bold text-slate-800">Invite New Staff</h3>
           <button
             type="button"
+            aria-label="Close"
             onClick={() => setShowAddModal(false)}
             className="text-slate-400 hover:text-slate-600 p-1"
           >
@@ -489,7 +540,7 @@ function AddStaffModal({
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter full name"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
               />
             </div>
             <div>
@@ -506,7 +557,7 @@ function AddStaffModal({
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="name@unitrack.com"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
               />
             </div>
             <div>
@@ -523,7 +574,7 @@ function AddStaffModal({
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="••••••••"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
               />
             </div>
             <div>
@@ -537,7 +588,7 @@ function AddStaffModal({
                 id="staff-add-role"
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
               >
                 {(availableRoles ?? []).map((r) => (
                   <option key={r.id} value={r.name}>
@@ -589,6 +640,7 @@ function EditStaffModal({
           <h3 className="font-bold text-slate-800">Edit Staff Member</h3>
           <button
             type="button"
+            aria-label="Close"
             onClick={() => setShowEditModal(false)}
             className="text-slate-400 hover:text-slate-600 p-1"
           >
@@ -611,7 +663,7 @@ function EditStaffModal({
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter full name"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
               />
             </div>
             <div>
@@ -628,7 +680,7 @@ function EditStaffModal({
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="name@unitrack.com"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
               />
             </div>
             <div>
@@ -644,7 +696,7 @@ function EditStaffModal({
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="••••••••"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
               />
             </div>
             <div>
@@ -658,7 +710,7 @@ function EditStaffModal({
                 id="staff-edit-role"
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
               >
                 {(availableRoles ?? []).map((r) => (
                   <option key={r.id} value={r.name}>
@@ -678,7 +730,7 @@ function EditStaffModal({
                 id="staff-edit-status"
                 value={formData.status || "Active"}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
               >
                 {Object.keys(statusConfig).map((s) => (
                   <option key={s} value={s}>

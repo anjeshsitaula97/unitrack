@@ -193,7 +193,7 @@ export default function StudentNotesContent() {
               type="button"
               onClick={addNote}
               disabled={!noteText.trim() || posting}
-              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {posting ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
               Send

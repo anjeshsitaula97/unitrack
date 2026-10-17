@@ -1,6 +1,7 @@
 # Node modules
 node_modules/
-package-lock.json
+# NOTE: package-lock.json is intentionally tracked — reproducible installs and
+# `npm ci` in CI depend on it. Do not add it back to this ignore list.
 
 # Next.js build output
 .next/

@@ -177,6 +177,7 @@ export default function AutomationsContent() {
                     setAutomations((prev) => prev.filter((item) => item.id !== a.id));
                     toast.error(`Deleted ${a.name} permanently.`);
                   }}
+                  aria-label={`Delete ${a.name}`}
                   className="p-2 text-red-800 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                 >
                   <Trash2 size={16} />
@@ -197,7 +198,7 @@ export default function AutomationsContent() {
             </p>
             <button
               type="button"
-              className="px-4 py-2 bg-white text-indigo-600 rounded-xl text-sm font-bold hover:shadow-lg transition-all active:scale-95"
+              className="px-4 py-2 bg-white text-indigo-600 rounded-xl text-sm font-bold hover:shadow-lg transition active:scale-95"
             >
               Open Builder
             </button>
@@ -216,7 +217,7 @@ export default function AutomationsContent() {
           </p>
           <button
             type="button"
-            className="text-sm font-bold text-indigo-600 hover:underline transition-all"
+            className="text-sm font-bold text-indigo-600 hover:underline transition"
           >
             Explore Templates &rarr;
           </button>

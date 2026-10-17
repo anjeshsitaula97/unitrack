@@ -65,7 +65,7 @@ const EMPTY_FORM: FormState = {
 };
 
 const inputClass =
-  "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all";
+  "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition";
 
 const labelClass = "block text-xs font-semibold text-slate-600 mb-1.5";
 
@@ -88,7 +88,12 @@ function formatDate(value: string | null): string {
   if (!value) return "—";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 /** Days until expiry, negative when past. Null when no expiry is set. */
@@ -186,11 +191,12 @@ export default function ConsultanciesContent() {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json().catch(() => null);
       if (!res.ok) {
+        const data = await res.json().catch(() => null);
         toast.error(data?.error || "Failed to upload logo");
         return;
       }
+      const data = await res.json().catch(() => null);
       setForm((f) => ({ ...f, logoUrl: data.url }));
       toast.success("Logo uploaded");
     } catch {
@@ -228,8 +234,8 @@ export default function ConsultanciesContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => null);
       if (!res.ok) {
+        const data = await res.json().catch(() => null);
         toast.error(data?.error || "Failed to save consultancy");
         return;
       }
@@ -254,8 +260,8 @@ export default function ConsultanciesContent() {
     setBusyId(c.id);
     try {
       const res = await fetch(`/api/consultancies/${c.id}`, { method: "DELETE" });
-      const data = await res.json().catch(() => null);
       if (!res.ok) {
+        const data = await res.json().catch(() => null);
         toast.error(data?.error || "Failed to delete consultancy");
         return;
       }
@@ -537,7 +543,11 @@ export default function ConsultanciesContent() {
                     )}
                   </div>
                   <div className="flex-1">
+                    <label htmlFor="consultancy-logo-url" className={labelClass}>
+                      Logo URL
+                    </label>
                     <input
+                      id="consultancy-logo-url"
                       type="text"
                       value={form.logoUrl}
                       onChange={(e) => setForm((f) => ({ ...f, logoUrl: e.target.value }))}
@@ -575,10 +585,11 @@ export default function ConsultanciesContent() {
                 </div>
 
                 <div className="mt-4">
-                  <label className={labelClass}>
+                  <label htmlFor="consultancy-name" className={labelClass}>
                     Name <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="consultancy-name"
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -601,8 +612,11 @@ export default function ConsultanciesContent() {
                 </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Email</label>
+                    <label htmlFor="consultancy-email" className={labelClass}>
+                      Email
+                    </label>
                     <input
+                      id="consultancy-email"
                       type="email"
                       value={form.email}
                       onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
@@ -610,8 +624,11 @@ export default function ConsultanciesContent() {
                     />
                   </div>
                   <div>
-                    <label className={labelClass}>Phone</label>
+                    <label htmlFor="consultancy-phone" className={labelClass}>
+                      Phone
+                    </label>
                     <input
+                      id="consultancy-phone"
                       type="text"
                       value={form.phone}
                       onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
@@ -620,8 +637,11 @@ export default function ConsultanciesContent() {
                   </div>
                 </div>
                 <div className="mt-4">
-                  <label className={labelClass}>Website</label>
+                  <label htmlFor="consultancy-website" className={labelClass}>
+                    Website
+                  </label>
                   <input
+                    id="consultancy-website"
                     type="text"
                     value={form.website}
                     onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
@@ -629,8 +649,11 @@ export default function ConsultanciesContent() {
                   />
                 </div>
                 <div className="mt-4">
-                  <label className={labelClass}>Address</label>
+                  <label htmlFor="consultancy-address" className={labelClass}>
+                    Address
+                  </label>
                   <textarea
+                    id="consultancy-address"
                     value={form.address}
                     onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
                     rows={2}
@@ -646,8 +669,11 @@ export default function ConsultanciesContent() {
                 </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Package Name</label>
+                    <label htmlFor="consultancy-package-name" className={labelClass}>
+                      Package Name
+                    </label>
                     <input
+                      id="consultancy-package-name"
                       type="text"
                       value={form.packageName}
                       onChange={(e) => setForm((f) => ({ ...f, packageName: e.target.value }))}
@@ -656,8 +682,11 @@ export default function ConsultanciesContent() {
                     />
                   </div>
                   <div>
-                    <label className={labelClass}>Max Users</label>
+                    <label htmlFor="consultancy-max-users" className={labelClass}>
+                      Max Users
+                    </label>
                     <input
+                      id="consultancy-max-users"
                       type="number"
                       min={1}
                       value={form.maxUsers}
@@ -667,8 +696,11 @@ export default function ConsultanciesContent() {
                     />
                   </div>
                   <div>
-                    <label className={labelClass}>Start Date</label>
+                    <label htmlFor="consultancy-start-date" className={labelClass}>
+                      Start Date
+                    </label>
                     <input
+                      id="consultancy-start-date"
                       type="date"
                       value={form.packageStartDate}
                       onChange={(e) => setForm((f) => ({ ...f, packageStartDate: e.target.value }))}
@@ -676,8 +708,11 @@ export default function ConsultanciesContent() {
                     />
                   </div>
                   <div>
-                    <label className={labelClass}>Expiry Date</label>
+                    <label htmlFor="consultancy-expiry-date" className={labelClass}>
+                      Expiry Date
+                    </label>
                     <input
+                      id="consultancy-expiry-date"
                       type="date"
                       value={form.packageExpiryDate}
                       onChange={(e) =>
@@ -690,8 +725,11 @@ export default function ConsultanciesContent() {
               </div>
 
               <div>
-                <label className={labelClass}>Status</label>
+                <label htmlFor="consultancy-status" className={labelClass}>
+                  Status
+                </label>
                 <select
+                  id="consultancy-status"
                   value={form.status}
                   onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
                   className={inputClass}

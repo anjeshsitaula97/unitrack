@@ -227,6 +227,7 @@ export async function POST(req: NextRequest) {
                 credits: parseInt(String(row.credits)) || 0,
                 duration: row.duration || "0",
                 instructor: row.instructor || "TBA",
+                instructorEmail: row.instructorEmail || null,
                 description: row.description || "",
                 prerequisites: "[]",
                 quickFilters: "[]",

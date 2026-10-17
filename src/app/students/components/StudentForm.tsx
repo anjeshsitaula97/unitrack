@@ -30,6 +30,7 @@ import {
   useReducedMotion,
 } from "framer-motion";
 import { toast } from "sonner";
+import { api } from "@/lib/fetch-client";
 import { ADToBS, BSToAD } from "bikram-sambat-js";
 import NEB_INSTITUTES from "@/lib/data/neb_grade12_institutes.json";
 
@@ -279,17 +280,20 @@ const capitalize = (str: string) => {
 
 const fetchDistricts = async (provinceId: number, setter: (val: string[]) => void) => {
   try {
-    const res = await fetch(`/api/nepal/districts?province=${provinceId}`);
-    const data = await res.json();
-    setter(data);
+    const data = await api.get<string[]>(`/api/nepal/districts?province=${provinceId}`, {
+      showError: false,
+    });
+    setter(Array.isArray(data) ? data : []);
   } catch (_err) {}
 };
 
 const fetchMunicipalities = async (district: string, setter: (val: string[]) => void) => {
   try {
-    const res = await fetch(`/api/nepal/municipalities?district=${encodeURIComponent(district)}`);
-    const data = await res.json();
-    setter(data);
+    const data = await api.get<string[]>(
+      `/api/nepal/municipalities?district=${encodeURIComponent(district)}`,
+      { showError: false }
+    );
+    setter(Array.isArray(data) ? data : []);
   } catch (_err) {}
 };
 
@@ -299,11 +303,11 @@ const fetchWards = async (
   setter: (val: string[]) => void
 ) => {
   try {
-    const res = await fetch(
-      `/api/nepal/wards?district=${encodeURIComponent(district)}&municipality=${encodeURIComponent(municipality)}`
+    const data = await api.get<string[]>(
+      `/api/nepal/wards?district=${encodeURIComponent(district)}&municipality=${encodeURIComponent(municipality)}`,
+      { showError: false }
     );
-    const data = await res.json();
-    setter(data);
+    setter(Array.isArray(data) ? data : []);
   } catch (_err) {}
 };
 
@@ -597,9 +601,8 @@ export default function StudentForm({
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/users");
-      if (res.ok) {
-        const data = await res.json();
+      const data = await api.get<UserSummary[]>("/api/users", { showError: false });
+      if (Array.isArray(data)) {
         setAllUsers(data);
       }
     } catch (_err) {}
@@ -607,9 +610,8 @@ export default function StudentForm({
 
   const fetchPartners = async () => {
     try {
-      const res = await fetch("/api/partners");
-      if (res.ok) {
-        const data = await res.json();
+      const data = await api.get<PartnerSummary[]>("/api/partners", { showError: false });
+      if (Array.isArray(data)) {
         setAllPartners(data);
       }
     } catch (_err) {}
@@ -617,16 +619,19 @@ export default function StudentForm({
 
   const fetchProvinces = async () => {
     try {
-      const res = await fetch("/api/nepal/provinces");
-      const data = await res.json();
-      setProvinces(data);
+      const data = await api.get<{ id: number; name: string }[]>("/api/nepal/provinces", {
+        showError: false,
+      });
+      if (Array.isArray(data)) setProvinces(data);
     } catch (_err) {}
   };
 
   const fetchQualifications = async () => {
     try {
-      const res = await fetch("/api/qualifications");
-      const data = (await res.json()) as { id: string; name: string; level: number }[];
+      const data = await api.get<{ id: string; name: string; level: number }[]>(
+        "/api/qualifications",
+        { showError: false }
+      );
       if (Array.isArray(data)) {
         const order: Record<string, number> = {
           SEE: 1,
@@ -907,6 +912,9 @@ export default function StudentForm({
     }));
   };
 
+  const requiredDocs = getRequiredDocsForQualifications(formData.education);
+  const requiredDocsSet = new Set(requiredDocs);
+
   return (
     <LazyMotion features={domAnimation}>
       <div className="animate-fade-in space-y-6">
@@ -914,6 +922,7 @@ export default function StudentForm({
           <button
             type="button"
             onClick={() => router.back()}
+            aria-label="Go back"
             className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 hover:text-slate-600"
           >
             <ArrowLeft size={20} />
@@ -943,7 +952,7 @@ export default function StudentForm({
                       className="flex flex-col items-center gap-1.5 shrink-0 group"
                     >
                       <span
-                        className={`size-8 rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
+                        className={`size-8 rounded-full flex items-center justify-center text-[11px] font-bold transition ${
                           isActive
                             ? "bg-indigo-600 text-white ring-4 ring-indigo-100"
                             : isCompleted
@@ -1001,7 +1010,7 @@ export default function StudentForm({
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={formData.photoUrl}
-                                alt="Student photo"
+                                alt="Student profile"
                                 className="size-full object-cover"
                               />
                             ) : (
@@ -1073,7 +1082,7 @@ export default function StudentForm({
                         onBlur={(e) =>
                           setFormData({ ...formData, firstName: capitalize(e.target.value) })
                         }
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-indigo-500"
                         placeholder="e.g. John"
                       />
                     </div>
@@ -1092,7 +1101,7 @@ export default function StudentForm({
                         onBlur={(e) =>
                           setFormData({ ...formData, lastName: capitalize(e.target.value) })
                         }
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-indigo-500"
                         placeholder="e.g. Doe"
                       />
                     </div>
@@ -1109,7 +1118,7 @@ export default function StudentForm({
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-indigo-500"
                         placeholder="personal@example.com"
                       />
                     </div>
@@ -1124,7 +1133,7 @@ export default function StudentForm({
                         id="student-status"
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
                       >
                         <option value="In Review">In Review</option>
                         <option value="Verified">Verified</option>
@@ -1160,7 +1169,7 @@ export default function StudentForm({
                         onChange={(e) =>
                           setFormData({ ...formData, admissionEmail: e.target.value })
                         }
-                        className="w-full px-4 py-2.5 bg-amber-50/30 border border-amber-100 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-amber-500"
+                        className="w-full px-4 py-2.5 bg-amber-50/30 border border-amber-100 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-amber-500"
                         placeholder="application.id@gmail.com"
                       />
                     </div>
@@ -1179,7 +1188,7 @@ export default function StudentForm({
                         onChange={(e) =>
                           setFormData({ ...formData, applicationEmailPassword: e.target.value })
                         }
-                        className="w-full px-4 py-2.5 bg-amber-50/30 border border-amber-100 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-amber-500"
+                        className="w-full px-4 py-2.5 bg-amber-50/30 border border-amber-100 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-amber-500"
                         placeholder="Password for admission email"
                       />
                     </div>
@@ -1192,6 +1201,7 @@ export default function StudentForm({
                       </label>
                       <div className="flex gap-2">
                         <select
+                          aria-label="Country calling code"
                           value={formData.phonePrefix}
                           onChange={(e) =>
                             setFormData({ ...formData, phonePrefix: e.target.value })
@@ -1208,7 +1218,7 @@ export default function StudentForm({
                           id="phone-number"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                          className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-indigo-500"
                           placeholder="9800000000"
                         />
                       </div>
@@ -1225,7 +1235,7 @@ export default function StudentForm({
                         id="assigned-counselor"
                         value={formData.counselor}
                         onChange={(e) => setFormData({ ...formData, counselor: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-indigo-50/50 border border-indigo-100 rounded-xl outline-none transition-all text-sm font-bold text-indigo-700 focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2.5 bg-indigo-50/50 border border-indigo-100 rounded-xl outline-none transition text-sm font-bold text-indigo-700 focus:ring-2 focus:ring-indigo-500"
                       >
                         <option value="">Select Counselor</option>
                         {staffUsers.map((u) => (
@@ -1261,7 +1271,7 @@ export default function StudentForm({
                             phonePrefix: c ? c.phoneCode : "+977",
                           });
                         }}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
                       >
                         {COUNTRIES.map((c) => (
                           <option key={c.name} value={c.name}>
@@ -1282,7 +1292,7 @@ export default function StudentForm({
                         type="date"
                         value={formData.dobAd}
                         onChange={handleAdDobChange}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -1296,7 +1306,7 @@ export default function StudentForm({
                         id="dob-bs"
                         value={formData.dobBs}
                         onChange={handleBsDobChange}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-indigo-500"
                         placeholder="YYYY-MM-DD"
                       />
                     </div>
@@ -1311,7 +1321,7 @@ export default function StudentForm({
                         id="gender"
                         value={formData.gender}
                         onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
                       >
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
@@ -1589,7 +1599,7 @@ export default function StudentForm({
                                   e.target.value === "Single" ? [] : formData.childrenDetails,
                               })
                             }
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-indigo-500 appearance-none"
                           >
                             <option value="Single">Single</option>
                             <option value="Married">Married</option>
@@ -1616,7 +1626,7 @@ export default function StudentForm({
                                   spouseName: capitalize(e.target.value),
                                 })
                               }
-                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-sm font-medium focus:ring-2 focus:ring-indigo-500"
                               placeholder="Spouse Full Name"
                             />
                           </div>
@@ -1687,6 +1697,7 @@ export default function StudentForm({
                                   <button
                                     type="button"
                                     onClick={() => removeChild(child.id)}
+                                    aria-label="Remove child"
                                     className="p-2 text-slate-300 hover:text-red-500 mb-0.5"
                                   >
                                     <Trash2 size={16} />
@@ -1966,12 +1977,14 @@ export default function StudentForm({
                             <button
                               type="button"
                               onClick={() => removeEducation(edu.id)}
-                              className="absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                              aria-label="Remove education"
+                              className="absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
                             >
                               <Trash2 size={16} />
                             </button>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <select
+                                aria-label="Qualification"
                                 value={edu.qualification}
                                 onChange={(e) =>
                                   updateEducation(edu.id, "qualification", e.target.value)
@@ -1987,6 +2000,7 @@ export default function StudentForm({
                               </select>
                               <div className="relative group/inst">
                                 <input
+                                  aria-label="Institution"
                                   value={edu.institution}
                                   onChange={(e) =>
                                     updateEducation(edu.id, "institution", e.target.value)
@@ -2009,6 +2023,7 @@ export default function StudentForm({
                               </div>
                               <div className="md:col-span-2">
                                 <input
+                                  aria-label="Institution address"
                                   value={edu.institutionAddress}
                                   onChange={(e) =>
                                     updateEducation(edu.id, "institutionAddress", e.target.value)
@@ -2018,12 +2033,14 @@ export default function StudentForm({
                                 />
                               </div>
                               <input
+                                aria-label="Year"
                                 value={edu.year}
                                 onChange={(e) => updateEducation(edu.id, "year", e.target.value)}
                                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Year"
                               />
                               <input
+                                aria-label="Score or GPA"
                                 value={edu.score}
                                 onChange={(e) => updateEducation(edu.id, "score", e.target.value)}
                                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
@@ -2061,18 +2078,21 @@ export default function StudentForm({
                         >
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input
+                              aria-label="Job title"
                               value={work.jobTitle}
                               onChange={(e) => updateWork(work.id, "jobTitle", e.target.value)}
                               className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
                               placeholder="Job Title"
                             />
                             <input
+                              aria-label="Company"
                               value={work.company}
                               onChange={(e) => updateWork(work.id, "company", e.target.value)}
                               className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500"
                               placeholder="Company"
                             />
                             <input
+                              aria-label="Company address"
                               value={work.companyAddress}
                               onChange={(e) =>
                                 updateWork(work.id, "companyAddress", e.target.value)
@@ -2227,22 +2247,19 @@ export default function StudentForm({
                     <p className="text-xs text-slate-500 ml-1">
                       Required documents based on highest qualification:{" "}
                       <span className="font-semibold text-slate-700">
-                        {getRequiredDocsForQualifications(formData.education)
-                          .filter((d) => !commonDocs.includes(d))
-                          .join(", ") || "None specific"}
+                        {requiredDocs.filter((d) => !commonDocs.includes(d)).join(", ") ||
+                          "None specific"}
                       </span>
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {docTypes
-                        .filter((type) =>
-                          getRequiredDocsForQualifications(formData.education).includes(type)
-                        )
+                        .filter((type) => requiredDocsSet.has(type))
                         .map((type) => {
                           const existingDoc = formData.documents.find((d) => d.type === type);
                           return (
                             <div
                               key={type}
-                              className={`p-4 rounded-3xl border-2 transition-all ${existingDoc ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}
+                              className={`p-4 rounded-3xl border-2 transition ${existingDoc ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}
                             >
                               <div className="flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-3 min-w-0">
@@ -2295,7 +2312,7 @@ export default function StudentForm({
             <button
               type="button"
               onClick={() => setStep((s) => Math.max(1, s - 1))}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${step === 1 ? "invisible" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition ${step === 1 ? "invisible" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}
             >
               <ChevronLeft size={18} /> Back
             </button>
@@ -2303,7 +2320,7 @@ export default function StudentForm({
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all"
+                className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition"
               >
                 Cancel
               </button>
@@ -2313,7 +2330,7 @@ export default function StudentForm({
                   if (step < totalSteps) setStep((s) => s + 1);
                   else handleSubmit();
                 }}
-                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-100"
+                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-100"
               >
                 {step === totalSteps ? (isEditing ? "Update Student" : "Create Student") : "Next"}
                 {step < totalSteps && <ChevronRight size={18} />}

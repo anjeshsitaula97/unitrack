@@ -1,91 +1,141 @@
-# Next.js
+# UniTrack
 
-A modern Next.js 15 application built with TypeScript and Tailwind CSS.
+Student / lead / application management CRM for education consultancies, built on
+**Next.js 16 (App Router) + TypeScript + Prisma + MySQL**, with multi-tenant
+consultancy scoping, a role/permission system, file management, payments
+(eSewa / connectIPS) and an email engine.
 
-## 🚀 Features
+## Requirements
 
-- **Next.js 15** - Latest version with improved performance and features
-- **React 19** - Latest React version with enhanced capabilities
-- **Tailwind CSS** - Utility-first CSS framework for rapid UI development
+- Node.js 20+
+- npm 10+ (the committed `package-lock.json` is required — CI uses `npm ci`)
+- A MySQL database (remote or local)
 
-## 🛠️ Installation
+## Setup
 
-1. Install dependencies:
-  ```bash
-  npm install
-  # or
-  yarn install
-  ```
+```bash
+# 1. Install exactly what the lockfile pins
+npm ci
 
-2. Start the development server:
-  ```bash
-  npm run dev
-  # or
-  yarn dev
-  ```
-3. Open [http://localhost:4028](http://localhost:4028) with your browser to see the result.
+# 2. Configure environment
+cp .env.example .env.local
+#    then edit .env.local with real values (see "Environment" below)
 
-## 📁 Project Structure
+# 3. Create the Prisma client
+npx prisma generate
 
-```
-nextjs/
-├── public/             # Static assets
-├── src/
-│   ├── app/            # App router components
-│   │   ├── layout.tsx  # Root layout component
-│   │   └── page.tsx    # Main page component
-│   ├── components/     # Reusable UI components
-│   ├── styles/         # Global styles and Tailwind configuration
-├── next.config.mjs     # Next.js configuration
-├── package.json        # Project dependencies and scripts
-├── postcss.config.js   # PostCSS configuration
-└── tailwind.config.js  # Tailwind CSS configuration
+# 4. Apply migrations (non-destructive; only applies pending ones)
+npx prisma migrate deploy
 
+# 5. Start the dev server (http://localhost:4028)
+npm run dev
 ```
 
-## 🧩 Page Editing
+> The Prisma CLI reads `.env`, **not** `.env.local`. To run CLI commands against
+> your local `.env.local`, source it first:
+> ```bash
+> set -a && . ./.env.local && set +a && npx prisma migrate status
+> ```
 
-You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-## 🎨 Styling
+`.env.example` is the tracked template. Every other `.env*` file is git-ignored.
 
-This project uses Tailwind CSS for styling with the following features:
-- Utility-first approach for rapid development
-- Custom theme configuration
-- Responsive design utilities
-- PostCSS and Autoprefixer integration
+| Variable | Required | Notes |
+|---|---|---|
+| `DATABASE_URL` | yes | `mysql://user:pass@host:3306/db` |
+| `JWT_SECRET` | yes | **≥ 32 chars**, `openssl rand -base64 32`. Enforced at request time. |
+| `ENCRYPTION_KEY` | recommended | **≥ 32 chars** and must **differ** from `JWT_SECRET`. |
+| `NEXT_PUBLIC_APP_URL` | yes | Used for gateway redirects and CSRF origin checks. |
+| `ESEWA_*`, `CONNECTIPS_*` | for payments | Payment gateway credentials. |
+| `MASTER_API_URL` / `MASTER_API_KEY` | optional | External master service. |
+| `UPLOADS_DIR` | optional | Absolute path for persistent uploads (must be outside `public/`). |
+| `TRUST_PROXY` | behind a proxy | `"true"` makes rate limiting trust `X-Forwarded-For`. |
+| `LOG_LEVEL` | optional | `debug` \| `info` \| `warn` \| `error` (default `info`). |
 
-## 📦 Available Scripts
+Environment is validated by `src/lib/env.ts` (`checkEnv` / `validateEnv`), which
+fails fast on missing/weak secrets and rejects reusing `JWT_SECRET` as
+`ENCRYPTION_KEY`. `GET /api/health` reports this alongside database reachability.
 
-- `npm run dev` - Start development server on port 4028
-- `npm run build` - Build the application for production
-- `npm run start` - Start the development server
-- `npm run serve` - Start the production server
-- `npm run lint` - Run ESLint to check code quality
-- `npm run lint:fix` - Fix ESLint issues automatically
-- `npm run format` - Format code with Prettier
+## Scripts
 
-## 📱 Deployment
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Dev server on `0.0.0.0:4028` |
+| `npm run build` | Production build (`next build --webpack`) |
+| `npm start` / `npm run serve` | Start the production server |
+| `npm run type-check` | `tsc --noEmit` |
+| `npm run lint` / `lint:fix` | ESLint (changed files first; full-repo lint is slow) |
+| `npm run format` | Prettier write |
+| `npm test` / `test:watch` / `test:coverage` | Vitest |
+| `npx prisma migrate deploy` | Apply pending migrations |
+| `npx prisma studio` | DB browser |
 
-Build the application for production:
+## Health check
 
-  ```bash
-  npm run build
-  ```
+```bash
+curl http://localhost:4028/api/health
+```
 
-## 📚 Learn More
+Unauthenticated, exposes no tenant data. Returns `200 { status: "ok" }` when the
+database is reachable and required env vars are present, `503 { status: "degraded" }`
+otherwise. Point load balancers / uptime monitors here.
 
-To learn more about Next.js, take a look at the following resources:
+## Quality gates
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial
+CI (`.github/workflows/ci.yml`) runs on every push/PR to `master`/`main`:
 
-You can check out the [Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. `npm ci` (reproducible install from the lockfile)
+2. `npx prisma generate`
+3. `npm run type-check`
+4. `npm run lint`
+5. `npm test`
+6. `npm run build`
 
-## 🙏 Acknowledgments
+Run the same four locally before pushing.
 
-- Built with [Rocket.new](https://rocket.new)
-- Powered by Next.js and React
-- Styled with Tailwind CSS
+## Project structure
 
-Built with ❤️ on Rocket.new
+```
+src/
+├── app/                 # App Router pages (route groups per feature)
+│   ├── api/             # API route handlers (auth + permission checks per route)
+│   ├── students/        # Students, leads, applications, payments, HR, ... etc
+│   └── om/              # Super Admin platform console
+├── components/          # Shared UI (Sidebar, ui/)
+├── lib/                 # Auth, RBAC, tenancy, validation, email, uploads, db
+│   ├── db.ts            # Prisma client + consultancy-scoping extension
+│   ├── validate.ts      # Shared zod request validation
+│   ├── env.ts           # Environment fail-fast checks
+│   └── __tests__/       # Unit tests
+└── test/setup.ts        # Vitest setup
+prisma/
+├── schema.prisma        # 65 models
+└── migrations/          # Versioned migrations
+```
+
+## Architecture notes
+
+- **Tenancy:** every tenant model carries `consultancyId`; `src/lib/db.ts` injects
+  the active consultancy into every query via a Prisma `$extends`. Models that are
+  intentionally platform-wide are listed in `UNSCOPED_MODELS` (`src/lib/consultancy.ts`)
+  — guarded by tests in `src/lib/__tests__/hardening.test.ts`. Never widen that
+  allow-list without review.
+- **Auth:** HS256 JWT in `httpOnly` cookies (`src/lib/session.ts`), re-validated
+  against the DB on every request. CSRF is enforced centrally for every non-GET
+  `/api` call in `src/proxy.ts`.
+- **Validation:** use `parseJson(req, schema)` + `zodResponse()` from
+  `src/lib/validate.ts` in new route handlers instead of hand-rolling checks.
+- **Logging:** `logError/logInfo/logWarn` from `src/lib/logger.ts` emit
+  single-line JSON (sanitised, no secrets) so output is collector-friendly.
+- **Uploads:** hardened in `src/lib/upload-security.ts` (magic-byte sniffing,
+  extension/MIME allow-lists, SVG sanitisation, path-traversal protection).
+
+## Deployment
+
+```bash
+npm ci && npx prisma migrate deploy && npm run build && npm start
+```
+
+Apply migrations before serving traffic. Secrets must be injected via the
+environment — never commit `.env.local` / `.env.production`.

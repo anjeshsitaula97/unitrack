@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { AlertTriangle, X } from "lucide-react";
 
 interface ConfirmDialogProps {
@@ -44,14 +44,19 @@ export default function ConfirmDialog({
   onCancel,
   loading = false,
 }: ConfirmDialogProps) {
+  const onCancelRef = useRef(onCancel);
+  useEffect(() => {
+    onCancelRef.current = onCancel;
+  });
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
+      if (e.key === "Escape") onCancelRef.current();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, onCancel]);
+  }, [open]);
 
   if (!open) return null;
 
@@ -71,7 +76,7 @@ export default function ConfirmDialog({
             type="button"
             aria-label="Close"
             onClick={onCancel}
-            className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+            className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
           >
             <X size={16} />
           </button>
@@ -88,7 +93,7 @@ export default function ConfirmDialog({
               type="button"
               onClick={onCancel}
               disabled={loading}
-              className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all disabled:opacity-50"
+              className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 transition disabled:opacity-50"
             >
               {cancelLabel}
             </button>
@@ -96,7 +101,7 @@ export default function ConfirmDialog({
               type="button"
               onClick={onConfirm}
               disabled={loading}
-              className={`flex-1 py-2.5 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2 ${s.buttonBg}`}
+              className={`flex-1 py-2.5 text-white text-sm font-bold rounded-xl transition disabled:opacity-50 inline-flex items-center justify-center gap-2 ${s.buttonBg}`}
             >
               {loading && (
                 <svg className="animate-spin size-4" viewBox="0 0 24 24">

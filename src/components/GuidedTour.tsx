@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { X, ChevronRight, ChevronLeft, GraduationCap } from "lucide-react";
-import { clearAuthCache } from "./AppLayoutWrapper";
+import { clearAuthCache } from "@/lib/auth-state";
 
 const steps = [
   {
@@ -96,6 +96,12 @@ export default function GuidedTour({ user }: GuidedTourProps) {
     setTooltipPos({ top, left });
   }, [currentStep]);
 
+  const updatePositionRef = useRef(updatePosition);
+
+  useEffect(() => {
+    updatePositionRef.current = updatePosition;
+  }, [updatePosition]);
+
   useEffect(() => {
     if (!active) return;
     const raf = requestAnimationFrame(() => {
@@ -104,14 +110,14 @@ export default function GuidedTour({ user }: GuidedTourProps) {
         el.scrollIntoView({ behavior: "smooth", block: "nearest" });
         el.classList.add("ring-2", "ring-indigo-400", "ring-offset-2", "rounded-lg");
       }
-      updatePosition();
+      updatePositionRef.current();
     });
     return () => {
       cancelAnimationFrame(raf);
       const el = document.querySelector(steps[currentStep].target);
       if (el) el.classList.remove("ring-2", "ring-indigo-400", "ring-offset-2", "rounded-lg");
     };
-  }, [active, currentStep, updatePosition]);
+  }, [active, currentStep]);
 
   useEffect(() => {
     if (!active) return;
@@ -129,7 +135,12 @@ export default function GuidedTour({ user }: GuidedTourProps) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/10 z-[90]" onClick={skip} />
+      <button
+        type="button"
+        aria-label="Close tour"
+        onClick={skip}
+        className="fixed inset-0 w-full cursor-default border-0 bg-black/10 p-0 z-[90]"
+      />
 
       <div
         ref={tooltipRef}
@@ -152,6 +163,7 @@ export default function GuidedTour({ user }: GuidedTourProps) {
             </div>
             <button
               type="button"
+              aria-label="Close tour"
               onClick={skip}
               className="text-slate-400 hover:text-slate-600"
             >
@@ -169,9 +181,7 @@ export default function GuidedTour({ user }: GuidedTourProps) {
               ))}
             </div>
             <h3 className="font-bold text-slate-800 text-sm mb-1">{step.title}</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              {step.content}
-            </p>
+            <p className="text-xs text-slate-500 leading-relaxed">{step.content}</p>
           </div>
 
           <div className="flex items-center justify-between">

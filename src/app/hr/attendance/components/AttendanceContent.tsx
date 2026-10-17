@@ -146,7 +146,7 @@ const QuickActionsPanel = ({
           {myStatus.checkInPhoto && (
             <button
               type="button"
-              onClick={() => window.open(myStatus.checkInPhoto!, "_blank")}
+              onClick={() => window.open(myStatus.checkInPhoto!, "_blank", "noopener,noreferrer")}
               className="text-[10px] text-indigo-600 flex items-center gap-1 mt-1 hover:underline"
             >
               <Camera size={10} /> View photo
@@ -586,7 +586,9 @@ export default function AttendanceContent() {
                           {r.checkInPhoto ? (
                             <button
                               type="button"
-                              onClick={() => window.open(r.checkInPhoto!, "_blank")}
+                              onClick={() =>
+                                window.open(r.checkInPhoto!, "_blank", "noopener,noreferrer")
+                              }
                               className="p-1 text-emerald-500 hover:text-emerald-600"
                               title="View check-in photo"
                             >

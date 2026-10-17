@@ -5,6 +5,15 @@ import { Mail, Loader2, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+const OTP_SLOT_KEYS = [
+  "otp-slot-1",
+  "otp-slot-2",
+  "otp-slot-3",
+  "otp-slot-4",
+  "otp-slot-5",
+  "otp-slot-6",
+] as const;
+
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const [step, setStep] = useState<"email" | "otp">("email");
@@ -188,13 +197,14 @@ export default function ForgotPasswordPage() {
               <div className="flex justify-center gap-3 mb-6">
                 {otp.map((digit, i) => (
                   <input
-                    key={i}
+                    key={OTP_SLOT_KEYS[i]}
                     ref={(el) => {
                       otpRefs.current[i] = el;
                     }}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
+                    aria-label={`Verification code digit ${i + 1}`}
                     value={digit}
                     onChange={(e) => handleOtpChange(i, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(i, e)}

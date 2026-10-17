@@ -55,6 +55,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         color: data.color,
         initials: data.initials || data.name?.substring(0, 2).toUpperCase(),
         instructor: data.instructor,
+        instructorEmail: data.instructorEmail || null,
         description: data.description,
         prerequisites: Array.isArray(data.prerequisites)
           ? JSON.stringify(data.prerequisites)

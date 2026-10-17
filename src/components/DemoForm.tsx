@@ -13,15 +13,20 @@ export default function DemoForm() {
       {!submitted ? (
         <form
           className="space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault();
+          action={() => {
             setSubmitted(true);
           }}
         >
           <div>
-            <label className="block font-label-pill text-label-pill uppercase text-slate-400 mb-1">Consultancy Name</label>
+            <label
+              className="block font-label-pill text-label-pill uppercase text-slate-400 mb-1"
+              htmlFor="demo-consultancy-name"
+            >
+              Consultancy Name
+            </label>
             <input
               className="w-full px-4 py-2.5 rounded-xl bg-white/10 text-white placeholder:text-slate-500 font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              id="demo-consultancy-name"
               placeholder="e.g. Landmark Educational Hub"
               required
               type="text"
@@ -29,16 +34,32 @@ export default function DemoForm() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-label-pill text-label-pill uppercase text-slate-400 mb-1">Branch Count</label>
-              <select className="w-full px-3 py-2.5 rounded-xl bg-white/10 text-white font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+              <label
+                className="block font-label-pill text-label-pill uppercase text-slate-400 mb-1"
+                htmlFor="demo-branch-count"
+              >
+                Branch Count
+              </label>
+              <select
+                className="w-full px-3 py-2.5 rounded-xl bg-white/10 text-white font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                id="demo-branch-count"
+              >
                 <option className="text-slate-900">1 Branch</option>
                 <option className="text-slate-900">2 - 4 Branches</option>
                 <option className="text-slate-900">5+ Branches</option>
               </select>
             </div>
             <div>
-              <label className="block font-label-pill text-label-pill uppercase text-slate-400 mb-1">Primary Intake Hub</label>
-              <select className="w-full px-3 py-2.5 rounded-xl bg-white/10 text-white font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+              <label
+                className="block font-label-pill text-label-pill uppercase text-slate-400 mb-1"
+                htmlFor="demo-intake-hub"
+              >
+                Primary Intake Hub
+              </label>
+              <select
+                className="w-full px-3 py-2.5 rounded-xl bg-white/10 text-white font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                id="demo-intake-hub"
+              >
                 <option className="text-slate-900">Kathmandu, Nepal</option>
                 <option className="text-slate-900">Sydney, Australia</option>
                 <option className="text-slate-900">New Delhi, India</option>
@@ -47,16 +68,22 @@ export default function DemoForm() {
             </div>
           </div>
           <div>
-            <label className="block font-label-pill text-label-pill uppercase text-slate-400 mb-1">Direct Phone / WhatsApp</label>
+            <label
+              className="block font-label-pill text-label-pill uppercase text-slate-400 mb-1"
+              htmlFor="demo-phone"
+            >
+              Direct Phone / WhatsApp
+            </label>
             <input
               className="w-full px-4 py-2.5 rounded-xl bg-white/10 text-white placeholder:text-slate-500 font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              id="demo-phone"
               placeholder="+977 980-0000000"
               required
               type="tel"
             />
           </div>
           <button
-            className="w-full mt-2 py-3 px-4 rounded-full bg-indigo-600 text-white font-label-btn text-label-btn font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-indigo-700 transition-all"
+            className="w-full mt-2 py-3 px-4 rounded-full bg-indigo-600 text-white font-label-btn text-label-btn font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-indigo-700 transition"
             type="submit"
           >
             <span>Confirm Walkthrough Session</span>
@@ -65,7 +92,8 @@ export default function DemoForm() {
         </form>
       ) : (
         <div className="p-4 rounded-xl bg-indigo-500/20 text-indigo-200 text-[14px] font-body-sm text-center">
-          Request received. A senior education solution consultant will WhatsApp you within 30 minutes.
+          Request received. A senior education solution consultant will WhatsApp you within 30
+          minutes.
         </div>
       )}
     </div>

@@ -210,7 +210,11 @@ export interface PaginationParams {
 
 export function getPaginationParams(searchParams: URLSearchParams): PaginationParams {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-  const perPage = Math.min(100, Math.max(1, parseInt(searchParams.get("perPage") || "20")));
+  // Raised from 100 to 500: several list UIs (leads, applications) paginate
+  // client-side over the full result set, so a low server cap silently made
+  // records beyond the cap unreachable. Callers that need true server-side
+  // paging still pass a small perPage (the default remains 20).
+  const perPage = Math.min(500, Math.max(1, parseInt(searchParams.get("perPage") || "20")));
   const search = searchParams.get("search") || "";
   const skip = (page - 1) * perPage;
   return { page, perPage, search, skip };

@@ -1,10 +1,26 @@
 /**
- * Production-ready rate limiter using MySQL via Prisma.
- * Falls back to in-memory if DB is unavailable.
+ * Rate limiting backed by MySQL (`RateLimitLog`).
  *
- * For multi-instance / serverless deployments, migrate to Redis:
- *   npm install ioredis
- *   and replace the db.* calls with Redis INCR + EXPIRE.
+ * Because counters live in the database, limits are shared correctly across
+ * every instance/process hitting the same database — no Redis required for the
+ * single-database deployment this app uses.
+ *
+ * Anti-race design: the previous implementation did `COUNT(*)` and then a
+ * separate `INSERT`, in JavaScript, with a network round-trip in between. Two
+ * concurrent requests could both observe "19 of 20" and both proceed, letting
+ * bursts exceed the limit. The insert is now a single conditional statement:
+ *
+ *     INSERT ... SELECT key, now
+ *     WHERE (SELECT COUNT(*) ... WHERE key = ? AND createdAt > windowStart) < max
+ *
+ * so the count check and the increment happen in one statement. If the limit is
+ * already reached no row is inserted, `$executeRaw` returns 0 affected rows and
+ * the request is denied. This fails closed (it can, under extreme concurrency,
+ * briefly reject one request that was exactly at the boundary — a safe failure
+ * mode for a limiter).
+ *
+ * For horizontal scaling beyond a shared database, or to remove any reliance on
+ * the fallback path, move this to Redis (ioredis: INCR + EXPIRE).
  */
 
 import { db } from "./db";
@@ -51,43 +67,48 @@ export async function checkRateLimit(
   windowMs: number = 60000
 ): Promise<{ allowed: boolean; remaining: number; resetIn: number }> {
   const now = Date.now();
+  const windowStart = new Date(now - windowMs);
 
-  // Try DB-backed rate limiting
   try {
-    const windowStart = new Date(now - windowMs);
-    const count = await db.$queryRawUnsafe<{ count: bigint }[]>(
-      `SELECT COUNT(*) as count FROM RateLimitLog WHERE \`key\` = ? AND createdAt > ?`,
-      key,
-      windowStart
-    );
-    const current = Number(count[0]?.count ?? 0);
+    // Single conditional insert: only succeeds while under the limit.
+    const affected = await db.$executeRaw`
+      INSERT INTO RateLimitLog (\`key\`, createdAt)
+      SELECT ${key}, ${new Date(now)}
+      WHERE (
+        SELECT COUNT(*) FROM RateLimitLog
+        WHERE \`key\` = ${key} AND createdAt > ${windowStart}
+      ) < ${maxRequests}
+    `;
 
-    if (current >= maxRequests) {
-      const oldest = await db.$queryRawUnsafe<{ createdAt: Date }[]>(
-        `SELECT createdAt FROM RateLimitLog WHERE \`key\` = ? ORDER BY createdAt ASC LIMIT 1`,
-        key
-      );
+    if (affected === 0) {
+      // Already at (or over) the limit — nothing was written, so deny.
+      const oldest = await db.$queryRaw<{ createdAt: Date }[]>`
+        SELECT createdAt FROM RateLimitLog
+        WHERE \`key\` = ${key} AND createdAt > ${windowStart}
+        ORDER BY createdAt ASC LIMIT 1
+      `;
       const resetIn = oldest[0] ? oldest[0].createdAt.getTime() + windowMs - now : windowMs;
       return { allowed: false, remaining: 0, resetIn: Math.max(0, resetIn) };
     }
 
-    await db.$executeRawUnsafe(
-      `INSERT INTO RateLimitLog (\`key\`, createdAt) VALUES (?, ?)`,
-      key,
-      new Date(now)
-    );
+    // This request consumed a slot, so re-count to report accurate `remaining`.
+    const counted = await db.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*) as count FROM RateLimitLog
+      WHERE \`key\` = ${key} AND createdAt > ${windowStart}
+    `;
+    const current = Number(counted[0]?.count ?? 0);
 
-    // Periodic cleanup of expired entries
+    // Opportunistic cleanup of expired rows.
     if (Math.random() < 0.01) {
-      await db.$executeRawUnsafe(
-        `DELETE FROM RateLimitLog WHERE createdAt < ?`,
-        new Date(now - windowMs * 2)
-      );
+      await db.$executeRaw`
+        DELETE FROM RateLimitLog WHERE createdAt < ${new Date(now - windowMs * 2)}
+      `;
     }
 
-    return { allowed: true, remaining: maxRequests - current - 1, resetIn: windowMs };
+    return { allowed: true, remaining: Math.max(0, maxRequests - current), resetIn: windowMs };
   } catch {
-    // Fallback to in-memory if RateLimitLog table doesn't exist yet
+    // Database unavailable (e.g. RateLimitLog table not migrated yet) — fall
+    // back to per-process memory so limiting still works for a single instance.
     memoryCleanup();
     const entry = memoryMap.get(key);
 

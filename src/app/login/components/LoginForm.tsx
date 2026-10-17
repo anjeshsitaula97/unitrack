@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Lock, Mail, Loader2, GraduationCap, ShieldCheck, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getRoleHome } from "@/lib/role-home";
-import { clearAuthCache } from "@/components/AppLayoutWrapper";
+import { clearAuthCache } from "@/lib/auth-state";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function LoginForm() {
         throw new Error(message);
       }
 
-      const data = await res.json();
+      await res.json();
 
       if (loginMode === "admin") {
         clearAuthCache();
@@ -103,7 +103,7 @@ export default function LoginForm() {
             <button
               type="button"
               onClick={() => setLoginMode("admin")}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition duration-150 ${
                 loginMode === "admin"
                   ? "bg-white text-indigo-700 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
@@ -115,7 +115,7 @@ export default function LoginForm() {
             <button
               type="button"
               onClick={() => setLoginMode("student")}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition duration-150 ${
                 loginMode === "student"
                   ? "bg-white text-emerald-700 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"

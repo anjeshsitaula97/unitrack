@@ -33,6 +33,7 @@ const formatDate = (dateString: string) => {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
 };
 
@@ -139,7 +140,10 @@ export default function LeadsContent() {
   const fetchData = useCallback(async () => {
     try {
       const [leadsRes, userRes, usersRes] = await Promise.all([
-        fetch("/api/leads"),
+        // The list is filtered/paginated client-side below, so we need the full
+        // set. Without an explicit perPage the API defaulted to 20, which made
+        // leads beyond the first page unreachable.
+        fetch("/api/leads?perPage=500"),
         fetch("/api/auth/me", { credentials: "include" }),
         fetch("/api/users"),
       ]);
@@ -239,13 +243,15 @@ export default function LeadsContent() {
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
+              aria-label="Search leads by name or email"
               placeholder="Search leads by name or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
             />
           </div>
           <select
+            aria-label="Filter by status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300"
@@ -258,6 +264,7 @@ export default function LeadsContent() {
             ))}
           </select>
           <select
+            aria-label="Filter by staff"
             value={staffFilter}
             onChange={(e) => setStaffFilter(e.target.value)}
             className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300"
@@ -273,7 +280,7 @@ export default function LeadsContent() {
             <button
               type="button"
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+              className={`p-2 rounded-lg transition ${viewMode === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
               title="Grid view"
             >
               <LayoutGrid size={16} />
@@ -281,7 +288,7 @@ export default function LeadsContent() {
             <button
               type="button"
               onClick={() => setViewMode("table")}
-              className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+              className={`p-2 rounded-lg transition ${viewMode === "table" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
               title="Table view"
             >
               <Table size={16} />
@@ -289,7 +296,7 @@ export default function LeadsContent() {
             <button
               type="button"
               onClick={() => setViewMode("kanban")}
-              className={`p-2 rounded-lg transition-all ${viewMode === "kanban" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+              className={`p-2 rounded-lg transition ${viewMode === "kanban" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
               title="Kanban view"
             >
               <Columns3 size={16} />
@@ -391,6 +398,7 @@ export default function LeadsContent() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"
+                          aria-label="Edit lead"
                           onClick={() => router.push(`/leads/${lead.id}/edit`)}
                           className="p-1.5 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                         >
@@ -399,6 +407,7 @@ export default function LeadsContent() {
                         {isAdmin && (
                           <button
                             type="button"
+                            aria-label="Delete lead"
                             onClick={() => handleDelete(lead.id)}
                             className="p-1.5 text-red-800 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
@@ -422,7 +431,7 @@ export default function LeadsContent() {
             {paginated.map((lead, idx) => (
               <div
                 key={lead.id}
-                className="card p-5 hover:shadow-md transition-all group relative overflow-hidden"
+                className="card p-5 hover:shadow-md transition group relative overflow-hidden"
               >
                 <div
                   className={`absolute inset-0 bg-gradient-to-br ${rainbowGradients[idx % rainbowGradients.length]} pointer-events-none`}
@@ -539,94 +548,89 @@ export default function LeadsContent() {
                     {leadsInCol.map((lead) => (
                       <div
                         key={lead.id}
-                        className="card p-4 hover:shadow-md transition-all group relative cursor-pointer overflow-hidden"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => router.push(`/leads/${lead.id}/edit`)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            router.push(`/leads/${lead.id}/edit`);
-                          }
-                        }}
+                        className="card p-4 hover:shadow-md transition group relative overflow-hidden"
                       >
                         <div
                           className={`absolute inset-0 bg-gradient-to-br ${col.gradient} pointer-events-none`}
                         />
-                        <div className="flex items-start justify-between mb-3 relative">
-                          <div className="flex items-center gap-2.5">
-                            <div className="size-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-xs">
-                              {lead.name.charAt(0).toUpperCase()}
+                        <button
+                          type="button"
+                          aria-label={`Edit ${lead.name}`}
+                          onClick={() => router.push(`/leads/${lead.id}/edit`)}
+                          className="absolute inset-0 z-0 cursor-pointer"
+                        />
+                        <div className="relative z-10 pointer-events-none">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="size-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-xs">
+                                {lead.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-slate-800 leading-tight">
+                                  {capitalize(lead.name)}
+                                </p>
+                                <p className="text-[9px] text-slate-400 mt-0.5">{lead.email}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-xs font-bold text-slate-800 leading-tight">
-                                {capitalize(lead.name)}
-                              </p>
-                              <p className="text-[9px] text-slate-400 mt-0.5">{lead.email}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(`/leads/${lead.id}/edit`);
-                              }}
-                              className="p-1 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"
-                            >
-                              <Edit2 size={12} />
-                            </button>
-                            {isAdmin && (
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">
                               <button
                                 type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDelete(lead.id);
-                                }}
-                                className="p-1 text-red-300 hover:text-red-500 hover:bg-red-50 rounded"
+                                aria-label="Edit lead"
+                                onClick={() => router.push(`/leads/${lead.id}/edit`)}
+                                className="p-1 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"
                               >
-                                <Trash2 size={12} />
+                                <Edit2 size={12} />
                               </button>
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  aria-label="Delete lead"
+                                  onClick={() => handleDelete(lead.id)}
+                                  className="p-1 text-red-300 hover:text-red-500 hover:bg-red-50 rounded"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          <div className="space-y-1.5 relative">
+                            {lead.phone && (
+                              <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                                <Phone size={10} className="text-slate-300" />
+                                {lead.phone}
+                              </div>
+                            )}
+                            {lead.counselor && (
+                              <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                                <UserCheck size={10} className="text-slate-300" />
+                                <span className="font-semibold text-indigo-500">
+                                  {lead.counselor}
+                                </span>
+                              </div>
+                            )}
+                            {lead.interestedCountry && (
+                              <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                                {getCountryFlag(lead.interestedCountry) && (
+                                  <Image
+                                    src={getCountryFlag(lead.interestedCountry)}
+                                    alt=""
+                                    width={24}
+                                    height={24}
+                                    className="w-5 h-3.5 rounded-sm object-cover"
+                                  />
+                                )}
+                                {lead.interestedCountry}
+                              </div>
                             )}
                           </div>
-                        </div>
-                        <div className="space-y-1.5 relative">
-                          {lead.phone && (
-                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                              <Phone size={10} className="text-slate-300" />
-                              {lead.phone}
-                            </div>
-                          )}
-                          {lead.counselor && (
-                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                              <UserCheck size={10} className="text-slate-300" />
-                              <span className="font-semibold text-indigo-500">
-                                {lead.counselor}
-                              </span>
-                            </div>
-                          )}
-                          {lead.interestedCountry && (
-                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                              {getCountryFlag(lead.interestedCountry) && (
-                                <Image
-                                  src={getCountryFlag(lead.interestedCountry)}
-                                  alt=""
-                                  width={24}
-                                  height={24}
-                                  className="w-5 h-3.5 rounded-sm object-cover"
-                                />
-                              )}
-                              {lead.interestedCountry}
-                            </div>
-                          )}
-                        </div>
-                        <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between relative">
-                          <span className="text-[9px] text-slate-400">
-                            {lead.source && `via ${lead.source}`}
-                          </span>
-                          <span className="text-[9px] text-slate-400">
-                            {formatDate(lead.createdAt)}
-                          </span>
+                          <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between relative">
+                            <span className="text-[9px] text-slate-400">
+                              {lead.source && `via ${lead.source}`}
+                            </span>
+                            <span className="text-[9px] text-slate-400">
+                              {formatDate(lead.createdAt)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}

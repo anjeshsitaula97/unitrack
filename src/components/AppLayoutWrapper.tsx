@@ -5,57 +5,18 @@ import { usePathname } from "next/navigation";
 import AppLayout from "./AppLayout";
 import { getRoleHome, isDashboardRoute } from "@/lib/role-home";
 import { Loader2 } from "lucide-react";
-
-interface AppUser {
-  id: number;
-  name?: string | null;
-  email?: string | null;
-  role?: string | null;
-  avatar?: string | null;
-  subscriptionPackage?: string | null;
-  subscriptionExpiry?: string | null;
-  isFirstLogin?: boolean | null;
-  consultancy?: { id: number; code: string; name: string; logoUrl: string | null } | null;
-}
-
-interface AuthState {
-  user: AppUser;
-  role: string;
-}
-
-let cached: AuthState | null | undefined = undefined;
-let inFlight: Promise<AuthState | null> | null = null;
-
-export function clearAuthCache() {
-  cached = undefined;
-  inFlight = null;
-}
-
-async function fetchAuthState(): Promise<AuthState | null> {
-  try {
-    const res = await fetch("/api/auth/me", { cache: "no-store", credentials: "include" });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data?.id) return null;
-    return { user: data, role: (data.role || "Student").toLowerCase() };
-  } catch (err) {
-    console.error("Failed to fetch user:", err);
-    return null;
-  }
-}
-
-function startAuthLoad(): Promise<AuthState | null> {
-  if (inFlight === null) {
-    inFlight = fetchAuthState().finally(() => {
-      inFlight = null;
-    });
-  }
-  return inFlight;
-}
+import {
+  getCachedAuthState,
+  setCachedAuthState,
+  loadAuthState,
+  revalidateAuthState,
+  type AppUser,
+  type AuthState,
+} from "@/lib/auth-state";
 
 export default function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = useState<string>(cached?.role || "");
-  const [user, setUser] = useState<AppUser | null>(cached?.user ?? null);
+  const [role, setRole] = useState<string>(() => getCachedAuthState()?.role || "");
+  const [user, setUser] = useState<AppUser | null>(() => getCachedAuthState()?.user ?? null);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
 
@@ -65,7 +26,7 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
     const apply = (state: AuthState | null) => {
       if (cancelled) return;
       setLoading(false);
-      cached = state;
+      setCachedAuthState(state);
       if (!state) {
         window.location.replace("/login");
         return;
@@ -80,10 +41,11 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
       }
     };
 
-    if (cached !== undefined) {
-      apply(cached);
+    const cachedState = getCachedAuthState();
+    if (cachedState !== undefined) {
+      apply(cachedState);
     } else {
-      startAuthLoad()
+      loadAuthState()
         .then(apply)
         .catch(() => {
           if (!cancelled) {
@@ -104,9 +66,9 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
-      fetchAuthState()
+      revalidateAuthState()
         .then((state) => {
-          cached = state;
+          setCachedAuthState(state);
           if (!state) {
             window.location.replace("/login");
             return;

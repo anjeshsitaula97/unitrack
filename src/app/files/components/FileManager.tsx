@@ -23,7 +23,7 @@ import {
   Plus,
   ArrowUpDown,
   BarChart3,
-  Map,
+  Map as MapIcon,
   Package,
   Eye,
   FileArchive,
@@ -63,7 +63,8 @@ function getFileIcon(fileType: string | null | undefined, name?: string) {
   const lower = (name || "").toLowerCase();
   if (lower.includes("report") || lower.includes("analytics"))
     return <BarChart3 size={20} className={cls} />;
-  if (lower.includes("roadmap") || lower.includes("map")) return <Map size={20} className={cls} />;
+  if (lower.includes("roadmap") || lower.includes("map"))
+    return <MapIcon size={20} className={cls} />;
   if (lower.includes("sprint") || lower.includes("inventory"))
     return <Package size={20} className={cls} />;
   return <File size={20} className={cls} />;
@@ -308,10 +309,14 @@ function AddFileDialog({
         <div className="py-4">
           {academicDocs.length > 0 && (
             <div className="mb-5">
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <label
+                htmlFor="add-file-academic-doc"
+                className="block text-sm font-medium text-slate-700 mb-1.5"
+              >
                 Academic Document (optional)
               </label>
               <select
+                id="add-file-academic-doc"
                 value={academicDocumentId}
                 onChange={(e) => setAcademicDocumentId(e.target.value)}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
@@ -524,7 +529,9 @@ function ScanDialog({
     setIsUploading(true);
     setUploadProgress({ loaded: 0, total: 0 });
     try {
-      const blob = await (await fetch(capturedImage)).blob();
+      const res = await fetch(capturedImage);
+      if (!res.ok) throw new Error("Failed to fetch captured image");
+      const blob = await res.blob();
       const filename = `scan_${Date.now()}.jpg`;
       setUploadProgress({ loaded: 0, total: blob.size });
       await onSubmit(blob, filename, academicDocumentId || undefined, setUploadProgress);
@@ -539,7 +546,7 @@ function ScanDialog({
   };
 
   const handleScannerScan = async () => {
-    if (!selectedScannerId) return;
+    if (!selectedScannerId || scannerScanning) return;
     setScannerScanning(true);
     try {
       const res = await fetch("http://localhost:5899/scan", {
@@ -553,7 +560,9 @@ function ScanDialog({
       }
       const data = await res.json();
       if (data.data) {
-        const blob = await (await fetch(data.data)).blob();
+        const res = await fetch(data.data);
+        if (!res.ok) throw new Error("Failed to fetch scan");
+        const blob = await res.blob();
         await onSubmit(blob, `scan_${Date.now()}.jpg`, academicDocumentId || undefined);
         toast.success("Document scanned from device");
         onClose();
@@ -608,10 +617,14 @@ function ScanDialog({
             <>
               {academicDocs.length > 0 && (
                 <div className="mb-5">
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label
+                    htmlFor="scan-academic-doc"
+                    className="block text-sm font-medium text-slate-700 mb-1.5"
+                  >
                     Academic Document (optional)
                   </label>
                   <select
+                    id="scan-academic-doc"
                     value={academicDocumentId}
                     onChange={(e) => setAcademicDocumentId(e.target.value)}
                     className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
@@ -629,7 +642,7 @@ function ScanDialog({
                 <button
                   type="button"
                   onClick={startCamera}
-                  className="flex flex-col items-center gap-3 p-8 border-2 border-dashed border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/40 transition-all"
+                  className="flex flex-col items-center gap-3 p-8 border-2 border-dashed border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/40 transition"
                 >
                   <Camera size={40} className="text-indigo-500" />
                   <div>
@@ -643,7 +656,7 @@ function ScanDialog({
                     setMode("scanner");
                     fetchScanners();
                   }}
-                  className="flex flex-col items-center gap-3 p-8 border-2 border-dashed border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/40 transition-all"
+                  className="flex flex-col items-center gap-3 p-8 border-2 border-dashed border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/40 transition"
                 >
                   <Scan size={40} className="text-indigo-500" />
                   <div>
@@ -1129,23 +1142,31 @@ export default function FileManager() {
     }
   };
 
+  const bulkDeletingRef = useRef(false);
   const handleBulkDelete = async () => {
+    if (bulkDeletingRef.current) return;
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
     if (!confirm(`Delete ${ids.length} file${ids.length > 1 ? "s" : ""}?`)) return;
 
+    bulkDeletingRef.current = true;
     let deleted = 0;
-    for (const id of ids) {
-      const file = files.find((f) => f.id === id);
-      if (!file) continue;
-      let url: string;
-      if (file.__studentId) {
-        url = `/api/students/${file.__studentId}/documents?documentId=${file.id}`;
-      } else {
-        url = `/api/files?id=${file.id}`;
+    try {
+      const fileMap = new Map(files.map((f) => [f.id, f]));
+      for (const id of ids) {
+        const file = fileMap.get(id);
+        if (!file) continue;
+        let url: string;
+        if (file.__studentId) {
+          url = `/api/students/${file.__studentId}/documents?documentId=${file.id}`;
+        } else {
+          url = `/api/files?id=${file.id}`;
+        }
+        const res = await fetch(url, { method: "DELETE" });
+        if (res.ok) deleted++;
       }
-      const res = await fetch(url, { method: "DELETE" });
-      if (res.ok) deleted++;
+    } finally {
+      bulkDeletingRef.current = false;
     }
 
     if (deleted > 0) {
@@ -1165,8 +1186,7 @@ export default function FileManager() {
   };
 
   const handleBulkDownloadZip = async () => {
-    const ids = Array.from(selectedIds);
-    const selectedFiles = files.filter((f) => ids.includes(f.id));
+    const selectedFiles = files.filter((f) => selectedIds.has(f.id));
     if (selectedFiles.length === 0) return;
 
     const toastId = toast.loading(
@@ -1176,17 +1196,24 @@ export default function FileManager() {
       const zip = new JSZip();
       let added = 0;
 
-      for (const file of selectedFiles) {
-        try {
-          const res = await fetch(file.url);
-          if (!res.ok) continue;
-          const blob = await res.blob();
-          const name = file.name || `file_${file.id}`;
-          zip.file(name, blob);
-          added++;
-        } catch {
-          // skip failed files
-        }
+      const downloaded = await Promise.all(
+        selectedFiles.map(async (file) => {
+          try {
+            const res = await fetch(file.url);
+            if (!res.ok) return null;
+            const blob = await res.blob();
+            return { file, blob };
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      for (const entry of downloaded) {
+        if (!entry) continue;
+        const name = entry.file.name || `file_${entry.file.id}`;
+        zip.file(name, entry.blob);
+        added++;
       }
 
       if (added === 0) {
@@ -1578,55 +1605,49 @@ export default function FileManager() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {(folders ?? []).map((folder) => (
-              <button
-                key={folder.id}
-                type="button"
-                onClick={() => openFolder(folder)}
-                className="bg-white p-6 rounded-xl text-left relative overflow-hidden border border-transparent hover:border-[#c6c6cd]/30 transition-all duration-300 group cursor-pointer"
-                style={softShadow}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = activeShadow.boxShadow;
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = softShadow.boxShadow;
-                }}
-              >
+              <div key={folder.id} className="relative group">
+                <button
+                  type="button"
+                  onClick={() => openFolder(folder)}
+                  className="w-full bg-white p-6 rounded-xl text-left overflow-hidden border border-transparent hover:border-[#c6c6cd]/30 transition duration-300 cursor-pointer"
+                  style={softShadow}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = activeShadow.boxShadow;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = softShadow.boxShadow;
+                  }}
+                >
+                  <FolderCardIcon student={!!folder.__studentId} />
+                  <h4 className="text-base font-semibold text-[#191c1e] mb-2 truncate">
+                    {folder.name}
+                  </h4>
+                  <p className="text-xs font-medium tracking-[0.02em] text-[#45464d]">
+                    {folder._count?.files ?? 0} Files
+                    {folder.__studentId ? " • Student" : ""}
+                  </p>
+                  <div className="mt-4 flex -space-x-2">
+                    <div className="w-6 h-6 rounded-full border-2 border-white bg-[#131b2e]" />
+                    <div className="w-6 h-6 rounded-full border-2 border-white bg-[#2170e4]" />
+                    <div className="w-6 h-6 rounded-full border-2 border-white bg-[#fcdeb5] flex items-center justify-center text-[8px] font-bold text-[#271901]">
+                      +{Math.max(0, Math.min(9, folder._count?.files ?? 0))}
+                    </div>
+                  </div>
+                </button>
                 {!folder.__studentId && (
-                  <span
-                    role="button"
-                    tabIndex={0}
+                  <button
+                    type="button"
                     aria-label="Delete folder"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteFolder(folder.id);
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.stopPropagation();
-                        handleDeleteFolder(folder.id);
-                      }
-                    }}
-                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-[#ffdad6] text-[#c6c6cd] hover:text-[#ba1a1a]"
+                    className="absolute z-10 top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-[#ffdad6] text-[#c6c6cd] hover:text-[#ba1a1a]"
                   >
                     <Trash2 size={16} />
-                  </span>
+                  </button>
                 )}
-                <FolderCardIcon student={!!folder.__studentId} />
-                <h4 className="text-base font-semibold text-[#191c1e] mb-2 truncate">
-                  {folder.name}
-                </h4>
-                <p className="text-xs font-medium tracking-[0.02em] text-[#45464d]">
-                  {folder._count?.files ?? 0} Files
-                  {folder.__studentId ? " • Student" : ""}
-                </p>
-                <div className="mt-4 flex -space-x-2">
-                  <div className="w-6 h-6 rounded-full border-2 border-white bg-[#131b2e]" />
-                  <div className="w-6 h-6 rounded-full border-2 border-white bg-[#2170e4]" />
-                  <div className="w-6 h-6 rounded-full border-2 border-white bg-[#fcdeb5] flex items-center justify-center text-[8px] font-bold text-[#271901]">
-                    +{Math.max(0, Math.min(9, folder._count?.files ?? 0))}
-                  </div>
-                </div>
-              </button>
+              </div>
             ))}
           </div>
         </section>

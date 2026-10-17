@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, ShieldCheck, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { clearAuthCache } from "@/components/AppLayoutWrapper";
+import { clearAuthCache } from "@/lib/auth-state";
 
 export function OmLoginForm() {
   const router = useRouter();
@@ -38,7 +38,7 @@ export function OmLoginForm() {
       }
 
       clearAuthCache();
-      router.push("/om");
+      router.push("/sadashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {

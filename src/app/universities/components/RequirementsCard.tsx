@@ -34,7 +34,7 @@ export default function RequirementsCard({ form, update }: RequirementsCardProps
                 update("requirements", next);
               }}
               className={`
-                flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer
+                flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer
                 ${
                   isSelected
                     ? "bg-blue-50 border-blue-200 ring-1 ring-blue-200"

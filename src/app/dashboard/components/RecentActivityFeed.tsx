@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import React from "react";
-import { MoreHorizontal } from "lucide-react";
 import { safeJson } from "@/lib/fetch-client";
+import DashboardCardHeader from "./DashboardCardHeader";
 
 interface Activity {
   id: string | number;
@@ -42,20 +42,7 @@ export default function RecentActivityFeed() {
 
   return (
     <div className="card p-5 h-full">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="font-semibold text-slate-800 text-sm">Recent Activities</h3>
-          <p className="text-xs text-slate-400 mt-0.5">Real-time platform activity</p>
-        </div>
-        <button
-          type="button"
-          className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all duration-150"
-          aria-label="MoreHorizontal"
-        >
-          {" "}
-          <MoreHorizontal size={16} />
-        </button>
-      </div>
+      <DashboardCardHeader title="Recent Activities" subtitle="Real-time platform activity" />
       <div className="space-y-0 divide-y divide-slate-50">
         {isLoading && (
           <p className="text-xs text-slate-400 py-4 text-center">Loading activities…</p>

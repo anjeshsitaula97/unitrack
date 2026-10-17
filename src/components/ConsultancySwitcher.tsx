@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Building2, Check, ChevronDown, Globe2 } from "lucide-react";
+import { api } from "@/lib/fetch-client";
 
 interface Consultancy {
   id: number;
@@ -37,12 +38,16 @@ export default function ConsultancySwitcher({ role }: Props) {
 
   useEffect(() => {
     if (!isSuperAdmin) return;
-    fetch("/api/consultancies")
-      .then((res) => (res.ok ? res.json() : []))
+    let cancelled = false;
+    api
+      .get<Consultancy[]>("/api/consultancies", { showError: false })
       .then((data) => {
-        if (Array.isArray(data)) setConsultancies(data);
+        if (!cancelled && Array.isArray(data)) setConsultancies(data);
       })
       .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [isSuperAdmin]);
 
   useEffect(() => {

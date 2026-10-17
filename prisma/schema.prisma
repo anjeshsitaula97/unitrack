@@ -95,6 +95,7 @@ model Course {
   color                  String        @default("#6366f1")
   initials               String
   instructor             String
+  instructorEmail        String?
   description            String
   prerequisites          String        @db.LongText
   intake                 String?
@@ -326,6 +327,26 @@ model EmailSetting {
   updatedAt      DateTime @updatedAt
   branch         Branch?  @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
+  @@index([consultancyId])
+}
+
+// Editable email bodies keyed by a stable machine name (e.g. "student-updated").
+// Rows are seeded from the built-in catalog the first time Settings > Email
+// Templates loads; a missing or disabled row falls back to the built-in default
+// so a template can never blank out an automated email.
+model EmailTemplate {
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  key           String
+  name          String
+  subject       String
+  body          String   @db.LongText
+  isEnabled     Boolean  @default(true)
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([consultancyId, key])
   @@index([consultancyId])
 }
 

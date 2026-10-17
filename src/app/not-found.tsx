@@ -24,7 +24,7 @@ export default function NotFound() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 transition"
           >
             <ArrowLeft size={16} />
             Go Back
@@ -32,7 +32,7 @@ export default function NotFound() {
           <button
             type="button"
             onClick={() => router.push("/dashboard")}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-100"
           >
             <Home size={16} />
             Dashboard

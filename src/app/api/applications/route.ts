@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
 import { logActivity } from "@/lib/activity";
-import { getPaginationParams, paginatedResponse, apiError, getSession, checkRoutePermission } from "@/lib/api-utils";
+import {
+  getPaginationParams,
+  paginatedResponse,
+  apiError,
+  getSession,
+  checkRoutePermission,
+} from "@/lib/api-utils";
+import { parseJson, zodResponse, coercedInt } from "@/lib/validate";
+
+// Coerces and bounds the three foreign keys instead of `Number()`-ing whatever
+// arrives and only checking truthiness (which passes NaN-free strings like "abc"
+// straight through to Prisma as NaN).
+const createApplicationSchema = z.object({
+  studentId: coercedInt({ min: 1 }),
+  universityId: coercedInt({ min: 1 }),
+  courseId: coercedInt({ min: 1 }),
+});
 
 export async function GET(req: NextRequest) {
   try {
@@ -82,13 +99,10 @@ export async function POST(req: NextRequest) {
     const permError = checkRoutePermission(session, req.url, req.method);
     if (permError) return permError;
 
-    const data = await req.json();
-    const studentId = Number(data.studentId);
-    const { universityId, courseId } = data;
+    const parsed = await parseJson(req, createApplicationSchema);
+    if (!parsed.ok) return zodResponse(parsed.error);
 
-    if (!studentId || !universityId || !courseId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
+    const { studentId, universityId, courseId } = parsed.data;
 
     const [newApplication, user] = await Promise.all([
       db.application.create({

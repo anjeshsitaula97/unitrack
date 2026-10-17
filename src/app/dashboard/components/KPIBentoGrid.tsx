@@ -32,7 +32,7 @@ function KPICard({
       onDragStart={(e) => onDragStart(e, definition.id)}
       onDragOver={(e) => onDragOver(e, definition.id)}
       onDragEnd={onDragEnd}
-      className={`card relative overflow-hidden p-5 hover:shadow-md transition-all duration-200 cursor-pointer group ${isDragging ? "opacity-50 ring-2 ring-indigo-400" : ""}`}
+      className={`card relative overflow-hidden p-5 hover:shadow-md transition duration-200 cursor-pointer group ${isDragging ? "opacity-50 ring-2 ring-indigo-400" : ""}`}
     >
       <div
         className={`absolute inset-0 bg-gradient-to-br ${definition.gradient} pointer-events-none`}
@@ -54,7 +54,7 @@ function KPICard({
         </div>
         <button
           type="button"
-          className="opacity-0 group-hover:opacity-100 px-2.5 py-1 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600 hover:bg-white transition-all duration-150"
+          className="opacity-0 group-hover:opacity-100 px-2.5 py-1 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600 hover:bg-white transition duration-150"
         >
           View details
         </button>

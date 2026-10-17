@@ -75,13 +75,12 @@ export default function MediaCard({ form, update, dispatch, toast }: MediaCardPr
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
     setUploading("gallery");
-    let count = 0;
     try {
-      for (const file of files) {
-        const url = await uploadFile(file);
+      const urls = await Promise.all(files.map((file) => uploadFile(file)));
+      for (const url of urls) {
         dispatch({ type: "addGalleryImage", image: url });
-        count++;
       }
+      const count = urls.length;
       toast.success(`${count} image${count > 1 ? "s" : ""} added`);
     } catch (err) {
       toast.error(describeError(err, "Failed to upload some images"));
@@ -206,7 +205,7 @@ export default function MediaCard({ form, update, dispatch, toast }: MediaCardPr
               </div>
             ))}
             <label
-              className={`aspect-square rounded-xl border-2 border-dashed border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${uploading === "gallery" ? "opacity-50 pointer-events-none" : ""}`}
+              className={`aspect-square rounded-xl border-2 border-dashed border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition flex flex-col items-center justify-center gap-1 cursor-pointer ${uploading === "gallery" ? "opacity-50 pointer-events-none" : ""}`}
             >
               {uploading === "gallery" ? (
                 <Loader2 className="animate-spin text-indigo-500" size={20} />

@@ -153,32 +153,39 @@ export default function DashboardContent() {
   const [saving, setSaving] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const [showBSDate, setShowBSDate] = useState(false);
-  const [now, setNow] = useState(new Date());
+  const [timeStr, setTimeStr] = useState("");
+  const [adDateStr, setAdDateStr] = useState("");
+  const [bsDateStr, setBsDateStr] = useState("");
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const formatNow = () => {
+      const now = new Date();
+      setTimeStr(
+        now.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+      );
+      setAdDateStr(
+        now.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      );
+      try {
+        const ad = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        setBsDateStr(formatBSDate(ADToBS(ad)));
+      } catch {
+        setBsDateStr("");
+      }
+    };
+    formatNow();
+    const timer = setInterval(formatNow, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  const timeStr = now.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-  const adDateStr = now.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-  const bsDateStr = (() => {
-    try {
-      const ad = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-      return formatBSDate(ADToBS(ad));
-    } catch {
-      return "";
-    }
-  })();
 
   useEffect(() => {
     const ac = new AbortController();
@@ -193,7 +200,8 @@ export default function DashboardContent() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/dashboard-layout")
+    const ac = new AbortController();
+    fetch("/api/dashboard-layout", { signal: ac.signal })
       .then(safeJson)
       .then((data) => {
         if (!data?.layout) return;
@@ -226,10 +234,12 @@ export default function DashboardContent() {
         }
       })
       .catch(() => {});
+    return () => ac.abort();
   }, []);
 
   useEffect(() => {
-    fetch("/api/settings/localization")
+    const ac = new AbortController();
+    fetch("/api/settings/localization", { signal: ac.signal })
       .then(safeJson)
       .then((data) => {
         if (data && !data.error && typeof data.showBSDate === "boolean") {
@@ -237,6 +247,7 @@ export default function DashboardContent() {
         }
       })
       .catch(() => {});
+    return () => ac.abort();
   }, []);
 
   const saveLayout = useCallback(
@@ -357,25 +368,6 @@ export default function DashboardContent() {
   const visibleWidgets = widgets.filter((w) => w.visible);
   const activeKpis = kpis.filter((id) => AVAILABLE_KPIS.some((k) => k.id === id));
 
-  const renderWidget = (widget: (typeof widgets)[0]) => {
-    switch (widget.component) {
-      case "kpi":
-        return <KPIBentoGrid visibleKpis={activeKpis} onKpiChange={handleKpiChange} />;
-      case "courses-chart":
-        return <CoursesPerUniversityChart />;
-      case "enrollment-chart":
-        return <EnrollmentTrendChart />;
-      case "faculty-chart":
-        return <FacultyDistributionChart />;
-      case "activity":
-        return <RecentActivityFeed />;
-      case "universities":
-        return <RecentUniversitiesTable />;
-      default:
-        return null;
-    }
-  };
-
   const availableKpis = AVAILABLE_KPIS.filter((k) => !kpis.includes(k.id));
   const availableWidgets = WIDGET_LIBRARY.filter((w) => {
     const existing = widgets.find((w2) => w2.id === w.id);
@@ -384,239 +376,389 @@ export default function DashboardContent() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-0.5">
-            Good morning, {userRole}!
-          </h1>
-          <div className="flex items-center gap-3 text-sm text-slate-400">
-            <span className="flex items-center gap-1.5 font-tabular" suppressHydrationWarning>
-              <Clock size={14} /> {timeStr}
-            </span>
-            <span className="text-slate-300">|</span>
-            <span>{adDateStr} AD</span>
-            {showBSDate && bsDateStr && (
-              <>
-                <span className="text-slate-300">|</span>
-                <span className="text-amber-600 font-medium">{bsDateStr} B.S.</span>
-              </>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {saving && <Loader2 className="animate-spin text-slate-400" size={16} />}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowAddWidget(!showAddWidget)}
-              className="px-3 py-2 bg-indigo-600 border border-indigo-600 rounded-xl text-xs font-semibold text-white hover:bg-indigo-700 flex items-center gap-1.5"
-            >
-              <Plus size={14} /> Add Widget
-            </button>
-            {showAddWidget && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl border border-slate-200 shadow-xl z-50 p-4 max-h-[70vh] overflow-y-auto">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-sm text-slate-800">Add Widget</h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddWidget(false)}
-                    className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-
-                {availableKpis.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">
-                      KPI Cards
-                    </h4>
-                    <div className="space-y-1">
-                      {availableKpis.map((k) => (
-                        <button
-                          type="button"
-                          key={k.id}
-                          onClick={() => {
-                            toggleKpi(k.id);
-                            setShowAddWidget(false);
-                          }}
-                          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-slate-50 transition-colors group"
-                        >
-                          <div className="size-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0">
-                            {KPI_ICON_MAP[k.id] || k.icon}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-slate-700">
-                              {k.title}
-                            </p>
-                            <p className="text-[11px] text-slate-400">{k.category}</p>
-                          </div>
-                          <Plus
-                            size={14}
-                            className="text-slate-300 group-hover:text-indigo-500 transition-colors flex-shrink-0"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {availableWidgets.length > 0 && (
-                  <div>
-                    <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">
-                      Widgets
-                    </h4>
-                    <div className="space-y-1">
-                      {availableWidgets.map((w) => (
-                        <button
-                          type="button"
-                          key={w.id}
-                          onClick={() => addWidget(w.id)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-slate-50 transition-colors group"
-                        >
-                          <div className="size-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600 flex-shrink-0">
-                            <w.icon size={16} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-slate-700">
-                              {w.label}
-                            </p>
-                            <p className="text-[11px] text-slate-400">{w.description}</p>
-                          </div>
-                          <Plus
-                            size={14}
-                            className="text-slate-300 group-hover:text-indigo-500 transition-colors flex-shrink-0"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {availableKpis.length === 0 && availableWidgets.length === 0 && (
-                  <p className="text-xs text-slate-400 text-center py-4">
-                    All items are already on your dashboard
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowCustomize(!showCustomize)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-1.5"
-          >
-            <Settings2 size={14} /> Customize
-          </button>
-          <button
-            type="button"
-            onClick={resetLayout}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-1.5"
-          >
-            <RotateCcw size={14} /> Reset
-          </button>
-        </div>
-      </div>
+      <DashboardHeader
+        adDateStr={adDateStr}
+        availableKpis={availableKpis}
+        availableWidgets={availableWidgets}
+        bsDateStr={bsDateStr}
+        onAddWidget={addWidget}
+        onReset={resetLayout}
+        onToggleKpi={toggleKpi}
+        saving={saving}
+        setShowAddWidget={setShowAddWidget}
+        setShowCustomize={setShowCustomize}
+        showAddWidget={showAddWidget}
+        showBSDate={showBSDate}
+        showCustomize={showCustomize}
+        timeStr={timeStr}
+        userRole={userRole}
+      />
 
       {showCustomize && (
-        <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-6">
-          <h3 className="font-bold text-sm text-slate-800 mb-3">
-            Toggle Widgets &amp; KPIs
-          </h3>
-          <div className="space-y-3">
-            <div>
-              <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
-                Dashboard Widgets
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {widgets.map((w) => (
-                  <label
-                    key={w.id}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={w.visible}
-                      onChange={() => toggleWidget(w.id)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <span className="text-xs font-medium text-slate-600">
-                      {w.label}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="border-t border-slate-100 pt-3">
-              <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
-                Individual KPI Cards
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {AVAILABLE_KPIS.map((k) => (
-                  <label
-                    key={k.id}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={kpis.includes(k.id)}
-                      onChange={() => toggleKpi(k.id)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <span className="text-xs text-slate-600">{k.title}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="border-t border-slate-100 pt-3">
-              <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
-                Display Options
-              </h4>
-              <label className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg cursor-pointer w-fit">
-                <input
-                  type="checkbox"
-                  checked={showBSDate}
-                  onChange={toggleBSDate}
-                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span className="text-xs font-medium text-slate-600">
-                  Show B.S. Date
-                </span>
-              </label>
-            </div>
-          </div>
-        </div>
+        <CustomizePanel
+          kpis={kpis}
+          onToggleBSDate={toggleBSDate}
+          onToggleKpi={toggleKpi}
+          onToggleWidget={toggleWidget}
+          showBSDate={showBSDate}
+          widgets={widgets}
+        />
       )}
 
       {visibleWidgets.length === 0 ? (
-        <div className="py-20 text-center text-slate-400">
-          <p className="font-medium">All widgets are hidden</p>
-          <button type="button" onClick={resetLayout} className="text-indigo-600 text-sm mt-2">
-            Restore defaults
-          </button>
-        </div>
+        <EmptyWidgetsState onReset={resetLayout} />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-4">
-          {visibleWidgets.map((widget) => (
-            <div
-              key={widget.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, widget.id)}
-              onDragOver={(e) => handleDragOver(e, widget.id)}
-              onDragEnd={handleDragEnd}
-              className={`${widgetSize(widget)} relative group ${dragId === widget.id ? "opacity-50" : ""}`}
-            >
-              <div
-                className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400"
-                style={{ cursor: "grab" }}
+        <WidgetGrid
+          dragId={dragId}
+          onDragEnd={handleDragEnd}
+          onDragOver={handleDragOver}
+          onDragStart={handleDragStart}
+          renderWidget={(widget) => renderWidgetComponent(widget, activeKpis, handleKpiChange)}
+          visibleWidgets={visibleWidgets}
+        />
+      )}
+    </div>
+  );
+}
+
+function EmptyWidgetsState({ onReset }: { onReset: () => void }) {
+  return (
+    <div className="py-20 text-center text-slate-400">
+      <p className="font-medium">All widgets are hidden</p>
+      <button type="button" onClick={onReset} className="text-indigo-600 text-sm mt-2">
+        Restore defaults
+      </button>
+    </div>
+  );
+}
+
+function renderWidgetComponent(
+  widget: { component: string },
+  activeKpis: string[],
+  onKpiChange: (kpis: string[]) => void
+) {
+  switch (widget.component) {
+    case "kpi":
+      return <KPIBentoGrid visibleKpis={activeKpis} onKpiChange={onKpiChange} />;
+    case "courses-chart":
+      return <CoursesPerUniversityChart />;
+    case "enrollment-chart":
+      return <EnrollmentTrendChart />;
+    case "faculty-chart":
+      return <FacultyDistributionChart />;
+    case "activity":
+      return <RecentActivityFeed />;
+    case "universities":
+      return <RecentUniversitiesTable />;
+    default:
+      return null;
+  }
+}
+
+function DashboardHeader({
+  timeStr,
+  adDateStr,
+  bsDateStr,
+  showBSDate,
+  userRole,
+  saving,
+  showAddWidget,
+  setShowAddWidget,
+  showCustomize,
+  setShowCustomize,
+  onReset,
+  availableKpis,
+  availableWidgets,
+  onToggleKpi,
+  onAddWidget,
+}: {
+  timeStr: string;
+  adDateStr: string;
+  bsDateStr: string;
+  showBSDate: boolean;
+  userRole: string;
+  saving: boolean;
+  showAddWidget: boolean;
+  setShowAddWidget: (open: boolean) => void;
+  showCustomize: boolean;
+  setShowCustomize: (open: boolean) => void;
+  onReset: () => void;
+  availableKpis: typeof AVAILABLE_KPIS;
+  availableWidgets: typeof WIDGET_LIBRARY;
+  onToggleKpi: (id: string) => void;
+  onAddWidget: (id: string) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-800 mb-0.5">Good morning, {userRole}!</h1>
+        <div className="flex items-center gap-3 text-sm text-slate-400">
+          <span className="flex items-center gap-1.5 font-tabular" suppressHydrationWarning>
+            <Clock size={14} /> {timeStr}
+          </span>
+          <span className="text-slate-300">|</span>
+          <span>{adDateStr} AD</span>
+          {showBSDate && bsDateStr && (
+            <>
+              <span className="text-slate-300">|</span>
+              <span className="text-amber-600 font-medium">{bsDateStr} B.S.</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {saving && <Loader2 className="animate-spin text-slate-400" size={16} />}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowAddWidget(!showAddWidget)}
+            className="px-3 py-2 bg-indigo-600 border border-indigo-600 rounded-xl text-xs font-semibold text-white hover:bg-indigo-700 flex items-center gap-1.5"
+          >
+            <Plus size={14} /> Add Widget
+          </button>
+          {showAddWidget && (
+            <AddWidgetPopover
+              availableKpis={availableKpis}
+              availableWidgets={availableWidgets}
+              onAddWidget={onAddWidget}
+              onClose={() => setShowAddWidget(false)}
+              onToggleKpi={onToggleKpi}
+            />
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCustomize(!showCustomize)}
+          className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-1.5"
+        >
+          <Settings2 size={14} /> Customize
+        </button>
+        <button
+          type="button"
+          onClick={onReset}
+          className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-1.5"
+        >
+          <RotateCcw size={14} /> Reset
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AddWidgetPopover({
+  availableKpis,
+  availableWidgets,
+  onToggleKpi,
+  onAddWidget,
+  onClose,
+}: {
+  availableKpis: typeof AVAILABLE_KPIS;
+  availableWidgets: typeof WIDGET_LIBRARY;
+  onToggleKpi: (id: string) => void;
+  onAddWidget: (id: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl border border-slate-200 shadow-xl z-50 p-4 max-h-[70vh] overflow-y-auto">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-bold text-sm text-slate-800">Add Widget</h3>
+        <button
+          type="button"
+          aria-label="Close add widget menu"
+          onClick={onClose}
+          className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
+        >
+          <X size={14} />
+        </button>
+      </div>
+
+      {availableKpis.length > 0 && (
+        <div className="mb-4">
+          <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">
+            KPI Cards
+          </h4>
+          <div className="space-y-1">
+            {availableKpis.map((k) => (
+              <button
+                type="button"
+                key={k.id}
+                onClick={() => {
+                  onToggleKpi(k.id);
+                  onClose();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-slate-50 transition-colors group"
               >
-                <GripVertical size={14} />
-              </div>
-              {renderWidget(widget)}
-            </div>
-          ))}
+                <div className="size-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0">
+                  {KPI_ICON_MAP[k.id] || k.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-700">{k.title}</p>
+                  <p className="text-[11px] text-slate-400">{k.category}</p>
+                </div>
+                <Plus
+                  size={14}
+                  className="text-slate-300 group-hover:text-indigo-500 transition-colors flex-shrink-0"
+                />
+              </button>
+            ))}
+          </div>
         </div>
       )}
+
+      {availableWidgets.length > 0 && (
+        <div>
+          <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">
+            Widgets
+          </h4>
+          <div className="space-y-1">
+            {availableWidgets.map((w) => (
+              <button
+                type="button"
+                key={w.id}
+                onClick={() => onAddWidget(w.id)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-slate-50 transition-colors group"
+              >
+                <div className="size-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600 flex-shrink-0">
+                  <w.icon size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-700">{w.label}</p>
+                  <p className="text-[11px] text-slate-400">{w.description}</p>
+                </div>
+                <Plus
+                  size={14}
+                  className="text-slate-300 group-hover:text-indigo-500 transition-colors flex-shrink-0"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {availableKpis.length === 0 && availableWidgets.length === 0 && (
+        <p className="text-xs text-slate-400 text-center py-4">
+          All items are already on your dashboard
+        </p>
+      )}
+    </div>
+  );
+}
+
+function CustomizePanel({
+  widgets,
+  kpis,
+  showBSDate,
+  onToggleWidget,
+  onToggleKpi,
+  onToggleBSDate,
+}: {
+  widgets: typeof defaultWidgets;
+  kpis: string[];
+  showBSDate: boolean;
+  onToggleWidget: (id: string) => void;
+  onToggleKpi: (id: string) => void;
+  onToggleBSDate: () => void;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-6">
+      <h3 className="font-bold text-sm text-slate-800 mb-3">Toggle Widgets &amp; KPIs</h3>
+      <div className="space-y-3">
+        <div>
+          <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+            Dashboard Widgets
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {widgets.map((w) => (
+              <label
+                key={w.id}
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={w.visible}
+                  onChange={() => onToggleWidget(w.id)}
+                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-xs font-medium text-slate-600">{w.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="border-t border-slate-100 pt-3">
+          <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+            Individual KPI Cards
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {AVAILABLE_KPIS.map((k) => (
+              <label
+                key={k.id}
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={kpis.includes(k.id)}
+                  onChange={() => onToggleKpi(k.id)}
+                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-xs text-slate-600">{k.title}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="border-t border-slate-100 pt-3">
+          <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+            Display Options
+          </h4>
+          <label className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg cursor-pointer w-fit">
+            <input
+              type="checkbox"
+              checked={showBSDate}
+              onChange={onToggleBSDate}
+              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span className="text-xs font-medium text-slate-600">Show B.S. Date</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WidgetGrid({
+  visibleWidgets,
+  dragId,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
+  renderWidget,
+}: {
+  visibleWidgets: typeof defaultWidgets;
+  dragId: string | null;
+  onDragStart: (e: React.DragEvent, id: string) => void;
+  onDragOver: (e: React.DragEvent, id: string) => void;
+  onDragEnd: () => void;
+  renderWidget: (widget: (typeof defaultWidgets)[0]) => React.ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-4">
+      {visibleWidgets.map((widget) => (
+        <div
+          key={widget.id}
+          draggable
+          onDragStart={(e) => onDragStart(e, widget.id)}
+          onDragOver={(e) => onDragOver(e, widget.id)}
+          onDragEnd={onDragEnd}
+          className={`${widgetSize(widget)} relative group ${dragId === widget.id ? "opacity-50" : ""}`}
+        >
+          <div
+            className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400"
+            style={{ cursor: "grab" }}
+          >
+            <GripVertical size={14} />
+          </div>
+          {renderWidget(widget)}
+        </div>
+      ))}
     </div>
   );
 }

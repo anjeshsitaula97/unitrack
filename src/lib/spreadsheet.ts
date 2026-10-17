@@ -28,9 +28,13 @@ export async function buildXlsx(
   } else {
     const dataRows = rows as SpreadsheetRow[];
     const headers: string[] = [];
+    const seenHeaders = new Set<string>();
     dataRows.forEach((row) => {
       Object.keys(row).forEach((key) => {
-        if (!headers.includes(key)) headers.push(key);
+        if (!seenHeaders.has(key)) {
+          seenHeaders.add(key);
+          headers.push(key);
+        }
       });
     });
     sheet.columns = headers.map((header) => ({ header, key: header }));

@@ -43,6 +43,8 @@ interface EmployeeProfile {
   faceDescriptor: string | null;
 }
 
+type EnrollmentStatus = "init" | "enrolling" | "success" | "error";
+
 export default function FaceEnrollmentContent() {
   const params = useParams();
   const router = useRouter();
@@ -52,7 +54,7 @@ export default function FaceEnrollmentContent() {
   const stream = useRef<MediaStream | null>(null);
   const [loading, setLoading] = useState(true);
   const [employee, setEmployee] = useState<EmployeeProfile | null>(null);
-  const [status, setStatus] = useState<"init" | "enrolling" | "success" | "error">("init");
+  const [status, setStatus] = useState<EnrollmentStatus>("init");
   const [movementCount, setMovementCount] = useState(0);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('Press "Start Enrollment" to begin');
@@ -237,18 +239,21 @@ export default function FaceEnrollmentContent() {
     }
   };
 
+  const cancelEnrollment = () => {
+    runningRef.current = false;
+    stopCamera();
+    setStatus("init");
+    setMessage('Press "Start Enrollment" to begin');
+  };
+
+  const retakeEnrollment = () => {
+    setStatus("init");
+    setCapturedDescriptor(null);
+    setMessage('Press "Start Enrollment" to begin');
+  };
+
   if (loading) {
-    return (
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="size-8 rounded-full bg-slate-200 animate-pulse" />
-          <div className="w-40 h-5 bg-slate-200 rounded animate-pulse" />
-        </div>
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="animate-spin text-indigo-500" size={32} />
-        </div>
-      </div>
-    );
+    return <EnrollmentSkeleton />;
   }
 
   return (
@@ -274,109 +279,193 @@ export default function FaceEnrollmentContent() {
           </div>
         </div>
 
-        <div className="relative bg-slate-900 rounded-xl overflow-hidden aspect-[4/3] mb-4">
-          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-          <canvas ref={overlayRef} className="absolute inset-0 w-full h-full" />
-          {status === "init" && !employee?.faceDescriptor && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60">
-              <Camera size={40} className="text-slate-500" />
-            </div>
-          )}
-        </div>
+        <CameraStage
+          status={status}
+          employee={employee}
+          videoRef={videoRef}
+          overlayRef={overlayRef}
+        />
 
-        {status === "enrolling" && (
-          <div className="bg-indigo-50 text-indigo-700 text-xs p-3 rounded-lg mb-4 flex items-center gap-2">
-            <Eye size={14} />
-            <span>
-              Movement detected: {movementCount}/{MOVEMENT_FRAMES}: move your head slightly
-            </span>
-          </div>
-        )}
+        <StatusNotices
+          status={status}
+          employee={employee}
+          capturedDescriptor={capturedDescriptor}
+          movementCount={movementCount}
+          message={message}
+        />
 
-        {status === "success" && employee?.faceDescriptor && (
-          <div className="bg-emerald-50 text-emerald-700 text-xs p-3 rounded-lg mb-4 flex items-center gap-2">
-            <CheckCircle size={14} /> Face already enrolled for this employee
-          </div>
-        )}
-
-        {status === "success" && capturedDescriptor && (
-          <div className="bg-emerald-50 text-emerald-700 text-xs p-3 rounded-lg mb-4 flex items-center gap-2">
-            <CheckCircle size={14} /> Face captured with liveness verification
-          </div>
-        )}
-
-        {status === "error" && (
-          <div className="bg-rose-50 text-rose-700 text-xs p-3 rounded-lg mb-4 flex items-center gap-2">
-            <XCircle size={14} /> {message}
-          </div>
-        )}
-
-        <div className="space-y-2">
-          {status === "init" && !employee?.faceDescriptor && (
-            <button
-              type="button"
-              onClick={startEnrollment}
-              className="w-full btn-primary flex items-center justify-center gap-2"
-            >
-              <Camera size={15} /> Start Enrollment
-            </button>
-          )}
-
-          {status === "enrolling" && (
-            <button
-              type="button"
-              onClick={() => {
-                runningRef.current = false;
-                stopCamera();
-                setStatus("init");
-                setMessage('Press "Start Enrollment" to begin');
-              }}
-              className="w-full btn-secondary flex items-center justify-center gap-2"
-            >
-              <XCircle size={15} /> Cancel
-            </button>
-          )}
-
-          {status === "success" && capturedDescriptor && (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setStatus("init");
-                  setCapturedDescriptor(null);
-                  setMessage('Press "Start Enrollment" to begin');
-                }}
-                className="flex-1 btn-secondary flex items-center justify-center gap-2"
-              >
-                <RefreshCw size={15} /> Retake
-              </button>
-              <button
-                type="button"
-                onClick={saveDescriptor}
-                disabled={saving}
-                className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {saving ? (
-                  <Loader2 size={15} className="animate-spin" />
-                ) : (
-                  <CheckCircle size={15} />
-                )}
-                {saving ? "Saving..." : "Save & Complete"}
-              </button>
-            </div>
-          )}
-
-          {employee?.faceDescriptor && (
-            <button
-              type="button"
-              onClick={() => router.push("/hr/employees")}
-              className="w-full btn-primary flex items-center justify-center gap-2"
-            >
-              <ArrowLeft size={15} /> Back to Employees
-            </button>
-          )}
-        </div>
+        <EnrollmentActions
+          status={status}
+          employee={employee}
+          capturedDescriptor={capturedDescriptor}
+          saving={saving}
+          onStart={startEnrollment}
+          onCancel={cancelEnrollment}
+          onRetake={retakeEnrollment}
+          onSave={saveDescriptor}
+          onBack={() => router.push("/hr/employees")}
+        />
       </div>
+    </div>
+  );
+}
+
+function EnrollmentSkeleton() {
+  return (
+    <div className="p-6">
+      <div className="flex items-center gap-2 mb-6">
+        <div className="size-8 rounded-full bg-slate-200 animate-pulse" />
+        <div className="w-40 h-5 bg-slate-200 rounded animate-pulse" />
+      </div>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="animate-spin text-indigo-500" size={32} />
+      </div>
+    </div>
+  );
+}
+
+function CameraStage({
+  status,
+  employee,
+  videoRef,
+  overlayRef,
+}: {
+  status: EnrollmentStatus;
+  employee: EmployeeProfile | null;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  overlayRef: React.RefObject<HTMLCanvasElement | null>;
+}) {
+  return (
+    <div className="relative bg-slate-900 rounded-xl overflow-hidden aspect-[4/3] mb-4">
+      <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+      <canvas ref={overlayRef} className="absolute inset-0 w-full h-full" />
+      {status === "init" && !employee?.faceDescriptor && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60">
+          <Camera size={40} className="text-slate-500" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatusNotices({
+  status,
+  employee,
+  capturedDescriptor,
+  movementCount,
+  message,
+}: {
+  status: EnrollmentStatus;
+  employee: EmployeeProfile | null;
+  capturedDescriptor: number[] | null;
+  movementCount: number;
+  message: string;
+}) {
+  return (
+    <>
+      {status === "enrolling" && (
+        <div className="bg-indigo-50 text-indigo-700 text-xs p-3 rounded-lg mb-4 flex items-center gap-2">
+          <Eye size={14} />
+          <span>
+            Movement detected: {movementCount}/{MOVEMENT_FRAMES}: move your head slightly
+          </span>
+        </div>
+      )}
+
+      {status === "success" && employee?.faceDescriptor && (
+        <div className="bg-emerald-50 text-emerald-700 text-xs p-3 rounded-lg mb-4 flex items-center gap-2">
+          <CheckCircle size={14} /> Face already enrolled for this employee
+        </div>
+      )}
+
+      {status === "success" && capturedDescriptor && (
+        <div className="bg-emerald-50 text-emerald-700 text-xs p-3 rounded-lg mb-4 flex items-center gap-2">
+          <CheckCircle size={14} /> Face captured with liveness verification
+        </div>
+      )}
+
+      {status === "error" && (
+        <div className="bg-rose-50 text-rose-700 text-xs p-3 rounded-lg mb-4 flex items-center gap-2">
+          <XCircle size={14} /> {message}
+        </div>
+      )}
+    </>
+  );
+}
+
+function EnrollmentActions({
+  status,
+  employee,
+  capturedDescriptor,
+  saving,
+  onStart,
+  onCancel,
+  onRetake,
+  onSave,
+  onBack,
+}: {
+  status: EnrollmentStatus;
+  employee: EmployeeProfile | null;
+  capturedDescriptor: number[] | null;
+  saving: boolean;
+  onStart: () => void;
+  onCancel: () => void;
+  onRetake: () => void;
+  onSave: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="space-y-2">
+      {status === "init" && !employee?.faceDescriptor && (
+        <button
+          type="button"
+          onClick={onStart}
+          className="w-full btn-primary flex items-center justify-center gap-2"
+        >
+          <Camera size={15} /> Start Enrollment
+        </button>
+      )}
+
+      {status === "enrolling" && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full btn-secondary flex items-center justify-center gap-2"
+        >
+          <XCircle size={15} /> Cancel
+        </button>
+      )}
+
+      {status === "success" && capturedDescriptor && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onRetake}
+            className="flex-1 btn-secondary flex items-center justify-center gap-2"
+          >
+            <RefreshCw size={15} /> Retake
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
+            {saving ? "Saving..." : "Save & Complete"}
+          </button>
+        </div>
+      )}
+
+      {employee?.faceDescriptor && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="w-full btn-primary flex items-center justify-center gap-2"
+        >
+          <ArrowLeft size={15} /> Back to Employees
+        </button>
+      )}
     </div>
   );
 }

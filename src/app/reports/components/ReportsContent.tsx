@@ -172,7 +172,7 @@ export default function ReportsContent() {
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") handlePreview(r.id, r.title);
             }}
-            className={`card p-5 border transition-all group flex flex-col justify-between min-h-[220px] cursor-pointer text-left
+            className={`card p-5 border transition group flex flex-col justify-between min-h-[220px] cursor-pointer text-left
               ${selectedReportId === r.id ? "border-indigo-500 ring-2 ring-indigo-100 shadow-md bg-indigo-50/10" : "border-slate-100 hover:border-indigo-200 hover:shadow-md"}
             `}
           >
@@ -194,7 +194,7 @@ export default function ReportsContent() {
                     e.stopPropagation();
                     handlePreview(r.id, r.title);
                   }}
-                  className={`p-2 rounded-lg transition-all ${selectedReportId === r.id ? "bg-indigo-100 text-indigo-700" : "bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
+                  className={`p-2 rounded-lg transition ${selectedReportId === r.id ? "bg-indigo-100 text-indigo-700" : "bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
                   title="Preview Report"
                 >
                   <Eye size={16} />
@@ -206,7 +206,7 @@ export default function ReportsContent() {
                     e.stopPropagation();
                     handleDownload(r.id, r.title);
                   }}
-                  className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all"
+                  className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition"
                   title="Download Excel"
                 >
                   {isDownloading === r.id ? (
@@ -225,7 +225,7 @@ export default function ReportsContent() {
       </div>
 
       {/* Inline Preview Area */}
-      <div id="report-preview-area" className="mt-8 transition-all duration-500 scroll-mt-6">
+      <div id="report-preview-area" className="mt-8 transition duration-500 scroll-mt-6">
         {isPreviewLoading ? (
           <div className="bg-white rounded-3xl border border-slate-100 p-20 flex flex-col items-center gap-4 text-center shadow-sm">
             <Loader2 className="animate-spin text-indigo-600" size={48} />
@@ -261,7 +261,7 @@ export default function ReportsContent() {
                     const r = reports.find((report) => report.title === previewTitle);
                     if (r) handleDownload(r.id, r.title, previewData);
                   }}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100"
                 >
                   <Download size={18} /> Download Excel
                 </button>
@@ -271,7 +271,7 @@ export default function ReportsContent() {
                     setPreviewData(null);
                     setSelectedReportId(null);
                   }}
-                  className="p-2.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-slate-400 transition-all"
+                  className="p-2.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-slate-400 transition"
                 >
                   <X size={20} />
                 </button>

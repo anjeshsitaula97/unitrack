@@ -437,7 +437,7 @@ export default function CommissionContent() {
           placeholder="Search universities, courses, partners, currencies..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 text-sm border border-slate-100 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium placeholder:text-slate-400"
+          className="w-full pl-10 pr-4 py-2 text-sm border border-slate-100 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition font-medium placeholder:text-slate-400"
         />
       </div>
 
@@ -677,7 +677,7 @@ function CommissionModal({
           <select
             value={univId}
             onChange={(e) => handleUnivChange(e.target.value)}
-            className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium"
+            className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition font-medium"
           >
             <option value="">Select a university...</option>
             {universities.map((u) => (
@@ -696,7 +696,7 @@ function CommissionModal({
             <select
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium"
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition font-medium"
             >
               <option value="">University-level commission (no course)</option>
               {univCourses.map((c) => (
@@ -724,7 +724,7 @@ function CommissionModal({
               placeholder="e.g. 5000 (optional)"
               value={partnershipAmount}
               onChange={(e) => setPartnershipAmount(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium"
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition font-medium"
             />
           </div>
         )}
@@ -778,7 +778,7 @@ function CommissionModal({
                       }
                       value={commissionValue}
                       onChange={(e) => setCommissionValue(e.target.value)}
-                      className="w-full pl-4 pr-12 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium"
+                      className="w-full pl-4 pr-12 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition font-medium"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
                       {commissionType === "Percentage" ? "%" : "amt"}
@@ -795,7 +795,7 @@ function CommissionModal({
                     placeholder="e.g. USD"
                     value={commissionCurrency}
                     onChange={(e) => setCommissionCurrency(e.target.value)}
-                    className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium uppercase"
+                    className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition font-medium uppercase"
                   />
                 </div>
               </>

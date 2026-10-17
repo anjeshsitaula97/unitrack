@@ -33,13 +33,23 @@ export default function CompareContent() {
 
   useEffect(() => {
     if (search.length < 2) return;
-    const timer = setTimeout(async () => {
-      const endpoint = type === "universities" ? "/api/universities" : "/api/courses";
-      const res = await fetch(`${endpoint}?search=${encodeURIComponent(search)}&perPage=10`);
-      const data = await res.json();
-      setResults(data?.data || []);
+    const controller = new AbortController();
+    const endpoint = type === "universities" ? "/api/universities" : "/api/courses";
+    const timer = setTimeout(() => {
+      fetch(`${endpoint}?search=${encodeURIComponent(search)}&perPage=10`, {
+        signal: controller.signal,
+      })
+        .then((res) => {
+          if (!res.ok) return [];
+          return res.json();
+        })
+        .then((data) => setResults(data?.data || []))
+        .catch(() => {});
     }, 300);
-    return () => clearTimeout(timer);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
   }, [search, type]);
 
   const displayResults = search.length < 2 ? [] : results;
@@ -99,9 +109,7 @@ export default function CompareContent() {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-          Compare
-        </h1>
+        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">Compare</h1>
       </div>
 
       <div className="flex gap-2 mb-6">
@@ -114,7 +122,7 @@ export default function CompareContent() {
               setSelected([]);
               setCompareData([]);
             }}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all capitalize flex items-center gap-1.5 ${type === t ? "bg-indigo-600 text-white shadow-lg" : "bg-white border border-slate-200 text-slate-600"}`}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition capitalize flex items-center gap-1.5 ${type === t ? "bg-indigo-600 text-white shadow-lg" : "bg-white border border-slate-200 text-slate-600"}`}
           >
             {t === "universities" ? <Building2 size={16} /> : <BookOpen size={16} />} {t}
           </button>
@@ -140,9 +148,7 @@ export default function CompareContent() {
                   onClick={() => addToCompare(item)}
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center justify-between"
                 >
-                  <span className="font-medium text-slate-700">
-                    {item.name}
-                  </span>
+                  <span className="font-medium text-slate-700">{item.name}</span>
                   <Plus size={14} className="text-indigo-500" />
                 </button>
               ))}
@@ -158,7 +164,11 @@ export default function CompareContent() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium"
               >
                 {item.name}
-                <button type="button" onClick={() => removeFromCompare(item.id)}>
+                <button
+                  type="button"
+                  aria-label={`Remove ${item.name} from comparison`}
+                  onClick={() => removeFromCompare(item.id)}
+                >
                   <X size={14} />
                 </button>
               </span>
@@ -202,10 +212,7 @@ export default function CompareContent() {
                     {field.replace(/([A-Z])/g, " $1")}
                   </td>
                   {compareData.map((item) => (
-                    <td
-                      key={item.id}
-                      className="px-4 py-2.5 text-sm text-slate-700"
-                    >
+                    <td key={item.id} className="px-4 py-2.5 text-sm text-slate-700">
                       {getFieldValue(item, field)?.toString() || "-"}
                     </td>
                   ))}

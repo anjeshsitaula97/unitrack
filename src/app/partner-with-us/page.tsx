@@ -142,13 +142,13 @@ export default function PartnerWithUsPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <a
                   href="#partner-form"
-                  className="bg-white text-[#0055c3] px-8 py-4 rounded-2xl font-extrabold text-lg shadow-2xl hover:bg-[#f0f4ff] transition-all active:scale-95 inline-block"
+                  className="bg-white text-[#0055c3] px-8 py-4 rounded-2xl font-extrabold text-lg shadow-2xl hover:bg-[#f0f4ff] transition active:scale-95 inline-block"
                 >
                   Apply for Partnership
                 </a>
                 <a
                   href="#how-it-works"
-                  className="bg-white/10 border border-white/25 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition-all inline-block"
+                  className="bg-white/10 border border-white/25 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition inline-block"
                 >
                   How It Works
                 </a>
@@ -164,6 +164,7 @@ export default function PartnerWithUsPage() {
                   src="/assets/images/partner_hero.png"
                   alt="University campus with international students"
                   fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
                   priority
                 />
@@ -204,7 +205,7 @@ export default function PartnerWithUsPage() {
               {BENEFITS.map((b) => (
                 <div
                   key={b.title}
-                  className="bg-white rounded-2xl p-7 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 group hover:-translate-y-1"
+                  className="bg-white rounded-2xl p-7 shadow-sm hover:shadow-xl transition duration-300 border border-slate-100 group hover:-translate-y-1"
                 >
                   <div className="w-12 h-12 bg-[#EEF4FF] rounded-xl flex items-center justify-center mb-5 group-hover:bg-[#0055c3] transition-colors duration-300">
                     <span className="material-symbols-outlined text-[#0055c3] text-2xl group-hover:text-white transition-colors duration-300">
@@ -297,7 +298,7 @@ export default function PartnerWithUsPage() {
                       value={formData.institutionName}
                       onChange={handleChange}
                       placeholder="e.g. University of Edinburgh"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition"
                     />
                   </div>
                   <div>
@@ -310,7 +311,7 @@ export default function PartnerWithUsPage() {
                       value={formData.country}
                       onChange={handleChange}
                       placeholder="e.g. United Kingdom"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition"
                     />
                   </div>
                   <div>
@@ -322,7 +323,7 @@ export default function PartnerWithUsPage() {
                       required
                       value={formData.institutionType}
                       onChange={handleChange}
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition-all bg-white"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition bg-white"
                     >
                       <option value="">Select type</option>
                       <option>Public University</option>
@@ -344,7 +345,7 @@ export default function PartnerWithUsPage() {
                       value={formData.website}
                       onChange={handleChange}
                       placeholder="https://www.example.ac.uk"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition"
                     />
                   </div>
                   <div>
@@ -355,7 +356,7 @@ export default function PartnerWithUsPage() {
                       name="annualEnrolment"
                       value={formData.annualEnrolment}
                       onChange={handleChange}
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition-all bg-white"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition bg-white"
                     >
                       <option value="">Select range</option>
                       <option>Under 100 students</option>
@@ -374,7 +375,7 @@ export default function PartnerWithUsPage() {
                       value={formData.programs}
                       onChange={handleChange}
                       placeholder="e.g. BSc Computer Science, MBA..."
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition"
                     />
                   </div>
                 </div>
@@ -392,7 +393,7 @@ export default function PartnerWithUsPage() {
                       value={formData.contactName}
                       onChange={handleChange}
                       placeholder="Dr. Jane Smith"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition"
                     />
                   </div>
                   <div>
@@ -406,7 +407,7 @@ export default function PartnerWithUsPage() {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="partnerships@example.ac.uk"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -419,7 +420,7 @@ export default function PartnerWithUsPage() {
                       value={formData.phone}
                       onChange={handleChange}
                       placeholder="+44 20 1234 5678"
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition"
                     />
                   </div>
                 </div>
@@ -433,13 +434,13 @@ export default function PartnerWithUsPage() {
                     value={formData.message}
                     onChange={handleChange}
                     placeholder="Tell us about your institution, recruitment goals, or any questions..."
-                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition-all resize-none"
+                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-sm text-[#131b31] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055c3] focus:border-transparent transition resize-none"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#0055c3] text-white py-4 rounded-xl font-extrabold text-base hover:bg-[#0044a0] transition-all shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-3"
+                  className="w-full bg-[#0055c3] text-white py-4 rounded-xl font-extrabold text-base hover:bg-[#0044a0] transition shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-3"
                 >
                   {loading ? (
                     <>
@@ -468,7 +469,7 @@ export default function PartnerWithUsPage() {
             </p>
             <a
               href="mailto:partners@unitrack.com"
-              className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white px-6 py-3 rounded-xl font-bold hover:bg-white/20 transition-all text-sm"
+              className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white px-6 py-3 rounded-xl font-bold hover:bg-white/20 transition text-sm"
             >
               <span className="material-symbols-outlined text-lg">mail</span>
               partners@unitrack.com

@@ -158,6 +158,7 @@ export default function DepartmentsContent() {
                     <button
                       type="button"
                       onClick={() => openEdit(dept)}
+                      aria-label={`Edit ${dept.name}`}
                       className="p-1.5 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                     >
                       <Edit2 size={14} />
@@ -165,6 +166,7 @@ export default function DepartmentsContent() {
                     <button
                       type="button"
                       onClick={() => handleDelete(dept.id)}
+                      aria-label={`Delete ${dept.name}`}
                       className="p-1.5 text-red-800 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 size={14} />
@@ -206,6 +208,7 @@ export default function DepartmentsContent() {
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
+                aria-label="Close"
                 className="text-slate-400 hover:text-slate-600 p-1"
               >
                 <X size={20} />
@@ -226,7 +229,7 @@ export default function DepartmentsContent() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="e.g. Engineering"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
                 />
               </div>
               <div>
@@ -241,7 +244,7 @@ export default function DepartmentsContent() {
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="Department description"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
                   rows={3}
                 />
               </div>
@@ -256,7 +259,7 @@ export default function DepartmentsContent() {
                   id="dept-head"
                   value={form.headId}
                   onChange={(e) => setForm({ ...form, headId: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
                 >
                   <option value="">No head</option>
                   {(users ?? []).map((u) => (

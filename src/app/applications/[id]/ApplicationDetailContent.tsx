@@ -22,6 +22,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { api } from "@/lib/fetch-client";
 import {
   DEFAULT_APPLICATION_STATUSES,
   getApplicationStatuses,
@@ -134,11 +135,12 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
   const [sideOpen, setSideOpen] = useState<string | null>("Application details");
   const [academicDocNames, setAcademicDocNames] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadTarget, setUploadTarget] = useState<string | null>(null);
+  const uploadTargetRef = useRef<string | null>(null);
+  const docActionBusyRef = useRef(false);
   const [uploadingReq, setUploadingReq] = useState<string | null>(null);
 
   const handleUploadClick = (reqName: string) => {
-    setUploadTarget(reqName);
+    uploadTargetRef.current = reqName;
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
       fileInputRef.current.click();
@@ -147,7 +149,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
 
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    const reqName = uploadTarget;
+    const reqName = uploadTargetRef.current;
     e.target.value = "";
     if (!file || !reqName) return;
     setUploadingReq(reqName);
@@ -199,7 +201,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
   const [wfLoading, setWfLoading] = useState(false);
   const [newStageName, setNewStageName] = useState("");
   const [newStageDesc, setNewStageDesc] = useState("");
-  const [addingStage, setAddingStage] = useState(false);
+  const [savingStage, setSavingStage] = useState(false);
   const [addingSubtaskTo, setAddingSubtaskTo] = useState<string | null>(null);
   const [subtaskInputs, setSubtaskInputs] = useState<Record<string, string>>({});
 
@@ -214,56 +216,61 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
   >([]);
   const [notesLoading, setNotesLoading] = useState(false);
   const [newNote, setNewNote] = useState("");
-  const [addingNote, setAddingNote] = useState(false);
+  const [savingNote, setSavingNote] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/applications/${id}`);
-        if (!res.ok) throw new Error("Failed");
-        const app = await res.json();
+    Promise.resolve()
+      .then(() => {
+        if (!cancelled) setLoading(true);
+        return api.get<ApplicationDetail>(`/api/applications/${id}`, { showError: false });
+      })
+      .then((app) => {
         if (cancelled) return;
         setDetail(app);
-
-        const [studentRes, appsRes, acadDocsRes, statusRes] = await Promise.all([
-          fetch(`/api/students/${app.studentId}`),
-          fetch(`/api/applications?studentId=${app.studentId}`),
-          fetch("/api/academic-documents"),
-          fetch("/api/settings/application-statuses"),
-        ]);
-        if (studentRes.ok) {
-          const student = await studentRes.json();
-          if (!cancelled) setDocs(Array.isArray(student.documents) ? student.documents : []);
-        }
-        if (appsRes.ok) {
-          const apps = await appsRes.json();
-          if (!cancelled) {
-            if (typeof apps.total === "number") setAppCount(apps.total || 1);
-            else {
+        return Promise.all([
+          api
+            .get<{ documents?: StudentDoc[] }>(`/api/students/${app.studentId}`, {
+              showError: false,
+            })
+            .catch(() => null),
+          api
+            .get<{ total?: number; data?: unknown[] } | unknown[]>(
+              `/api/applications?studentId=${app.studentId}`,
+              { showError: false }
+            )
+            .catch(() => null),
+          api
+            .get<Array<{ name: string }>>("/api/academic-documents", { showError: false })
+            .catch(() => null),
+          api
+            .get<{ statuses?: unknown }>("/api/settings/application-statuses", { showError: false })
+            .catch(() => null),
+        ]).then(([student, apps, acadDocs, statusData]) => {
+          if (cancelled) return;
+          if (student) setDocs(Array.isArray(student.documents) ? student.documents : []);
+          if (apps) {
+            if (!Array.isArray(apps) && typeof apps.total === "number") {
+              setAppCount(apps.total || 1);
+            } else {
               const list = Array.isArray(apps) ? apps : apps.data || [];
               setAppCount(list.length || 1);
             }
           }
-        }
-        if (acadDocsRes.ok) {
-          const docsList = await acadDocsRes.json();
-          if (!cancelled)
-            setAcademicDocNames(Array.isArray(docsList) ? docsList.map((d) => d.name) : []);
-        }
-        if (statusRes.ok) {
-          const statusData = await statusRes.json();
-          if (!cancelled && statusData?.statuses) {
+          if (acadDocs) {
+            setAcademicDocNames(Array.isArray(acadDocs) ? acadDocs.map((d) => d.name) : []);
+          }
+          if (statusData?.statuses) {
             setAppStatuses(getApplicationStatuses(JSON.stringify(statusData.statuses)));
           }
-        }
-      } catch {
-        toast.error("Failed to load application details");
-      } finally {
+        });
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Failed to load application details");
+      })
+      .finally(() => {
         if (!cancelled) setLoading(false);
-      }
-    })();
+      });
     return () => {
       cancelled = true;
     };
@@ -272,20 +279,28 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
   useEffect(() => {
     if (mainTab !== "Workflow" || !id) return;
     let cancelled = false;
-    (async () => {
-      setWfLoading(true);
-      try {
-        const res = await fetch(`/api/applications/${id}/workflow`);
-        if (res.ok) {
-          const data = await res.json();
-          if (!cancelled) setWfStages(data);
-        }
-      } catch {
-        toast.error("Failed to load workflow");
-      } finally {
+    Promise.resolve()
+      .then(() => {
+        if (!cancelled) setWfLoading(true);
+        return api.get<
+          Array<{
+            id: string;
+            name: string;
+            order: number;
+            description?: string | null;
+            subtasks: string;
+          }>
+        >(`/api/applications/${id}/workflow`, { showError: false });
+      })
+      .then((data) => {
+        if (!cancelled) setWfStages(data);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Failed to load workflow");
+      })
+      .finally(() => {
         if (!cancelled) setWfLoading(false);
-      }
-    })();
+      });
     return () => {
       cancelled = true;
     };
@@ -294,28 +309,36 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
   useEffect(() => {
     if (mainTab !== "Notes" || !id) return;
     let cancelled = false;
-    (async () => {
-      setNotesLoading(true);
-      try {
-        const res = await fetch(`/api/applications/${id}/notes`);
-        if (res.ok) {
-          const data = await res.json();
-          if (!cancelled) setNotes(Array.isArray(data) ? data : []);
-        }
-      } catch {
-        toast.error("Failed to load notes");
-      } finally {
+    Promise.resolve()
+      .then(() => {
+        if (!cancelled) setNotesLoading(true);
+        return api.get<
+          Array<{
+            id: string;
+            content: string;
+            createdAt: string;
+            author: { id: string; name: string } | null;
+          }>
+        >(`/api/applications/${id}/notes`, { showError: false });
+      })
+      .then((data) => {
+        if (!cancelled) setNotes(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Failed to load notes");
+      })
+      .finally(() => {
         if (!cancelled) setNotesLoading(false);
-      }
-    })();
+      });
     return () => {
       cancelled = true;
     };
   }, [mainTab, id]);
 
   const handleAddNote = async () => {
-    if (!newNote.trim() || addingNote) return;
-    setAddingNote(true);
+    if (savingNote) return;
+    if (!newNote.trim()) return;
+    setSavingNote(true);
     try {
       const res = await fetch(`/api/applications/${id}/notes`, {
         method: "POST",
@@ -334,7 +357,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
     } catch {
       toast.error("Error adding note");
     } finally {
-      setAddingNote(false);
+      setSavingNote(false);
     }
   };
 
@@ -354,6 +377,29 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
       toast.success("Note deleted");
     } catch {
       toast.error("Error deleting note");
+    }
+  };
+
+  const setDocStatus = async (docId: string, status: "Approved" | "Rejected") => {
+    if (docActionBusyRef.current) return;
+    docActionBusyRef.current = true;
+    try {
+      const res = await fetch(`/api/students/documents/${docId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setDocs((prev) => prev.map((d) => (d.id === docId ? { ...d, status: updated.status } : d)));
+        toast.success(`Document ${status.toLowerCase()}`);
+      } else {
+        toast.error(`Failed to ${status === "Approved" ? "approve" : "reject"} document`);
+      }
+    } catch {
+      toast.error(`Failed to ${status === "Approved" ? "approve" : "reject"} document`);
+    } finally {
+      docActionBusyRef.current = false;
     }
   };
 
@@ -381,13 +427,15 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
     }
   }, [detail]);
 
+  const academicDocNameSet = useMemo(() => new Set(academicDocNames), [academicDocNames]);
+
   const docReqs = useMemo(() => {
-    return courseReqs.filter((r: string) => academicDocNames.includes(r));
-  }, [courseReqs, academicDocNames]);
+    return courseReqs.filter((r: string) => academicDocNameSet.has(r));
+  }, [courseReqs, academicDocNameSet]);
 
   const generalReqs = useMemo(() => {
-    return courseReqs.filter((r: string) => !academicDocNames.includes(r));
-  }, [courseReqs, academicDocNames]);
+    return courseReqs.filter((r: string) => !academicDocNameSet.has(r));
+  }, [courseReqs, academicDocNameSet]);
 
   const matchedDocReqs = useMemo(() => {
     return docReqs.map((req: string) => {
@@ -511,8 +559,9 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
   };
 
   const handleAddStage = async () => {
+    if (savingStage) return;
     if (!newStageName.trim()) return;
-    setAddingStage(true);
+    setSavingStage(true);
     try {
       const res = await fetch(`/api/applications/${id}/workflow`, {
         method: "POST",
@@ -534,7 +583,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
     } catch {
       toast.error("Failed to add stage");
     } finally {
-      setAddingStage(false);
+      setSavingStage(false);
     }
   };
 
@@ -844,6 +893,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                   href={detail.university.website}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Learn more about the university website"
                   className="inline-flex items-center gap-1 mt-2 text-xs text-[#1d4ed8] font-bold hover:underline"
                 >
                   Learn more <ExternalLink size={12} />
@@ -965,7 +1015,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                         key={f}
                         type="button"
                         onClick={() => setReqFilter(f)}
-                        className={`px-4 py-1.5 rounded-md text-xs transition-all ${
+                        className={`px-4 py-1.5 rounded-md text-xs transition ${
                           reqFilter === f
                             ? "font-bold bg-white shadow-sm text-slate-800"
                             : "font-semibold text-slate-500 hover:bg-white/50"
@@ -993,7 +1043,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                     <h3 className="font-bold text-slate-900 text-sm">Course Prerequisites</h3>
                   </div>
                   <div className="divide-y divide-slate-50">
-                    {matchedPrereqs.map((prereq, i) => {
+                    {matchedPrereqs.map((prereq) => {
                       const badgeInfo = !prereq.doc
                         ? { label: "Missing", className: "bg-amber-100 text-amber-700" }
                         : (() => {
@@ -1011,7 +1061,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                           })();
                       return (
                         <div
-                          key={`prereq-${i}`}
+                          key={`prereq-${prereq.name}`}
                           className="flex items-center justify-between px-4 py-3"
                         >
                           <div className="flex items-center gap-3 min-w-0">
@@ -1039,7 +1089,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                     <h3 className="font-bold text-slate-900 text-sm">Course Requirements</h3>
                   </div>
                   <div className="divide-y divide-slate-50">
-                    {requirementRows.map((row, i) => {
+                    {requirementRows.map((row) => {
                       const badgeInfo =
                         row.status === "Approved"
                           ? { label: "Approved", className: "bg-emerald-100 text-emerald-700" }
@@ -1052,7 +1102,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                                 : { label: "Pending", className: "bg-amber-100 text-amber-700" };
                       return (
                         <div
-                          key={`req-${i}`}
+                          key={`req-${row.name}`}
                           className="flex items-center justify-between px-4 py-3"
                         >
                           <div className="flex items-center gap-3 min-w-0">
@@ -1185,33 +1235,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                                       </a>
                                       <button
                                         type="button"
-                                        onClick={async () => {
-                                          try {
-                                            const res = await fetch(
-                                              `/api/students/documents/${doc.id}/status`,
-                                              {
-                                                method: "PATCH",
-                                                headers: { "Content-Type": "application/json" },
-                                                body: JSON.stringify({ status: "Approved" }),
-                                              }
-                                            );
-                                            if (res.ok) {
-                                              const updated = await res.json();
-                                              setDocs((prev) =>
-                                                prev.map((d) =>
-                                                  d.id === doc.id
-                                                    ? { ...d, status: updated.status }
-                                                    : d
-                                                )
-                                              );
-                                              toast.success("Document approved");
-                                            } else {
-                                              toast.error("Failed to approve document");
-                                            }
-                                          } catch {
-                                            toast.error("Failed to approve document");
-                                          }
-                                        }}
+                                        onClick={() => setDocStatus(doc.id, "Approved")}
                                         className="px-3 py-1.5 bg-emerald-600 text-white rounded text-xs font-bold hover:bg-emerald-700 transition-colors"
                                       >
                                         <Check size={14} className="mr-1" />
@@ -1219,33 +1243,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                                       </button>
                                       <button
                                         type="button"
-                                        onClick={async () => {
-                                          try {
-                                            const res = await fetch(
-                                              `/api/students/documents/${doc.id}/status`,
-                                              {
-                                                method: "PATCH",
-                                                headers: { "Content-Type": "application/json" },
-                                                body: JSON.stringify({ status: "Rejected" }),
-                                              }
-                                            );
-                                            if (res.ok) {
-                                              const updated = await res.json();
-                                              setDocs((prev) =>
-                                                prev.map((d) =>
-                                                  d.id === doc.id
-                                                    ? { ...d, status: updated.status }
-                                                    : d
-                                                )
-                                              );
-                                              toast.success("Document rejected");
-                                            } else {
-                                              toast.error("Failed to reject document");
-                                            }
-                                          } catch {
-                                            toast.error("Failed to reject document");
-                                          }
-                                        }}
+                                        onClick={() => setDocStatus(doc.id, "Rejected")}
                                         className="px-3 py-1.5 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700 transition-colors"
                                       >
                                         <X size={14} className="mr-1" />
@@ -1317,6 +1315,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
+                    aria-label="Stage name"
                     placeholder="Stage name (e.g. Document Verification)"
                     value={newStageName}
                     onChange={(e) => setNewStageName(e.target.value)}
@@ -1325,6 +1324,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                   />
                   <input
                     type="text"
+                    aria-label="Stage description"
                     placeholder="Description (optional)"
                     value={newStageDesc}
                     onChange={(e) => setNewStageDesc(e.target.value)}
@@ -1334,11 +1334,11 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                   <button
                     type="button"
                     onClick={handleAddStage}
-                    disabled={addingStage || !newStageName.trim()}
+                    disabled={savingStage || !newStageName.trim()}
                     className="px-4 py-2 bg-[#1d4ed8] text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 inline-flex items-center gap-2"
                   >
                     <Plus size={16} />
-                    {addingStage ? "Adding…" : "Add"}
+                    {savingStage ? "Adding…" : "Add"}
                   </button>
                 </div>
               </div>
@@ -1399,7 +1399,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                         <div className="px-5 pt-3">
                           <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                              className="h-full bg-emerald-500 rounded-full transition duration-300"
                               style={{ width: `${progress}%` }}
                             />
                           </div>
@@ -1416,6 +1416,9 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                             <button
                               type="button"
                               onClick={() => handleToggleSubtask(stage.id, st.id)}
+                              aria-label={
+                                st.done ? "Mark subtask incomplete" : "Mark subtask complete"
+                              }
                               className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                                 st.done
                                   ? "bg-emerald-500 border-emerald-500 text-white"
@@ -1432,7 +1435,8 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                             <button
                               type="button"
                               onClick={() => handleDeleteSubtask(stage.id, st.id)}
-                              className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all"
+                              aria-label="Delete subtask"
+                              className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -1445,6 +1449,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                             <input
                               type="text"
                               autoFocus
+                              aria-label="Subtask title"
                               placeholder="Subtask title"
                               value={subtaskInputs[stage.id] || ""}
                               onChange={(e) =>
@@ -1469,6 +1474,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                               type="button"
                               onClick={() => handleAddSubtask(stage.id)}
                               disabled={!(subtaskInputs[stage.id] || "").trim()}
+                              aria-label="Add subtask"
                               className="px-2 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 disabled:opacity-50"
                             >
                               <Check size={14} />
@@ -1479,6 +1485,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                                 setAddingSubtaskTo(null);
                                 setSubtaskInputs((prev) => ({ ...prev, [stage.id]: "" }));
                               }}
+                              aria-label="Cancel subtask"
                               className="px-2 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-300"
                             >
                               <X size={14} />
@@ -1531,10 +1538,10 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                   <button
                     type="button"
                     onClick={handleAddNote}
-                    disabled={!newNote.trim() || addingNote}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1d4ed8] text-white text-xs font-semibold rounded-lg hover:bg-blue-700 active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!newNote.trim() || savingNote}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1d4ed8] text-white text-xs font-semibold rounded-lg hover:bg-blue-700 active:scale-95 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {addingNote ? (
+                    {savingNote ? (
                       <Loader2 size={14} className="animate-spin" />
                     ) : (
                       <Plus size={14} />
@@ -1584,7 +1591,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                         <button
                           type="button"
                           onClick={() => handleDeleteNote(note.id)}
-                          className="p-1.5 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                          className="p-1.5 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition"
                           title="Delete note"
                         >
                           <Trash2 size={14} />
@@ -1625,7 +1632,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
                         type="button"
                         disabled={saving}
                         onClick={() => handleStatusUpdate(s.name)}
-                        className={`text-left rounded-xl border-2 p-4 transition-all ${
+                        className={`text-left rounded-xl border-2 p-4 transition ${
                           active
                             ? "border-[#1d4ed8] bg-[#1d4ed8]/5"
                             : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
@@ -1737,7 +1744,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
         <button
           type="button"
           onClick={() => router.push("/applications")}
-          className="bg-indigo-900 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-xl hover:bg-indigo-800 transition-all text-sm font-medium"
+          className="bg-indigo-900 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-xl hover:bg-indigo-800 transition text-sm font-medium"
         >
           Back to list
           <ChevronUp size={16} />
@@ -1749,7 +1756,7 @@ export default function ApplicationDetailContent({ id }: { id: string }) {
               description: `Status: ${detail.status}. Change it in the Settings tab — the process tracker updates automatically.`,
             })
           }
-          className="w-12 h-12 bg-white border border-indigo-200 rounded-full flex items-center justify-center shadow-xl hover:bg-indigo-50 transition-all text-indigo-600"
+          className="w-12 h-12 bg-white border border-indigo-200 rounded-full flex items-center justify-center shadow-xl hover:bg-indigo-50 transition text-indigo-600"
           aria-label="Help"
         >
           <Info size={22} />

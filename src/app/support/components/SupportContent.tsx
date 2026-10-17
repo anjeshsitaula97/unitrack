@@ -2956,6 +2956,327 @@ const FAQS = [
 
 const totalArticles = ARTICLES.reduce((acc, cat) => acc + cat.articles.length, 0);
 
+function articleMatchesQuery(article: Article, q: string): boolean {
+  if (article.title.toLowerCase().includes(q)) return true;
+  if (article.description.toLowerCase().includes(q)) return true;
+  if (article.content && article.content.toLowerCase().includes(q)) return true;
+  return Boolean(
+    article.steps &&
+    article.steps.some(
+      (s) => s.instruction.toLowerCase().includes(q) || s.title.toLowerCase().includes(q)
+    )
+  );
+}
+
+function categoryMatchesQuery(category: Category, q: string): boolean {
+  if (category.label.toLowerCase().includes(q) || category.desc.toLowerCase().includes(q)) {
+    return true;
+  }
+  return category.articles.some((a) => articleMatchesQuery(a, q));
+}
+
+function filterArticles(articles: Article[], q: string): Article[] {
+  if (!q) return articles;
+  return articles.filter((a) => articleMatchesQuery(a, q));
+}
+
+function ArticleContent({
+  article,
+  category,
+  onBack,
+  onSelectRelated,
+}: {
+  article: Article;
+  category: Category;
+  onBack: () => void;
+  onSelectRelated: (categoryId: string, articleId: string) => void;
+}) {
+  return (
+    <div className="lg:col-span-2 space-y-6">
+      <div className="card p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Back to article list"
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft size={16} className="text-slate-400" />
+          </button>
+          <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center">
+            {category.icon}
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              {category.label}
+            </p>
+            <h2 className="text-lg font-bold text-slate-800">{article.title}</h2>
+          </div>
+        </div>
+        <div className="h-px bg-slate-100 mb-6"></div>
+
+        {article.steps ? (
+          <div className="space-y-8">
+            {article.steps.map((step, idx) => (
+              <div key={step.title}>
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="size-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                    {idx + 1}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-slate-800 mb-1">{step.title}</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">{step.instruction}</p>
+                  </div>
+                </div>
+                {step.screenshot && (
+                  <div className="ml-10 mb-2">
+                    <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                      <Image
+                        src={`/screenshots/${step.screenshot}`}
+                        alt={step.title}
+                        width={1440}
+                        height={900}
+                        className="w-full h-auto object-contain"
+                        unoptimized
+                      />
+                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-md flex items-center gap-1 backdrop-blur-sm">
+                        <ImageIcon size={10} />
+                        Screenshot
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : article.content ? (
+          <div className="prose prose-sm max-w-none">
+            <MarkdownContent content={article.content} />
+          </div>
+        ) : null}
+
+        {article.relatedLinks && article.relatedLinks.length > 0 && (
+          <>
+            <div className="h-px bg-slate-100 my-6"></div>
+            <h3 className="text-sm font-bold text-slate-700 mb-3">Related Articles</h3>
+            <div className="flex flex-wrap gap-2">
+              {article.relatedLinks.map((link) => (
+                <button
+                  type="button"
+                  key={link.href}
+                  onClick={() => {
+                    const targetId = link.href.replace("#", "");
+                    const foundCat = ARTICLES.find((c) =>
+                      c.articles.some((a) => a.id === targetId)
+                    );
+                    if (foundCat) onSelectRelated(foundCat.id, targetId);
+                  }}
+                  className="text-xs px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
+                >
+                  {link.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        <div className="h-px bg-slate-100 my-6"></div>
+        <div className="flex items-center justify-between">
+          <Link
+            href={category.href}
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+          >
+            Open {category.label} <ExternalLink size={12} />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ArticleList({
+  category,
+  articles,
+  onBack,
+  onSelectArticle,
+}: {
+  category: Category;
+  articles: Article[];
+  onBack: () => void;
+  onSelectArticle: (articleId: string) => void;
+}) {
+  return (
+    <div className="lg:col-span-2 space-y-6">
+      <div className="card p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            type="button"
+            onClick={onBack}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            aria-label="Back to categories"
+          >
+            <ArrowLeft size={16} className="text-slate-400" />
+          </button>
+          <div className="size-12 bg-slate-50 rounded-2xl flex items-center justify-center">
+            {category.icon}
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">{category.label}</h2>
+            <p className="text-sm text-slate-500">
+              {articles.length} article{articles.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+          <Link
+            href={category.href}
+            className="ml-auto text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-3 py-2 rounded-lg"
+          >
+            Open Page <ExternalLink size={12} />
+          </Link>
+        </div>
+
+        {articles.length === 0 ? (
+          <div className="text-center py-8">
+            <FileText size={32} className="text-slate-300 mx-auto mb-2" />
+            <p className="text-sm text-slate-500">No articles match your search.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {articles.map((article) => (
+              <button
+                type="button"
+                key={article.id}
+                onClick={() => onSelectArticle(article.id)}
+                className="w-full text-left p-4 rounded-xl hover:bg-slate-50 border border-slate-100 hover:border-indigo-200 transition group"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">
+                      {article.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">{article.description}</p>
+                  </div>
+                  <ChevronRight
+                    size={16}
+                    className="text-slate-300 group-hover:text-indigo-400 mt-0.5 flex-shrink-0"
+                  />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SupportSidebar({
+  faqs,
+  openFaq,
+  onToggleFaq,
+}: {
+  faqs: typeof FAQS;
+  openFaq: number | null;
+  onToggleFaq: (index: number) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      {faqs.length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+              <HelpCircle className="text-indigo-600 flex-shrink-0" size={18} />
+              <span>FAQs</span>
+            </h2>
+            <p className="text-xs text-slate-500">Quick answers to common questions.</p>
+          </div>
+
+          <div className="space-y-2">
+            {faqs.map((faq) => {
+              const realIdx = FAQS.indexOf(faq);
+              return (
+                <div key={faq.question} className="card overflow-hidden border border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => onToggleFaq(realIdx)}
+                    className="w-full flex items-center justify-between p-3 text-left hover:bg-slate-50 transition-colors"
+                  >
+                    <span className="text-xs font-semibold text-slate-700 pr-2">
+                      {faq.question}
+                    </span>
+                    {openFaq === realIdx ? (
+                      <ChevronUp size={14} className="text-slate-400 flex-shrink-0" />
+                    ) : (
+                      <ChevronDown size={14} className="text-slate-400 flex-shrink-0" />
+                    )}
+                  </button>
+                  {openFaq === realIdx && (
+                    <div className="px-3 pb-3 animate-slide-down">
+                      <div className="h-px bg-slate-100 mb-3"></div>
+                      <p className="text-xs text-slate-600 leading-relaxed">{faq.answer}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="card p-5 space-y-5">
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <div className="size-9 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Mail className="text-blue-600" size={16} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                Email Support
+              </p>
+              <p className="text-xs font-bold text-slate-800">support@unitrack.com</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="size-9 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Phone className="text-purple-600" size={16} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                Phone Support
+              </p>
+              <p className="text-xs font-bold text-slate-800">+1 (888) UNI-TRACK</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-100"></div>
+
+        <div className="card p-3 bg-gradient-to-br from-indigo-50 to-white border-indigo-100">
+          <h4 className="text-xs font-bold text-indigo-900 mb-1">Live Chat</h4>
+          <p className="text-[10px] text-indigo-700 leading-relaxed mb-2">
+            Chat with our specialists in real-time.
+          </p>
+          <button
+            type="button"
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg text-[10px] font-bold shadow-sm hover:bg-indigo-700 transition-colors"
+          >
+            Start Chat
+          </button>
+        </div>
+
+        <div className="h-px bg-slate-100"></div>
+
+        <Link
+          href="/tickets"
+          className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+        >
+          <FileText size={14} />
+          Submit a Support Ticket
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function SupportContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -2972,45 +3293,23 @@ export default function SupportContent() {
       : null;
 
   const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) return ARTICLES;
-    const q = searchQuery.toLowerCase();
-    return ARTICLES.filter((cat) => {
-      if (cat.label.toLowerCase().includes(q) || cat.desc.toLowerCase().includes(q)) return true;
-      return cat.articles.some(
-        (a) =>
-          a.title.toLowerCase().includes(q) ||
-          a.description.toLowerCase().includes(q) ||
-          (a.content && a.content.toLowerCase().includes(q)) ||
-          (a.steps &&
-            a.steps.some(
-              (s) => s.instruction.toLowerCase().includes(q) || s.title.toLowerCase().includes(q)
-            ))
-      );
-    });
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return ARTICLES;
+    return ARTICLES.filter((cat) => categoryMatchesQuery(cat, q));
   }, [searchQuery]);
 
   const filteredFaqs = useMemo(() => {
-    if (!searchQuery.trim()) return FAQS;
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return FAQS;
     return FAQS.filter(
       (faq) => faq.question.toLowerCase().includes(q) || faq.answer.toLowerCase().includes(q)
     );
   }, [searchQuery]);
 
-  const searchedArticles = (() => {
-    if (!searchQuery.trim() || !selectedCategory) return selectedCategory?.articles || [];
-    const q = searchQuery.toLowerCase();
-    return selectedCategory.articles.filter(
-      (a) =>
-        a.title.toLowerCase().includes(q) ||
-        a.description.toLowerCase().includes(q) ||
-        (a.content && a.content.toLowerCase().includes(q)) ||
-        (a.steps &&
-          a.steps.some(
-            (s) => s.instruction.toLowerCase().includes(q) || s.title.toLowerCase().includes(q)
-          ))
-    );
-  })();
+  const searchedArticles = useMemo(() => {
+    if (!selectedCategory) return [];
+    return filterArticles(selectedCategory.articles, searchQuery.trim().toLowerCase());
+  }, [selectedCategory, searchQuery]);
 
   const hasResults = filteredCategories.length > 0 || filteredFaqs.length > 0;
 
@@ -3037,181 +3336,10 @@ export default function SupportContent() {
     }
   };
 
-  const renderArticleContent = () => {
-    if (!selectedArticle || !selectedCategory) return null;
-
-    return (
-      <div className="lg:col-span-2 space-y-6">
-        <div className="card p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              type="button"
-              onClick={() => setSelectedArticleId(null)}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              <ArrowLeft size={16} className="text-slate-400" />
-            </button>
-            <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center">
-              {selectedCategory.icon}
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                {selectedCategory.label}
-              </p>
-              <h2 className="text-lg font-bold text-slate-800">{selectedArticle.title}</h2>
-            </div>
-          </div>
-          <div className="h-px bg-slate-100 mb-6"></div>
-
-          {selectedArticle.steps ? (
-            <div className="space-y-8">
-              {selectedArticle.steps.map((step, idx) => (
-                <div key={step.title}>
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="size-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                      {idx + 1}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-bold text-slate-800 mb-1">{step.title}</h3>
-                      <p className="text-sm text-slate-600 leading-relaxed">{step.instruction}</p>
-                    </div>
-                  </div>
-                  {step.screenshot && (
-                    <div className="ml-10 mb-2">
-                      <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
-                        <Image
-                          src={`/screenshots/${step.screenshot}`}
-                          alt={step.title}
-                          width={1440}
-                          height={900}
-                          className="w-full h-auto object-contain"
-                          unoptimized
-                        />
-                        <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-md flex items-center gap-1 backdrop-blur-sm">
-                          <ImageIcon size={10} />
-                          Screenshot
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : selectedArticle.content ? (
-            <div className="prose prose-sm max-w-none">
-              <MarkdownContent content={selectedArticle.content} />
-            </div>
-          ) : null}
-
-          {selectedArticle.relatedLinks && selectedArticle.relatedLinks.length > 0 && (
-            <>
-              <div className="h-px bg-slate-100 my-6"></div>
-              <h3 className="text-sm font-bold text-slate-700 mb-3">Related Articles</h3>
-              <div className="flex flex-wrap gap-2">
-                {selectedArticle.relatedLinks.map((link, _i) => (
-                  <button
-                    type="button"
-                    key={link.href}
-                    onClick={() => {
-                      const targetId = link.href.replace("#", "");
-                      const foundCat = ARTICLES.find((c) =>
-                        c.articles.some((a) => a.id === targetId)
-                      );
-                      if (foundCat) {
-                        setSelectedCategoryId(foundCat.id);
-                        setSelectedArticleId(targetId);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }
-                    }}
-                    className="text-xs px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
-                  >
-                    {link.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          <div className="h-px bg-slate-100 my-6"></div>
-          <div className="flex items-center justify-between">
-            <Link
-              href={selectedCategory.href}
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-            >
-              Open {selectedCategory.label} <ExternalLink size={12} />
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderArticleList = () => {
-    if (!selectedCategory) return null;
-    const articles = searchedArticles;
-
-    return (
-      <div className="lg:col-span-2 space-y-6">
-        <div className="card p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              type="button"
-              onClick={handleBackToCategories}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-              aria-label="Previous"
-            >
-              {" "}
-              <ArrowLeft size={16} className="text-slate-400" />
-            </button>
-            <div className="size-12 bg-slate-50 rounded-2xl flex items-center justify-center">
-              {selectedCategory.icon}
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-800">{selectedCategory.label}</h2>
-              <p className="text-sm text-slate-500">
-                {articles.length} article{articles.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-            <Link
-              href={selectedCategory.href}
-              className="ml-auto text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-3 py-2 rounded-lg"
-            >
-              Open Page <ExternalLink size={12} />
-            </Link>
-          </div>
-
-          {articles.length === 0 ? (
-            <div className="text-center py-8">
-              <FileText size={32} className="text-slate-300 mx-auto mb-2" />
-              <p className="text-sm text-slate-500">No articles match your search.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {articles.map((article) => (
-                <button
-                  type="button"
-                  key={article.id}
-                  onClick={() => handleSelectArticle(article.id)}
-                  className="w-full text-left p-4 rounded-xl hover:bg-slate-50 border border-slate-100 hover:border-indigo-200 transition-all group"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">
-                        {article.title}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-1">{article.description}</p>
-                    </div>
-                    <ChevronRight
-                      size={16}
-                      className="text-slate-300 group-hover:text-indigo-400 mt-0.5 flex-shrink-0"
-                    />
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  const handleSelectRelated = (categoryId: string, articleId: string) => {
+    setSelectedCategoryId(categoryId);
+    setSelectedArticleId(articleId);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -3236,9 +3364,10 @@ export default function SupportContent() {
             <input
               type="text"
               placeholder="Search for articles, guides, and more..."
+              aria-label="Search support articles"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 rounded-2xl border-none bg-white/95 text-slate-800 placeholder-slate-400 focus:ring-4 focus:ring-indigo-500/20 shadow-lg transition-all"
+              className="w-full pl-12 pr-4 py-4 rounded-2xl border-none bg-white/95 text-slate-800 placeholder-slate-400 focus:ring-4 focus:ring-indigo-500/20 shadow-lg transition"
             />
           </div>
         </div>
@@ -3255,159 +3384,138 @@ export default function SupportContent() {
       )}
 
       {hasResults && (
-        <div className="flex items-center gap-2 text-xs text-slate-400 mb-4">
-          <button
-            type="button"
-            onClick={handleBackToCategories}
-            className="hover:text-indigo-600 transition-colors"
-          >
-            All Categories
-          </button>
-          {selectedCategory && (
-            <>
-              <ChevronRight size={12} />
-              {selectedArticleId && selectedArticle ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedArticleId(null)}
-                    className="hover:text-indigo-600 transition-colors"
-                  >
-                    {selectedCategory.label}
-                  </button>
-                  <ChevronRight size={12} />
-                  <span className="text-slate-600 font-medium">{selectedArticle.title}</span>
-                </>
-              ) : (
-                <span className="text-slate-600 font-medium">{selectedCategory.label}</span>
-              )}
-            </>
-          )}
-        </div>
+        <SupportBreadcrumb
+          selectedCategory={selectedCategory}
+          selectedArticle={selectedArticle}
+          onBackToCategories={handleBackToCategories}
+          onBackToArticle={() => setSelectedArticleId(null)}
+        />
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {selectedArticle ? (
-          renderArticleContent()
-        ) : selectedCategory ? (
-          renderArticleList()
-        ) : (
-          <>
-            {filteredCategories.length > 0 && (
-              <div className="lg:col-span-2 space-y-6">
-                <CategoriesGrid categories={filteredCategories} onSelect={handleSelectCategory} />
-              </div>
-            )}
-          </>
-        )}
+        <SupportMainContent
+          selectedArticle={selectedArticle}
+          selectedCategory={selectedCategory}
+          filteredCategories={filteredCategories}
+          searchedArticles={searchedArticles}
+          onSelectCategory={handleSelectCategory}
+          onSelectArticle={handleSelectArticle}
+          onBackToCategories={handleBackToCategories}
+          onBackToArticle={() => setSelectedArticleId(null)}
+          onSelectRelated={handleSelectRelated}
+        />
 
-        <div className="space-y-6">
-          {filteredFaqs.length > 0 && (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
-                  <HelpCircle className="text-indigo-600 flex-shrink-0" size={18} />
-                  <span>FAQs</span>
-                </h2>
-                <p className="text-xs text-slate-500">Quick answers to common questions.</p>
-              </div>
-
-              <div className="space-y-2">
-                {filteredFaqs.map((faq, _idx) => {
-                  const realIdx = FAQS.indexOf(faq);
-                  return (
-                    <div
-                      key={faq.question}
-                      className="card overflow-hidden border border-slate-100"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setOpenFaq(openFaq === realIdx ? null : realIdx)}
-                        className="w-full flex items-center justify-between p-3 text-left hover:bg-slate-50 transition-colors"
-                      >
-                        <span className="text-xs font-semibold text-slate-700 pr-2">
-                          {faq.question}
-                        </span>
-                        {openFaq === realIdx ? (
-                          <ChevronUp size={14} className="text-slate-400 flex-shrink-0" />
-                        ) : (
-                          <ChevronDown size={14} className="text-slate-400 flex-shrink-0" />
-                        )}
-                      </button>
-                      {openFaq === realIdx && (
-                        <div className="px-3 pb-3 animate-slide-down">
-                          <div className="h-px bg-slate-100 mb-3"></div>
-                          <p className="text-xs text-slate-600 leading-relaxed">{faq.answer}</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div className="card p-5 space-y-5">
-            <div className="space-y-3">
-              <div className="flex gap-3">
-                <div className="size-9 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Mail className="text-blue-600" size={16} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
-                    Email Support
-                  </p>
-                  <p className="text-xs font-bold text-slate-800">support@unitrack.com</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <div className="size-9 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Phone className="text-purple-600" size={16} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
-                    Phone Support
-                  </p>
-                  <p className="text-xs font-bold text-slate-800">+1 (888) UNI-TRACK</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="h-px bg-slate-100"></div>
-
-            <div className="card p-3 bg-gradient-to-br from-indigo-50 to-white border-indigo-100">
-              <h4 className="text-xs font-bold text-indigo-900 mb-1">Live Chat</h4>
-              <p className="text-[10px] text-indigo-700 leading-relaxed mb-2">
-                Chat with our specialists in real-time.
-              </p>
-              <button
-                type="button"
-                className="w-full bg-indigo-600 text-white py-2 rounded-lg text-[10px] font-bold shadow-sm hover:bg-indigo-700 transition-colors"
-              >
-                Start Chat
-              </button>
-            </div>
-
-            <div className="h-px bg-slate-100"></div>
-
-            <Link
-              href="/tickets"
-              className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
-            >
-              <FileText size={14} />
-              Submit a Support Ticket
-            </Link>
-          </div>
-        </div>
+        <SupportSidebar
+          faqs={filteredFaqs}
+          openFaq={openFaq}
+          onToggleFaq={(index) => setOpenFaq((prev) => (prev === index ? null : index))}
+        />
       </div>
     </div>
   );
 }
 
+function SupportBreadcrumb({
+  selectedCategory,
+  selectedArticle,
+  onBackToCategories,
+  onBackToArticle,
+}: {
+  selectedCategory: Category | null;
+  selectedArticle: Article | null;
+  onBackToCategories: () => void;
+  onBackToArticle: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-xs text-slate-400 mb-4">
+      <button
+        type="button"
+        onClick={onBackToCategories}
+        className="hover:text-indigo-600 transition-colors"
+      >
+        All Categories
+      </button>
+      {selectedCategory && (
+        <>
+          <ChevronRight size={12} />
+          {selectedArticle ? (
+            <>
+              <button
+                type="button"
+                onClick={onBackToArticle}
+                className="hover:text-indigo-600 transition-colors"
+              >
+                {selectedCategory.label}
+              </button>
+              <ChevronRight size={12} />
+              <span className="text-slate-600 font-medium">{selectedArticle.title}</span>
+            </>
+          ) : (
+            <span className="text-slate-600 font-medium">{selectedCategory.label}</span>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function SupportMainContent({
+  selectedArticle,
+  selectedCategory,
+  filteredCategories,
+  searchedArticles,
+  onSelectCategory,
+  onSelectArticle,
+  onBackToCategories,
+  onBackToArticle,
+  onSelectRelated,
+}: {
+  selectedArticle: Article | null;
+  selectedCategory: Category | null;
+  filteredCategories: Category[];
+  searchedArticles: Article[];
+  onSelectCategory: (id: string) => void;
+  onSelectArticle: (id: string) => void;
+  onBackToCategories: () => void;
+  onBackToArticle: () => void;
+  onSelectRelated: (categoryId: string, articleId: string) => void;
+}) {
+  if (selectedArticle && selectedCategory) {
+    return (
+      <ArticleContent
+        article={selectedArticle}
+        category={selectedCategory}
+        onBack={onBackToArticle}
+        onSelectRelated={onSelectRelated}
+      />
+    );
+  }
+  if (selectedCategory) {
+    return (
+      <ArticleList
+        category={selectedCategory}
+        articles={searchedArticles}
+        onBack={onBackToCategories}
+        onSelectArticle={onSelectArticle}
+      />
+    );
+  }
+  if (filteredCategories.length > 0) {
+    return (
+      <div className="lg:col-span-2 space-y-6">
+        <CategoriesGrid categories={filteredCategories} onSelect={onSelectCategory} />
+      </div>
+    );
+  }
+  return null;
+}
+
 function MarkdownContent({ content }: { content: string }) {
-  return content.split("\n").map((line, i) => {
-    const key = `${i}-${line.slice(0, 20)}`;
+  const occurrences = new Map<string, number>();
+  return content.split("\n").map((line) => {
+    const occurrence = (occurrences.get(line) ?? 0) + 1;
+    occurrences.set(line, occurrence);
+    const key = `${line}#${occurrence}`;
     if (line.startsWith("## ")) {
       return (
         <h2 key={key} className="text-lg font-bold text-slate-700 mt-5 mb-2">
@@ -3472,7 +3580,7 @@ function CategoriesGrid({
           type="button"
           key={cat.id}
           onClick={() => onSelect(cat.id)}
-          className="card p-6 group hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50 transition-all cursor-pointer text-left"
+          className="card p-6 group hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50 transition cursor-pointer text-left"
         >
           <div className="flex items-start justify-between mb-4">
             <div className="size-12 bg-slate-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -3486,7 +3594,7 @@ function CategoriesGrid({
             {cat.label}
           </h3>
           <p className="text-sm text-slate-500 leading-relaxed mb-4">{cat.desc}</p>
-          <div className="flex items-center text-xs font-bold text-indigo-600 gap-1 opacity-0 group-hover:opacity-100 transition-all">
+          <div className="flex items-center text-xs font-bold text-indigo-600 gap-1 opacity-0 group-hover:opacity-100 transition">
             Browse Articles <ChevronRight size={14} />
           </div>
         </button>

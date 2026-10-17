@@ -34,18 +34,21 @@ export default function HRDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const ac = new AbortController();
+    (async () => {
       try {
-        const res = await fetch("/api/hr/dashboard");
-        const d = await res.json();
-        if (res.ok) setData(d);
+        const res = await fetch("/api/hr/dashboard", { signal: ac.signal });
+        if (res.ok) {
+          const d = (await res.json()) as HRDashboardData;
+          setData(d);
+        }
       } catch (err) {
-        console.error(err);
+        if ((err as { name?: string })?.name !== "AbortError") console.error(err);
       } finally {
-        setLoading(false);
+        if (!ac.signal.aborted) setLoading(false);
       }
-    };
-    fetchData();
+    })();
+    return () => ac.abort();
   }, []);
 
   const cards = [

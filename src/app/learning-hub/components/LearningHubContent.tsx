@@ -45,6 +45,7 @@ interface Resource {
   thumbnail: string | null;
   fileSize: string | null;
   createdAt: string;
+  createdAtLabel?: string;
 }
 
 interface ResourceForm {
@@ -64,6 +65,71 @@ interface CountryForm {
 
 interface CategoryForm {
   name: string;
+}
+
+function decorateResources(list: Resource[]): Resource[] {
+  return list.map((resource) => ({
+    ...resource,
+    createdAtLabel: new Date(resource.createdAt).toLocaleDateString(),
+  }));
+}
+
+const EMPTY_RESOURCE_FORM: ResourceForm = {
+  title: "",
+  description: "",
+  type: "Document",
+  categoryId: "",
+  countryId: "",
+  url: "",
+  fileSize: "",
+};
+
+async function loadHubData(): Promise<{
+  resources: Resource[];
+  countries: Country[];
+  categories: Category[];
+}> {
+  const [resResources, resCountries, resCategories] = await Promise.all([
+    fetch("/api/learning-resources"),
+    fetch("/api/learning-hub/countries"),
+    fetch("/api/learning-hub/categories"),
+  ]);
+
+  const [resources, countries, categories] = await Promise.all([
+    resResources.json(),
+    resCountries.json(),
+    resCategories.json(),
+  ]);
+
+  return { resources, countries, categories };
+}
+
+async function uploadResourceFile(file: File): Promise<{ url: string; size: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const uploadRes = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!uploadRes.ok) throw new Error("Upload failed");
+
+  return uploadRes.json();
+}
+
+function filterResources(
+  resources: Resource[] | undefined,
+  countryId: string | null,
+  categoryId: string | null,
+  query: string
+): Resource[] {
+  return (resources ?? []).filter(
+    (r) =>
+      r.countryId === countryId &&
+      r.categoryId === categoryId &&
+      r.title.toLowerCase().includes(query.toLowerCase())
+  );
 }
 
 export default function LearningHubContent() {
@@ -87,36 +153,17 @@ export default function LearningHubContent() {
   const [uploadType, setUploadType] = useState<"link" | "upload">("link");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const [resourceForm, setResourceForm] = useState({
-    title: "",
-    description: "",
-    type: "Document",
-    categoryId: "",
-    countryId: "",
-    url: "",
-    fileSize: "",
-  });
+  const [resourceForm, setResourceForm] = useState<ResourceForm>(EMPTY_RESOURCE_FORM);
 
   const [countryForm, setCountryForm] = useState({ name: "", code: "" });
   const [categoryForm, setCategoryForm] = useState({ name: "" });
 
   const fetchData = async () => {
     try {
-      const [resResources, resCountries, resCategories] = await Promise.all([
-        fetch("/api/learning-resources"),
-        fetch("/api/learning-hub/countries"),
-        fetch("/api/learning-hub/categories"),
-      ]);
-
-      const [dataResources, dataCountries, dataCategories] = await Promise.all([
-        resResources.json(),
-        resCountries.json(),
-        resCategories.json(),
-      ]);
-
-      setResources(dataResources);
-      setCountries(dataCountries);
-      setCategories(dataCategories);
+      const data = await loadHubData();
+      setResources(decorateResources(data.resources));
+      setCountries(data.countries);
+      setCategories(data.categories);
     } catch (_err) {
       toast.error("Failed to load hub data");
     } finally {
@@ -138,17 +185,7 @@ export default function LearningHubContent() {
       const resourceData = { ...resourceForm };
 
       if (uploadType === "upload" && selectedFile) {
-        const formData = new FormData();
-        formData.append("file", selectedFile);
-
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!uploadRes.ok) throw new Error("Upload failed");
-
-        const uploadData = await uploadRes.json();
+        const uploadData = await uploadResourceFile(selectedFile);
         resourceData.url = uploadData.url;
         resourceData.fileSize = uploadData.size;
       }
@@ -166,15 +203,7 @@ export default function LearningHubContent() {
       if (res.ok) {
         toast.success("Document published");
         setShowAddResourceModal(false);
-        setResourceForm({
-          title: "",
-          description: "",
-          type: "Document",
-          categoryId: "",
-          countryId: "",
-          url: "",
-          fileSize: "",
-        });
+        setResourceForm(EMPTY_RESOURCE_FORM);
         setSelectedFile(null);
         setUploadType("link");
         fetchData();
@@ -306,150 +335,348 @@ export default function LearningHubContent() {
     }
   };
 
-  const filteredResources = useMemo(() => {
-    return (resources ?? []).filter(
-      (r) =>
-        r.countryId === selectedCountryId &&
-        r.categoryId === selectedCategoryId &&
-        r.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [resources, selectedCountryId, selectedCategoryId, searchQuery]);
+  const filteredResources = useMemo(
+    () => filterResources(resources, selectedCountryId, selectedCategoryId, searchQuery),
+    [resources, selectedCountryId, selectedCategoryId, searchQuery]
+  );
 
   return (
     <div className="flex flex-col h-full bg-slate-50 -m-8 animate-fade-in">
-      {/* Top Header */}
-      <div className="px-8 py-4 bg-white border-b border-slate-200 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-          <span>Dashboard</span>
-          <ChevronRight size={14} />
-          <span className="text-slate-800 font-bold">Learning Hub</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setShowAddResourceModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#1e40af] text-white rounded-lg text-xs font-bold hover:bg-[#1d4ed8] transition-all shadow-md shadow-blue-100"
-          >
-            <Plus size={14} />
-            Publish Document
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 transition-all"
-          >
-            <Mail size={14} />
-            Email Updates
-          </button>
-        </div>
+      <HubTopBar onPublish={() => setShowAddResourceModal(true)} />
+
+      <HubTitleBar
+        view={view}
+        countries={countries}
+        categories={categories}
+        selectedCountryId={selectedCountryId}
+        selectedCategoryId={selectedCategoryId}
+        documentCount={filteredResources.length}
+        onGoToCountries={() => {
+          setSelectedCountryId(null);
+          setSelectedCategoryId(null);
+          setView("countries");
+        }}
+        onGoToCategories={() => {
+          setSelectedCategoryId(null);
+          setView("categories");
+        }}
+        onAddCountry={() => setShowAddCountryModal(true)}
+        onAddCategory={() => setShowAddCategoryModal(true)}
+      />
+
+      <HubWorkspace
+        view={view}
+        countries={countries}
+        categories={categories}
+        selectedCountryId={selectedCountryId}
+        selectedCategoryId={selectedCategoryId}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        setView={setView}
+        setSelectedCountryId={setSelectedCountryId}
+        setSelectedCategoryId={setSelectedCategoryId}
+        setEditingCategoryId={setEditingCategoryId}
+        setCategoryForm={setCategoryForm}
+        setShowAddResourceModal={setShowAddResourceModal}
+        isLoading={isLoading}
+        filteredResources={filteredResources}
+        setEditingResource={setEditingResource}
+        setResourceForm={setResourceForm}
+        deleteResource={deleteResource}
+        handleDeleteCategory={handleDeleteCategory}
+      />
+
+      <HubModals
+        showAddResourceModal={showAddResourceModal}
+        setShowAddResourceModal={setShowAddResourceModal}
+        showAddCountryModal={showAddCountryModal}
+        setShowAddCountryModal={setShowAddCountryModal}
+        showAddCategoryModal={showAddCategoryModal}
+        setShowAddCategoryModal={setShowAddCategoryModal}
+        editingCategoryId={editingCategoryId}
+        setEditingCategoryId={setEditingCategoryId}
+        editingResource={editingResource}
+        setEditingResource={setEditingResource}
+        resourceForm={resourceForm}
+        setResourceForm={setResourceForm}
+        countryForm={countryForm}
+        setCountryForm={setCountryForm}
+        categoryForm={categoryForm}
+        setCategoryForm={setCategoryForm}
+        countries={countries}
+        categories={categories}
+        uploadType={uploadType}
+        setUploadType={setUploadType}
+        selectedFile={selectedFile}
+        setSelectedFile={setSelectedFile}
+        isSubmitting={isSubmitting}
+        handleAddResource={handleAddResource}
+        handleAddCountry={handleAddCountry}
+        handleAddCategory={handleAddCategory}
+        handleUpdateCategory={handleUpdateCategory}
+        handleUpdateResource={handleUpdateResource}
+      />
+    </div>
+  );
+}
+
+function HubTopBar({ onPublish }: { onPublish: () => void }) {
+  return (
+    <div className="px-8 py-4 bg-white border-b border-slate-200 flex items-center justify-between">
+      <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+        <span>Dashboard</span>
+        <ChevronRight size={14} />
+        <span className="text-slate-800 font-bold">Learning Hub</span>
       </div>
-
-      <div className="px-8 py-4 bg-slate-50 flex items-center justify-between">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-              Learning Hub
-            </h1>
-            {selectedCountryId && (
-              <>
-                <ChevronRight size={16} className="text-slate-300" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedCountryId(null);
-                    setSelectedCategoryId(null);
-                    setView("countries");
-                  }}
-                  className="px-2 py-0.5 bg-blue-50 text-[#1e40af] text-[10px] font-black rounded uppercase hover:bg-blue-100 transition-all"
-                >
-                  {(countries ?? []).find((c) => c.id === selectedCountryId)?.name}
-                </button>
-              </>
-            )}
-            {selectedCategoryId && (
-              <>
-                <ChevronRight size={16} className="text-slate-300" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategoryId(null);
-                    setView("categories");
-                  }}
-                  className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-black rounded uppercase hover:bg-amber-100 transition-all"
-                >
-                  {(categories ?? []).find((c) => c.id === selectedCategoryId)?.name}
-                </button>
-              </>
-            )}
-          </div>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-            {view === "countries" && `${countries?.length ?? 0} countries available.`}
-            {view === "categories" &&
-              `Select a category for ${(countries ?? []).find((c) => c.id === selectedCountryId)?.name}.`}
-            {view === "resources" &&
-              `${filteredResources.length} documents in ${(categories ?? []).find((c) => c.id === selectedCategoryId)?.name}.`}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setShowAddCountryModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest text-[#1e40af] hover:bg-blue-50 transition-all"
-          >
-            <Globe size={12} /> Add Country
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAddCategoryModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-50 transition-all"
-          >
-            <Folder size={12} /> Add Category
-          </button>
-        </div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onPublish}
+          className="flex items-center gap-2 px-4 py-2 bg-[#1e40af] text-white rounded-lg text-xs font-bold hover:bg-[#1d4ed8] transition shadow-md shadow-blue-100"
+        >
+          <Plus size={14} />
+          Publish Document
+        </button>
+        <button
+          type="button"
+          className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 transition"
+        >
+          <Mail size={14} />
+          Email Updates
+        </button>
       </div>
+    </div>
+  );
+}
 
-      <div className="flex-1 flex flex-col overflow-hidden border-t border-slate-200 bg-white p-8">
-        {view === "countries" && (
-          <CountriesView
-            countries={countries}
-            setSelectedCountryId={setSelectedCountryId}
-            setSelectedCategoryId={setSelectedCategoryId}
-            setView={setView}
-          />
-        )}
-
-        {view === "categories" && (
-          <CategoriesView
-            setView={setView}
-            selectedCountryId={selectedCountryId}
-            countries={countries}
-            categories={categories}
-            setSelectedCategoryId={setSelectedCategoryId}
-            setEditingCategoryId={setEditingCategoryId}
-            setCategoryForm={setCategoryForm}
-            handleDeleteCategory={handleDeleteCategory}
-          />
-        )}
-
-        {view === "resources" && (
-          <ResourcesView
-            setView={setView}
-            selectedCategoryId={selectedCategoryId}
-            categories={categories}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            setShowAddResourceModal={setShowAddResourceModal}
-            isLoading={isLoading}
-            filteredResources={filteredResources}
-            setEditingResource={setEditingResource}
-            setResourceForm={setResourceForm}
-            deleteResource={deleteResource}
-          />
-        )}
+function HubTitleBar({
+  view,
+  countries,
+  categories,
+  selectedCountryId,
+  selectedCategoryId,
+  documentCount,
+  onGoToCountries,
+  onGoToCategories,
+  onAddCountry,
+  onAddCategory,
+}: {
+  view: "countries" | "categories" | "resources";
+  countries: Country[] | undefined;
+  categories: Category[] | undefined;
+  selectedCountryId: string | null;
+  selectedCategoryId: string | null;
+  documentCount: number;
+  onGoToCountries: () => void;
+  onGoToCategories: () => void;
+  onAddCountry: () => void;
+  onAddCategory: () => void;
+}) {
+  const countryName = (countries ?? []).find((c) => c.id === selectedCountryId)?.name;
+  const categoryName = (categories ?? []).find((c) => c.id === selectedCategoryId)?.name;
+  return (
+    <div className="px-8 py-4 bg-slate-50 flex items-center justify-between">
+      <div className="flex flex-col">
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            Learning Hub
+          </h1>
+          {selectedCountryId && (
+            <>
+              <ChevronRight size={16} className="text-slate-300" />
+              <button
+                type="button"
+                onClick={onGoToCountries}
+                className="px-2 py-0.5 bg-blue-50 text-[#1e40af] text-[10px] font-black rounded uppercase hover:bg-blue-100 transition"
+              >
+                {countryName}
+              </button>
+            </>
+          )}
+          {selectedCategoryId && (
+            <>
+              <ChevronRight size={16} className="text-slate-300" />
+              <button
+                type="button"
+                onClick={onGoToCategories}
+                className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-black rounded uppercase hover:bg-amber-100 transition"
+              >
+                {categoryName}
+              </button>
+            </>
+          )}
+        </div>
+        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+          {view === "countries" && `${countries?.length ?? 0} countries available.`}
+          {view === "categories" && `Select a category for ${countryName}.`}
+          {view === "resources" && `${documentCount} documents in ${categoryName}.`}
+        </p>
       </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onAddCountry}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest text-[#1e40af] hover:bg-blue-50 transition"
+        >
+          <Globe size={12} /> Add Country
+        </button>
+        <button
+          type="button"
+          onClick={onAddCategory}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-50 transition"
+        >
+          <Folder size={12} /> Add Category
+        </button>
+      </div>
+    </div>
+  );
+}
 
-      {/* Modals */}
+function HubWorkspace({
+  view,
+  countries,
+  categories,
+  selectedCountryId,
+  selectedCategoryId,
+  searchQuery,
+  setSearchQuery,
+  setView,
+  setSelectedCountryId,
+  setSelectedCategoryId,
+  setEditingCategoryId,
+  setCategoryForm,
+  setShowAddResourceModal,
+  isLoading,
+  filteredResources,
+  setEditingResource,
+  setResourceForm,
+  deleteResource,
+  handleDeleteCategory,
+}: {
+  view: "countries" | "categories" | "resources";
+  countries: Country[] | undefined;
+  categories: Category[] | undefined;
+  selectedCountryId: string | null;
+  selectedCategoryId: string | null;
+  searchQuery: string;
+  setSearchQuery: (v: string) => void;
+  setView: (v: "countries" | "categories" | "resources") => void;
+  setSelectedCountryId: (id: string | null) => void;
+  setSelectedCategoryId: (id: string | null) => void;
+  setEditingCategoryId: (id: string | null) => void;
+  setCategoryForm: (v: CategoryForm) => void;
+  setShowAddResourceModal: (v: boolean) => void;
+  isLoading: boolean;
+  filteredResources: Resource[];
+  setEditingResource: (v: Resource | null) => void;
+  setResourceForm: (v: ResourceForm) => void;
+  deleteResource: (id: string) => Promise<void>;
+  handleDeleteCategory: (id: string, name: string) => Promise<void>;
+}) {
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden border-t border-slate-200 bg-white p-8">
+      {view === "countries" && (
+        <CountriesView
+          countries={countries}
+          setSelectedCountryId={setSelectedCountryId}
+          setSelectedCategoryId={setSelectedCategoryId}
+          setView={setView}
+        />
+      )}
 
-      {/* Add Document Modal */}
+      {view === "categories" && (
+        <CategoriesView
+          setView={setView}
+          selectedCountryId={selectedCountryId}
+          countries={countries}
+          categories={categories}
+          setSelectedCategoryId={setSelectedCategoryId}
+          setEditingCategoryId={setEditingCategoryId}
+          setCategoryForm={setCategoryForm}
+          handleDeleteCategory={handleDeleteCategory}
+        />
+      )}
+
+      {view === "resources" && (
+        <ResourcesView
+          setView={setView}
+          selectedCategoryId={selectedCategoryId}
+          categories={categories}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          setShowAddResourceModal={setShowAddResourceModal}
+          isLoading={isLoading}
+          filteredResources={filteredResources}
+          setEditingResource={setEditingResource}
+          setResourceForm={setResourceForm}
+          deleteResource={deleteResource}
+        />
+      )}
+    </div>
+  );
+}
+
+function HubModals({
+  showAddResourceModal,
+  setShowAddResourceModal,
+  showAddCountryModal,
+  setShowAddCountryModal,
+  showAddCategoryModal,
+  setShowAddCategoryModal,
+  editingCategoryId,
+  setEditingCategoryId,
+  editingResource,
+  setEditingResource,
+  resourceForm,
+  setResourceForm,
+  countryForm,
+  setCountryForm,
+  categoryForm,
+  setCategoryForm,
+  countries,
+  categories,
+  uploadType,
+  setUploadType,
+  selectedFile,
+  setSelectedFile,
+  isSubmitting,
+  handleAddResource,
+  handleAddCountry,
+  handleAddCategory,
+  handleUpdateCategory,
+  handleUpdateResource,
+}: {
+  showAddResourceModal: boolean;
+  setShowAddResourceModal: (v: boolean) => void;
+  showAddCountryModal: boolean;
+  setShowAddCountryModal: (v: boolean) => void;
+  showAddCategoryModal: boolean;
+  setShowAddCategoryModal: (v: boolean) => void;
+  editingCategoryId: string | null;
+  setEditingCategoryId: (id: string | null) => void;
+  editingResource: Resource | null;
+  setEditingResource: (v: Resource | null) => void;
+  resourceForm: ResourceForm;
+  setResourceForm: (v: ResourceForm) => void;
+  countryForm: CountryForm;
+  setCountryForm: (v: CountryForm) => void;
+  categoryForm: CategoryForm;
+  setCategoryForm: (v: CategoryForm) => void;
+  countries: Country[] | undefined;
+  categories: Category[] | undefined;
+  uploadType: "link" | "upload";
+  setUploadType: (v: "link" | "upload") => void;
+  selectedFile: File | null;
+  setSelectedFile: (v: File | null) => void;
+  isSubmitting: boolean;
+  handleAddResource: (e: React.FormEvent) => Promise<void>;
+  handleAddCountry: (e: React.FormEvent) => Promise<void>;
+  handleAddCategory: (e: React.FormEvent) => Promise<void>;
+  handleUpdateCategory: (e: React.FormEvent) => Promise<void>;
+  handleUpdateResource: (e: React.FormEvent) => Promise<void>;
+}) {
+  return (
+    <>
       {showAddResourceModal && (
         <AddResourceModal
           showAddResourceModal={showAddResourceModal}
@@ -467,7 +694,6 @@ export default function LearningHubContent() {
         />
       )}
 
-      {/* Add Country Modal */}
       {showAddCountryModal && (
         <AddCountryModal
           showAddCountryModal={showAddCountryModal}
@@ -479,7 +705,6 @@ export default function LearningHubContent() {
         />
       )}
 
-      {/* Add Category Modal */}
       {showAddCategoryModal && (
         <AddCategoryModal
           showAddCategoryModal={showAddCategoryModal}
@@ -490,7 +715,7 @@ export default function LearningHubContent() {
           isSubmitting={isSubmitting}
         />
       )}
-      {/* Edit Category Modal */}
+
       {editingCategoryId && (
         <EditCategoryModal
           editingCategoryId={editingCategoryId}
@@ -502,7 +727,6 @@ export default function LearningHubContent() {
         />
       )}
 
-      {/* Edit Resource Modal */}
       {editingResource && (
         <EditResourceModal
           editingResource={editingResource}
@@ -515,7 +739,7 @@ export default function LearningHubContent() {
           isSubmitting={isSubmitting}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -549,7 +773,7 @@ function CountriesView({
               setSelectedCategoryId(null);
               setView("categories");
             }}
-            className="group flex flex-col items-center justify-center p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-blue-100 transition-all"
+            className="group flex flex-col items-center justify-center p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-blue-100 transition"
           >
             <div className="mb-4 transform group-hover:scale-110 transition-transform">
               {c.code ? (
@@ -570,7 +794,7 @@ function CountriesView({
             <span className="text-lg font-black text-slate-800 text-center uppercase tracking-tight group-hover:text-[#1e40af] transition-colors">
               {c.name}
             </span>
-            <div className="mt-4 px-4 py-1.5 bg-slate-50 rounded-full text-[9px] font-black text-white uppercase tracking-widest group-hover:bg-blue-50 group-hover:text-[#1e40af] transition-all">
+            <div className="mt-4 px-4 py-1.5 bg-slate-50 rounded-full text-[9px] font-black text-white uppercase tracking-widest group-hover:bg-blue-50 group-hover:text-[#1e40af] transition">
               Open Library
             </div>
           </button>
@@ -604,8 +828,9 @@ function CategoriesView({
       <div className="flex items-center gap-4">
         <button
           type="button"
+          aria-label="Back to countries"
           onClick={() => setView("countries")}
-          className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-400 hover:text-slate-600"
+          className="p-2 hover:bg-slate-100 rounded-xl transition text-slate-400 hover:text-slate-600"
         >
           <ArrowLeft size={20} />
         </button>
@@ -627,7 +852,7 @@ function CategoriesView({
                   setSelectedCategoryId(cat.id);
                   setView("resources");
                 }}
-                className="w-full flex flex-col items-center justify-center p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-amber-100 transition-all"
+                className="w-full flex flex-col items-center justify-center p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-amber-100 transition"
               >
                 <div className="mb-4 text-amber-400 transform group-hover:scale-110 transition-transform">
                   <Folder size={48} fill="#fbbf24" className="opacity-80" />
@@ -635,13 +860,14 @@ function CategoriesView({
                 <span className="text-lg font-black text-slate-800 text-center uppercase tracking-tight group-hover:text-amber-600 transition-colors">
                   {cat.name}
                 </span>
-                <div className="mt-4 px-4 py-1.5 bg-slate-50 rounded-full text-[9px] font-black text-white uppercase tracking-widest group-hover:bg-amber-50 group-hover:text-amber-600 transition-all">
+                <div className="mt-4 px-4 py-1.5 bg-slate-50 rounded-full text-[9px] font-black text-white uppercase tracking-widest group-hover:bg-amber-50 group-hover:text-amber-600 transition">
                   View Documents
                 </div>
               </button>
-              <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
+              <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition z-10">
                 <button
                   type="button"
+                  aria-label="Edit category"
                   onClick={(e) => {
                     e.stopPropagation();
                     setEditingCategoryId(cat.id);
@@ -653,6 +879,7 @@ function CategoriesView({
                 </button>
                 <button
                   type="button"
+                  aria-label="Delete category"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDeleteCategory(cat.id, cat.name);
@@ -701,8 +928,9 @@ function ResourcesView({
         <div className="flex items-center gap-4">
           <button
             type="button"
+            aria-label="Back to categories"
             onClick={() => setView("categories")}
-            className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-400 hover:text-slate-600"
+            className="p-2 hover:bg-slate-100 rounded-xl transition text-slate-400 hover:text-slate-600"
           >
             <ArrowLeft size={20} />
           </button>
@@ -715,6 +943,7 @@ function ResourcesView({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
               type="text"
+              aria-label="Search documents"
               placeholder="Search documents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -724,7 +953,7 @@ function ResourcesView({
           <button
             type="button"
             onClick={() => setShowAddResourceModal(true)}
-            className="px-4 py-2 bg-[#1e40af] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md shadow-blue-100 flex items-center gap-2"
+            className="px-4 py-2 bg-[#1e40af] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition shadow-md shadow-blue-100 flex items-center gap-2"
           >
             <PlusCircle size={14} /> Add New
           </button>
@@ -746,7 +975,7 @@ function ResourcesView({
             {filteredResources.map((resource) => (
               <div
                 key={resource.id}
-                className="bg-white rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all group overflow-hidden flex flex-col h-full"
+                className="bg-white rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl transition group overflow-hidden flex flex-col h-full"
               >
                 <div className="p-8 flex flex-col items-center flex-1">
                   <div className="mb-6 relative">
@@ -760,7 +989,7 @@ function ResourcesView({
                   </h3>
                   <div className="w-full h-px bg-slate-50 mb-4" />
                   <div className="w-full flex items-center justify-between text-[9px] font-black text-slate-300 uppercase tracking-widest mb-6">
-                    <span>{new Date(resource.createdAt).toLocaleDateString()}</span>
+                    <span>{resource.createdAtLabel}</span>
                     <span>{resource.fileSize || "--- MB"}</span>
                   </div>
 
@@ -769,14 +998,15 @@ function ResourcesView({
                       href={resource.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#1e40af] hover:text-white transition-all shadow-sm"
+                      className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#1e40af] hover:text-white transition shadow-sm"
                     >
                       Get File
                       <Download size={14} />
                     </a>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
                       <button
                         type="button"
+                        aria-label="Edit document"
                         onClick={() => {
                           setEditingResource(resource);
                           setResourceForm({
@@ -789,14 +1019,15 @@ function ResourcesView({
                             fileSize: resource.fileSize || "",
                           });
                         }}
-                        className="p-2.5 text-blue-800 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                        className="p-2.5 text-blue-800 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button
                         type="button"
+                        aria-label="Delete document"
                         onClick={() => deleteResource(resource.id)}
-                        className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -854,7 +1085,7 @@ function AddResourceModal({
             type="button"
             aria-label="Close"
             onClick={() => setShowAddResourceModal(false)}
-            className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 transition-all"
+            className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 transition"
           >
             <X size={20} />
           </button>
@@ -930,14 +1161,14 @@ function AddResourceModal({
             <button
               type="button"
               onClick={() => setUploadType("link")}
-              className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${uploadType === "link" ? "bg-white text-[#1e40af] shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+              className={`flex-1 py-2 text-xs font-black rounded-lg transition ${uploadType === "link" ? "bg-white text-[#1e40af] shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
             >
               Document Link
             </button>
             <button
               type="button"
               onClick={() => setUploadType("upload")}
-              className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${uploadType === "upload" ? "bg-white text-[#1e40af] shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+              className={`flex-1 py-2 text-xs font-black rounded-lg transition ${uploadType === "upload" ? "bg-white text-[#1e40af] shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
             >
               Upload File
             </button>
@@ -995,7 +1226,7 @@ function AddResourceModal({
                   onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <div className="w-full px-4 py-6 bg-blue-50/50 border-2 border-dashed border-blue-200 rounded-2xl flex flex-col items-center justify-center gap-2 group-hover:border-[#1e40af] transition-all">
+                <div className="w-full px-4 py-6 bg-blue-50/50 border-2 border-dashed border-blue-200 rounded-2xl flex flex-col items-center justify-center gap-2 group-hover:border-[#1e40af] transition">
                   <div className="size-10 bg-blue-100 rounded-full flex items-center justify-center text-[#1e40af]">
                     <PlusCircle size={20} />
                   </div>
@@ -1018,14 +1249,14 @@ function AddResourceModal({
             <button
               type="button"
               onClick={() => setShowAddResourceModal(false)}
-              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm"
+              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition text-sm"
             >
               Cancel
             </button>
             <button
               type="button"
               disabled={isSubmitting}
-              className="flex-[2] px-6 py-3 bg-[#1e40af] text-white rounded-xl font-black hover:bg-[#1d4ed8] transition-all text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-100 disabled:opacity-50"
+              className="flex-[2] px-6 py-3 bg-[#1e40af] text-white rounded-xl font-black hover:bg-[#1d4ed8] transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-100 disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : "Confirm Add"}
             </button>
@@ -1066,7 +1297,7 @@ function AddCountryModal({
             type="button"
             aria-label="Close"
             onClick={() => setShowAddCountryModal(false)}
-            className="p-2 hover:bg-white rounded-lg text-slate-400 transition-all"
+            className="p-2 hover:bg-white rounded-lg text-slate-400 transition"
           >
             <X size={20} />
           </button>
@@ -1109,7 +1340,7 @@ function AddCountryModal({
           <button
             type="button"
             disabled={isSubmitting}
-            className="w-full px-6 py-3 bg-[#1e40af] text-white rounded-xl font-black hover:bg-[#1d4ed8] transition-all text-sm shadow-lg shadow-blue-100"
+            className="w-full px-6 py-3 bg-[#1e40af] text-white rounded-xl font-black hover:bg-[#1d4ed8] transition text-sm shadow-lg shadow-blue-100"
           >
             {isSubmitting ? <Loader2 size={18} className="animate-spin mx-auto" /> : "Save Country"}
           </button>
@@ -1149,7 +1380,7 @@ function AddCategoryModal({
             type="button"
             aria-label="Close"
             onClick={() => setShowAddCategoryModal(false)}
-            className="p-2 hover:bg-white rounded-lg text-slate-400 transition-all"
+            className="p-2 hover:bg-white rounded-lg text-slate-400 transition"
           >
             <X size={20} />
           </button>
@@ -1175,7 +1406,7 @@ function AddCategoryModal({
           <button
             type="button"
             disabled={isSubmitting}
-            className="w-full px-6 py-3 bg-amber-600 text-white rounded-xl font-black hover:bg-amber-700 transition-all text-sm shadow-lg shadow-amber-100"
+            className="w-full px-6 py-3 bg-amber-600 text-white rounded-xl font-black hover:bg-amber-700 transition text-sm shadow-lg shadow-amber-100"
           >
             {isSubmitting ? (
               <Loader2 size={18} className="animate-spin mx-auto" />
@@ -1219,7 +1450,7 @@ function EditCategoryModal({
             type="button"
             aria-label="Close"
             onClick={() => setEditingCategoryId(null)}
-            className="p-2 hover:bg-white rounded-lg text-slate-400 transition-all"
+            className="p-2 hover:bg-white rounded-lg text-slate-400 transition"
           >
             <X size={20} />
           </button>
@@ -1245,14 +1476,14 @@ function EditCategoryModal({
             <button
               type="button"
               onClick={() => setEditingCategoryId(null)}
-              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm"
+              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition text-sm"
             >
               Cancel
             </button>
             <button
               type="button"
               disabled={isSubmitting}
-              className="flex-[2] px-6 py-3 bg-[#1e40af] text-white rounded-xl font-black hover:bg-[#1d4ed8] transition-all text-sm shadow-lg shadow-blue-100"
+              className="flex-[2] px-6 py-3 bg-[#1e40af] text-white rounded-xl font-black hover:bg-[#1d4ed8] transition text-sm shadow-lg shadow-blue-100"
             >
               {isSubmitting ? (
                 <Loader2 size={18} className="animate-spin mx-auto" />
@@ -1301,7 +1532,7 @@ function EditResourceModal({
             type="button"
             aria-label="Close"
             onClick={() => setEditingResource(null)}
-            className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 transition-all"
+            className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 transition"
           >
             <X size={20} />
           </button>
@@ -1410,14 +1641,14 @@ function EditResourceModal({
             <button
               type="button"
               onClick={() => setEditingResource(null)}
-              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm"
+              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition text-sm"
             >
               Cancel
             </button>
             <button
               type="button"
               disabled={isSubmitting}
-              className="flex-[2] px-6 py-3 bg-[#1e40af] text-white rounded-xl font-black hover:bg-[#1d4ed8] transition-all text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-100 disabled:opacity-50"
+              className="flex-[2] px-6 py-3 bg-[#1e40af] text-white rounded-xl font-black hover:bg-[#1d4ed8] transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-100 disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : "Update Document"}
             </button>

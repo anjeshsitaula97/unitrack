@@ -28,70 +28,76 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "delete": {
-        for (const rawId of ids) {
-          const id = Number(rawId);
-          switch (entity) {
-            case "students":
-              await softDeleteStudent(String(id));
-              break;
-            case "universities":
-              await softDeleteUniversity(id);
-              break;
-            case "courses":
-              await softDeleteCourse(id);
-              break;
-            case "leads":
-              await softDeleteLead(id);
-              break;
-          }
-          count++;
-        }
+        await Promise.all(
+          ids.map(async (rawId: unknown) => {
+            const id = Number(rawId);
+            switch (entity) {
+              case "students":
+                await softDeleteStudent(String(id));
+                break;
+              case "universities":
+                await softDeleteUniversity(id);
+                break;
+              case "courses":
+                await softDeleteCourse(id);
+                break;
+              case "leads":
+                await softDeleteLead(id);
+                break;
+            }
+          })
+        );
+        count = ids.length;
         break;
       }
       case "updateStatus": {
         if (!data?.status)
           return NextResponse.json({ error: "status required for updateStatus" }, { status: 400 });
-        for (const rawId of ids) {
-          const id = Number(rawId);
-          switch (entity) {
-            case "students":
-              await db.student.update({ where: { id }, data: { status: data.status } });
-              break;
-            case "universities":
-              await db.university.update({ where: { id }, data: { status: data.status } });
-              break;
-            case "courses":
-              await db.course.update({ where: { id }, data: { status: data.status } });
-              break;
-            case "leads":
-              await db.lead.update({ where: { id }, data: { status: data.status } });
-              break;
-            case "applications":
-              await db.application.update({ where: { id }, data: { status: data.status } });
-              break;
-            case "payments":
-              await db.payment.update({ where: { id }, data: { status: data.status } });
-              break;
-          }
-          count++;
-        }
+        await Promise.all(
+          ids.map(async (rawId: unknown) => {
+            const id = Number(rawId);
+            switch (entity) {
+              case "students":
+                await db.student.update({ where: { id }, data: { status: data.status } });
+                break;
+              case "universities":
+                await db.university.update({ where: { id }, data: { status: data.status } });
+                break;
+              case "courses":
+                await db.course.update({ where: { id }, data: { status: data.status } });
+                break;
+              case "leads":
+                await db.lead.update({ where: { id }, data: { status: data.status } });
+                break;
+              case "applications":
+                await db.application.update({ where: { id }, data: { status: data.status } });
+                break;
+              case "payments":
+                await db.payment.update({ where: { id }, data: { status: data.status } });
+                break;
+            }
+          })
+        );
+        count = ids.length;
         break;
       }
       case "assignCounselor": {
         if (!data?.counselor)
           return NextResponse.json({ error: "counselor required" }, { status: 400 });
-        for (const rawId of ids) {
-          const id = Number(rawId);
-          switch (entity) {
-            case "students":
-              await db.student.update({ where: { id }, data: { counselor: data.counselor } });
-              break;
-            case "leads":
-              await db.lead.update({ where: { id }, data: { counselor: data.counselor } });
-              break;
-          }
-          count++;
-        }
+        await Promise.all(
+          ids.map(async (rawId: unknown) => {
+            const id = Number(rawId);
+            switch (entity) {
+              case "students":
+                await db.student.update({ where: { id }, data: { counselor: data.counselor } });
+                break;
+              case "leads":
+                await db.lead.update({ where: { id }, data: { counselor: data.counselor } });
+                break;
+            }
+          })
+        );
+        count = ids.length;
         break;
       }
       default:

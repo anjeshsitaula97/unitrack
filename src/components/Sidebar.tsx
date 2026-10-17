@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { clearAuthCache } from "./AppLayoutWrapper";
+import { clearAuthCache } from "@/lib/auth-state";
 import { deactivateSession } from "@/lib/client-session";
 import AppLogo from "@/components/ui/AppLogo";
 import {
@@ -199,44 +199,44 @@ const navSections: NavSection[] = [
       },
     ],
   },
-{
-      id: "business",
-      title: "Business",
-      items: [
-        { id: "nav-payments", label: "Payments", icon: <CreditCard size={18} />, href: "/payments" },
-        { id: "nav-expenses", label: "Expenses", icon: <Receipt size={18} />, href: "/expenses" },
-        {
-          id: "nav-commission",
-          label: "Commission",
-          icon: <BadgeDollarSign size={18} />,
-          href: "/commission",
-        },
-        {
-          id: "nav-partnership",
-          label: "Partnership",
-          icon: <Handshake size={18} />,
-          href: "/partnership",
-        },
-        {
-          id: "nav-bulk-import",
-          label: "Bulk Import/Export",
-          icon: <Upload size={18} />,
-          href: "/bulk-import",
-        },
-      ],
-    },
-    {
-      id: "marketing",
-      title: "Marketing",
-      items: [
-        {
-          id: "nav-marketing-materials",
-          label: "Marketing Materials",
-          icon: <Megaphone size={18} />,
-          href: "/marketing/materials",
-        },
-      ],
-    },
+  {
+    id: "business",
+    title: "Business",
+    items: [
+      { id: "nav-payments", label: "Payments", icon: <CreditCard size={18} />, href: "/payments" },
+      { id: "nav-expenses", label: "Expenses", icon: <Receipt size={18} />, href: "/expenses" },
+      {
+        id: "nav-commission",
+        label: "Commission",
+        icon: <BadgeDollarSign size={18} />,
+        href: "/commission",
+      },
+      {
+        id: "nav-partnership",
+        label: "Partnership",
+        icon: <Handshake size={18} />,
+        href: "/partnership",
+      },
+      {
+        id: "nav-bulk-import",
+        label: "Bulk Import/Export",
+        icon: <Upload size={18} />,
+        href: "/bulk-import",
+      },
+    ],
+  },
+  {
+    id: "marketing",
+    title: "Marketing",
+    items: [
+      {
+        id: "nav-marketing-materials",
+        label: "Marketing Materials",
+        icon: <Megaphone size={18} />,
+        href: "/marketing/materials",
+      },
+    ],
+  },
   {
     id: "analytics",
     title: "Analytics",
@@ -351,19 +351,18 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
   const [stats, setStats] = useState<DashboardStats | undefined>(undefined);
   const navRef = React.useRef<HTMLElement>(null);
 
-  const fetchStats = async () => {
-    try {
-      const res = await fetch("/api/dashboard/stats");
-      const data = await res.json();
-      if (!data.error) {
-        setStats(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch stats:", err);
-    }
-  };
-
   useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("/api/dashboard/stats");
+        const data = await res.json();
+        if (!data.error) {
+          setStats(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+      }
+    };
     fetchStats();
     const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
@@ -476,6 +475,31 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
 
     const dashboardHref = getRoleHome(user?.role);
     const isSuperAdmin = (user?.role || "").trim().toLowerCase() === "super admin";
+    const isSADashboard = pathname === "/sadashboard";
+    const saDashboardHiddenItems = new Set([
+      "nav-leads",
+      "nav-students",
+      "nav-applications",
+      "nav-onboarding",
+      "nav-console",
+      "nav-search",
+      "nav-compare",
+      "nav-calendar",
+      "nav-files",
+      "nav-commission",
+      "nav-partnership",
+      "nav-chat",
+      "nav-email",
+      "nav-marketing-materials",
+      "nav-hr-dashboard",
+      "nav-hr-employees",
+      "nav-hr-departments",
+      "nav-hr-designations",
+      "nav-hr-attendance",
+      "nav-hr-leave",
+      "nav-hr-payroll",
+      "nav-student-messages",
+    ]);
 
     const sectionsWithModules = navSections
       .map((section) => ({
@@ -484,6 +508,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
           .filter((item) => {
             if (item.id === "nav-consultancies" && !isSuperAdmin) return false;
             if (item.id === "nav-console" && !isSuperAdmin) return false;
+            if (isSADashboard && saDashboardHiddenItems.has(item.id)) return false;
             const matchingModule = MODULES.find((m) => m.routes.includes(item.href));
             if (matchingModule && !enabledModuleIds.includes(matchingModule.id)) return false;
             if (!matchingModule) return true;
@@ -506,13 +531,13 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
       }
     }
     return result;
-  }, [searchQuery, enabledModuleIds, user?.role]);
+  }, [searchQuery, enabledModuleIds, user?.role, pathname]);
 
   return (
     <aside
       className={`
         fixed left-0 top-0 h-full bg-white border-r border-slate-200 z-30
-        flex flex-col transition-all duration-300 ease-in-out
+        flex flex-col transition duration-300 ease-in-out
         ${collapsed ? "w-16" : "w-60"}
       `}
     >
@@ -532,7 +557,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
           <button
             type="button"
             onClick={onToggle}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all duration-150"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition duration-150"
             aria-label="Collapse sidebar"
           >
             {" "}
@@ -563,7 +588,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
               autoCorrect="off"
               spellCheck="false"
               aria-label="Search menu"
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 pointer-events-auto relative z-10"
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition placeholder:text-slate-400 pointer-events-auto relative z-10"
             />
             {!searchQuery && (
               <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-white border border-slate-200 rounded px-1 py-0.5 text-slate-400 pointer-events-none uppercase">
@@ -673,7 +698,7 @@ function NavSectionList({
                     href={item.href}
                     title={collapsed ? item.label : undefined}
                     className={`
-                  w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 mb-0.5 relative group
+                  w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition duration-150 mb-0.5 relative group
                   ${
                     isActive
                       ? "bg-indigo-50 text-indigo-700"
@@ -785,7 +810,7 @@ function UserBottomSection({
         <button
           type="button"
           onClick={onToggle}
-          className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all duration-150"
+          className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition duration-150"
           aria-label="Expand sidebar"
         >
           {" "}
@@ -798,7 +823,7 @@ function UserBottomSection({
           type="button"
           aria-label="Settings"
           onClick={() => setSettingsOpen(!settingsOpen)}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${collapsed ? "justify-center" : ""} ${settingsOpen ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition duration-150 ${collapsed ? "justify-center" : ""} ${settingsOpen ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
           title={collapsed ? "Settings" : undefined}
         >
           <Settings size={18} />
@@ -843,7 +868,7 @@ function UserBottomSection({
 
       <Link
         href="/tickets"
-        className={`text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 w-full ${
+        className={`text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition duration-150 w-full ${
           pathname === "/tickets"
             ? "bg-indigo-50 text-indigo-700"
             : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -857,7 +882,7 @@ function UserBottomSection({
         type="button"
         onClick={handleLogout}
         disabled={isLoggingOut}
-        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-150 ${collapsed ? "justify-center" : ""}`}
+        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition duration-150 ${collapsed ? "justify-center" : ""}`}
         title={collapsed ? "Logout" : undefined}
       >
         {" "}

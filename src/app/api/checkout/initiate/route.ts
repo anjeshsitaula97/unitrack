@@ -105,10 +105,11 @@ export async function POST(req: NextRequest) {
 
     const amount = getChargeAmount(plan, payload.cycle);
 
-    let order = null;
-    for (let attempt = 0; attempt < MAX_REFERENCE_ATTEMPTS && !order; attempt += 1) {
+    const createOrder = async (
+      attempt: number
+    ): Promise<Awaited<ReturnType<typeof db.checkoutOrder.create>>> => {
       try {
-        order = await db.checkoutOrder.create({
+        return await db.checkoutOrder.create({
           data: {
             reference: generateReference(),
             planId: plan.id,
@@ -125,10 +126,12 @@ export async function POST(req: NextRequest) {
           },
         });
       } catch (error) {
-        if (!isUniqueViolation(error)) throw error;
+        if (!isUniqueViolation(error) || attempt + 1 >= MAX_REFERENCE_ATTEMPTS) throw error;
+        return createOrder(attempt + 1);
       }
-    }
-    if (!order) throw new Error("Could not allocate a unique checkout reference");
+    };
+
+    const order = await createOrder(0);
 
     const form =
       payload.gateway === "esewa"

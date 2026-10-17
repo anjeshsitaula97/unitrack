@@ -7,6 +7,7 @@ import AppLayoutWrapper from "@/components/AppLayoutWrapper";
 import StudentForm from "@/app/students/components/StudentForm";
 import type { Student } from "@/app/students/components/StudentForm";
 import { toast } from "sonner";
+import { api } from "@/lib/fetch-client";
 
 export default function EditStudentPage() {
   const router = useRouter();
@@ -17,17 +18,23 @@ export default function EditStudentPage() {
 
   useEffect(() => {
     if (!studentId) return;
-    fetch(`/api/students/${studentId}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Not found");
-        const data = await res.json();
-        setStudent(data);
+    let cancelled = false;
+    api
+      .get<Student>(`/api/students/${studentId}`, { showError: false })
+      .then((data) => {
+        if (!cancelled) setStudent(data);
       })
       .catch(() => {
+        if (cancelled) return;
         toast.error("Failed to load student");
         window.location.replace("/students");
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [studentId]);
 
   if (loading) {

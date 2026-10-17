@@ -34,6 +34,7 @@ export default function NotificationsContent() {
   const fetchNotifications = async (silent = false) => {
     try {
       const res = await fetch("/api/notifications");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (Array.isArray(data)) setNotifications(data);
     } catch (err) {
@@ -79,8 +80,7 @@ export default function NotificationsContent() {
     }
   };
 
-  const deleteNotification = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const deleteNotification = async (id: string) => {
     try {
       await fetch(`/api/notifications?id=${id}`, { method: "DELETE" });
       fetchNotifications();
@@ -148,37 +148,34 @@ export default function NotificationsContent() {
           {(notifications ?? []).map((n) => (
             <div
               key={n.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => !n.read && markRead(n.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  if (!n.read) markRead(n.id);
-                }
-              }}
-              className={`card p-4 flex items-start gap-4 transition-all duration-200 cursor-pointer ${!n.read ? "border-l-4 border-l-indigo-500 bg-indigo-50/10" : "hover:bg-slate-50 opacity-80"}`}
+              className={`card p-4 flex items-start gap-4 transition duration-200 ${!n.read ? "border-l-4 border-l-indigo-500 bg-indigo-50/10" : "hover:bg-slate-50 opacity-80"}`}
             >
-              <div className="mt-0.5">{getIcon(n.type)}</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <h3
-                    className={`text-sm font-bold ${!n.read ? "text-slate-900" : "text-slate-600"}`}
-                  >
-                    {n.title}
-                  </h3>
-                  <span className="text-[10px] text-slate-400 font-medium">{n.time}</span>
-                </div>
-                <p className="text-sm text-slate-600 leading-relaxed">{n.message}</p>
-              </div>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteNotification(n.id, e);
+                onClick={() => {
+                  if (!n.read) markRead(n.id);
                 }}
+                className="flex-1 min-w-0 flex items-start gap-4 text-left cursor-pointer"
+              >
+                <div className="mt-0.5">{getIcon(n.type)}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3
+                      className={`text-sm font-bold ${!n.read ? "text-slate-900" : "text-slate-600"}`}
+                    >
+                      {n.title}
+                    </h3>
+                    <span className="text-[10px] text-slate-400 font-medium">{n.time}</span>
+                  </div>
+                  <p className="text-sm text-slate-600 leading-relaxed">{n.message}</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteNotification(n.id)}
                 className="p-1.5 text-slate-500 hover:text-white hover:bg-rose-500 rounded-lg transition-colors flex-shrink-0 hover:shadow-sm"
                 title="Delete notification"
+                aria-label="Delete notification"
               >
                 <Trash2 size={15} />
               </button>

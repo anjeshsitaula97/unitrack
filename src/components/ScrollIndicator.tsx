@@ -89,7 +89,7 @@ export default function ScrollIndicator() {
       {/* 1. Top Reading Scroll Progress Bar */}
       <div className="fixed top-0 left-0 w-full h-1 z-[100] bg-outline/20 pointer-events-none">
         <div
-          className="h-full bg-gradient-to-r from-[#286c00] via-[#58ce18] to-[#85fe4b] shadow-sm transition-all duration-150 ease-out"
+          className="h-full bg-gradient-to-r from-[#286c00] via-[#58ce18] to-[#85fe4b] shadow-sm transition duration-150 ease-out"
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
@@ -106,12 +106,12 @@ export default function ScrollIndicator() {
               aria-label={`Scroll to ${sec.label}`}
             >
               {/* Floating Tooltip */}
-              <span className="absolute right-8 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 px-3 py-1 bg-inverse-surface text-inverse-on-surface text-xs font-semibold rounded-md shadow-md whitespace-nowrap">
+              <span className="absolute right-8 opacity-0 pointer-events-none group-hover:opacity-100 transition duration-200 px-3 py-1 bg-inverse-surface text-inverse-on-surface text-xs font-semibold rounded-md shadow-md whitespace-nowrap">
                 {sec.label}
               </span>
               {/* Indicator Dot */}
               <span
-                className={`transition-all duration-300 rounded-full ${
+                className={`transition duration-300 rounded-full ${
                   isActive
                     ? "w-3 h-3 bg-primary ring-4 ring-primary-container/40 scale-110"
                     : "w-2 h-2 bg-outline group-hover:bg-primary group-hover:scale-125"
@@ -129,7 +129,7 @@ export default function ScrollIndicator() {
             onClick={scrollToTop}
             aria-label="Scroll to top"
             title={`Scroll to top (${Math.round(scrollProgress)}%)`}
-            className="relative p-3.5 bg-primary hover:bg-on-surface text-inverse-on-surface rounded-full shadow-2xl hover:shadow-primary/40 hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center cursor-pointer group"
+            className="relative p-3.5 bg-primary hover:bg-on-surface text-inverse-on-surface rounded-full shadow-2xl hover:shadow-primary/40 hover:scale-110 active:scale-95 transition duration-300 flex items-center justify-center cursor-pointer group"
           >
             {/* Circular SVG Gauge */}
             <svg className="absolute inset-0 w-full h-full -rotate-90 p-0.5" viewBox="0 0 48 48">
@@ -144,7 +144,7 @@ export default function ScrollIndicator() {
                 cx="24"
                 cy="24"
                 r={radius}
-                className="stroke-white fill-none transition-all duration-150 ease-out"
+                className="stroke-white fill-none transition duration-150 ease-out"
                 strokeWidth="3"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}

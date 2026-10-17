@@ -19,7 +19,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import { safeJson } from "@/lib/fetch-client";
+import { api } from "@/lib/fetch-client";
 
 const statusColors: Record<string, string> = {
   Submitted: "bg-blue-50 text-blue-700 border-blue-100",
@@ -73,6 +73,127 @@ interface ApplicationDetail {
   };
 }
 
+function ApplicationModalHeader({ id, onClose }: { id: string; onClose: () => void }) {
+  return (
+    <div className="sticky top-0 bg-white z-10 border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-3xl">
+      <div className="flex items-center gap-3">
+        <div className="size-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+          <FileText size={20} className="text-indigo-600" />
+        </div>
+        <div>
+          <h2 className="font-bold text-slate-800">Application Details</h2>
+          <p className="text-xs text-slate-400 font-mono">
+            #
+            {String(id)
+              .substring(String(id).length - 8)
+              .toUpperCase()}
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition"
+      >
+        <X size={20} />
+      </button>
+    </div>
+  );
+}
+
+function StudentInfoCard({ student }: { student: ApplicationDetail["student"] }) {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+        Student Information
+      </h3>
+      <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-sm">
+            {student.firstName[0]}
+            {student.lastName[0]}
+          </div>
+          <div>
+            <p className="font-bold text-slate-800">
+              {student.firstName} {student.lastName}
+            </p>
+            {student.email && (
+              <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                <Mail size={10} /> {student.email}
+              </p>
+            )}
+          </div>
+        </div>
+        {student.phone && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <User size={12} className="text-slate-400" />
+            {student.phone}
+          </div>
+        )}
+        {student.nationality && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Globe size={12} className="text-slate-400" />
+            {student.nationality}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CourseInfoCard({
+  university,
+  course,
+}: {
+  university: ApplicationDetail["university"];
+  course: ApplicationDetail["course"];
+}) {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+        University & Course
+      </h3>
+      <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Building2 size={14} className="text-slate-400" />
+          <div>
+            <p className="font-bold text-slate-800 text-sm">{university.name}</p>
+            <p className="text-xs text-slate-400">
+              {university.city}, {university.country}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <BookOpen size={14} className="text-slate-400" />
+          <div>
+            <p className="font-semibold text-slate-700 text-sm">{course.name}</p>
+            <p className="text-xs text-slate-400">{course.faculty || course.level}</p>
+          </div>
+        </div>
+        {course.duration && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Clock size={12} className="text-slate-400" />
+            Duration: {course.duration}
+          </div>
+        )}
+        {course.intake && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Calendar size={12} className="text-slate-400" />
+            Intake: {course.intake}
+          </div>
+        )}
+        {course.tuitionFee && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <GraduationCap size={12} className="text-slate-400" />
+            Tuition: {course.currency || "USD"} {course.tuitionFee}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ApplicationDetailModal({
   applicationId,
   onClose,
@@ -88,17 +209,23 @@ export default function ApplicationDetailModal({
   const [newStatus, setNewStatus] = useState("");
 
   useEffect(() => {
-    fetch(`/api/applications/${applicationId}`)
-      .then(safeJson)
+    let active = true;
+    api
+      .get<ApplicationDetail>(`/api/applications/${applicationId}`, { showError: false })
       .then((d) => {
+        if (!active) return;
         setDetail(d);
         setNewStatus(d.status);
         setLoading(false);
       })
       .catch(() => {
+        if (!active) return;
         toast.error("Failed to load application details");
         setLoading(false);
       });
+    return () => {
+      active = false;
+    };
   }, [applicationId]);
 
   const handleStatusUpdate = async () => {
@@ -145,30 +272,7 @@ export default function ApplicationDetailModal({
           <div className="py-20 text-center text-slate-400">Failed to load application</div>
         ) : (
           <>
-            <div className="sticky top-0 bg-white z-10 border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-3xl">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-                  <FileText size={20} className="text-indigo-600" />
-                </div>
-                <div>
-                  <h2 className="font-bold text-slate-800">Application Details</h2>
-                  <p className="text-xs text-slate-400 font-mono">
-                    #
-                    {String(detail.id)
-                      .substring(String(detail.id).length - 8)
-                      .toUpperCase()}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={onClose}
-                className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-all"
-              >
-                <X size={20} />
-              </button>
-            </div>
+            <ApplicationModalHeader id={detail.id} onClose={onClose} />
 
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
@@ -184,85 +288,8 @@ export default function ApplicationDetailModal({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                    Student Information
-                  </h3>
-                  <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="size-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-sm">
-                        {detail.student.firstName[0]}
-                        {detail.student.lastName[0]}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-800">
-                          {detail.student.firstName} {detail.student.lastName}
-                        </p>
-                        {detail.student.email && (
-                          <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                            <Mail size={10} /> {detail.student.email}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {detail.student.phone && (
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <User size={12} className="text-slate-400" />
-                        {detail.student.phone}
-                      </div>
-                    )}
-                    {detail.student.nationality && (
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <Globe size={12} className="text-slate-400" />
-                        {detail.student.nationality}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                    University & Course
-                  </h3>
-                  <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Building2 size={14} className="text-slate-400" />
-                      <div>
-                        <p className="font-bold text-slate-800 text-sm">{detail.university.name}</p>
-                        <p className="text-xs text-slate-400">
-                          {detail.university.city}, {detail.university.country}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <BookOpen size={14} className="text-slate-400" />
-                      <div>
-                        <p className="font-semibold text-slate-700 text-sm">{detail.course.name}</p>
-                        <p className="text-xs text-slate-400">
-                          {detail.course.faculty || detail.course.level}
-                        </p>
-                      </div>
-                    </div>
-                    {detail.course.duration && (
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <Clock size={12} className="text-slate-400" />
-                        Duration: {detail.course.duration}
-                      </div>
-                    )}
-                    {detail.course.intake && (
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <Calendar size={12} className="text-slate-400" />
-                        Intake: {detail.course.intake}
-                      </div>
-                    )}
-                    {detail.course.tuitionFee && (
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <GraduationCap size={12} className="text-slate-400" />
-                        Tuition: {detail.course.currency || "USD"} {detail.course.tuitionFee}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <StudentInfoCard student={detail.student} />
+                <CourseInfoCard university={detail.university} course={detail.course} />
               </div>
 
               <div className="border-t border-slate-100 pt-6">
@@ -275,6 +302,7 @@ export default function ApplicationDetailModal({
                 <div className="flex items-center gap-3 mt-3">
                   <div className="relative flex-1">
                     <select
+                      aria-label="Application status"
                       value={newStatus}
                       onChange={(e) => setNewStatus(e.target.value)}
                       className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer"
@@ -294,7 +322,7 @@ export default function ApplicationDetailModal({
                     type="button"
                     onClick={handleStatusUpdate}
                     disabled={newStatus === detail.status || saving}
-                    className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+                    className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition whitespace-nowrap"
                   >
                     {saving ? "Saving..." : "Update"}
                   </button>

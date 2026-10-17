@@ -104,37 +104,33 @@ interface ImportResult {
   errors?: string[];
 }
 
-export default function BulkImportContent() {
-  const [activeTab, setActiveTab] = useState<"import" | "export">("import");
+function ImportPanel() {
   const [importType, setImportType] = useState("students");
   const [file, setFile] = useState<File | null>(null);
-  const [importing, setImporting] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
-  const [exportType, setExportType] = useState("students");
-  const [exporting, setExporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleImport = async () => {
+    if (busy) return;
     if (!file) {
       toast.error("Please select a file to import");
       return;
     }
-    setImporting(true);
+    if (
+      !file.name.endsWith(".xlsx") &&
+      !file.name.endsWith(".xls") &&
+      !file.name.endsWith(".csv")
+    ) {
+      toast.error("Please upload an Excel file (.xlsx, .xls) or CSV");
+      return;
+    }
+    setBusy(true);
     setResult(null);
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("type", importType);
-      // Check file extension
-      if (
-        !file.name.endsWith(".xlsx") &&
-        !file.name.endsWith(".xls") &&
-        !file.name.endsWith(".csv")
-      ) {
-        toast.error("Please upload an Excel file (.xlsx, .xls) or CSV");
-        setImporting(false);
-        return;
-      }
       const res = await fetch("/api/bulk", { method: "POST", body: formData });
       const data = await res.json();
       if (res.ok) {
@@ -146,11 +142,125 @@ export default function BulkImportContent() {
     } catch {
       toast.error("Import failed");
     } finally {
-      setImporting(false);
+      setBusy(false);
     }
   };
 
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-6">
+      <h2 className="font-bold text-slate-800 mb-4">Import Data</h2>
+
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {importTypes.map((t) => (
+          <button
+            type="button"
+            key={t.value}
+            onClick={() => {
+              setImportType(t.value);
+              setResult(null);
+              setFile(null);
+            }}
+            className={`px-3 py-2 rounded-lg text-xs font-semibold transition ${
+              importType === t.value
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <p className="text-sm text-slate-500 mb-4">
+        {importTypes.find((t) => t.value === importType)?.description}
+      </p>
+
+      <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-indigo-300 transition-colors">
+        {file ? (
+          <div className="flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex items-center gap-2"
+            >
+              <FileSpreadsheet size={24} className="text-emerald-500" />
+              <span className="font-medium text-slate-700">{file.name}</span>
+            </button>
+            <button
+              type="button"
+              aria-label="Remove selected file"
+              onClick={() => setFile(null)}
+              className="text-slate-400 hover:text-red-500"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="w-full cursor-pointer"
+          >
+            <Upload size={32} className="mx-auto text-slate-300 mb-2" />
+            <p className="text-sm text-slate-500 font-medium">Click to upload Excel file</p>
+            <p className="text-xs text-slate-400 mt-1">.xlsx, .xls, or .csv files</p>
+          </button>
+        )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          className="hidden"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={handleImport}
+        disabled={!file || busy}
+        className="mt-4 px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+      >
+        {busy ? <Loader2 className="animate-spin" size={18} /> : <Upload size={18} />}
+        {busy ? "Importing..." : "Import Data"}
+      </button>
+
+      {result && (
+        <div
+          className={`mt-4 p-4 rounded-xl ${(result.errors?.length ?? 0) > 0 ? "bg-amber-50 border border-amber-200" : "bg-emerald-50 border border-emerald-200"}`}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            {(result.errors?.length ?? 0) > 0 ? (
+              <AlertTriangle size={18} className="text-amber-500" />
+            ) : (
+              <CheckCircle size={18} className="text-emerald-500" />
+            )}
+            <span className="font-semibold text-slate-800">Import Complete</span>
+          </div>
+          <p className="text-sm text-slate-600">
+            Imported: {result.imported} of {result.total} records
+          </p>
+          {(result.errors?.length ?? 0) > 0 && (
+            <div className="mt-2 max-h-32 overflow-y-auto">
+              {result.errors?.map((err: string) => (
+                <p key={err} className="text-xs text-red-600">
+                  {err}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExportPanel() {
+  const [exportType, setExportType] = useState("students");
+  const [exporting, setExporting] = useState(false);
+
   const handleExport = async () => {
+    if (exporting) return;
     setExporting(true);
     try {
       const res = await fetch(`/api/bulk?type=${exportType}&format=xlsx`);
@@ -181,6 +291,68 @@ export default function BulkImportContent() {
   };
 
   return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-6">
+      <h2 className="font-bold text-slate-800 mb-4">Export Data</h2>
+
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {importTypes.map((t) => (
+          <button
+            type="button"
+            key={t.value}
+            onClick={() => setExportType(t.value)}
+            className={`px-3 py-2 rounded-lg text-xs font-semibold transition ${
+              exportType === t.value
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={exporting}
+          className="px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+        >
+          {exporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+          {exporting ? "Exporting..." : "Export as Excel"}
+        </button>
+
+        <button
+          type="button"
+          onClick={downloadTemplate}
+          className="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2"
+        >
+          <FileSpreadsheet size={18} />
+          Download Template
+        </button>
+      </div>
+
+      <div className="mt-6">
+        <h3 className="text-sm font-bold text-slate-700 mb-2">Export Fields</h3>
+        <div className="flex flex-wrap gap-1.5">
+          {templates[exportType].map((f) => (
+            <span
+              key={f}
+              className="px-2 py-1 bg-slate-50 rounded-lg text-xs text-slate-600 font-mono"
+            >
+              {f}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function BulkImportContent() {
+  const [activeTab, setActiveTab] = useState<"import" | "export">("import");
+
+  return (
     <>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
@@ -194,7 +366,7 @@ export default function BulkImportContent() {
             type="button"
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all capitalize ${
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition capitalize ${
               activeTab === tab
                 ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
                 : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -210,172 +382,7 @@ export default function BulkImportContent() {
         ))}
       </div>
 
-      {activeTab === "import" ? (
-        <div className="bg-white rounded-2xl border border-slate-100 p-6">
-          <h2 className="font-bold text-slate-800 mb-4">Import Data</h2>
-
-          <div className="flex gap-2 mb-4 flex-wrap">
-            {importTypes.map((t) => (
-              <button
-                type="button"
-                key={t.value}
-                onClick={() => {
-                  setImportType(t.value);
-                  setResult(null);
-                  setFile(null);
-                }}
-                className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  importType === t.value
-                    ? "bg-indigo-600 text-white"
-                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          <p className="text-sm text-slate-500 mb-4">
-            {importTypes.find((t) => t.value === importType)?.description}
-          </p>
-
-          <div
-            className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-indigo-300 transition-colors cursor-pointer"
-            role="button"
-            tabIndex={0}
-            onClick={() => fileRef.current?.click()}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                fileRef.current?.click();
-              }
-            }}
-          >
-            {file ? (
-              <div className="flex items-center justify-center gap-2">
-                <FileSpreadsheet size={24} className="text-emerald-500" />
-                <span className="font-medium text-slate-700">{file.name}</span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setFile(null);
-                  }}
-                  className="text-slate-400 hover:text-red-500"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ) : (
-              <>
-                <Upload size={32} className="mx-auto text-slate-300 mb-2" />
-                <p className="text-sm text-slate-500 font-medium">Click to upload Excel file</p>
-                <p className="text-xs text-slate-400 mt-1">.xlsx, .xls, or .csv files</p>
-              </>
-            )}
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              className="hidden"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={handleImport}
-            disabled={!file || importing}
-            className="mt-4 px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-          >
-            {importing ? <Loader2 className="animate-spin" size={18} /> : <Upload size={18} />}
-            {importing ? "Importing..." : "Import Data"}
-          </button>
-
-          {result && (
-            <div
-              className={`mt-4 p-4 rounded-xl ${(result.errors?.length ?? 0) > 0 ? "bg-amber-50 border border-amber-200" : "bg-emerald-50 border border-emerald-200"}`}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                {(result.errors?.length ?? 0) > 0 ? (
-                  <AlertTriangle size={18} className="text-amber-500" />
-                ) : (
-                  <CheckCircle size={18} className="text-emerald-500" />
-                )}
-                <span className="font-semibold text-slate-800">Import Complete</span>
-              </div>
-              <p className="text-sm text-slate-600">
-                Imported: {result.imported} of {result.total} records
-              </p>
-              {(result.errors?.length ?? 0) > 0 && (
-                <div className="mt-2 max-h-32 overflow-y-auto">
-                  {result.errors?.map((err: string, i: number) => (
-                    <p key={i} className="text-xs text-red-600">
-                      {err}
-                    </p>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-slate-100 p-6">
-          <h2 className="font-bold text-slate-800 mb-4">Export Data</h2>
-
-          <div className="flex gap-2 mb-4 flex-wrap">
-            {importTypes.map((t) => (
-              <button
-                type="button"
-                key={t.value}
-                onClick={() => setExportType(t.value)}
-                className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  exportType === t.value
-                    ? "bg-indigo-600 text-white"
-                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleExport}
-              disabled={exporting}
-              className="px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-            >
-              {exporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
-              {exporting ? "Exporting..." : "Export as Excel"}
-            </button>
-
-            <button
-              type="button"
-              onClick={downloadTemplate}
-              className="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2"
-            >
-              <FileSpreadsheet size={18} />
-              Download Template
-            </button>
-          </div>
-
-          <div className="mt-6">
-            <h3 className="text-sm font-bold text-slate-700 mb-2">Export Fields</h3>
-            <div className="flex flex-wrap gap-1.5">
-              {templates[exportType].map((f) => (
-                <span
-                  key={f}
-                  className="px-2 py-1 bg-slate-50 rounded-lg text-xs text-slate-600 font-mono"
-                >
-                  {f}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {activeTab === "import" ? <ImportPanel /> : <ExportPanel />}
     </>
   );
 }

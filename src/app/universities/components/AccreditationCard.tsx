@@ -62,6 +62,7 @@ export default function AccreditationCard({
           <div className="flex-1 relative">
             <input
               type="text"
+              aria-label="Accreditation body"
               value={accInput}
               onChange={(e) => setAccInput(e.target.value)}
               onKeyDown={(e) => {

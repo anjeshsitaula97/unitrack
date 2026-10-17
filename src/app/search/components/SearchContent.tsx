@@ -82,9 +82,23 @@ interface Course {
   requirements: string[];
   applicationDeadline: string | null;
   gpaRequired?: string;
+  percentageRequired?: string;
+  academicRequirement?: string;
   englishOverallScore?: string;
   englishLanguageType?: string;
   englishTestStage?: string;
+  englishReadingScore?: string;
+  englishWritingScore?: string;
+  englishListeningScore?: string;
+  englishSpeakingScore?: string;
+  englishTests?: {
+    type?: string;
+    overall?: string;
+    reading?: string;
+    writing?: string;
+    listening?: string;
+    speaking?: string;
+  }[];
   tuitionFeePeriod?: string;
 }
 
@@ -121,6 +135,10 @@ interface StudentProfile {
   education?: EducationEntry[] | string;
   testType?: string;
   overallScore?: string;
+  readingScore?: string;
+  writingScore?: string;
+  listeningScore?: string;
+  speakingScore?: string;
 }
 
 interface UniversitySummary {
@@ -194,7 +212,7 @@ function GuestCheckModal({
                 id="search-qualification"
                 value={details.qualification}
                 onChange={(e) => setDetails({ ...details, qualification: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition-all cursor-pointer"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition cursor-pointer"
               >
                 <option value="">Select Qualification.</option>
                 <option value="+2/Grade XII">+2 / Grade XII</option>
@@ -216,7 +234,7 @@ function GuestCheckModal({
                 value={details.score}
                 onChange={(e) => setDetails({ ...details, score: e.target.value })}
                 placeholder="e.g. 3.5 or 75%"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition-all"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition"
               />
             </div>
 
@@ -232,7 +250,7 @@ function GuestCheckModal({
                   id="search-testType"
                   value={details.testType}
                   onChange={(e) => setDetails({ ...details, testType: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition cursor-pointer"
                 >
                   <option value="">Select Test.</option>
                   <option value="IELTS">IELTS</option>
@@ -254,7 +272,7 @@ function GuestCheckModal({
                   value={details.overallScore}
                   onChange={(e) => setDetails({ ...details, overallScore: e.target.value })}
                   placeholder="e.g. 7.0 or 65"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition-all"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition"
                 />
               </div>
             </div>
@@ -264,7 +282,7 @@ function GuestCheckModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-5 py-2.5 border border-slate-200 rounded-xl font-bold text-xs text-slate-500 hover:bg-slate-50 transition-all uppercase tracking-widest font-sans"
+              className="flex-1 px-5 py-2.5 border border-slate-200 rounded-xl font-bold text-xs text-slate-500 hover:bg-slate-50 transition uppercase tracking-widest font-sans"
             >
               Cancel
             </button>
@@ -274,13 +292,265 @@ function GuestCheckModal({
                 onSave(details);
                 onClose();
               }}
-              className="flex-[2] px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all uppercase tracking-widest font-sans"
+              className="flex-[2] px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition uppercase tracking-widest font-sans"
             >
               Save & Check
             </button>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function EnrollCourseHeader({ course, onClose }: { course: Course; onClose: () => void }) {
+  return (
+    <div className="flex items-start justify-between mb-5">
+      <div className="flex items-center gap-4">
+        <div
+          className="size-14 rounded-2xl flex items-center justify-center text-white text-base font-black shadow-lg shrink-0"
+          style={{ backgroundColor: course.color }}
+        >
+          {course.initials}
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-black text-slate-800 leading-tight truncate">
+              {course.name}
+            </h3>
+            {course.id && (
+              <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tight shrink-0">
+                {course.level}
+              </span>
+            )}
+          </div>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+            {course.university}
+          </p>
+        </div>
+      </div>
+      <button type="button" aria-label="Close" onClick={onClose} className="shrink-0 ml-2">
+        <X size={20} />
+      </button>
+    </div>
+  );
+}
+
+function EnrollCourseSummary({ course }: { course: Course }) {
+  const currency = course.currency || "USD";
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-2 mb-5">
+        <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-2.5">
+          <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+            Duration
+          </span>
+          <span className="text-sm font-black text-slate-700">{course.duration} yrs</span>
+        </div>
+        <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-2.5">
+          <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+            Tuition / yr
+          </span>
+          <span className="text-sm font-black text-indigo-600">
+            {currency}{" "}
+            {annualTuition(course.tuitionFee, course.tuitionFeePeriod)?.toLocaleString() ??
+              course.tuitionFee}
+          </span>
+        </div>
+        <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-2.5">
+          <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+            App. Fee
+          </span>
+          <span className="text-sm font-black text-emerald-600">
+            {course.applicationFee ? `${currency} ${course.applicationFee}` : "—"}
+          </span>
+        </div>
+      </div>
+      {isSemesterPeriod(course.tuitionFeePeriod) && (
+        <p className="-mt-3 mb-4 text-[10px] font-bold text-slate-400">
+          {currency} {course.tuitionFee} per semester (2 semesters/year)
+        </p>
+      )}
+    </>
+  );
+}
+
+function EnrollStudentFields({
+  selectedStudentId,
+  onStudentSelect,
+  loadingStudents,
+  filteredStudents,
+  name,
+  setName,
+  email,
+  setEmail,
+}: {
+  selectedStudentId: string;
+  onStudentSelect: (id: string) => void;
+  loadingStudents: boolean;
+  filteredStudents: StudentSummary[];
+  name: string;
+  setName: (v: string) => void;
+  email: string;
+  setEmail: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <label
+          htmlFor="search-student"
+          className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1"
+        >
+          Select Student from Database
+        </label>
+        <div className="relative group">
+          <User
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"
+            size={16}
+          />
+          <select
+            id="search-student"
+            value={selectedStudentId}
+            onChange={(e) => onStudentSelect(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-bold text-slate-700 transition cursor-pointer appearance-none"
+          >
+            <option value="">Choose a student.</option>
+            <option value="manual">Enter details manually</option>
+            {loadingStudents ? (
+              <option disabled>Loading students...</option>
+            ) : filteredStudents.length > 0 ? (
+              filteredStudents.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.email || "No email"})
+                </option>
+              ))
+            ) : (
+              <option disabled>No students found</option>
+            )}
+          </select>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+            <ChevronDown size={16} />
+          </div>
+        </div>
+      </div>
+
+      <div className="relative flex items-center py-1.5">
+        <div className="flex-grow border-t border-slate-100"></div>
+        <span className="flex-shrink mx-4 text-[9px] font-bold text-slate-300 uppercase tracking-widest">
+          Or Provide Details
+        </span>
+        <div className="flex-grow border-t border-slate-100"></div>
+      </div>
+
+      <div className="grid gap-3">
+        <div>
+          <label
+            htmlFor="search-name"
+            className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1.5 ml-1"
+          >
+            Full Name
+          </label>
+          <input
+            id="search-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Student full name"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="search-email"
+            className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1.5 ml-1"
+          >
+            Email Address
+          </label>
+          <input
+            id="search-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="student@example.com"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EligibilityCheckList({ checkResult }: { checkResult: EligibilityResult }) {
+  return (
+    <div className="mt-5 rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          Admission Criteria
+        </span>
+        {checkResult.allPass ? (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black ring-1 ring-emerald-500/20">
+            <CheckCircle size={11} />
+            {checkResult.pending > 0 ? "Met — score pending" : "All criteria met"}
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-rose-50 text-rose-600 text-[10px] font-black ring-1 ring-rose-500/20">
+            <XCircle size={11} />
+            Not eligible
+          </span>
+        )}
+      </div>
+      <div className="divide-y divide-slate-50 max-h-72 overflow-y-auto custom-scrollbar">
+        {checkResult.checks.map((c) => (
+          <div key={c.label} className="flex items-start gap-3 px-4 py-2.5">
+            {c.informational ? (
+              <Info size={14} className="text-slate-400 shrink-0 mt-0.5" />
+            ) : c.pending ? (
+              <Clock size={14} className="text-amber-500 shrink-0 mt-0.5" />
+            ) : c.pass ? (
+              <CheckCircle size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+            ) : (
+              <XCircle size={14} className="text-rose-500 shrink-0 mt-0.5" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p
+                className={`text-[11px] font-bold ${c.informational ? "text-slate-600" : "text-slate-700"}`}
+              >
+                {c.label}
+              </p>
+              {c.detail && <p className="text-[10px] font-medium text-slate-400">{c.detail}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EnrollSuccess({
+  name,
+  courseName,
+  onClose,
+}: {
+  name: string;
+  courseName: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="text-center py-6">
+      <div className="size-20 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+        <CheckCircle size={40} className="text-emerald-500" />
+      </div>
+      <h3 className="text-2xl font-black text-slate-800 mb-2">Enrolled!</h3>
+      <p className="text-sm font-medium text-slate-500 mb-8 leading-relaxed">
+        <strong>{name}</strong> has been successfully enrolled in <strong>{courseName}</strong>.
+      </p>
+      <button
+        type="button"
+        onClick={onClose}
+        className="w-full px-8 py-4 bg-slate-900 text-white rounded-2xl font-black hover:bg-slate-800 transition text-xs uppercase tracking-widest"
+      >
+        Close
+      </button>
     </div>
   );
 }
@@ -297,40 +567,45 @@ function EnrollModal({ course, onClose, defaultStudentId }: EnrollModalProps) {
   const [searchStudent] = useState("");
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      setLoadingStudents(true);
-      try {
-        const res = await fetch("/api/students");
-        if (res.ok) {
-          const data = await res.json();
-          setStudents(Array.isArray(data) ? data : data.data);
-        }
-      } catch (err) {
+    const ac = new AbortController();
+    let ignore = false;
+    fetch("/api/students", { signal: ac.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!ignore && data) setStudents(Array.isArray(data) ? data : data.data);
+      })
+      .catch((err) => {
         console.error("Failed to fetch students", err);
-      } finally {
-        setLoadingStudents(false);
-      }
+      })
+      .finally(() => {
+        if (!ignore) setLoadingStudents(false);
+      });
+    return () => {
+      ignore = true;
+      ac.abort();
     };
-    fetchStudents();
   }, []);
 
   // Hydrate the student the results were filtered by (pre-selected in the list).
   useEffect(() => {
     if (!defaultStudentId) return;
-    (async () => {
-      try {
-        const res = await fetch(`/api/students/${defaultStudentId}`);
-        if (res.ok) {
-          const profile = (await res.json()) as StudentProfile & {
-            name?: string;
-            email?: string;
-          };
-          setSelectedStudentProfile(profile);
-          setName(profile.name || "");
-          setEmail(profile.email || "");
+    const ac = new AbortController();
+    let ignore = false;
+    fetch(`/api/students/${defaultStudentId}`, { signal: ac.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((profile) => {
+        if (profile && !ignore) {
+          const p = profile as StudentProfile & { name?: string; email?: string };
+          setSelectedStudentProfile(p);
+          setName(p.name || "");
+          setEmail(p.email || "");
         }
-      } catch {}
-    })();
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+      ac.abort();
+    };
   }, [defaultStudentId]);
 
   const handleStudentSelect = async (studentId: string) => {
@@ -365,15 +640,27 @@ function EnrollModal({ course, onClose, defaultStudentId }: EnrollModalProps) {
       {
         level: course.level,
         prerequisites: course.prerequisites,
+        requirements: course.requirements,
+        academicRequirement: course.academicRequirement,
+        percentageRequired: course.percentageRequired,
         gpaRequired: course.gpaRequired,
         englishOverallScore: course.englishOverallScore,
         englishLanguageType: course.englishLanguageType,
         englishTestStage: course.englishTestStage,
+        englishReadingScore: course.englishReadingScore,
+        englishWritingScore: course.englishWritingScore,
+        englishListeningScore: course.englishListeningScore,
+        englishSpeakingScore: course.englishSpeakingScore,
+        englishTests: course.englishTests,
       },
       {
         education: profile.education,
         testType: profile.testType,
         overallScore: profile.overallScore,
+        readingScore: profile.readingScore,
+        writingScore: profile.writingScore,
+        listeningScore: profile.listeningScore,
+        speakingScore: profile.speakingScore,
       }
     );
   }, [selectedStudentProfile, course]);
@@ -451,203 +738,29 @@ function EnrollModal({ course, onClose, defaultStudentId }: EnrollModalProps) {
         <div className="p-7">
           {!done ? (
             <>
-              <div className="flex items-start justify-between mb-5">
-                <div className="flex items-center gap-4">
-                  <div
-                    className="size-14 rounded-2xl flex items-center justify-center text-white text-base font-black shadow-lg shrink-0"
-                    style={{ backgroundColor: course.color }}
-                  >
-                    {course.initials}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-black text-slate-800 leading-tight truncate">
-                        {course.name}
-                      </h3>
-                      {course.id && (
-                        <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tight shrink-0">
-                          {course.level}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                      {course.university}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  aria-label="Close"
-                  onClick={onClose}
-                  className="shrink-0 ml-2"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+              <EnrollCourseHeader course={course} onClose={onClose} />
 
               {/* Course / fee summary */}
-              <div className="grid grid-cols-3 gap-2 mb-5">
-                <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-2.5">
-                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
-                    Duration
-                  </span>
-                  <span className="text-sm font-black text-slate-700">{course.duration} yrs</span>
-                </div>
-                <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-2.5">
-                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
-                    Tuition / yr
-                  </span>
-                  <span className="text-sm font-black text-indigo-600">
-                    {course.currency || "USD"}{" "}
-                    {annualTuition(course.tuitionFee, course.tuitionFeePeriod)?.toLocaleString() ??
-                      course.tuitionFee}
-                  </span>
-                </div>
-                <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-2.5">
-                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
-                    App. Fee
-                  </span>
-                  <span className="text-sm font-black text-emerald-600">
-                    {course.applicationFee
-                      ? `${course.currency || "USD"} ${course.applicationFee}`
-                      : "—"}
-                  </span>
-                </div>
-              </div>
-              {isSemesterPeriod(course.tuitionFeePeriod) && (
-                <p className="-mt-3 mb-4 text-[10px] font-bold text-slate-400">
-                  {course.currency || "USD"} {course.tuitionFee} per semester (2 semesters/year)
-                </p>
-              )}
+              <EnrollCourseSummary course={course} />
 
-              <div className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="search-student"
-                    className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1"
-                  >
-                    Select Student from Database
-                  </label>
-                  <div className="relative group">
-                    <User
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"
-                      size={16}
-                    />
-                    <select
-                      id="search-student"
-                      value={selectedStudentId}
-                      onChange={(e) => handleStudentSelect(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-bold text-slate-700 transition-all cursor-pointer appearance-none"
-                    >
-                      <option value="">Choose a student.</option>
-                      <option value="manual">Enter details manually</option>
-                      {loadingStudents ? (
-                        <option disabled>Loading students...</option>
-                      ) : filteredStudents.length > 0 ? (
-                        filteredStudents.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name} ({s.email || "No email"})
-                          </option>
-                        ))
-                      ) : (
-                        <option disabled>No students found</option>
-                      )}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                      <ChevronDown size={16} />
-                    </div>
-                  </div>
-                </div>
+              <EnrollStudentFields
+                selectedStudentId={selectedStudentId}
+                onStudentSelect={handleStudentSelect}
+                loadingStudents={loadingStudents}
+                filteredStudents={filteredStudents}
+                name={name}
+                setName={setName}
+                email={email}
+                setEmail={setEmail}
+              />
 
-                <div className="relative flex items-center py-1.5">
-                  <div className="flex-grow border-t border-slate-100"></div>
-                  <span className="flex-shrink mx-4 text-[9px] font-bold text-slate-300 uppercase tracking-widest">
-                    Or Provide Details
-                  </span>
-                  <div className="flex-grow border-t border-slate-100"></div>
-                </div>
-
-                <div className="grid gap-3">
-                  <div>
-                    <label
-                      htmlFor="search-name"
-                      className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1.5 ml-1"
-                    >
-                      Full Name
-                    </label>
-                    <input
-                      id="search-name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Student full name"
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="search-email"
-                      className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1.5 ml-1"
-                    >
-                      Email Address
-                    </label>
-                    <input
-                      id="search-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="student@example.com"
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-sans font-semibold text-slate-700 transition-all"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {checkResult && (
-                <div className="mt-5 rounded-2xl border border-slate-200 overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-100">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                      Admission Criteria
-                    </span>
-                    {checkResult.allPass ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black ring-1 ring-emerald-500/20">
-                        <CheckCircle size={11} />
-                        {checkResult.pending > 0 ? "Met — score pending" : "All criteria met"}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-rose-50 text-rose-600 text-[10px] font-black ring-1 ring-rose-500/20">
-                        <XCircle size={11} />
-                        Not eligible
-                      </span>
-                    )}
-                  </div>
-                  <div className="divide-y divide-slate-50">
-                    {checkResult.checks.map((c, i) => (
-                      <div key={i} className="flex items-start gap-3 px-4 py-2.5">
-                        {c.pending ? (
-                          <Clock size={14} className="text-amber-500 shrink-0 mt-0.5" />
-                        ) : c.pass ? (
-                          <CheckCircle size={14} className="text-emerald-500 shrink-0 mt-0.5" />
-                        ) : (
-                          <XCircle size={14} className="text-rose-500 shrink-0 mt-0.5" />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[11px] font-bold text-slate-700">{c.label}</p>
-                          {c.detail && (
-                            <p className="text-[10px] font-medium text-slate-400">{c.detail}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {checkResult && <EligibilityCheckList checkResult={checkResult} />}
 
               <div className="flex gap-3 mt-5">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-5 py-3 border border-slate-200 rounded-xl font-bold text-xs text-slate-500 hover:bg-slate-50 transition-all uppercase tracking-widest font-sans"
+                  className="flex-1 px-5 py-3 border border-slate-200 rounded-xl font-bold text-xs text-slate-500 hover:bg-slate-50 transition uppercase tracking-widest font-sans"
                 >
                   Cancel
                 </button>
@@ -655,7 +768,7 @@ function EnrollModal({ course, onClose, defaultStudentId }: EnrollModalProps) {
                   type="button"
                   onClick={handleSubmit}
                   disabled={submitting || (checkResult !== null && !checkResult.allPass)}
-                  className="flex-[1.5] px-5 py-3 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all uppercase tracking-widest font-sans disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-[1.5] px-5 py-3 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition uppercase tracking-widest font-sans disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {submitting && <Loader2 className="animate-spin" size={14} />}
                   {submitting
@@ -667,27 +780,362 @@ function EnrollModal({ course, onClose, defaultStudentId }: EnrollModalProps) {
               </div>
             </>
           ) : (
-            <div className="text-center py-6">
-              <div className="size-20 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
-                <CheckCircle size={40} className="text-emerald-500" />
-              </div>
-              <h3 className="text-2xl font-black text-slate-800 mb-2">Enrolled!</h3>
-              <p className="text-sm font-medium text-slate-500 mb-8 leading-relaxed">
-                <strong>{name}</strong> has been successfully enrolled in{" "}
-                <strong>{course.name}</strong>.
-              </p>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-full px-8 py-4 bg-slate-900 text-white rounded-2xl font-black hover:bg-slate-800 transition-all text-xs uppercase tracking-widest"
-              >
-                Close
-              </button>
-            </div>
+            <EnrollSuccess name={name} courseName={course.name} onClose={onClose} />
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+function currentTuitionFee(c: Course): number {
+  return parseFloat(c.tuitionFee?.replace(/[^0-9.]/g, "") || "0");
+}
+
+function computeFilteredCourses(
+  courses: Course[],
+  filters: {
+    categoryFilter: string;
+    levelFilter: string;
+    universityFilter: string;
+    countryFilter: string;
+    intakeFilter: string;
+    durationFilter: string;
+    priceRange: [number, number];
+    activeQuickFilters: string[];
+    activeRequirements: string[];
+    onlyAvailableFilter: boolean;
+    selectedStudentId: string;
+    guestDetails: GuestDetails;
+    students: StudentSummary[] | undefined;
+  }
+): Course[] {
+  let data = [...courses];
+  const {
+    categoryFilter,
+    levelFilter,
+    universityFilter,
+    countryFilter,
+    intakeFilter,
+    durationFilter,
+    priceRange,
+    activeQuickFilters,
+    activeRequirements,
+    onlyAvailableFilter,
+    selectedStudentId,
+    guestDetails,
+    students,
+  } = filters;
+
+  if (selectedStudentId !== "all") {
+    const student =
+      selectedStudentId === "guest"
+        ? {
+            id: "guest",
+            name: "Guest Student",
+            education: JSON.stringify([
+              { qualification: guestDetails.qualification, score: guestDetails.score },
+            ]),
+            testType: guestDetails.testType,
+            overallScore: guestDetails.overallScore,
+          }
+        : (students ?? []).find((s) => String(s.id) === String(selectedStudentId));
+
+    if (student) {
+      data = data.filter(
+        (c) =>
+          evaluateCourseEligibility(
+            {
+              level: c.level,
+              prerequisites: c.prerequisites,
+              requirements: c.requirements,
+              academicRequirement: c.academicRequirement,
+              percentageRequired: c.percentageRequired,
+              gpaRequired: c.gpaRequired,
+              englishOverallScore: c.englishOverallScore,
+              englishLanguageType: c.englishLanguageType,
+              englishTestStage: c.englishTestStage,
+              englishReadingScore: c.englishReadingScore,
+              englishWritingScore: c.englishWritingScore,
+              englishListeningScore: c.englishListeningScore,
+              englishSpeakingScore: c.englishSpeakingScore,
+              englishTests: c.englishTests,
+            },
+            student
+          ).allPass
+      );
+    }
+  }
+
+  if (categoryFilter !== "all") data = data.filter((c) => c.category === categoryFilter);
+  if (levelFilter !== "all") data = data.filter((c) => c.level === levelFilter);
+  if (universityFilter !== "all") data = data.filter((c) => c.university === universityFilter);
+  if (countryFilter !== "all") data = data.filter((c) => c.country === countryFilter);
+  if (intakeFilter !== "all") data = data.filter((c) => c.intake?.includes(intakeFilter));
+  if (durationFilter !== "all") data = data.filter((c) => c.duration === durationFilter);
+
+  data = data.filter((c) => {
+    const fee = currentTuitionFee(c);
+    return fee >= priceRange[0] && fee <= priceRange[1];
+  });
+
+  if (activeQuickFilters.length > 0) {
+    data = data.filter((c) => activeQuickFilters.every((f) => c.quickFilters?.includes(f)));
+  }
+
+  if (activeRequirements.length > 0) {
+    data = data.filter((c) => activeRequirements.every((r) => c.requirements?.includes(r)));
+  }
+
+  if (onlyAvailableFilter) {
+    const now = new Date();
+    data = data.filter((c) => {
+      if (!c.applicationDeadline) return true;
+      return new Date(c.applicationDeadline) >= now;
+    });
+  }
+
+  return data;
+}
+
+function computeAvailableUniversities(
+  filterOptions: { universities: string[]; universitiesByCountry: Record<string, string[]> },
+  courses: Course[],
+  countryFilter: string
+): string[] {
+  if (countryFilter !== "all") {
+    const byCountry = filterOptions.universitiesByCountry?.[countryFilter];
+    if (byCountry && byCountry.length > 0) return [...byCountry].sort();
+    return Array.from(
+      new Set(courses.filter((c) => c.country === countryFilter).map((c) => c.university))
+    )
+      .filter(Boolean)
+      .sort();
+  }
+  return filterOptions.universities.length > 0
+    ? filterOptions.universities
+    : Array.from(new Set(courses.map((c) => c.university)))
+        .filter(Boolean)
+        .sort();
+}
+
+function computeAvailableCountries(
+  filterOptions: { countries: string[] },
+  courses: Course[]
+): string[] {
+  return filterOptions.countries.length > 0
+    ? filterOptions.countries
+    : Array.from(new Set(courses.map((c) => c.country)))
+        .filter(Boolean)
+        .sort();
+}
+
+function computeAvailableIntakes(
+  filterOptions: { intakes: string[] },
+  courses: Course[]
+): string[] {
+  return filterOptions.intakes.length > 0
+    ? filterOptions.intakes
+    : Array.from(new Set(courses.map((c) => c.intake)))
+        .filter(Boolean)
+        .sort();
+}
+
+function computeAvailableDurations(courses: Course[]): string[] {
+  return Array.from(new Set(courses.map((c) => c.duration)))
+    .filter(Boolean)
+    .sort();
+}
+
+function computeMaxPrice(courses: Course[]): number {
+  return Math.max(100000, ...courses.map(currentTuitionFee));
+}
+
+function SearchHeader({
+  coursesCount,
+  universitiesCount,
+  showInNPR,
+  onToggleNpr,
+}: {
+  coursesCount: number;
+  universitiesCount: number;
+  showInNPR: boolean;
+  onToggleNpr: () => void;
+}) {
+  return (
+    <div className="mb-6 flex items-start justify-between">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-800 mb-1">Search Database</h1>
+        <p className="text-sm text-slate-400">
+          Searching {coursesCount.toLocaleString()} courses and {universitiesCount.toLocaleString()}{" "}
+          universities in database
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onToggleNpr}
+        className={`btn-secondary mt-1 ${showInNPR ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700" : ""}`}
+      >
+        <Icons.DollarSign size={16} />
+        {showInNPR ? "Showing in NPR" : "Show in NPR"}
+      </button>
+    </div>
+  );
+}
+
+function UniversityResultsSection({ universities }: { universities: UniversitySummary[] }) {
+  if (universities.length === 0) return null;
+  return (
+    <div className="mb-8">
+      <h2 className="text-sm font-semibold text-slate-600 mb-4 flex items-center gap-2">
+        <Building2 size={16} className="text-indigo-500" />
+        Universities ({universities.length})
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {universities.map((uni) => (
+          <UniversityResultCard key={uni.id} university={uni} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CourseResultsSection({
+  hasSearch,
+  loading,
+  filteredCourses,
+  universitiesResults,
+  expandedId,
+  setExpandedId,
+  setEnrollingCourse,
+  quickFilters,
+  showInNPR,
+  rates,
+}: {
+  hasSearch: boolean;
+  loading: boolean;
+  filteredCourses: Course[];
+  universitiesResults: UniversitySummary[];
+  expandedId: string | null;
+  setExpandedId: (v: string | null) => void;
+  setEnrollingCourse: (v: Course | null) => void;
+  quickFilters: QuickFilterEntry[];
+  showInNPR: boolean;
+  rates: Record<string, number>;
+}) {
+  const isEmpty = !loading && filteredCourses.length === 0 && universitiesResults.length === 0;
+  return (
+    <div>
+      {hasSearch && (
+        <h2 className="text-sm font-semibold text-slate-600 mb-4 flex items-center gap-2">
+          <BookOpen size={16} className="text-indigo-500" />
+          Courses ({filteredCourses.length})
+        </h2>
+      )}
+
+      {isEmpty ? (
+        <div className="card py-16 text-center">
+          <Search size={36} className="text-slate-300 mx-auto mb-3" />
+          <p className="font-semibold text-slate-500 text-sm mb-1">No results found</p>
+          <p className="text-xs text-slate-400">Try different keywords or adjust your filters</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {filteredCourses.map((course) => (
+            <SearchResultCard
+              key={course.id}
+              course={course}
+              expanded={expandedId === course.id}
+              onToggle={() => setExpandedId(expandedId === course.id ? null : course.id)}
+              onEnroll={() => setEnrollingCourse(course)}
+              quickFilters={quickFilters}
+              showInNPR={showInNPR}
+              rates={rates}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function computeHasSearch(input: {
+  query: string;
+  categoryFilter: string;
+  levelFilter: string;
+  universityFilter: string;
+  countryFilter: string;
+  intakeFilter: string;
+  durationFilter: string;
+  activeQuickFilters: string[];
+  activeRequirements: string[];
+  priceRange: [number, number];
+  maxPrice: number;
+}): boolean {
+  return !!(
+    input.query.trim() ||
+    input.categoryFilter !== "all" ||
+    input.levelFilter !== "all" ||
+    input.universityFilter !== "all" ||
+    input.countryFilter !== "all" ||
+    input.intakeFilter !== "all" ||
+    input.durationFilter !== "all" ||
+    input.activeQuickFilters.length > 0 ||
+    input.activeRequirements.length > 0 ||
+    input.priceRange[0] > 0 ||
+    input.priceRange[1] < input.maxPrice
+  );
+}
+
+function loadSavedFilters(): SavedFilterPreset[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem("search-filter-presets:v1");
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function SearchDialogs({
+  enrollingCourse,
+  setEnrollingCourse,
+  selectedStudentId,
+  showGuestModal,
+  setShowGuestModal,
+  guestDetails,
+  setGuestDetails,
+}: {
+  enrollingCourse: Course | null;
+  setEnrollingCourse: (v: Course | null) => void;
+  selectedStudentId: string;
+  showGuestModal: boolean;
+  setShowGuestModal: (v: boolean) => void;
+  guestDetails: GuestDetails;
+  setGuestDetails: (v: GuestDetails) => void;
+}) {
+  return (
+    <>
+      {enrollingCourse && (
+        <EnrollModal
+          course={enrollingCourse}
+          onClose={() => setEnrollingCourse(null)}
+          defaultStudentId={
+            selectedStudentId !== "all" && selectedStudentId !== "guest"
+              ? selectedStudentId
+              : undefined
+          }
+        />
+      )}
+
+      {showGuestModal && (
+        <GuestCheckModal
+          onClose={() => setShowGuestModal(false)}
+          onSave={setGuestDetails}
+          initialDetails={guestDetails}
+        />
+      )}
+    </>
   );
 }
 
@@ -710,9 +1158,10 @@ export default function SearchContent() {
   const [quickFilters, setQuickFilters] = useState<QuickFilterEntry[]>([]);
   const [filterOptions, setFilterOptions] = useState<{
     universities: string[];
+    universitiesByCountry: Record<string, string[]>;
     countries: string[];
     intakes: string[];
-  }>({ universities: [], countries: [], intakes: [] });
+  }>({ universities: [], universitiesByCountry: {}, countries: [], intakes: [] });
   const [activeQuickFilters, setActiveQuickFilters] = useState<string[]>([]);
   const [activeRequirements, setActiveRequirements] = useState<string[]>([]);
   const [onlyAvailableFilter, setOnlyAvailableFilter] = useState(false);
@@ -727,15 +1176,7 @@ export default function SearchContent() {
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [showInNPR, setShowInNPR] = useState(false);
   const [rates, setRates] = useState<Record<string, number>>({ NPR: 1 });
-  const [savedFilters, setSavedFilters] = useState<SavedFilterPreset[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const stored = localStorage.getItem("search-filter-presets:v1");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [savedFilters, setSavedFilters] = useState<SavedFilterPreset[]>(loadSavedFilters);
   const [filterPresetName, setFilterPresetName] = useState("");
   const [showSaveFilter, setShowSaveFilter] = useState(false);
 
@@ -785,207 +1226,138 @@ export default function SearchContent() {
   };
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const res = await fetch("/api/students");
-        if (res.ok) {
-          const data = await res.json();
-          setStudents(Array.isArray(data) ? data : data.data);
-        } else {
-          setStudents([]);
-        }
-      } catch (err) {
+    const ac = new AbortController();
+    let ignore = false;
+    fetch("/api/students", { signal: ac.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (ignore) return;
+        if (data) setStudents(Array.isArray(data) ? data : data.data);
+        else setStudents([]);
+      })
+      .catch((err) => {
         console.error("Failed to fetch students", err);
-        setStudents([]);
-      }
+        if (!ignore) setStudents([]);
+      });
+    return () => {
+      ignore = true;
+      ac.abort();
     };
-    fetchStudents();
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      const [cRes, qRes] = await Promise.all([
-        fetch(`/api/search?q=${encodeURIComponent(query)}`),
-        fetch("/api/quick-filters"),
-      ]);
-      const [cData, qData] = await Promise.all([safeJson(cRes), safeJson(qRes)]);
-
-      setCourses(cData.courses || []);
-      setUniversitiesResults(cData.universities || []);
-      if (cData.filters) setFilterOptions(cData.filters);
-      if (Array.isArray(qData)) setQuickFilters(qData);
-      setLoading(false);
-      isLoading.current = false;
+    const ac = new AbortController();
+    let ignore = false;
+    const timer = setTimeout(() => {
+      Promise.all([
+        fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal: ac.signal }),
+        fetch("/api/quick-filters", { signal: ac.signal }),
+      ])
+        .then(([cRes, qRes]) => Promise.all([safeJson(cRes), safeJson(qRes)]))
+        .then(([cData, qData]) => {
+          if (ignore) return;
+          setCourses(cData.courses || []);
+          setUniversitiesResults(cData.universities || []);
+          if (cData.filters) setFilterOptions(cData.filters);
+          if (Array.isArray(qData)) setQuickFilters(qData);
+          setLoading(false);
+          isLoading.current = false;
+        })
+        .catch(() => {});
     }, 300);
-
-    return () => clearTimeout(timer);
+    return () => {
+      ignore = true;
+      clearTimeout(timer);
+      ac.abort();
+    };
   }, [query]);
 
-  const filteredCourses = useMemo(() => {
-    let data = [...courses];
-
-    // Eligibility Check
-    if (selectedStudentId !== "all") {
-      const student =
-        selectedStudentId === "guest"
-          ? {
-              id: "guest",
-              name: "Guest Student",
-              education: JSON.stringify([
-                { qualification: guestDetails.qualification, score: guestDetails.score },
-              ]),
-              testType: guestDetails.testType,
-              overallScore: guestDetails.overallScore,
-            }
-          : (students ?? []).find((s) => String(s.id) === String(selectedStudentId));
-
-      if (student) {
-        data = data.filter(
-          (c) =>
-            evaluateCourseEligibility(
-              {
-                level: c.level,
-                prerequisites: c.prerequisites,
-                gpaRequired: c.gpaRequired,
-                englishOverallScore: c.englishOverallScore,
-                englishLanguageType: c.englishLanguageType,
-                englishTestStage: c.englishTestStage,
-              },
-              student
-            ).allPass
-        );
-      }
-    }
-
-    if (categoryFilter !== "all") data = data.filter((c) => c.category === categoryFilter);
-    if (levelFilter !== "all") data = data.filter((c) => c.level === levelFilter);
-    if (universityFilter !== "all") data = data.filter((c) => c.university === universityFilter);
-    if (countryFilter !== "all") data = data.filter((c) => c.country === countryFilter);
-    if (intakeFilter !== "all") data = data.filter((c) => c.intake?.includes(intakeFilter));
-    if (durationFilter !== "all") data = data.filter((c) => c.duration === durationFilter);
-
-    // Price filtering
-    data = data.filter((c) => {
-      const fee = parseFloat(c.tuitionFee?.replace(/[^0-9.]/g, "") || "0");
-      return fee >= priceRange[0] && fee <= priceRange[1];
-    });
-
-    if (activeQuickFilters.length > 0) {
-      data = data.filter((c) => activeQuickFilters.every((f) => c.quickFilters?.includes(f)));
-    }
-
-    if (activeRequirements.length > 0) {
-      data = data.filter((c) => activeRequirements.every((r) => c.requirements?.includes(r)));
-    }
-
-    if (onlyAvailableFilter) {
-      const now = new Date();
-      data = data.filter((c) => {
-        if (!c.applicationDeadline) return true;
-        return new Date(c.applicationDeadline) >= now;
-      });
-    }
-
-    return data;
-  }, [
-    courses,
-    categoryFilter,
-    levelFilter,
-    universityFilter,
-    countryFilter,
-    intakeFilter,
-    durationFilter,
-    priceRange,
-    activeQuickFilters,
-    activeRequirements,
-    onlyAvailableFilter,
-    selectedStudentId,
-    guestDetails,
-    students,
-  ]);
+  const filteredCourses = useMemo(
+    () =>
+      computeFilteredCourses(courses, {
+        categoryFilter,
+        levelFilter,
+        universityFilter,
+        countryFilter,
+        intakeFilter,
+        durationFilter,
+        priceRange,
+        activeQuickFilters,
+        activeRequirements,
+        onlyAvailableFilter,
+        selectedStudentId,
+        guestDetails,
+        students,
+      }),
+    [
+      courses,
+      categoryFilter,
+      levelFilter,
+      universityFilter,
+      countryFilter,
+      intakeFilter,
+      durationFilter,
+      priceRange,
+      activeQuickFilters,
+      activeRequirements,
+      onlyAvailableFilter,
+      selectedStudentId,
+      guestDetails,
+      students,
+    ]
+  );
 
   const availableCategories = useMemo(
     () => Array.from(new Set(courses.map((c) => c.category))).sort(),
     [courses]
   );
   const availableUniversities = useMemo(
-    () =>
-      filterOptions.universities.length > 0
-        ? filterOptions.universities
-        : Array.from(new Set(courses.map((c) => c.university))).sort(),
-    [filterOptions.universities, courses]
+    () => computeAvailableUniversities(filterOptions, courses, countryFilter),
+    [filterOptions, courses, countryFilter]
   );
   const availableCountries = useMemo(
-    () =>
-      filterOptions.countries.length > 0
-        ? filterOptions.countries
-        : Array.from(new Set(courses.map((c) => c.country)))
-            .filter(Boolean)
-            .sort(),
-    [filterOptions.countries, courses]
+    () => computeAvailableCountries(filterOptions, courses),
+    [filterOptions, courses]
   );
   const availableIntakes = useMemo(
-    () =>
-      filterOptions.intakes.length > 0
-        ? filterOptions.intakes
-        : Array.from(new Set(courses.map((c) => c.intake)))
-            .filter(Boolean)
-            .sort(),
-    [filterOptions.intakes, courses]
+    () => computeAvailableIntakes(filterOptions, courses),
+    [filterOptions, courses]
   );
-  const availableDurations = useMemo(
-    () =>
-      Array.from(new Set(courses.map((c) => c.duration)))
-        .filter(Boolean)
-        .sort(),
-    [courses]
-  );
+  const availableDurations = useMemo(() => computeAvailableDurations(courses), [courses]);
 
-  const maxPrice = Math.max(
-    100000,
-    ...courses.map((c) => parseFloat(c.tuitionFee?.replace(/[^0-9.]/g, "") || "0"))
-  );
+  const maxPrice = computeMaxPrice(courses);
 
-  const hasSearch = !!(
-    query.trim() ||
-    categoryFilter !== "all" ||
-    levelFilter !== "all" ||
-    universityFilter !== "all" ||
-    countryFilter !== "all" ||
-    intakeFilter !== "all" ||
-    durationFilter !== "all" ||
-    activeQuickFilters.length > 0 ||
-    activeRequirements.length > 0 ||
-    priceRange[0] > 0 ||
-    priceRange[1] < maxPrice
-  );
+  const hasSearch = computeHasSearch({
+    query,
+    categoryFilter,
+    levelFilter,
+    universityFilter,
+    countryFilter,
+    intakeFilter,
+    durationFilter,
+    activeQuickFilters,
+    activeRequirements,
+    priceRange,
+    maxPrice,
+  });
 
   return (
     <div className="animate-fade-in relative min-h-[500px]">
       {/* Header */}
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-1">Search Database</h1>
-          <p className="text-sm text-slate-400">
-            Searching {courses.length.toLocaleString()} courses and{" "}
-            {universitiesResults.length.toLocaleString()} universities in database
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            const newVal = !showInNPR;
-            setShowInNPR(newVal);
-            if (newVal && Object.keys(rates).length <= 1) {
-              getLatestRates().then(setRates);
-            }
-          }}
-          className={`btn-secondary mt-1 ${showInNPR ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700" : ""}`}
-        >
-          <Icons.DollarSign size={16} />
-          {showInNPR ? "Showing in NPR" : "Show in NPR"}
-        </button>
-      </div>
+      <SearchHeader
+        coursesCount={courses.length}
+        universitiesCount={universitiesResults.length}
+        showInNPR={showInNPR}
+        onToggleNpr={() => {
+          const newVal = !showInNPR;
+          setShowInNPR(newVal);
+          if (newVal && Object.keys(rates).length <= 1) {
+            getLatestRates()
+              .then(setRates)
+              .catch(() => {});
+          }
+        }}
+      />
 
       <SearchFiltersPanel
         loading={loading}
@@ -1025,6 +1397,7 @@ export default function SearchContent() {
         availableCategories={availableCategories}
         availableUniversities={availableUniversities}
         availableCountries={availableCountries}
+        universitiesByCountry={filterOptions.universitiesByCountry}
         availableIntakes={availableIntakes}
         availableDurations={availableDurations}
         savedFilters={savedFilters}
@@ -1037,78 +1410,37 @@ export default function SearchContent() {
       />
 
       {/* Results */}
-      {query && universitiesResults.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-sm font-semibold text-slate-600 mb-4 flex items-center gap-2">
-            <Building2 size={16} className="text-indigo-500" />
-            Universities ({universitiesResults.length})
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {universitiesResults.map((uni) => (
-              <UniversityResultCard key={uni.id} university={uni} />
-            ))}
-          </div>
-        </div>
-      )}
+      <UniversityResultsSection universities={query ? universitiesResults : []} />
 
-      <div>
-        {hasSearch && (
-          <h2 className="text-sm font-semibold text-slate-600 mb-4 flex items-center gap-2">
-            <BookOpen size={16} className="text-indigo-500" />
-            Courses ({filteredCourses.length})
-          </h2>
-        )}
+      <CourseResultsSection
+        hasSearch={hasSearch}
+        loading={loading}
+        filteredCourses={filteredCourses}
+        universitiesResults={universitiesResults}
+        expandedId={expandedId}
+        setExpandedId={setExpandedId}
+        setEnrollingCourse={setEnrollingCourse}
+        quickFilters={quickFilters}
+        showInNPR={showInNPR}
+        rates={rates}
+      />
 
-        {!loading && filteredCourses.length === 0 && universitiesResults.length === 0 ? (
-          <div className="card py-16 text-center">
-            <Search size={36} className="text-slate-300 mx-auto mb-3" />
-            <p className="font-semibold text-slate-500 text-sm mb-1">No results found</p>
-            <p className="text-xs text-slate-400">Try different keywords or adjust your filters</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {filteredCourses.map((course) => (
-              <SearchResultCard
-                key={course.id}
-                course={course}
-                expanded={expandedId === course.id}
-                onToggle={() => setExpandedId(expandedId === course.id ? null : course.id)}
-                onEnroll={() => setEnrollingCourse(course)}
-                quickFilters={quickFilters}
-                showInNPR={showInNPR}
-                rates={rates}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {enrollingCourse && (
-        <EnrollModal
-          course={enrollingCourse}
-          onClose={() => setEnrollingCourse(null)}
-          defaultStudentId={
-            selectedStudentId !== "all" && selectedStudentId !== "guest"
-              ? selectedStudentId
-              : undefined
-          }
-        />
-      )}
-
-      {showGuestModal && (
-        <GuestCheckModal
-          onClose={() => setShowGuestModal(false)}
-          onSave={setGuestDetails}
-          initialDetails={guestDetails}
-        />
-      )}
+      <SearchDialogs
+        enrollingCourse={enrollingCourse}
+        setEnrollingCourse={setEnrollingCourse}
+        selectedStudentId={selectedStudentId}
+        showGuestModal={showGuestModal}
+        setShowGuestModal={setShowGuestModal}
+        guestDetails={guestDetails}
+        setGuestDetails={setGuestDetails}
+      />
     </div>
   );
 }
 
 function UniversityResultCard({ university }: { university: UniversitySummary }) {
   return (
-    <div className="card p-4 hover:shadow-md transition-all duration-200">
+    <div className="card p-4 hover:shadow-md transition duration-200">
       <div className="flex items-center gap-3 mb-3">
         <div
           className="size-10 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -1154,6 +1486,265 @@ function UniversityResultCard({ university }: { university: UniversitySummary })
   );
 }
 
+function FormattedDeadline({ date, passed }: { date: Date; passed: boolean }) {
+  return (
+    <span className={passed ? "text-red-500" : "text-slate-600"}>
+      {date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "UTC",
+      })}
+    </span>
+  );
+}
+
+function CourseHeaderMeta({ course }: { course: Course }) {
+  const status = statusConfig[course.status] || statusConfig["Draft"];
+  const catStyle = categoryColors[course.category] || "bg-slate-50 text-slate-600";
+  const levelStyle = levelConfig[course.level] || "bg-slate-50 text-slate-600";
+  return (
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-2 flex-wrap">
+        <div
+          className="size-7 rounded-lg flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
+          style={{ backgroundColor: course.color }}
+        >
+          {course.initials}
+        </div>
+        <h3 className="text-sm font-black text-slate-800 truncate">{course.name}</h3>
+        <span className={`badge ${status.className} flex-shrink-0`}>{status.label}</span>
+      </div>
+
+      <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-500 flex-wrap">
+        <span className="font-bold text-slate-600 truncate max-w-[45%]">{course.university}</span>
+        <span className="text-slate-300">•</span>
+        <span className="flex items-center gap-1 text-slate-400 font-semibold flex-shrink-0">
+          <Globe size={11} /> {course.country}
+        </span>
+        <span className="text-slate-300">•</span>
+        <span className="flex items-center gap-1 text-slate-400 font-semibold flex-shrink-0">
+          <Clock size={11} /> {course.duration}
+        </span>
+        <span className="text-slate-300">•</span>
+        <span className="flex items-center gap-1 text-slate-400 font-semibold flex-shrink-0">
+          <GraduationCap size={11} /> {course.credits} cr.
+        </span>
+        <span className="text-slate-300">•</span>
+        <span className="flex items-center gap-1 text-slate-400 font-semibold truncate">
+          <User size={11} className="flex-shrink-0" /> {course.instructor}
+        </span>
+      </div>
+
+      <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
+        {course.description}
+      </p>
+
+      <div className="flex flex-wrap gap-1.5 mt-2.5">
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${levelStyle}`}
+        >
+          {course.level}
+        </span>
+        <span
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold ${catStyle}`}
+        >
+          <Tag size={8} />
+          {course.category}
+        </span>
+        {course.requirements &&
+          course.requirements.slice(0, 3).map((req) => (
+            <span
+              key={req}
+              className="inline-flex items-center px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-semibold rounded-md border border-blue-100"
+            >
+              {req}
+            </span>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+function courseEnrollPct(course: Course): number {
+  return course.capacity > 0 ? Math.round((course.enrolled / course.capacity) * 100) : 0;
+}
+
+function courseDeadline(course: Course): { date: Date | null; passed: boolean } {
+  if (!course.applicationDeadline) return { date: null, passed: false };
+  const date = new Date(course.applicationDeadline);
+  return { date, passed: date < new Date() };
+}
+
+function enrollColor(pct: number): string {
+  return pct > 90 ? "#ef4444" : pct > 70 ? "#f59e0b" : "#10b981";
+}
+
+function computeFeeLabels(course: Course, showInNPR: boolean, rates: Record<string, number>) {
+  const currency = course.currency || "USD";
+  const annual = annualTuition(course.tuitionFee, course.tuitionFeePeriod);
+  const tuitionLabel = showInNPR
+    ? formatNPR(convertToNPR(String(annual ?? 0), currency, rates))
+    : `${currency} ${annual?.toLocaleString() ?? "—"}`;
+  const appFeeLabel = course.applicationFee
+    ? showInNPR
+      ? formatNPR(convertToNPR(course.applicationFee, currency, rates))
+      : `${currency} ${course.applicationFee}`
+    : null;
+  return { currency, tuitionLabel, appFeeLabel };
+}
+
+function CourseFeeBlock({
+  course,
+  showInNPR,
+  rates,
+  expanded,
+  onToggle,
+  onEnroll,
+}: {
+  course: Course;
+  showInNPR: boolean;
+  rates: Record<string, number>;
+  expanded: boolean;
+  onToggle: () => void;
+  onEnroll: () => void;
+}) {
+  const enrollPct = courseEnrollPct(course);
+  const { date: deadlineDate, passed: deadlinePassed } = courseDeadline(course);
+  const { currency, tuitionLabel, appFeeLabel } = computeFeeLabels(course, showInNPR, rates);
+  const pctColor = enrollColor(enrollPct);
+
+  return (
+    <div className="lg:w-64 flex-shrink-0 flex flex-col gap-3 lg:border-l lg:border-slate-100 lg:pl-6">
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+            Tuition / yr
+          </p>
+          <p className="text-lg font-black text-indigo-600 leading-tight">{tuitionLabel}</p>
+          {isSemesterPeriod(course.tuitionFeePeriod) && (
+            <p className="text-[10px] text-slate-400 leading-tight">
+              {currency} {course.tuitionFee} /sem
+            </p>
+          )}
+          {appFeeLabel && (
+            <p className="text-[10px] font-bold text-emerald-600 leading-tight">
+              App. Fee: {appFeeLabel}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          {course.intake && (
+            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[9px] font-bold whitespace-nowrap">
+              {course.intake.split(",")[0]?.trim()}
+            </span>
+          )}
+          <span className="text-[9px] font-bold text-slate-400">
+            {course.enrolled}/{course.capacity} enrolled
+          </span>
+          <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${enrollPct}%`, backgroundColor: pctColor }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {deadlineDate && (
+        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tight">
+          <span className="text-slate-400 flex items-center gap-1">
+            <Clock size={10} /> Deadline
+          </span>
+          <FormattedDeadline date={deadlineDate} passed={deadlinePassed} />
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onEnroll}
+          disabled={course.status !== "Active" || deadlinePassed}
+          className="flex-1 btn-primary text-xs py-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {deadlinePassed ? "Applications Closed" : "Enroll Now"}
+        </button>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+          title={expanded ? "Hide details" : "View details"}
+        >
+          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CourseExpandedPanel({
+  course,
+  quickFilters,
+}: {
+  course: Course;
+  quickFilters: QuickFilterEntry[];
+}) {
+  return (
+    <div className="mt-3 pt-3 border-t border-slate-100 space-y-2.5 animate-fade-in">
+      <div>
+        <div className="flex items-center gap-1 mb-1">
+          <Info size={11} className="text-slate-400" />
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+            Description
+          </span>
+        </div>
+        <p className="text-xs text-slate-600 leading-relaxed">{course.description}</p>
+      </div>
+      <div>
+        <div className="flex items-center gap-1 mb-1">
+          <ListChecks size={11} className="text-slate-400" />
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+            Prerequisites
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {course.prerequisites.map((p) => (
+            <span
+              key={p}
+              className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-medium"
+            >
+              {p}
+            </span>
+          ))}
+        </div>
+      </div>
+      {course.quickFilters && course.quickFilters.length > 0 && (
+        <div>
+          <div className="flex items-center gap-1 mb-1">
+            <Zap size={11} className="text-purple-400" />
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+              Quick Filters
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {course.quickFilters.map((f) => {
+              const filterInfo = quickFilters.find((q) => q.label === f);
+              return (
+                <span
+                  key={f}
+                  className="px-1.5 py-0.5 bg-purple-50 text-purple-600 border border-purple-100 rounded text-[10px] font-medium"
+                >
+                  {filterInfo?.label || f}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SearchResultCard({
   course,
   expanded,
@@ -1171,235 +1762,505 @@ function SearchResultCard({
   showInNPR: boolean;
   rates: Record<string, number>;
 }) {
-  const status = statusConfig[course.status] || statusConfig["Draft"];
-  const catStyle = categoryColors[course.category] || "bg-slate-50 text-slate-600";
-  const levelStyle = levelConfig[course.level] || "bg-slate-50 text-slate-600";
-  const enrollPct = course.capacity > 0 ? Math.round((course.enrolled / course.capacity) * 100) : 0;
-  const now = new Date();
-  const deadlineDate = course.applicationDeadline ? new Date(course.applicationDeadline) : null;
-  const deadlinePassed = deadlineDate ? deadlineDate < now : false;
-
   return (
     <div
-      className="card overflow-hidden hover:shadow-md transition-all duration-200"
+      className="card overflow-hidden hover:shadow-md transition duration-200"
       suppressHydrationWarning
     >
       <div className="h-1 w-full" style={{ backgroundColor: course.color }} />
       <div className="p-5">
         <div className="flex flex-col lg:flex-row lg:items-center gap-5">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <div
-                className="size-7 rounded-lg flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
-                style={{ backgroundColor: course.color }}
-              >
-                {course.initials}
-              </div>
-              <h3 className="text-sm font-black text-slate-800 truncate">{course.name}</h3>
-              <span className={`badge ${status.className} flex-shrink-0`}>{status.label}</span>
-            </div>
-
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-500 flex-wrap">
-              <span className="font-bold text-slate-600 truncate max-w-[45%]">
-                {course.university}
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="flex items-center gap-1 text-slate-400 font-semibold flex-shrink-0">
-                <Globe size={11} /> {course.country}
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="flex items-center gap-1 text-slate-400 font-semibold flex-shrink-0">
-                <Clock size={11} /> {course.duration}
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="flex items-center gap-1 text-slate-400 font-semibold flex-shrink-0">
-                <GraduationCap size={11} /> {course.credits} cr.
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="flex items-center gap-1 text-slate-400 font-semibold truncate">
-                <User size={11} className="flex-shrink-0" /> {course.instructor}
-              </span>
-            </div>
-
-            <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
-              {course.description}
-            </p>
-
-            <div className="flex flex-wrap gap-1.5 mt-2.5">
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${levelStyle}`}
-              >
-                {course.level}
-              </span>
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold ${catStyle}`}
-              >
-                <Tag size={8} />
-                {course.category}
-              </span>
-              {course.requirements &&
-                course.requirements.slice(0, 3).map((req) => (
-                  <span
-                    key={req}
-                    className="inline-flex items-center px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-semibold rounded-md border border-blue-100"
-                  >
-                    {req}
-                  </span>
-                ))}
-            </div>
-          </div>
-
-          <div className="lg:w-64 flex-shrink-0 flex flex-col gap-3 lg:border-l lg:border-slate-100 lg:pl-6">
-            <div className="flex items-end justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-                  Tuition / yr
-                </p>
-                <p className="text-lg font-black text-indigo-600 leading-tight">
-                  {showInNPR
-                    ? formatNPR(
-                        convertToNPR(
-                          String(annualTuition(course.tuitionFee, course.tuitionFeePeriod) ?? 0),
-                          course.currency || "USD",
-                          rates
-                        )
-                      )
-                    : `${course.currency || "USD"} ${
-                        annualTuition(
-                          course.tuitionFee,
-                          course.tuitionFeePeriod
-                        )?.toLocaleString() ?? "—"
-                      }`}
-                </p>
-                {isSemesterPeriod(course.tuitionFeePeriod) && (
-                  <p className="text-[10px] text-slate-400 leading-tight">
-                    {course.currency || "USD"} {course.tuitionFee} /sem
-                  </p>
-                )}
-                {course.applicationFee && (
-                  <p className="text-[10px] font-bold text-emerald-600 leading-tight">
-                    App. Fee:{" "}
-                    {showInNPR
-                      ? formatNPR(
-                          convertToNPR(course.applicationFee, course.currency || "USD", rates)
-                        )
-                      : `${course.currency || "USD"} ${course.applicationFee}`}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                {course.intake && (
-                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[9px] font-bold whitespace-nowrap">
-                    {course.intake.split(",")[0]?.trim()}
-                  </span>
-                )}
-                <span className="text-[9px] font-bold text-slate-400">
-                  {course.enrolled}/{course.capacity} enrolled
-                </span>
-                <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${enrollPct}%`,
-                      backgroundColor:
-                        enrollPct > 90 ? "#ef4444" : enrollPct > 70 ? "#f59e0b" : "#10b981",
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {course.applicationDeadline && (
-              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tight">
-                <span className="text-slate-400 flex items-center gap-1">
-                  <Clock size={10} /> Deadline
-                </span>
-                <span className={deadlinePassed ? "text-red-500" : "text-slate-600"}>
-                  {deadlineDate?.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onEnroll}
-                disabled={course.status !== "Active" || deadlinePassed}
-                className="flex-1 btn-primary text-xs py-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {deadlinePassed ? "Applications Closed" : "Enroll Now"}
-              </button>
-              <button
-                type="button"
-                onClick={onToggle}
-                className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
-                title={expanded ? "Hide details" : "View details"}
-              >
-                {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
-            </div>
-          </div>
+          <CourseHeaderMeta course={course} />
+          <CourseFeeBlock
+            course={course}
+            showInNPR={showInNPR}
+            rates={rates}
+            expanded={expanded}
+            onToggle={onToggle}
+            onEnroll={onEnroll}
+          />
         </div>
 
-        {expanded && (
-          <div className="mt-3 pt-3 border-t border-slate-100 space-y-2.5 animate-fade-in">
-            <div>
-              <div className="flex items-center gap-1 mb-1">
-                <Info size={11} className="text-slate-400" />
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-                  Description
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">{course.description}</p>
-            </div>
-            <div>
-              <div className="flex items-center gap-1 mb-1">
-                <ListChecks size={11} className="text-slate-400" />
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-                  Prerequisites
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {course.prerequisites.map((p, _i) => (
-                  <span
-                    key={p}
-                    className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-medium"
-                  >
-                    {p}
-                  </span>
-                ))}
-              </div>
-            </div>
-            {course.quickFilters && course.quickFilters.length > 0 && (
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <Zap size={11} className="text-purple-400" />
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-                    Quick Filters
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {course.quickFilters.map((f, i) => {
-                    const filterInfo = quickFilters.find((q) => q.label === f);
-                    return (
-                      <span
-                        key={`qf-${i}`}
-                        className="px-1.5 py-0.5 bg-purple-50 text-purple-600 border border-purple-100 rounded text-[10px] font-medium"
-                      >
-                        {filterInfo?.label || f}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
+        {expanded && <CourseExpandedPanel course={course} quickFilters={quickFilters} />}
+      </div>
+    </div>
+  );
+}
+
+function QuickFiltersSection({
+  quickFilters,
+  activeQuickFilters,
+  setActiveQuickFilters,
+}: {
+  quickFilters: QuickFilterEntry[];
+  activeQuickFilters: string[];
+  setActiveQuickFilters: (v: string[]) => void;
+}) {
+  const activeSet = new Set(activeQuickFilters);
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Zap size={14} className="text-purple-500 fill-purple-500" />
+        <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">
+          Quick Filters
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-100 hover:scrollbar-thumb-purple-200">
+          {quickFilters.map((filter) => {
+            const IconComponent =
+              (Icons as unknown as Record<string, LucideIcon>)[filter.icon] || Icons.Filter;
+            const isActive = activeSet.has(filter.label);
+            return (
+              <button
+                type="button"
+                key={filter.id}
+                onClick={() => {
+                  if (isActive) {
+                    setActiveQuickFilters(activeQuickFilters.filter((id) => id !== filter.label));
+                  } else {
+                    setActiveQuickFilters([...activeQuickFilters, filter.label]);
+                  }
+                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[11px] font-bold transition whitespace-nowrap ${
+                  isActive
+                    ? "bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-100"
+                    : "bg-white border-slate-200 text-slate-600 hover:border-purple-300 hover:text-purple-600"
+                }`}
+              >
+                <IconComponent size={12} />
+                {filter.label}
+              </button>
+            );
+          })}
+        </div>
+        {activeQuickFilters.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setActiveQuickFilters([])}
+            className="text-[10px] font-bold text-red-500 hover:text-red-700 px-2 py-1.5"
+          >
+            Reset
+          </button>
         )}
       </div>
+    </div>
+  );
+}
+
+const filterSelectClass =
+  "text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer";
+
+function FilterSelects({
+  selectedStudentId,
+  setSelectedStudentId,
+  setShowGuestModal,
+  students,
+  categoryFilter,
+  setCategoryFilter,
+  levelFilter,
+  setLevelFilter,
+  countryFilter,
+  setCountryFilter,
+  universityFilter,
+  setUniversityFilter,
+  universitiesByCountry,
+  availableCategories,
+  availableCountries,
+  availableUniversities,
+  availableDurations,
+  intakeFilter,
+  setIntakeFilter,
+  availableIntakes,
+  durationFilter,
+  setDurationFilter,
+  activeRequirements,
+  setActiveRequirements,
+}: {
+  selectedStudentId: string;
+  setSelectedStudentId: (v: string) => void;
+  setShowGuestModal: (v: boolean) => void;
+  students: StudentSummary[] | undefined;
+  categoryFilter: string;
+  setCategoryFilter: (v: string) => void;
+  levelFilter: string;
+  setLevelFilter: (v: string) => void;
+  countryFilter: string;
+  setCountryFilter: (v: string) => void;
+  universityFilter: string;
+  setUniversityFilter: (v: string) => void;
+  universitiesByCountry: Record<string, string[]>;
+  availableCategories: string[];
+  availableCountries: string[];
+  availableUniversities: string[];
+  availableDurations: string[];
+  intakeFilter: string;
+  setIntakeFilter: (v: string) => void;
+  availableIntakes: string[];
+  durationFilter: string;
+  setDurationFilter: (v: string) => void;
+  activeRequirements: string[];
+  setActiveRequirements: (v: string[]) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-3">
+      <div className="relative">
+        <GraduationCap
+          size={13}
+          className="absolute left-2.5 top-1/2 -translate-y-1/2 text-indigo-400"
+        />
+        <select
+          aria-label="Check eligibility for student"
+          value={selectedStudentId}
+          onChange={(e) => {
+            setSelectedStudentId(e.target.value);
+            if (e.target.value === "guest") setShowGuestModal(true);
+          }}
+          className="text-xs font-bold pl-8 pr-3 py-2 border border-indigo-100 rounded-lg bg-indigo-50/50 text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer appearance-none min-w-[160px]"
+        >
+          <option value="all">Check Eligibility For.</option>
+          <option value="guest" className="font-bold text-indigo-600">
+            Guest Student (Manual Check)
+          </option>
+          {students === undefined ? (
+            <option disabled>Loading students...</option>
+          ) : students.length > 0 ? (
+            students.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name || s.firstName + " " + s.lastName}
+              </option>
+            ))
+          ) : (
+            <option disabled>No students found</option>
+          )}
+        </select>
+        {selectedStudentId === "guest" && (
+          <button
+            type="button"
+            onClick={() => setShowGuestModal(true)}
+            className="absolute -top-1 -right-1 size-4 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-indigo-700 transition-colors shadow-sm"
+            title="Edit Guest Details"
+          >
+            <Edit2 size={8} />
+          </button>
+        )}
+      </div>
+      <select
+        aria-label="Filter by category"
+        value={categoryFilter}
+        onChange={(e) => setCategoryFilter(e.target.value)}
+        className={filterSelectClass}
+      >
+        <option value="all">All Categories</option>
+        {availableCategories.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Filter by level"
+        value={levelFilter}
+        onChange={(e) => setLevelFilter(e.target.value)}
+        className={filterSelectClass}
+      >
+        <option value="all">All Levels</option>
+        <option value="Undergraduate">Undergraduate</option>
+        <option value="Postgraduate">Postgraduate</option>
+        <option value="PhD">PhD</option>
+      </select>
+      <select
+        aria-label="Filter by country"
+        value={countryFilter}
+        onChange={(e) => {
+          const value = e.target.value;
+          setCountryFilter(value);
+          if (value !== "all" && universityFilter !== "all") {
+            const list = universitiesByCountry[value];
+            if (list && list.length > 0 && !list.includes(universityFilter)) {
+              setUniversityFilter("all");
+            }
+          }
+        }}
+        className={filterSelectClass}
+      >
+        <option value="all">All Countries</option>
+        {availableCountries.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Filter by university"
+        value={universityFilter}
+        onChange={(e) => setUniversityFilter(e.target.value)}
+        className={filterSelectClass}
+      >
+        <option value="all">
+          {countryFilter === "all" ? "All Universities" : `Universities in ${countryFilter}`}
+        </option>
+        {availableUniversities.map((u) => (
+          <option key={u} value={u}>
+            {u}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Filter by intake"
+        value={intakeFilter}
+        onChange={(e) => setIntakeFilter(e.target.value)}
+        className={filterSelectClass}
+      >
+        <option value="all">All Intakes</option>
+        {availableIntakes.map((intake) => (
+          <option key={intake} value={intake}>
+            {intake}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Filter by duration"
+        value={durationFilter}
+        onChange={(e) => setDurationFilter(e.target.value)}
+        className={filterSelectClass}
+      >
+        <option value="all">All Durations</option>
+        {availableDurations.map((d) => (
+          <option key={d} value={d}>
+            {d}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Filter by requirement"
+        value={activeRequirements[0] || "all"}
+        onChange={(e) => setActiveRequirements(e.target.value === "all" ? [] : [e.target.value])}
+        className={filterSelectClass}
+      >
+        <option value="all">All Requirements</option>
+        {REQUIREMENTS_LIST.map((req) => (
+          <option key={req} value={req}>
+            {req}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function OnlyAvailableToggle({
+  onlyAvailableFilter,
+  setOnlyAvailableFilter,
+}: {
+  onlyAvailableFilter: boolean;
+  setOnlyAvailableFilter: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50">
+      <label
+        htmlFor="search-onlyAvailable"
+        className="flex items-center gap-2 cursor-pointer group"
+      >
+        <div
+          className={`size-5 rounded-md border-2 flex items-center justify-center transition ${
+            onlyAvailableFilter
+              ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200"
+              : "bg-white border-slate-200 group-hover:border-indigo-400"
+          }`}
+        >
+          <input
+            id="search-onlyAvailable"
+            type="checkbox"
+            className="hidden"
+            checked={onlyAvailableFilter}
+            onChange={() => setOnlyAvailableFilter(!onlyAvailableFilter)}
+          />
+          {onlyAvailableFilter && <Check size={14} strokeWidth={3} />}
+        </div>
+        <span
+          className={`text-xs font-bold transition-colors ${onlyAvailableFilter ? "text-indigo-700" : "text-slate-500 group-hover:text-slate-700"}`}
+        >
+          Only show courses which can be Applied now
+        </span>
+      </label>
+      <div className="w-px h-4 bg-indigo-200 mx-1" />
+      <p className="text-[10px] font-medium text-indigo-400 italic">
+        Hides courses whose application deadline has already passed.
+      </p>
+    </div>
+  );
+}
+
+function PriceRangeFilter({
+  priceRange,
+  setPriceRange,
+  maxPrice,
+}: {
+  priceRange: [number, number];
+  setPriceRange: (v: [number, number]) => void;
+  maxPrice: number;
+}) {
+  return (
+    <div className="bg-slate-50 p-4 rounded-xl space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+          <Tag size={12} /> Tuition Fee Range
+        </span>
+        <span className="text-[11px] font-bold text-indigo-600">
+          ${priceRange[0].toLocaleString()} - ${priceRange[1].toLocaleString()}
+        </span>
+      </div>
+      <div className="relative h-6 flex items-center">
+        <input
+          aria-label="Minimum tuition fee"
+          type="range"
+          min="0"
+          max={maxPrice}
+          step="500"
+          value={priceRange[0]}
+          onChange={(e) =>
+            setPriceRange([Math.min(parseInt(e.target.value), priceRange[1] - 500), priceRange[1]])
+          }
+          className="absolute w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 z-10"
+        />
+        <input
+          aria-label="Maximum tuition fee"
+          type="range"
+          min="0"
+          max={maxPrice}
+          step="500"
+          value={priceRange[1]}
+          onChange={(e) =>
+            setPriceRange([priceRange[0], Math.max(parseInt(e.target.value), priceRange[0] + 500)])
+          }
+          className="absolute w-full h-1 bg-transparent rounded-lg appearance-none cursor-pointer accent-indigo-600 z-20 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto"
+        />
+      </div>
+      <div className="flex justify-between text-[9px] font-bold text-slate-400">
+        <span>$0</span>
+        <span>${maxPrice.toLocaleString()}</span>
+      </div>
+    </div>
+  );
+}
+
+function ClearFiltersButton({ visible, onClear }: { visible: boolean; onClear: () => void }) {
+  if (!visible) return null;
+  return (
+    <button
+      type="button"
+      onClick={onClear}
+      className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
+    >
+      <X size={12} /> Clear all filters
+    </button>
+  );
+}
+
+function FilterToolbar({
+  showFilters,
+  setShowFilters,
+  showSaveFilter,
+  setShowSaveFilter,
+  savedFilters,
+  loadFilterPreset,
+  hasSearch,
+  resultCount,
+}: {
+  showFilters: boolean;
+  setShowFilters: (v: boolean) => void;
+  showSaveFilter: boolean;
+  setShowSaveFilter: (v: boolean) => void;
+  savedFilters: SavedFilterPreset[];
+  loadFilterPreset: (preset: SavedFilterPreset) => void;
+  hasSearch: boolean;
+  resultCount: number;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 font-medium transition-colors"
+        >
+          <Filter size={14} />
+          {showFilters ? "Hide filters" : "Show filters"}
+          {showFilters ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowSaveFilter(!showSaveFilter)}
+          className="flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-600 font-medium transition-colors"
+        >
+          <Bookmark size={12} />
+          Save Filter
+        </button>
+      </div>
+      <div className="flex items-center gap-2">
+        {savedFilters.length > 0 && (
+          <div className="flex items-center gap-1">
+            {savedFilters.slice(-3).map((preset) => (
+              <button
+                type="button"
+                key={preset.id}
+                onClick={() => loadFilterPreset(preset)}
+                className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors text-[10px] font-semibold"
+              >
+                {preset.name}
+              </button>
+            ))}
+          </div>
+        )}
+        {hasSearch && (
+          <span className="text-xs text-slate-400">
+            {resultCount} result{resultCount !== 1 ? "s" : ""} found
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SaveFilterForm({
+  visible,
+  filterPresetName,
+  setFilterPresetName,
+  saveFilterPreset,
+  onClose,
+}: {
+  visible: boolean;
+  filterPresetName: string;
+  setFilterPresetName: (v: string) => void;
+  saveFilterPreset: () => void;
+  onClose: () => void;
+}) {
+  if (!visible) return null;
+  return (
+    <div className="mt-3 flex items-center gap-2 animate-fade-in">
+      <input
+        type="text"
+        aria-label="Filter preset name"
+        value={filterPresetName}
+        onChange={(e) => setFilterPresetName(e.target.value)}
+        placeholder="Preset name..."
+        className="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-300 outline-none"
+      />
+      <button
+        type="button"
+        onClick={saveFilterPreset}
+        className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+      >
+        Save
+      </button>
+      <button
+        type="button"
+        onClick={onClose}
+        className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-600"
+      >
+        Cancel
+      </button>
     </div>
   );
 }
@@ -1442,6 +2303,7 @@ function SearchFiltersPanel({
   availableCategories,
   availableUniversities,
   availableCountries,
+  universitiesByCountry,
   availableIntakes,
   availableDurations,
   savedFilters,
@@ -1489,6 +2351,7 @@ function SearchFiltersPanel({
   availableCategories: string[];
   availableUniversities: string[];
   availableCountries: string[];
+  universitiesByCountry: Record<string, string[]>;
   availableIntakes: string[];
   availableDurations: string[];
   savedFilters: SavedFilterPreset[];
@@ -1510,10 +2373,11 @@ function SearchFiltersPanel({
         <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
+          aria-label="Search courses and universities"
           placeholder="Search by name, country, instructor, keyword..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 text-base border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition-all"
+          className="w-full pl-12 pr-4 py-3 text-base border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition"
         />
         {query && (
           <button
@@ -1527,421 +2391,94 @@ function SearchFiltersPanel({
         )}
       </div>
 
-      <div className="mb-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap size={14} className="text-purple-500 fill-purple-500" />
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">
-            Quick Filters
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-100 hover:scrollbar-thumb-purple-200">
-            {quickFilters.map((filter) => {
-              const IconComponent =
-                (Icons as unknown as Record<string, LucideIcon>)[filter.icon] || Icons.Filter;
-              const isActive = activeQuickFilters.includes(filter.label);
+      <QuickFiltersSection
+        quickFilters={quickFilters}
+        activeQuickFilters={activeQuickFilters}
+        setActiveQuickFilters={setActiveQuickFilters}
+      />
 
-              return (
-                <button
-                  type="button"
-                  key={filter.id}
-                  onClick={() => {
-                    if (isActive) {
-                      setActiveQuickFilters(activeQuickFilters.filter((id) => id !== filter.label));
-                    } else {
-                      setActiveQuickFilters([...activeQuickFilters, filter.label]);
-                    }
-                  }}
-                  className={`
-                    flex items-center gap-2 px-4 py-2 rounded-full border text-[11px] font-bold transition-all whitespace-nowrap
-                    ${
-                      isActive
-                        ? "bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-100"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-purple-300 hover:text-purple-600"
-                    }
-                  `}
-                >
-                  <IconComponent size={12} />
-                  {filter.label}
-                </button>
-              );
-            })}
-          </div>
-          {activeQuickFilters.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setActiveQuickFilters([])}
-              className="text-[10px] font-bold text-red-500 hover:text-red-700 px-2 py-1.5"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-      </div>
+      <FilterToolbar
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+        showSaveFilter={showSaveFilter}
+        setShowSaveFilter={setShowSaveFilter}
+        savedFilters={savedFilters}
+        loadFilterPreset={loadFilterPreset}
+        hasSearch={hasSearch}
+        resultCount={filteredCourses.length + (query ? universitiesResults.length : 0)}
+      />
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 font-medium transition-colors"
-          >
-            <Filter size={14} />
-            {showFilters ? "Hide filters" : "Show filters"}
-            {showFilters ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSaveFilter(!showSaveFilter)}
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-600 font-medium transition-colors"
-          >
-            <Bookmark size={12} />
-            Save Filter
-          </button>
-        </div>
-        <div className="flex items-center gap-2">
-          {savedFilters.length > 0 && (
-            <div className="flex items-center gap-1">
-              {savedFilters.slice(-3).map((preset) => (
-                <button
-                  type="button"
-                  key={preset.id}
-                  onClick={() => loadFilterPreset(preset)}
-                  className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors text-[10px] font-semibold"
-                >
-                  {preset.name}
-                </button>
-              ))}
-            </div>
-          )}
-          {hasSearch && (
-            <span className="text-xs text-slate-400">
-              {filteredCourses.length + (query ? universitiesResults.length : 0)} result
-              {filteredCourses.length + (query ? universitiesResults.length : 0) !== 1
-                ? "s"
-                : ""}{" "}
-              found
-            </span>
-          )}
-        </div>
-      </div>
-
-      {showSaveFilter && (
-        <div className="mt-3 flex items-center gap-2 animate-fade-in">
-          <input
-            type="text"
-            value={filterPresetName}
-            onChange={(e) => setFilterPresetName(e.target.value)}
-            placeholder="Preset name..."
-            className="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-300 outline-none"
-          />
-          <button
-            type="button"
-            onClick={saveFilterPreset}
-            className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSaveFilter(false)}
-            className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-600"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
+      <SaveFilterForm
+        visible={showSaveFilter}
+        filterPresetName={filterPresetName}
+        setFilterPresetName={setFilterPresetName}
+        saveFilterPreset={saveFilterPreset}
+        onClose={() => setShowSaveFilter(false)}
+      />
 
       {showFilters && (
         <div className="mt-4 pt-4 border-t border-slate-100 animate-fade-in space-y-4">
-          <div className="flex flex-wrap gap-3">
-            <div className="relative">
-              <GraduationCap
-                size={13}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-indigo-400"
-              />
-              <select
-                value={selectedStudentId}
-                onChange={(e) => {
-                  setSelectedStudentId(e.target.value);
-                  if (e.target.value === "guest") setShowGuestModal(true);
-                }}
-                className="text-xs font-bold pl-8 pr-3 py-2 border border-indigo-100 rounded-lg bg-indigo-50/50 text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer appearance-none min-w-[160px]"
-              >
-                <option value="all">Check Eligibility For.</option>
-                <option value="guest" className="font-bold text-indigo-600">
-                  Guest Student (Manual Check)
-                </option>
-                {students === undefined ? (
-                  <option disabled>Loading students...</option>
-                ) : students.length > 0 ? (
-                  students.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name || s.firstName + " " + s.lastName}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>No students found</option>
-                )}
-              </select>
-              {selectedStudentId === "guest" && (
-                <button
-                  type="button"
-                  onClick={() => setShowGuestModal(true)}
-                  className="absolute -top-1 -right-1 size-4 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-indigo-700 transition-colors shadow-sm"
-                  title="Edit Guest Details"
-                >
-                  <Edit2 size={8} />
-                </button>
-              )}
-            </div>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
-            >
-              <option value="all">All Categories</option>
-              {availableCategories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <select
-              value={levelFilter}
-              onChange={(e) => setLevelFilter(e.target.value)}
-              className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
-            >
-              <option value="all">All Levels</option>
-              <option value="Undergraduate">Undergraduate</option>
-              <option value="Postgraduate">Postgraduate</option>
-              <option value="PhD">PhD</option>
-            </select>
-            <select
-              value={universityFilter}
-              onChange={(e) => setUniversityFilter(e.target.value)}
-              className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
-            >
-              <option value="all">All Universities</option>
-              {availableUniversities.map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
-            </select>
-            <select
-              value={countryFilter}
-              onChange={(e) => setCountryFilter(e.target.value)}
-              className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
-            >
-              <option value="all">All Countries</option>
-              {availableCountries.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <select
-              value={intakeFilter}
-              onChange={(e) => setIntakeFilter(e.target.value)}
-              className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
-            >
-              <option value="all">All Intakes</option>
-              {availableIntakes.map((intake) => (
-                <option key={intake} value={intake}>
-                  {intake}
-                </option>
-              ))}
-            </select>
-            <select
-              value={durationFilter}
-              onChange={(e) => setDurationFilter(e.target.value)}
-              className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
-            >
-              <option value="all">All Durations</option>
-              {availableDurations.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-            <select
-              value={activeRequirements[0] || "all"}
-              onChange={(e) =>
-                setActiveRequirements(e.target.value === "all" ? [] : [e.target.value])
-              }
-              className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
-            >
-              <option value="all">All Requirements</option>
-              {REQUIREMENTS_LIST.map((req) => (
-                <option key={req} value={req}>
-                  {req}
-                </option>
-              ))}
-            </select>
-          </div>
+          <FilterSelects
+            selectedStudentId={selectedStudentId}
+            setSelectedStudentId={setSelectedStudentId}
+            setShowGuestModal={setShowGuestModal}
+            students={students}
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
+            levelFilter={levelFilter}
+            setLevelFilter={setLevelFilter}
+            countryFilter={countryFilter}
+            setCountryFilter={setCountryFilter}
+            universityFilter={universityFilter}
+            setUniversityFilter={setUniversityFilter}
+            universitiesByCountry={universitiesByCountry}
+            availableCategories={availableCategories}
+            availableCountries={availableCountries}
+            availableUniversities={availableUniversities}
+            availableDurations={availableDurations}
+            intakeFilter={intakeFilter}
+            setIntakeFilter={setIntakeFilter}
+            availableIntakes={availableIntakes}
+            durationFilter={durationFilter}
+            setDurationFilter={setDurationFilter}
+            activeRequirements={activeRequirements}
+            setActiveRequirements={setActiveRequirements}
+          />
 
-          <div className="flex items-center gap-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50">
-            <label
-              htmlFor="search-onlyAvailable"
-              className="flex items-center gap-2 cursor-pointer group"
-            >
-              <div
-                className={`
-                size-5 rounded-md border-2 flex items-center justify-center transition-all
-                ${onlyAvailableFilter ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200" : "bg-white border-slate-200 group-hover:border-indigo-400"}
-              `}
-              >
-                <input
-                  id="search-onlyAvailable"
-                  type="checkbox"
-                  className="hidden"
-                  checked={onlyAvailableFilter}
-                  onChange={() => setOnlyAvailableFilter(!onlyAvailableFilter)}
-                />
-                {onlyAvailableFilter && <Check size={14} strokeWidth={3} />}
-              </div>
-              <span
-                className={`text-xs font-bold transition-colors ${onlyAvailableFilter ? "text-indigo-700" : "text-slate-500 group-hover:text-slate-700"}`}
-              >
-                Only show courses which can be Applied now
-              </span>
-            </label>
-            <div className="w-px h-4 bg-indigo-200 mx-1" />
-            <p className="text-[10px] font-medium text-indigo-400 italic">
-              Hides courses whose application deadline has already passed.
-            </p>
-          </div>
+          <OnlyAvailableToggle
+            onlyAvailableFilter={onlyAvailableFilter}
+            setOnlyAvailableFilter={setOnlyAvailableFilter}
+          />
 
-          <div className="bg-slate-50 p-4 rounded-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                <Tag size={12} /> Tuition Fee Range
-              </span>
-              <span className="text-[11px] font-bold text-indigo-600">
-                ${priceRange[0].toLocaleString()} - ${priceRange[1].toLocaleString()}
-              </span>
-            </div>
-            <div className="relative h-6 flex items-center">
-              <input
-                type="range"
-                min="0"
-                max={maxPrice}
-                step="500"
-                value={priceRange[0]}
-                onChange={(e) =>
-                  setPriceRange([
-                    Math.min(parseInt(e.target.value), priceRange[1] - 500),
-                    priceRange[1],
-                  ])
-                }
-                className="absolute w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 z-10"
-              />
-              <input
-                type="range"
-                min="0"
-                max={maxPrice}
-                step="500"
-                value={priceRange[1]}
-                onChange={(e) =>
-                  setPriceRange([
-                    priceRange[0],
-                    Math.max(parseInt(e.target.value), priceRange[0] + 500),
-                  ])
-                }
-                className="absolute w-full h-1 bg-transparent rounded-lg appearance-none cursor-pointer accent-indigo-600 z-20 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto"
-              />
-            </div>
-            <div className="flex justify-between text-[9px] font-bold text-slate-400">
-              <span>$0</span>
-              <span>${maxPrice.toLocaleString()}</span>
-            </div>
-          </div>
+          <PriceRangeFilter
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+            maxPrice={maxPrice}
+          />
 
-          {(categoryFilter !== "all" ||
-            levelFilter !== "all" ||
-            universityFilter !== "all" ||
-            countryFilter !== "all" ||
-            intakeFilter !== "all" ||
-            durationFilter !== "all" ||
-            activeRequirements.length > 0 ||
-            priceRange[0] > 0 ||
-            priceRange[1] < maxPrice) && (
-            <button
-              type="button"
-              onClick={() => {
-                setCategoryFilter("all");
-                setLevelFilter("all");
-                setUniversityFilter("all");
-                setCountryFilter("all");
-                setIntakeFilter("all");
-                setDurationFilter("all");
-                setActiveRequirements([]);
-                setPriceRange([0, maxPrice]);
-              }}
-              className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
-            >
-              <X size={12} /> Clear all filters
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function _CourseResultsSection({
-  hasSearch,
-  loading,
-  filteredCourses,
-  universitiesResults,
-  expandedId,
-  setExpandedId,
-  setEnrollingCourse,
-  quickFilters,
-  showInNPR,
-  rates,
-}: {
-  hasSearch: boolean;
-  loading: boolean;
-  filteredCourses: Course[];
-  universitiesResults: UniversitySummary[];
-  expandedId: string | null;
-  setExpandedId: (v: string | null) => void;
-  setEnrollingCourse: (v: Course | null) => void;
-  quickFilters: QuickFilterEntry[];
-  showInNPR: boolean;
-  rates: Record<string, number>;
-}) {
-  return (
-    <div>
-      {hasSearch && (
-        <h2 className="text-sm font-semibold text-slate-600 mb-4 flex items-center gap-2">
-          <BookOpen size={16} className="text-indigo-500" />
-          Courses ({filteredCourses.length})
-        </h2>
-      )}
-
-      {!loading && filteredCourses.length === 0 && universitiesResults.length === 0 ? (
-        <div className="card py-16 text-center">
-          <Search size={36} className="text-slate-300 mx-auto mb-3" />
-          <p className="font-semibold text-slate-500 text-sm mb-1">No results found</p>
-          <p className="text-xs text-slate-400">Try different keywords or adjust your filters</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCourses.map((course) => (
-            <SearchResultCard
-              key={course.id}
-              course={course}
-              expanded={expandedId === course.id}
-              onToggle={() => setExpandedId(expandedId === course.id ? null : course.id)}
-              onEnroll={() => setEnrollingCourse(course)}
-              quickFilters={quickFilters}
-              showInNPR={showInNPR}
-              rates={rates}
-            />
-          ))}
+          <ClearFiltersButton
+            visible={
+              categoryFilter !== "all" ||
+              levelFilter !== "all" ||
+              universityFilter !== "all" ||
+              countryFilter !== "all" ||
+              intakeFilter !== "all" ||
+              durationFilter !== "all" ||
+              activeRequirements.length > 0 ||
+              priceRange[0] > 0 ||
+              priceRange[1] < maxPrice
+            }
+            onClear={() => {
+              setCategoryFilter("all");
+              setLevelFilter("all");
+              setUniversityFilter("all");
+              setCountryFilter("all");
+              setIntakeFilter("all");
+              setDurationFilter("all");
+              setActiveRequirements([]);
+              setPriceRange([0, maxPrice]);
+            }}
+          />
         </div>
       )}
     </div>

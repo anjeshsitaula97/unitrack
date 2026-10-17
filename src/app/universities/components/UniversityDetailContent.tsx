@@ -34,6 +34,7 @@ import {
   useReducedMotion,
 } from "framer-motion";
 import { getLatestRates, convertToNPR, formatNPR } from "@/lib/forex";
+import { api } from "@/lib/fetch-client";
 import AppLayoutWrapper from "@/components/AppLayoutWrapper";
 
 const formatIntake = (intakeStr: string | undefined) => {
@@ -142,20 +143,22 @@ export default function UniversityDetailContent({ id }: { id: string }) {
   const now = new Date();
 
   useEffect(() => {
+    let active = true;
     const load = async () => {
       try {
-        const res = await fetch(`/api/universities/${id}`);
-        if (!res.ok) throw new Error("University not found");
-        const data = await res.json();
-        setUniversity(data);
+        const data = await api.get<University>(`/api/universities/${id}`, { showError: false });
+        if (active) setUniversity(data);
       } catch (err) {
-        toast.error("Failed to load university details");
+        if (active) toast.error("Failed to load university details");
         console.error(err);
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     };
     load();
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   const faculties = useMemo(() => {
@@ -286,7 +289,7 @@ export default function UniversityDetailContent({ id }: { id: string }) {
               href="/universities"
               className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold text-sm transition-colors group"
             >
-              <div className="p-2 rounded-xl bg-white border border-slate-200 group-hover:border-indigo-200 group-hover:bg-indigo-50 transition-all">
+              <div className="p-2 rounded-xl bg-white border border-slate-200 group-hover:border-indigo-200 group-hover:bg-indigo-50 transition">
                 <ArrowLeft size={16} />
               </div>
               Back to Listing
@@ -298,7 +301,9 @@ export default function UniversityDetailContent({ id }: { id: string }) {
                   const newVal = !showInNPR;
                   setShowInNPR(newVal);
                   if (newVal && Object.keys(rates).length <= 1) {
-                    getLatestRates().then(setRates);
+                    getLatestRates()
+                      .then(setRates)
+                      .catch(() => toast.error("Failed to load exchange rates"));
                   }
                 }}
                 className={`btn-secondary ${showInNPR ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700" : ""}`}
@@ -487,7 +492,7 @@ function AboutCard({ university }: { university: University }) {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all group"
+            className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50 transition group"
           >
             <div className="flex items-center gap-4">
               <div className="size-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-indigo-500 group-hover:border-indigo-100 shadow-sm">
@@ -515,7 +520,7 @@ function AboutCard({ university }: { university: University }) {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-amber-50/60 border border-amber-100 hover:border-amber-300 hover:bg-amber-50 transition-all group"
+            className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-amber-50/60 border border-amber-100 hover:border-amber-300 hover:bg-amber-50 transition group"
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="size-10 shrink-0 rounded-xl bg-white border border-amber-200 flex items-center justify-center text-amber-500 shadow-sm">
@@ -740,6 +745,42 @@ function CampusGallery({
   );
 }
 
+function IntakeCell({ course, now }: { course: Course; now: Date }) {
+  let openIntakeName: string | null = null;
+  try {
+    if (course.intake && course.intake.startsWith("[")) {
+      const intakes = JSON.parse(course.intake);
+      if (Array.isArray(intakes) && intakes.length > 0) {
+        const openIntake = intakes.find((i) => {
+          const open = new Date(i.openDate);
+          const deadline = new Date(i.deadline);
+          return now >= open && now <= deadline;
+        });
+        if (openIntake) openIntakeName = openIntake.name;
+      }
+    }
+  } catch (_e) {}
+
+  if (openIntakeName) {
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1 w-fit">
+          {openIntakeName}
+          <span className="size-1 rounded-full bg-emerald-500 animate-pulse"></span>
+        </span>
+        <span className="text-[8px] text-emerald-600 font-bold uppercase tracking-tighter ml-1">
+          Open
+        </span>
+      </div>
+    );
+  }
+  return (
+    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
+      {formatIntake(course.intake)}
+    </span>
+  );
+}
+
 function CourseCatalog({
   university,
   activeFaculty,
@@ -793,10 +834,11 @@ function CourseCatalog({
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
+            aria-label="Search programs"
             placeholder="Search programs by name or level..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-6 py-3.5 text-sm border border-slate-200 rounded-2xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all font-medium shadow-sm"
+            className="w-full pl-12 pr-6 py-3.5 text-sm border border-slate-200 rounded-2xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-50 transition font-medium shadow-sm"
           />
         </div>
       </div>
@@ -807,7 +849,7 @@ function CourseCatalog({
           type="button"
           onClick={() => setActiveFaculty("all")}
           className={`
-            px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition-all
+            px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition
             ${
               activeFaculty === "all"
                 ? "bg-slate-900 text-white shadow-xl shadow-slate-200"
@@ -823,7 +865,7 @@ function CourseCatalog({
             key={faculty}
             onClick={() => setActiveFaculty(faculty)}
             className={`
-              px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition-all
+              px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition
               ${
                 activeFaculty === faculty
                   ? "bg-indigo-600 text-white shadow-xl shadow-indigo-100"
@@ -914,7 +956,9 @@ function CourseCatalog({
                             {course.applicationDeadline && (
                               <p className="text-[10px] text-red-500 font-medium mt-0.5">
                                 Deadline:{" "}
-                                {new Date(course.applicationDeadline).toLocaleDateString()}
+                                {new Date(course.applicationDeadline).toLocaleDateString("en-US", {
+                                  timeZone: "UTC",
+                                })}
                               </p>
                             )}
                           </div>
@@ -957,39 +1001,7 @@ function CourseCatalog({
                         </div>
                       </td>
                       <td className="p-3" suppressHydrationWarning>
-                        {(() => {
-                          try {
-                            if (course.intake && course.intake.startsWith("[")) {
-                              const intakes = JSON.parse(course.intake);
-                              if (Array.isArray(intakes) && intakes.length > 0) {
-                                const openIntake = intakes.find((i) => {
-                                  const open = new Date(i.openDate);
-                                  const deadline = new Date(i.deadline);
-                                  return now >= open && now <= deadline;
-                                });
-
-                                if (openIntake) {
-                                  return (
-                                    <div className="flex flex-col gap-1">
-                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1 w-fit">
-                                        {openIntake.name}
-                                        <span className="size-1 rounded-full bg-emerald-500 animate-pulse"></span>
-                                      </span>
-                                      <span className="text-[8px] text-emerald-600 font-bold uppercase tracking-tighter ml-1">
-                                        Open
-                                      </span>
-                                    </div>
-                                  );
-                                }
-                              }
-                            }
-                          } catch (_e) {}
-                          return (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
-                              {formatIntake(course.intake)}
-                            </span>
-                          );
-                        })()}
+                        <IntakeCell course={course} now={now} />
                       </td>
                       <td className="p-3 text-center max-w-[100px]">
                         <span
@@ -1002,7 +1014,7 @@ function CourseCatalog({
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Link
                             href={`/search?id=${course.id}`}
-                            className="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-800 hover:text-indigo-600 transition-all"
+                            className="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-800 hover:text-indigo-600 transition"
                             title="View Details"
                           >
                             <Info size={14} />
@@ -1010,7 +1022,7 @@ function CourseCatalog({
                           <button
                             type="button"
                             onClick={() => handleDeleteCourse(course.id, course.name)}
-                            className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-800 hover:text-rose-600 transition-all"
+                            className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-800 hover:text-rose-600 transition"
                             title="Delete Course"
                           >
                             <Trash2 size={14} />
@@ -1105,6 +1117,10 @@ function ImageLightbox({
           animate={prefersReducedMotion ? {} : { opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") onClose();
+          }}
+          role="presentation"
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md cursor-zoom-out"
         >
           <motion.div
@@ -1124,6 +1140,8 @@ function ImageLightbox({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close preview"
+              title="Close preview"
               className="absolute -top-4 -right-4 size-10 bg-white rounded-full flex items-center justify-center shadow-xl hover:bg-slate-100 transition-colors"
             >
               <X size={20} className="text-slate-800" />

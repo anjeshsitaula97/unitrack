@@ -122,6 +122,198 @@ function modalReducer(state: ModalState, action: ModalAction): ModalState {
   }
 }
 
+function LocationPanel() {
+  return (
+    <div className="text-center py-6">
+      <Loader2 className="animate-spin text-indigo-500 mx-auto mb-2" size={24} />
+      <p className="text-sm text-slate-500">Getting your location…</p>
+    </div>
+  );
+}
+
+function CameraFrame({
+  videoRef,
+  overlayRef,
+  children,
+}: {
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  overlayRef: React.RefObject<HTMLCanvasElement | null>;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="relative bg-slate-900 rounded-xl overflow-hidden aspect-[4/3]">
+      {children}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        aria-label="Camera preview"
+        className="w-full h-full object-cover"
+      />
+      <canvas ref={overlayRef} className="absolute inset-0 w-full h-full" />
+    </div>
+  );
+}
+
+function CapturePanel({
+  stream,
+  step,
+  movementCount,
+  videoRef,
+  overlayRef,
+}: {
+  stream: MediaStream | null;
+  step: Step;
+  movementCount: number;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  overlayRef: React.RefObject<HTMLCanvasElement | null>;
+}) {
+  return (
+    <CameraFrame videoRef={videoRef} overlayRef={overlayRef}>
+      {!stream && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Loader2 className="animate-spin text-white" size={24} />
+        </div>
+      )}
+      {step === "capturing" && (
+        <div className="absolute bottom-3 left-3 bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-2">
+          <Eye size={12} /> Move head slightly: {movementCount}/{MOVEMENT_FRAMES}
+        </div>
+      )}
+    </CameraFrame>
+  );
+}
+
+function VerifyingPanel({
+  videoRef,
+  overlayRef,
+}: {
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  overlayRef: React.RefObject<HTMLCanvasElement | null>;
+}) {
+  return (
+    <CameraFrame videoRef={videoRef} overlayRef={overlayRef}>
+      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin text-white mx-auto mb-2" size={28} />
+          <p className="text-white text-sm font-medium">Verifying identity…</p>
+        </div>
+      </div>
+    </CameraFrame>
+  );
+}
+
+function CompletePanel({
+  photoUrl,
+  similarity,
+  hasLocation,
+}: {
+  photoUrl: string | null;
+  similarity: number | null;
+  hasLocation: boolean;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="bg-emerald-50 text-emerald-700 text-xs p-3 rounded-lg flex items-center gap-2">
+        <ShieldCheck size={14} /> Face verified: {similarity}% match
+      </div>
+      {photoUrl && (
+        <div className="w-full rounded-xl aspect-[4/3] overflow-hidden relative">
+          <Image
+            src={photoUrl}
+            alt="Verification"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        </div>
+      )}
+      {hasLocation && (
+        <div className="bg-emerald-50 text-emerald-700 text-xs p-3 rounded-lg flex items-center gap-2">
+          <MapPin size={14} /> Location captured
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ErrorPanel({ message, locError }: { message: string; locError: string | null }) {
+  return (
+    <div>
+      <div className="bg-rose-50 text-rose-700 text-xs p-3 rounded-lg flex items-start gap-2 mb-2">
+        <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="font-semibold mb-1">Verification failed</p>
+          <p>{message}</p>
+        </div>
+      </div>
+      {locError && (
+        <div className="bg-amber-50 text-amber-700 text-xs p-3 rounded-lg flex items-start gap-2">
+          <MapPin size={14} className="mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="font-semibold mb-1">Location error</p>
+            <p>{locError}. Please enable location access.</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ModalFooter({
+  step,
+  action,
+  onCancel,
+  onRetry,
+  onConfirm,
+}: {
+  step: Step;
+  action: "checkin" | "checkout";
+  onCancel: () => void;
+  onRetry: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="flex gap-3 pt-2">
+      {step !== "complete" && (
+        <>
+          <button type="button" onClick={onCancel} className="flex-1 btn-secondary">
+            Cancel
+          </button>
+          {step === "error" && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="flex-1 btn-primary flex items-center justify-center gap-2"
+              aria-label="Camera"
+            >
+              {" "}
+              <Camera size={15} /> Retry
+            </button>
+          )}
+        </>
+      )}
+      {step === "complete" && (
+        <>
+          <button type="button" onClick={onRetry} className="flex-1 btn-secondary">
+            Retake
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="flex-1 btn-primary flex items-center justify-center gap-2"
+            aria-label="ShieldCheck"
+          >
+            {" "}
+            <ShieldCheck size={15} /> Confirm {action === "checkin" ? "Check In" : "Check Out"}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function FaceVerificationModal({
   action,
   onComplete,
@@ -370,139 +562,41 @@ export default function FaceVerificationModal({
           </button>
         </div>
         <div className="p-6 space-y-4">
-          {state.step === "location" && (
-            <div className="text-center py-6">
-              <Loader2 className="animate-spin text-indigo-500 mx-auto mb-2" size={24} />
-              <p className="text-sm text-slate-500">Getting your location…</p>
-            </div>
-          )}
+          {state.step === "location" && <LocationPanel />}
 
           {(state.step === "face" || state.step === "capturing") && (
-            <div className="relative bg-slate-900 rounded-xl overflow-hidden aspect-[4/3]">
-              {!stream && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="animate-spin text-white" size={24} />
-                </div>
-              )}
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                aria-label="Camera preview"
-                className="w-full h-full object-cover"
-              />
-              <canvas ref={overlayRef} className="absolute inset-0 w-full h-full" />
-              {state.step === "capturing" && (
-                <div className="absolute bottom-3 left-3 bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-2">
-                  <Eye size={12} /> Move head slightly: {state.movementCount}/{MOVEMENT_FRAMES}
-                </div>
-              )}
-            </div>
+            <CapturePanel
+              stream={stream}
+              step={state.step}
+              movementCount={state.movementCount}
+              videoRef={videoRef}
+              overlayRef={overlayRef}
+            />
           )}
 
           {state.step === "verifying" && (
-            <div className="relative bg-slate-900 rounded-xl overflow-hidden aspect-[4/3]">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                aria-label="Camera preview"
-                className="w-full h-full object-cover"
-              />
-              <canvas ref={overlayRef} className="absolute inset-0 w-full h-full" />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <div className="text-center">
-                  <Loader2 className="animate-spin text-white mx-auto mb-2" size={28} />
-                  <p className="text-white text-sm font-medium">Verifying identity…</p>
-                </div>
-              </div>
-            </div>
+            <VerifyingPanel videoRef={videoRef} overlayRef={overlayRef} />
           )}
 
           {state.step === "complete" && (
-            <div className="space-y-3">
-              <div className="bg-emerald-50 text-emerald-700 text-xs p-3 rounded-lg flex items-center gap-2">
-                <ShieldCheck size={14} /> Face verified: {state.similarity}% match
-              </div>
-              {state.photoUrl && (
-                <div className="w-full rounded-xl aspect-[4/3] overflow-hidden relative">
-                  <Image
-                    src={state.photoUrl}
-                    alt="Verification"
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
-                </div>
-              )}
-              {state.location && (
-                <div className="bg-emerald-50 text-emerald-700 text-xs p-3 rounded-lg flex items-center gap-2">
-                  <MapPin size={14} /> Location captured
-                </div>
-              )}
-            </div>
+            <CompletePanel
+              photoUrl={state.photoUrl}
+              similarity={state.similarity}
+              hasLocation={!!state.location}
+            />
           )}
 
           {state.step === "error" && (
-            <div>
-              <div className="bg-rose-50 text-rose-700 text-xs p-3 rounded-lg flex items-start gap-2 mb-2">
-                <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold mb-1">Verification failed</p>
-                  <p>{state.message}</p>
-                </div>
-              </div>
-              {state.locError && (
-                <div className="bg-amber-50 text-amber-700 text-xs p-3 rounded-lg flex items-start gap-2">
-                  <MapPin size={14} className="mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold mb-1">Location error</p>
-                    <p>{state.locError}. Please enable location access.</p>
-                  </div>
-                </div>
-              )}
-            </div>
+            <ErrorPanel message={state.message} locError={state.locError} />
           )}
 
-          <div className="flex gap-3 pt-2">
-            {state.step !== "complete" && (
-              <>
-                <button type="button" onClick={onCancel} className="flex-1 btn-secondary">
-                  Cancel
-                </button>
-                {state.step === "error" && (
-                  <button
-                    type="button"
-                    onClick={handleRetry}
-                    className="flex-1 btn-primary flex items-center justify-center gap-2"
-                    aria-label="Camera"
-                  >
-                    {" "}
-                    <Camera size={15} /> Retry
-                  </button>
-                )}
-              </>
-            )}
-            {state.step === "complete" && (
-              <>
-                <button type="button" onClick={handleRetry} className="flex-1 btn-secondary">
-                  Retake
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirm}
-                  className="flex-1 btn-primary flex items-center justify-center gap-2"
-                  aria-label="ShieldCheck"
-                >
-                  {" "}
-                  <ShieldCheck size={15} /> Confirm{" "}
-                  {action === "checkin" ? "Check In" : "Check Out"}
-                </button>
-              </>
-            )}
-          </div>
+          <ModalFooter
+            step={state.step}
+            action={action}
+            onCancel={onCancel}
+            onRetry={handleRetry}
+            onConfirm={handleConfirm}
+          />
         </div>
       </div>
     </div>

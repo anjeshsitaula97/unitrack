@@ -331,30 +331,7 @@ export default function BackupsPage() {
           {/* Backup Section */}
           <div className="card p-0 border-none shadow-xl shadow-slate-200/50 overflow-hidden min-h-[480px] flex flex-col">
             {!showBackupConfig ? (
-              <div className="p-12 flex-1 flex flex-col items-center justify-center text-center">
-                <div className="size-24 bg-indigo-50 text-indigo-600 rounded-[2.5rem] flex items-center justify-center mb-8 relative group shadow-inner">
-                  <Download size={40} className="group-hover:-translate-y-1 transition-transform" />
-                  <div className="absolute inset-0 bg-indigo-600/5 rounded-[2.5rem] animate-pulse" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-800 mb-3">Backup Snapshot</h2>
-                <p className="text-sm text-slate-500 mb-10 max-w-xs leading-relaxed">
-                  Securely export your system data. You can choose to backup the entire system or
-                  select specific categories.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowBackupConfig(true)}
-                  className="btn-primary px-10 py-4 text-base flex items-center gap-3 shadow-lg shadow-indigo-100"
-                >
-                  <RefreshCw size={20} className="animate-spin-slow" />
-                  Start New Backup
-                </button>
-                {lastBackup && (
-                  <p className="mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    Latest Activity: {lastBackup}
-                  </p>
-                )}
-              </div>
+              <BackupIntro onStart={() => setShowBackupConfig(true)} lastBackup={lastBackup} />
             ) : (
               <BackupConfigPanel
                 showBackupConfig={showBackupConfig}
@@ -376,36 +353,7 @@ export default function BackupsPage() {
           {/* Restore Section */}
           <div className="card p-0 border-none shadow-xl shadow-slate-200/50 overflow-hidden min-h-[480px] flex flex-col">
             {!uploadedBackup ? (
-              <div className="p-12 flex-1 flex flex-col items-center justify-center text-center">
-                <div className="size-24 bg-rose-50 text-rose-600 rounded-[2.5rem] flex items-center justify-center mb-8 relative group shadow-inner">
-                  <Upload size={40} className="group-hover:translate-y-1 transition-transform" />
-                  <div className="absolute inset-0 bg-rose-600/5 rounded-[2.5rem] animate-pulse" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-800 mb-3">System Restore</h2>
-                <p className="text-sm text-slate-500 mb-10 max-w-xs leading-relaxed">
-                  Recover your data from a previous backup file. You can choose exactly which parts
-                  of the system to overwrite.
-                </p>
-
-                <div className="relative">
-                  <input
-                    type="file"
-                    aria-label="Upload Backup File"
-                    accept=".json"
-                    onChange={handleFileUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                  />
-                  <button
-                    type="button"
-                    className="btn-secondary border-rose-200 text-rose-600 hover:bg-rose-50 px-10 py-4 text-base flex items-center gap-3"
-                    aria-label="FileJson"
-                  >
-                    {" "}
-                    <FileJson size={20} />
-                    Upload Backup File
-                  </button>
-                </div>
-              </div>
+              <RestoreIntro onFileUpload={handleFileUpload} />
             ) : (
               <RestoreConfigPanel
                 uploadedBackup={uploadedBackup}
@@ -444,6 +392,74 @@ export default function BackupsPage() {
   );
 }
 
+function BackupIntro({ onStart, lastBackup }: { onStart: () => void; lastBackup: string | null }) {
+  return (
+    <div className="p-12 flex-1 flex flex-col items-center justify-center text-center">
+      <div className="size-24 bg-indigo-50 text-indigo-600 rounded-[2.5rem] flex items-center justify-center mb-8 relative group shadow-inner">
+        <Download size={40} className="group-hover:-translate-y-1 transition-transform" />
+        <div className="absolute inset-0 bg-indigo-600/5 rounded-[2.5rem] animate-pulse" />
+      </div>
+      <h2 className="text-2xl font-bold text-slate-800 mb-3">Backup Snapshot</h2>
+      <p className="text-sm text-slate-500 mb-10 max-w-xs leading-relaxed">
+        Securely export your system data. You can choose to backup the entire system or select
+        specific categories.
+      </p>
+      <button
+        type="button"
+        onClick={onStart}
+        className="btn-primary px-10 py-4 text-base flex items-center gap-3 shadow-lg shadow-indigo-100"
+      >
+        <RefreshCw size={20} className="animate-spin-slow" />
+        Start New Backup
+      </button>
+      {lastBackup && (
+        <p className="mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+          Latest Activity: {lastBackup}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function RestoreIntro({
+  onFileUpload,
+}: {
+  onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <div className="p-12 flex-1 flex flex-col items-center justify-center text-center">
+      <div className="size-24 bg-rose-50 text-rose-600 rounded-[2.5rem] flex items-center justify-center mb-8 relative group shadow-inner">
+        <Upload size={40} className="group-hover:translate-y-1 transition-transform" />
+        <div className="absolute inset-0 bg-rose-600/5 rounded-[2.5rem] animate-pulse" />
+      </div>
+      <h2 className="text-2xl font-bold text-slate-800 mb-3">System Restore</h2>
+      <p className="text-sm text-slate-500 mb-10 max-w-xs leading-relaxed">
+        Recover your data from a previous backup file. You can choose exactly which parts of the
+        system to overwrite.
+      </p>
+
+      <div className="relative">
+        <input
+          type="file"
+          aria-label="Upload Backup File"
+          accept=".json"
+          onChange={onFileUpload}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+        />
+        <button
+          type="button"
+          className="btn-secondary border-rose-200 text-rose-600 hover:bg-rose-50 px-10 py-4 text-base flex items-center gap-3"
+          aria-label="FileJson"
+        >
+          {" "}
+          <FileJson size={20} />
+          Upload Backup File
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function BackupConfigPanel({
   showBackupConfig: _showBackupConfig,
   setShowBackupConfig,
@@ -476,8 +492,9 @@ function BackupConfigPanel({
       <div className="flex items-center justify-between mb-8">
         <button
           type="button"
+          aria-label="Back to backup options"
           onClick={() => setShowBackupConfig(false)}
-          className="p-2 -ml-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+          className="p-2 -ml-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition"
         >
           <ArrowLeft size={20} />
         </button>
@@ -510,7 +527,7 @@ function BackupConfigPanel({
               type="button"
               key={section.id}
               onClick={() => toggleBackupSection(section.id)}
-              className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+              className={`flex items-center gap-3 p-3 rounded-xl border-2 transition text-left ${
                 selectedBackupSections.includes(section.id)
                   ? "border-indigo-600 bg-indigo-50/50 text-indigo-700"
                   : "border-slate-100 hover:border-slate-200 text-slate-500"
@@ -532,7 +549,7 @@ function BackupConfigPanel({
         <button
           type="button"
           onClick={() => setEncryptBackup(!encryptBackup)}
-          className={`flex items-center gap-3 w-full p-4 rounded-2xl border-2 transition-all ${
+          className={`flex items-center gap-3 w-full p-4 rounded-2xl border-2 transition ${
             encryptBackup
               ? "border-emerald-400 bg-emerald-50 text-emerald-700"
               : "border-slate-100 hover:border-slate-200 text-slate-400"
@@ -548,10 +565,10 @@ function BackupConfigPanel({
             </p>
           </div>
           <div
-            className={`w-10 h-6 rounded-full transition-all ${encryptBackup ? "bg-emerald-500" : "bg-slate-200"} relative`}
+            className={`w-10 h-6 rounded-full transition ${encryptBackup ? "bg-emerald-500" : "bg-slate-200"} relative`}
           >
             <div
-              className={`absolute top-0.5 size-5 bg-white rounded-full shadow transition-all ${encryptBackup ? "left-[18px]" : "left-0.5"}`}
+              className={`absolute top-0.5 size-5 bg-white rounded-full shadow transition ${encryptBackup ? "left-[18px]" : "left-0.5"}`}
             />
           </div>
         </button>
@@ -625,11 +642,12 @@ function RestoreConfigPanel({
       <div className="flex items-center justify-between mb-8">
         <button
           type="button"
+          aria-label="Back to restore upload"
           onClick={() => {
             setUploadedBackup(null);
             setSelectedRestoreSections([]);
           }}
-          className="p-2 -ml-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+          className="p-2 -ml-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition"
         >
           <ArrowLeft size={20} />
         </button>
@@ -643,7 +661,10 @@ function RestoreConfigPanel({
             <p className="text-[10px] font-black text-slate-800 uppercase tracking-tighter">
               {uploadedBackup.encrypted ? "Encrypted File" : "File Loaded"}
             </p>
-            <p className="text-[9px] text-slate-400 font-medium leading-none">
+            <p
+              suppressHydrationWarning
+              className="text-[9px] text-slate-400 font-medium leading-none"
+            >
               {uploadedBackup.timestamp
                 ? new Date(uploadedBackup.timestamp).toLocaleDateString()
                 : "Password required"}
@@ -697,7 +718,7 @@ function RestoreConfigPanel({
                   key={section.id}
                   disabled={!isAvailable}
                   onClick={() => toggleRestoreSection(section.id)}
-                  className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all text-left group ${
+                  className={`flex items-center justify-between p-3 rounded-xl border-2 transition text-left group ${
                     !isAvailable
                       ? "border-slate-50 bg-slate-50 opacity-50 cursor-not-allowed"
                       : selectedRestoreSections.includes(section.id)
@@ -732,7 +753,7 @@ function RestoreConfigPanel({
           isRestoring ||
           (uploadedBackup.encrypted ? !restorePassword : selectedRestoreSections.length === 0)
         }
-        className="w-full bg-rose-600 hover:bg-rose-700 text-white py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-rose-200 transition-all disabled:opacity-50 mt-auto"
+        className="w-full bg-rose-600 hover:bg-rose-700 text-white py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-rose-200 transition disabled:opacity-50 mt-auto"
       >
         {isRestoring ? <Loader2 className="animate-spin" size={20} /> : <RefreshCw size={20} />}
         <span className="font-bold">

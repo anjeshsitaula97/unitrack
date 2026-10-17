@@ -199,7 +199,7 @@ export default function TasksContent() {
             <button
               type="button"
               onClick={() => setTaskView("grid")}
-              className={`p-2 rounded-lg transition-all ${taskView === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+              className={`p-2 rounded-lg transition ${taskView === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
               title="Kanban Board"
             >
               <LayoutGrid size={18} />
@@ -207,7 +207,7 @@ export default function TasksContent() {
             <button
               type="button"
               onClick={() => setTaskView("list")}
-              className={`p-2 rounded-lg transition-all ${taskView === "list" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+              className={`p-2 rounded-lg transition ${taskView === "list" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
               title="List View"
             >
               <List size={18} />
@@ -229,7 +229,7 @@ export default function TasksContent() {
               });
               setShowTaskModal(true);
             }}
-            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-black hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-100"
+            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-black hover:bg-indigo-700 transition flex items-center gap-2 shadow-lg shadow-indigo-100"
           >
             <Plus size={18} />
             New Task
@@ -246,7 +246,7 @@ export default function TasksContent() {
             placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-medium transition-all"
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-medium transition"
           />
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -298,7 +298,7 @@ export default function TasksContent() {
                   {statusTasks.map((task) => (
                     <div
                       key={task.id}
-                      className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all group relative overflow-hidden"
+                      className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition group relative overflow-hidden"
                     >
                       <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
 
@@ -308,7 +308,7 @@ export default function TasksContent() {
                         >
                           - {task.priority} Priority
                         </span>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
                           <button
                             type="button"
                             onClick={() => openEditModal(task)}
@@ -373,7 +373,7 @@ export default function TasksContent() {
                         <select
                           value={task.status}
                           onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                          className="text-[9px] font-black uppercase tracking-widest bg-white border border-slate-100 text-indigo-600 cursor-pointer hover:bg-indigo-50 px-2 py-1 rounded-lg transition-all outline-none"
+                          className="text-[9px] font-black uppercase tracking-widest bg-white border border-slate-100 text-indigo-600 cursor-pointer hover:bg-indigo-50 px-2 py-1 rounded-lg transition outline-none"
                         >
                           {statuses.map((s) => (
                             <option key={s} value={s}>
@@ -458,7 +458,7 @@ export default function TasksContent() {
                       <select
                         value={task.status}
                         onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                        className="text-[9px] font-black uppercase tracking-widest bg-slate-100 border border-transparent text-indigo-600 cursor-pointer hover:bg-indigo-50 px-2 py-1 rounded-lg transition-all outline-none"
+                        className="text-[9px] font-black uppercase tracking-widest bg-slate-100 border border-transparent text-indigo-600 cursor-pointer hover:bg-indigo-50 px-2 py-1 rounded-lg transition outline-none"
                       >
                         {statuses.map((s) => (
                           <option key={s} value={s}>
@@ -496,18 +496,18 @@ export default function TasksContent() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition">
                         <button
                           type="button"
                           onClick={() => openEditModal(task)}
-                          className="p-2 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                          className="p-2 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteTask(task.id)}
-                          className="p-2 text-red-800 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                          className="p-2 text-red-800 hover:text-red-500 hover:bg-red-50 rounded-xl transition"
                         >
                           <Trash2 size={16} />
                         </button>

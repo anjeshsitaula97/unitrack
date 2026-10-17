@@ -36,6 +36,342 @@ interface Course {
   country: string;
 }
 
+interface ComboboxOption<T extends string | number> {
+  id: T;
+  primary: string;
+  secondary?: string;
+}
+
+interface ComboboxProps<T extends string | number> {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  placeholder: string;
+  disabledPlaceholder?: string;
+  selectedText: string | null;
+  searchPlaceholder: string;
+  searchAriaLabel: string;
+  search: string;
+  onSearchChange: (value: string) => void;
+  open: boolean;
+  onToggle: () => void;
+  loading: boolean;
+  emptyText: string;
+  options: ComboboxOption<T>[];
+  selectedId: T | null;
+  onSelect: (id: T) => void;
+  disabled?: boolean;
+}
+
+function Combobox<T extends string | number>({
+  id,
+  label,
+  icon,
+  placeholder,
+  disabledPlaceholder,
+  selectedText,
+  searchPlaceholder,
+  searchAriaLabel,
+  search,
+  onSearchChange,
+  open,
+  onToggle,
+  loading,
+  emptyText,
+  options,
+  selectedId,
+  onSelect,
+  disabled,
+}: ComboboxProps<T>) {
+  return (
+    <div className="space-y-2">
+      <label
+        htmlFor={id}
+        className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+      >
+        {icon} {label}
+      </label>
+      <div className="relative">
+        <button
+          id={id}
+          type="button"
+          disabled={disabled}
+          onClick={onToggle}
+          className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-left transition hover:border-indigo-300 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {selectedText ? (
+            <span className="text-slate-800">{selectedText}</span>
+          ) : (
+            <span className="text-slate-400">
+              {disabled && disabledPlaceholder ? disabledPlaceholder : placeholder}
+            </span>
+          )}
+          <svg
+            className="w-4 h-4 text-slate-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {open && (
+          <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-hidden">
+            <div className="p-2 border-b border-slate-100">
+              <div className="relative">
+                <Search
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  type="text"
+                  aria-label={searchAriaLabel}
+                  placeholder={searchPlaceholder}
+                  value={search}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-100"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="overflow-y-auto max-h-48">
+              {loading ? (
+                <div className="p-4 text-center text-xs text-slate-400">
+                  <Loader2 className="animate-spin mx-auto" size={16} />
+                </div>
+              ) : options.length === 0 ? (
+                <div className="p-4 text-center text-xs text-slate-400">{emptyText}</div>
+              ) : (
+                options.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => onSelect(option.id)}
+                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-indigo-50 transition-colors flex flex-col ${selectedId === option.id ? "bg-indigo-50 text-indigo-700" : "text-slate-700"}`}
+                  >
+                    <span className="font-bold">{option.primary}</span>
+                    {option.secondary ? (
+                      <span className="text-[10px] text-slate-400">{option.secondary}</span>
+                    ) : null}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface StudentFieldProps {
+  students: Student[];
+  loading: boolean;
+  selectedId: number | null;
+  onSelect: (id: number) => void;
+}
+
+function StudentField({ students, loading, selectedId, onSelect }: StudentFieldProps) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const selected = students.find((s) => s.id === selectedId) || null;
+
+  const filtered = useMemo(() => {
+    if (!search) return students;
+    const q = search.toLowerCase();
+    return students.filter(
+      (s) =>
+        `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) ||
+        s.email?.toLowerCase().includes(q)
+    );
+  }, [students, search]);
+
+  return (
+    <Combobox<number>
+      id="student-select"
+      label="Student"
+      icon={<GraduationCap size={12} />}
+      placeholder="Select a student..."
+      selectedText={
+        selected ? `${selected.firstName} ${selected.lastName} — ${selected.email}` : null
+      }
+      searchPlaceholder="Search students..."
+      searchAriaLabel="Search students"
+      search={search}
+      onSearchChange={setSearch}
+      open={open}
+      onToggle={() => {
+        setOpen(!open);
+        setSearch("");
+      }}
+      loading={loading}
+      emptyText="No students found"
+      options={filtered.map((s) => ({
+        id: s.id,
+        primary: `${s.firstName} ${s.lastName}`,
+        secondary: s.email,
+      }))}
+      selectedId={selectedId}
+      onSelect={(id) => {
+        onSelect(id);
+        setOpen(false);
+      }}
+    />
+  );
+}
+
+interface UniversityFieldProps {
+  universities: University[];
+  loading: boolean;
+  selectedId: string | null;
+  studentCountry?: string;
+  onSelect: (id: string) => void;
+}
+
+function UniversityField({
+  universities,
+  loading,
+  selectedId,
+  studentCountry,
+  onSelect,
+}: UniversityFieldProps) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const selected = universities.find((u) => u.id === selectedId) || null;
+
+  const filtered = useMemo(() => {
+    let list = universities;
+    if (studentCountry) {
+      const countryMatch = list.filter(
+        (u) => u.country?.toLowerCase() === studentCountry.toLowerCase()
+      );
+      if (countryMatch.length > 0) list = countryMatch;
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (u) => u.name.toLowerCase().includes(q) || u.country?.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [universities, search, studentCountry]);
+
+  return (
+    <Combobox<string>
+      id="university-select"
+      label="University"
+      icon={<Building2 size={12} />}
+      placeholder="Select a university..."
+      selectedText={selected ? `${selected.name} — ${selected.country}` : null}
+      searchPlaceholder="Search universities..."
+      searchAriaLabel="Search universities"
+      search={search}
+      onSearchChange={setSearch}
+      open={open}
+      onToggle={() => {
+        setOpen(!open);
+        setSearch("");
+      }}
+      loading={loading}
+      emptyText="No universities found"
+      options={filtered.map((u) => ({
+        id: u.id,
+        primary: u.name,
+        secondary: u.city ? `${u.country}, ${u.city}` : u.country,
+      }))}
+      selectedId={selectedId}
+      onSelect={(id) => {
+        onSelect(id);
+        setOpen(false);
+      }}
+    />
+  );
+}
+
+interface CourseFieldProps {
+  courses: Course[];
+  loading: boolean;
+  selectedId: string | null;
+  universityId: string | null;
+  onSelect: (id: string) => void;
+}
+
+function CourseField({ courses, loading, selectedId, universityId, onSelect }: CourseFieldProps) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const selected = courses.find((c) => c.id === selectedId) || null;
+
+  const filtered = useMemo(() => {
+    if (!search) return courses;
+    const q = search.toLowerCase();
+    return courses.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.level?.toLowerCase().includes(q)
+    );
+  }, [courses, search]);
+
+  return (
+    <Combobox<string>
+      id="course-select"
+      label="Course"
+      icon={<BookOpen size={12} />}
+      placeholder="Select a course..."
+      disabledPlaceholder="Select a university first"
+      disabled={!universityId}
+      selectedText={selected ? `${selected.name} (${selected.level})` : null}
+      searchPlaceholder="Search courses..."
+      searchAriaLabel="Search courses"
+      search={search}
+      onSearchChange={setSearch}
+      open={open && !!universityId}
+      onToggle={() => {
+        setOpen(!open);
+        setSearch("");
+      }}
+      loading={loading}
+      emptyText="No courses at this university"
+      options={filtered.map((c) => ({
+        id: c.id,
+        primary: c.name,
+        secondary: c.level,
+      }))}
+      selectedId={selectedId}
+      onSelect={(id) => {
+        onSelect(id);
+        setOpen(false);
+      }}
+    />
+  );
+}
+
+interface ApplicationSummaryProps {
+  student: Student | null;
+  university: University | null;
+  course: Course | null;
+}
+
+function ApplicationSummary({ student, university, course }: ApplicationSummaryProps) {
+  if (!student || !university || !course) return null;
+  return (
+    <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 space-y-1">
+      <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-2">
+        Application Summary
+      </p>
+      <p className="text-sm text-slate-700">
+        <span className="font-bold">Student:</span> {student.firstName} {student.lastName}
+      </p>
+      <p className="text-sm text-slate-700">
+        <span className="font-bold">University:</span> {university.name}
+      </p>
+      <p className="text-sm text-slate-700">
+        <span className="font-bold">Course:</span> {course.name}
+      </p>
+    </div>
+  );
+}
+
 export default function ApplicationForm() {
   const router = useRouter();
 
@@ -48,22 +384,15 @@ export default function ApplicationForm() {
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [studentSearch, setStudentSearch] = useState("");
-  const [universitySearch, setUniversitySearch] = useState("");
-  const [courseSearch, setCourseSearch] = useState("");
-
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [selectedUniversityId, setSelectedUniversityId] = useState<string | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
 
-  const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
-  const [universityDropdownOpen, setUniversityDropdownOpen] = useState(false);
-  const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
-
   useEffect(() => {
+    const controller = new AbortController();
     const fetchStudents = async () => {
       try {
-        const res = await fetch("/api/students");
+        const res = await fetch("/api/students", { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
           setStudents(Array.isArray(data) ? data : data.data || []);
@@ -74,35 +403,15 @@ export default function ApplicationForm() {
       }
     };
     fetchStudents();
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
-    if (!selectedUniversityId) return;
-
-    const fetchCourses = async () => {
-      setCourses([]);
-      setSelectedCourseId(null);
-      setCourseSearch("");
-      setLoadingCourses(true);
-      try {
-        const res = await fetch(`/api/courses?universityId=${selectedUniversityId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setCourses(Array.isArray(data) ? data : data.data || []);
-        }
-      } catch {
-      } finally {
-        setLoadingCourses(false);
-      }
-    };
-    fetchCourses();
-  }, [selectedUniversityId]);
-
-  useEffect(() => {
+    const controller = new AbortController();
     const fetchUniversities = async () => {
       setLoadingUniversities(true);
       try {
-        const res = await fetch("/api/universities");
+        const res = await fetch("/api/universities", { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
           setUniversities(Array.isArray(data) ? data : data.data || []);
@@ -113,46 +422,34 @@ export default function ApplicationForm() {
       }
     };
     fetchUniversities();
+    return () => controller.abort();
   }, []);
+
+  const handleUniversitySelect = (id: string | null) => {
+    setSelectedUniversityId(id);
+    if (id) {
+      setCourses([]);
+      setSelectedCourseId(null);
+      setLoadingCourses(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedUniversityId) return;
+    const controller = new AbortController();
+    fetch(`/api/courses?universityId=${selectedUniversityId}`, { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setCourses(Array.isArray(data) ? data : data.data || []);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingCourses(false));
+    return () => controller.abort();
+  }, [selectedUniversityId]);
 
   const selectedStudent = students.find((s) => s.id === selectedStudentId) || null;
   const selectedUniversity = universities.find((u) => u.id === selectedUniversityId) || null;
   const selectedCourse = courses.find((c) => c.id === selectedCourseId) || null;
-
-  const filteredStudents = useMemo(() => {
-    if (!studentSearch) return students;
-    const q = studentSearch.toLowerCase();
-    return students.filter(
-      (s) =>
-        `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) ||
-        s.email?.toLowerCase().includes(q)
-    );
-  }, [students, studentSearch]);
-
-  const filteredUniversities = useMemo(() => {
-    let list = universities;
-    if (selectedStudent?.interestedCountry) {
-      const countryMatch = list.filter(
-        (u) => u.country?.toLowerCase() === selectedStudent.interestedCountry!.toLowerCase()
-      );
-      if (countryMatch.length > 0) list = countryMatch;
-    }
-    if (universitySearch) {
-      const q = universitySearch.toLowerCase();
-      list = list.filter(
-        (u) => u.name.toLowerCase().includes(q) || u.country?.toLowerCase().includes(q)
-      );
-    }
-    return list;
-  }, [universities, universitySearch, selectedStudent]);
-
-  const filteredCourses = useMemo(() => {
-    if (!courseSearch) return courses;
-    const q = courseSearch.toLowerCase();
-    return courses.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.level?.toLowerCase().includes(q)
-    );
-  }, [courses, courseSearch]);
 
   const canSubmit = selectedStudentId && selectedUniversityId && selectedCourseId;
 
@@ -187,6 +484,8 @@ export default function ApplicationForm() {
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <button
+          type="button"
+          aria-label="Go back"
           onClick={() => router.back()}
           className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 hover:text-slate-600"
         >
@@ -199,296 +498,47 @@ export default function ApplicationForm() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm space-y-6 p-6">
-        {/* Student */}
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            <GraduationCap size={12} /> Student
-          </label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                setStudentDropdownOpen(!studentDropdownOpen);
-                setStudentSearch("");
-              }}
-              className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-left transition-all hover:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
-            >
-              {selectedStudent ? (
-                <span className="text-slate-800">
-                  {selectedStudent.firstName} {selectedStudent.lastName} — {selectedStudent.email}
-                </span>
-              ) : (
-                <span className="text-slate-400">Select a student...</span>
-              )}
-              <svg
-                className="w-4 h-4 text-slate-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-            {studentDropdownOpen && (
-              <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-hidden">
-                <div className="p-2 border-b border-slate-100">
-                  <div className="relative">
-                    <Search
-                      size={14}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Search students..."
-                      value={studentSearch}
-                      onChange={(e) => setStudentSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-100"
-                      autoFocus
-                    />
-                  </div>
-                </div>
-                <div className="overflow-y-auto max-h-48">
-                  {loadingStudents ? (
-                    <div className="p-4 text-center text-xs text-slate-400">
-                      <Loader2 className="animate-spin mx-auto" size={16} />
-                    </div>
-                  ) : filteredStudents.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-slate-400">No students found</div>
-                  ) : (
-                    filteredStudents.map((s) => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedStudentId(s.id);
-                          setStudentDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-indigo-50 transition-colors flex flex-col ${selectedStudentId === s.id ? "bg-indigo-50 text-indigo-700" : "text-slate-700"}`}
-                      >
-                        <span className="font-bold">
-                          {s.firstName} {s.lastName}
-                        </span>
-                        <span className="text-[10px] text-slate-400">{s.email}</span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* University */}
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            <Building2 size={12} /> University
-          </label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                setUniversityDropdownOpen(!universityDropdownOpen);
-                setUniversitySearch("");
-              }}
-              className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-left transition-all hover:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
-            >
-              {selectedUniversity ? (
-                <span className="text-slate-800">
-                  {selectedUniversity.name} — {selectedUniversity.country}
-                </span>
-              ) : (
-                <span className="text-slate-400">Select a university...</span>
-              )}
-              <svg
-                className="w-4 h-4 text-slate-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-            {universityDropdownOpen && (
-              <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-hidden">
-                <div className="p-2 border-b border-slate-100">
-                  <div className="relative">
-                    <Search
-                      size={14}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Search universities..."
-                      value={universitySearch}
-                      onChange={(e) => setUniversitySearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-100"
-                      autoFocus
-                    />
-                  </div>
-                </div>
-                <div className="overflow-y-auto max-h-48">
-                  {loadingUniversities ? (
-                    <div className="p-4 text-center text-xs text-slate-400">
-                      <Loader2 className="animate-spin mx-auto" size={16} />
-                    </div>
-                  ) : filteredUniversities.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-slate-400">
-                      No universities found
-                    </div>
-                  ) : (
-                    filteredUniversities.map((u) => (
-                      <button
-                        key={u.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedUniversityId(u.id);
-                          setUniversityDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-indigo-50 transition-colors flex flex-col ${selectedUniversityId === u.id ? "bg-indigo-50 text-indigo-700" : "text-slate-700"}`}
-                      >
-                        <span className="font-bold">{u.name}</span>
-                        <span className="text-[10px] text-slate-400">
-                          {u.country}
-                          {u.city ? `, ${u.city}` : ""}
-                        </span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Course */}
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            <BookOpen size={12} /> Course
-          </label>
-          <div className="relative">
-            <button
-              type="button"
-              disabled={!selectedUniversityId}
-              onClick={() => {
-                setCourseDropdownOpen(!courseDropdownOpen);
-                setCourseSearch("");
-              }}
-              className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-left transition-all hover:border-indigo-300 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {selectedCourse ? (
-                <span className="text-slate-800">
-                  {selectedCourse.name} ({selectedCourse.level})
-                </span>
-              ) : (
-                <span className="text-slate-400">
-                  {selectedUniversityId ? "Select a course..." : "Select a university first"}
-                </span>
-              )}
-              <svg
-                className="w-4 h-4 text-slate-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-            {courseDropdownOpen && selectedUniversityId && (
-              <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-hidden">
-                <div className="p-2 border-b border-slate-100">
-                  <div className="relative">
-                    <Search
-                      size={14}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Search courses..."
-                      value={courseSearch}
-                      onChange={(e) => setCourseSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-100"
-                      autoFocus
-                    />
-                  </div>
-                </div>
-                <div className="overflow-y-auto max-h-48">
-                  {loadingCourses ? (
-                    <div className="p-4 text-center text-xs text-slate-400">
-                      <Loader2 className="animate-spin mx-auto" size={16} />
-                    </div>
-                  ) : filteredCourses.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-slate-400">
-                      No courses at this university
-                    </div>
-                  ) : (
-                    filteredCourses.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedCourseId(c.id);
-                          setCourseDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-indigo-50 transition-colors flex flex-col ${selectedCourseId === c.id ? "bg-indigo-50 text-indigo-700" : "text-slate-700"}`}
-                      >
-                        <span className="font-bold">{c.name}</span>
-                        <span className="text-[10px] text-slate-400">{c.level}</span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Summary */}
-        {selectedStudent && selectedUniversity && selectedCourse && (
-          <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 space-y-1">
-            <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-2">
-              Application Summary
-            </p>
-            <p className="text-sm text-slate-700">
-              <span className="font-bold">Student:</span> {selectedStudent.firstName}{" "}
-              {selectedStudent.lastName}
-            </p>
-            <p className="text-sm text-slate-700">
-              <span className="font-bold">University:</span> {selectedUniversity.name}
-            </p>
-            <p className="text-sm text-slate-700">
-              <span className="font-bold">Course:</span> {selectedCourse.name}
-            </p>
-          </div>
-        )}
+        <StudentField
+          students={students}
+          loading={loadingStudents}
+          selectedId={selectedStudentId}
+          onSelect={setSelectedStudentId}
+        />
+        <UniversityField
+          universities={universities}
+          loading={loadingUniversities}
+          selectedId={selectedUniversityId}
+          studentCountry={selectedStudent?.interestedCountry}
+          onSelect={handleUniversitySelect}
+        />
+        <CourseField
+          key={selectedUniversityId ?? "none"}
+          courses={courses}
+          loading={loadingCourses}
+          selectedId={selectedCourseId}
+          universityId={selectedUniversityId}
+          onSelect={setSelectedCourseId}
+        />
+        <ApplicationSummary
+          student={selectedStudent}
+          university={selectedUniversity}
+          course={selectedCourse}
+        />
       </div>
 
-      {/* Actions */}
       <div className="flex justify-end gap-3">
         <button
+          type="button"
           onClick={() => router.back()}
-          className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all"
+          className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition"
         >
           Cancel
         </button>
         <button
+          type="button"
           onClick={handleSubmit}
           disabled={!canSubmit || submitting}
-          className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-indigo-100"
+          className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-indigo-100"
         >
           {submitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
           {submitting ? "Creating..." : "Create Application"}

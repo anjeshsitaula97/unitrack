@@ -48,9 +48,10 @@ export default function StudentTopbar({
     });
   }, []);
 
-  const fetchNotifications = async () => {
+  const _fetchNotifications = async () => {
     try {
       const res = await fetch("/api/notifications");
+      if (!res.ok) return;
       const data = await res.json();
       if (Array.isArray(data)) {
         setNotifications(data);
@@ -61,7 +62,20 @@ export default function StudentTopbar({
 
   useEffect(() => {
     if (!isMounted) return;
-    Promise.resolve().then(fetchNotifications);
+    const controller = new AbortController();
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/notifications", { signal: controller.signal });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        if (Array.isArray(data)) {
+          setNotifications(data);
+          setUnreadCount(data.filter((n) => !n.read).length);
+        }
+      } catch {}
+    })();
 
     const es = new EventSource("/api/notifications/stream");
     eventSourceRef.current = es;
@@ -86,15 +100,30 @@ export default function StudentTopbar({
 
     es.onerror = () => es.close();
 
-    return () => es.close();
+    return () => {
+      cancelled = true;
+      controller.abort();
+      es.close();
+    };
   }, [isMounted]);
 
+  const [markAllBusy, setMarkAllBusy] = useState(false);
   const markAllRead = async () => {
+    if (markAllBusy) return;
+    setMarkAllBusy(true);
     try {
-      await fetch("/api/notifications", { method: "PUT", body: JSON.stringify({ read: true }) });
+      const res = await fetch("/api/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ read: true }),
+      });
+      if (!res.ok) return;
       setNotifications((prev) => prev?.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
-    } catch {}
+    } catch {
+    } finally {
+      setMarkAllBusy(false);
+    }
   };
 
   const markRead = async (id: string) => {
@@ -111,12 +140,12 @@ export default function StudentTopbar({
 
   return (
     <header
-      className={`fixed top-0 right-0 h-14 bg-white border-b border-slate-200 z-20 flex items-center px-6 gap-4 transition-all duration-300 ${sidebarCollapsed ? "left-16" : "left-60"}`}
+      className={`fixed top-0 right-0 h-14 bg-white border-b border-slate-200 z-20 flex items-center px-6 gap-4 transition duration-300 ${sidebarCollapsed ? "left-16" : "left-60"}`}
     >
       <div className="flex items-center gap-1.5 text-sm flex-1 min-w-0">
         <Home size={15} className="text-slate-400 flex-shrink-0" />
         {crumbs.map((crumb, i) => (
-          <React.Fragment key={i}>
+          <React.Fragment key={crumb}>
             <ChevronRight size={13} className="text-slate-300 flex-shrink-0" />
             <span
               className={`truncate ${i === crumbs.length - 1 ? "font-semibold text-slate-800" : "text-slate-500"}`}
@@ -132,7 +161,7 @@ export default function StudentTopbar({
           type="button"
           aria-label="Notifications"
           onClick={() => setNotifOpen(!notifOpen)}
-          className="relative p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all duration-150"
+          className="relative p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition duration-150"
         >
           <Bell size={17} />
           {isMounted && unreadCount > 0 && (
@@ -149,7 +178,8 @@ export default function StudentTopbar({
                 <button
                   type="button"
                   onClick={markAllRead}
-                  className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline"
+                  disabled={markAllBusy}
+                  className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline disabled:opacity-50"
                 >
                   Mark all read
                 </button>

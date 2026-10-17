@@ -19,9 +19,9 @@ describe("API Utils", () => {
       expect(params.skip).toBe(20);
     });
 
-    it("enforces max perPage of 100", () => {
-      const params = getPaginationParams(new URLSearchParams("perPage=500"));
-      expect(params.perPage).toBe(100);
+    it("enforces max perPage of 500", () => {
+      const params = getPaginationParams(new URLSearchParams("perPage=999"));
+      expect(params.perPage).toBe(500);
     });
 
     it("enforces minimum page of 1", () => {

@@ -35,7 +35,7 @@ export default function BasicInfoCard({ form, errors, update, COUNTRIES }: Basic
             value={form.name}
             onChange={(e) => update("name", e.target.value)}
             placeholder="e.g. Massachusetts Institute of Technology"
-            className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all ${errors.name ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
+            className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition ${errors.name ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
           />
           {errors.name && (
             <p className="text-xs text-red-500 mt-1 flex items-center gap-1">

@@ -177,7 +177,7 @@ export default function ExpensesContent() {
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="bg-red-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-red-700 transition-all flex items-center gap-2 shadow-lg shadow-red-100"
+          className="bg-red-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-red-700 transition flex items-center gap-2 shadow-lg shadow-red-100"
         >
           <Plus size={18} />
           Record Expense
@@ -283,14 +283,16 @@ function ExpenseFilterBar({
         <input
           type="text"
           placeholder="Search expenses..."
+          aria-label="Search expenses"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all text-sm"
+          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition text-sm"
         />
       </div>
       <select
         value={categoryFilter}
         onChange={(e) => setCategoryFilter(e.target.value)}
+        aria-label="Filter by category"
         className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-red-500"
       >
         <option value="all">All Categories</option>
@@ -348,7 +350,7 @@ function ExpenseTable({ isLoading, filtered }: { isLoading: boolean; filtered: E
               {filtered.map((expense) => (
                 <tr key={expense.id} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-6 py-4 text-xs font-bold text-slate-500">
-                    {new Date(expense.date).toLocaleDateString()}
+                    {new Date(expense.date).toLocaleDateString("en-US", { timeZone: "UTC" })}
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-[10px] font-black bg-slate-100 text-slate-600 px-2 py-1 rounded-full uppercase tracking-tighter">
@@ -448,6 +450,7 @@ function ExpenseFormModal({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <button
         type="button"
+        aria-label="Close"
         className="absolute inset-0 bg-slate-900/10 backdrop-blur-sm"
         onClick={() => setShowModal(false)}
       />
@@ -460,7 +463,8 @@ function ExpenseFormModal({
           <button
             type="button"
             onClick={() => setShowModal(false)}
-            className="p-2 hover:bg-white rounded-xl text-slate-400 transition-all"
+            aria-label="Close"
+            className="p-2 hover:bg-white rounded-xl text-slate-400 transition"
           >
             <X size={20} />
           </button>
@@ -610,7 +614,7 @@ function ExpenseFormModal({
               />
               <label
                 htmlFor="screenshot-upload"
-                className="flex items-center justify-center gap-2 w-full px-4 py-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-red-50 hover:border-red-200 transition-all group"
+                className="flex items-center justify-center gap-2 w-full px-4 py-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-red-50 hover:border-red-200 transition group"
               >
                 {formData.screenshot ? (
                   <div className="flex items-center gap-3">
@@ -685,14 +689,14 @@ function ExpenseFormModal({
             <button
               type="button"
               onClick={() => setShowModal(false)}
-              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm"
+              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition text-sm"
             >
               Cancel
             </button>
             <button
               type="button"
               disabled={isSubmitting}
-              className="flex-[2] px-6 py-3 bg-red-600 text-white rounded-xl font-black hover:bg-red-700 transition-all text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-100 disabled:opacity-50"
+              className="flex-[2] px-6 py-3 bg-red-600 text-white rounded-xl font-black hover:bg-red-700 transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-100 disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : "Confirm Log"}
             </button>

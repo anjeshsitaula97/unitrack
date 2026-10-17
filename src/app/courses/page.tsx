@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import { unstable_rethrow } from "next/navigation";
 import AppLayoutWrapper from "@/components/AppLayoutWrapper";
 import CoursesContent from "./components/CoursesContent";
 import { db } from "@/lib/db";
@@ -28,16 +29,26 @@ async function getCourses() {
       ...course,
       university: course.university?.name || "Unknown",
       universityLogo: course.university?.logo || null,
+      country: course.university?.country || null,
       faculty: course.faculty || "General",
       degreeType: course.degreeType || "None",
       prerequisites: safeParseArray<string>(course.prerequisites),
       quickFilters: safeParseArray<string>(course.quickFilters),
       requirements: safeParseArray<string>(course.requirements),
+      englishTests: safeParseArray<{
+        type?: string;
+        overall?: string;
+        reading?: string;
+        writing?: string;
+        listening?: string;
+        speaking?: string;
+      }>(course.englishTests),
       startDate: course.startDate?.toISOString() || null,
       createdAt: course.createdAt.toISOString(),
       updatedAt: course.updatedAt.toISOString(),
     }));
   } catch (err) {
+    unstable_rethrow(err);
     console.error("Database error in getCourses:", err);
     return [];
   }

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Send, Settings, Mail, Loader2, AlertTriangle, Search } from "lucide-react";
 import { toast } from "sonner";
-import { api, safeJson } from "@/lib/fetch-client";
+import { api } from "@/lib/fetch-client";
 
 interface Student {
   id: string;
@@ -24,6 +24,7 @@ export default function EmailContent() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
 
   // Settings form
   const [smtpHost, setSmtpHost] = useState("");
@@ -36,28 +37,41 @@ export default function EmailContent() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/email/send")
-      .then(safeJson)
-      .then((data) => {
-        setConfigured(data.configured);
-        if (data.configured) {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await api.get<{
+          configured: boolean;
+          host?: string;
+          fromEmail?: string;
+          fromName?: string;
+        }>("/api/email/send", { showError: false });
+        if (cancelled) return;
+        setConfigured(!!data?.configured);
+        if (data?.configured) {
           setSmtpHost(data.host || "");
           setFromEmail(data.fromEmail || "");
           setFromName(data.fromName || "");
         }
-        setChecking(false);
-      })
-      .catch(() => setChecking(false));
+      } catch {
+        // ignore — fall through to the not-configured state
+      } finally {
+        if (!cancelled) setChecking(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (!studentSearch || studentSearch.length < 2) return;
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `/api/students?search=${encodeURIComponent(studentSearch)}&perPage=10`
+        const data = await api.get<{ data?: Student[] }>(
+          `/api/students?search=${encodeURIComponent(studentSearch)}&perPage=10`,
+          { showError: false }
         );
-        const data = await res.json();
         setStudents(data?.data || []);
       } catch {}
     }, 300);
@@ -73,10 +87,12 @@ export default function EmailContent() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (sendingRef.current) return;
     if (!to || !subject || !body) {
       toast.error("Please fill in all fields");
       return;
     }
+    sendingRef.current = true;
     setSending(true);
     try {
       const res = await api.post("/api/email/send", {
@@ -96,6 +112,7 @@ export default function EmailContent() {
     } catch {
       // error handled by api helper
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
@@ -160,7 +177,7 @@ export default function EmailContent() {
             type="button"
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 ${
               tab === t.id
                 ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
                 : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -196,7 +213,10 @@ export default function EmailContent() {
               className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4"
             >
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                <label
+                  htmlFor="email-to"
+                  className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5"
+                >
                   To
                 </label>
                 <div className="relative">
@@ -205,6 +225,7 @@ export default function EmailContent() {
                     size={16}
                   />
                   <input
+                    id="email-to"
                     type="email"
                     value={to}
                     onChange={(e) => setTo(e.target.value)}
@@ -215,10 +236,14 @@ export default function EmailContent() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                <label
+                  htmlFor="email-subject"
+                  className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5"
+                >
                   Subject
                 </label>
                 <input
+                  id="email-subject"
                   type="text"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
@@ -228,10 +253,14 @@ export default function EmailContent() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                <label
+                  htmlFor="email-message"
+                  className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5"
+                >
                   Message
                 </label>
                 <textarea
+                  id="email-message"
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   rows={10}
@@ -268,6 +297,7 @@ export default function EmailContent() {
                 />
                 <input
                   type="text"
+                  aria-label="Search students"
                   value={studentSearch}
                   onChange={(e) => setStudentSearch(e.target.value)}
                   placeholder="Search students..."
@@ -302,10 +332,14 @@ export default function EmailContent() {
           >
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                <label
+                  htmlFor="smtp-host"
+                  className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5"
+                >
                   SMTP Host
                 </label>
                 <input
+                  id="smtp-host"
                   type="text"
                   value={smtpHost}
                   onChange={(e) => setSmtpHost(e.target.value)}
@@ -314,10 +348,14 @@ export default function EmailContent() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                <label
+                  htmlFor="smtp-port"
+                  className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5"
+                >
                   Port
                 </label>
                 <input
+                  id="smtp-port"
                   type="number"
                   value={smtpPort}
                   onChange={(e) => setSmtpPort(e.target.value)}
@@ -327,10 +365,14 @@ export default function EmailContent() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+              <label
+                htmlFor="smtp-username"
+                className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5"
+              >
                 SMTP Username
               </label>
               <input
+                id="smtp-username"
                 type="text"
                 value={smtpUser}
                 onChange={(e) => setSmtpUser(e.target.value)}
@@ -340,10 +382,14 @@ export default function EmailContent() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+              <label
+                htmlFor="smtp-password"
+                className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5"
+              >
                 SMTP Password
               </label>
               <input
+                id="smtp-password"
                 type="password"
                 value={smtpPass}
                 onChange={(e) => setSmtpPass(e.target.value)}
@@ -354,10 +400,14 @@ export default function EmailContent() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                <label
+                  htmlFor="from-email"
+                  className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5"
+                >
                   From Email
                 </label>
                 <input
+                  id="from-email"
                   type="email"
                   value={fromEmail}
                   onChange={(e) => setFromEmail(e.target.value)}
@@ -366,10 +416,14 @@ export default function EmailContent() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                <label
+                  htmlFor="from-name"
+                  className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5"
+                >
                   From Name
                 </label>
                 <input
+                  id="from-name"
                   type="text"
                   value={fromName}
                   onChange={(e) => setFromName(e.target.value)}
@@ -380,10 +434,14 @@ export default function EmailContent() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+              <label
+                htmlFor="smtp-encryption"
+                className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5"
+              >
                 Encryption
               </label>
               <select
+                id="smtp-encryption"
                 value={encryption}
                 onChange={(e) => setEncryption(e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"

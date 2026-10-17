@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -20,7 +20,7 @@ import {
 import { useRouter } from "next/navigation";
 import { SkeletonText } from "@/components/Skeleton";
 import { toast } from "sonner";
-import { safeJson } from "@/lib/fetch-client";
+import { api } from "@/lib/fetch-client";
 
 const typeConfig: Record<string, { label: string; icon: LucideIcon; color: string }> = {
   application: {
@@ -63,6 +63,360 @@ interface Holiday {
   type?: string;
 }
 
+async function loadCalendarData(currentYear: number, currentMonth: number) {
+  const start = new Date(currentYear, currentMonth - 1, 1).toISOString();
+  const end = new Date(currentYear, currentMonth + 2, 0).toISOString();
+  const [evts, hols] = await Promise.all([
+    api.get<CalendarEvent[]>(`/api/calendar?start=${start}&end=${end}`, { showError: false }),
+    api.get<Holiday[]>("/api/holidays", { showError: false }),
+  ]);
+  return {
+    events: Array.isArray(evts) ? evts : [],
+    holidays: Array.isArray(hols) ? hols : [],
+  };
+}
+
+const FILTERS: [string, string][] = [
+  ["all", "All"],
+  ["application", "Applications"],
+  ["task", "Tasks"],
+  ["leave", "Leave"],
+  ["followup", "Follow-ups"],
+  ["payment", "Payments"],
+  ["holiday", "Holidays"],
+];
+
+function TypeFilters({
+  typeFilter,
+  setTypeFilter,
+}: {
+  typeFilter: string;
+  setTypeFilter: (v: string) => void;
+}) {
+  return (
+    <div className="flex gap-2 mb-4 flex-wrap">
+      {FILTERS.map(([key, label]) => (
+        <button
+          type="button"
+          key={key}
+          onClick={() => setTypeFilter(key)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${typeFilter === key ? "bg-indigo-600 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SelectedDayPanel({
+  selectedDay,
+  currentYear,
+  currentMonth,
+  loading,
+  dayEvents,
+  onNavigate,
+}: {
+  selectedDay: number | null;
+  currentYear: number;
+  currentMonth: number;
+  loading: boolean;
+  dayEvents: CalendarEvent[];
+  onNavigate: (url: string) => void;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-4">
+      {selectedDay ? (
+        <>
+          <h3 className="font-bold text-slate-800 mb-3">
+            {new Date(Date.UTC(currentYear, currentMonth, selectedDay)).toLocaleDateString(
+              "en-US",
+              {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                timeZone: "UTC",
+              }
+            )}
+          </h3>
+          {loading ? (
+            <SkeletonText lines={4} />
+          ) : dayEvents.length === 0 ? (
+            <div className="text-sm text-slate-400 py-8 text-center">No events this day</div>
+          ) : (
+            <div className="space-y-2">
+              {dayEvents.map((e) => {
+                const config = (e.type && typeConfig[e.type]) || {
+                  label: "Event",
+                  icon: CalendarDays,
+                  color: "bg-slate-100 text-slate-600",
+                };
+                const Icon = config.icon;
+                return (
+                  <div
+                    key={e.id}
+                    className="p-3 rounded-xl border border-slate-100 hover:shadow-sm transition-shadow cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => e.url && onNavigate(e.url)}
+                    onKeyDown={(ev) => {
+                      if (ev.key === "Enter" || ev.key === " ") {
+                        ev.preventDefault();
+                        if (e.url) onNavigate(e.url);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`size-7 rounded-lg ${config.color} flex items-center justify-center`}
+                        >
+                          <Icon size={14} />
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-slate-700">{e.title}</div>
+                          <div className="text-xs text-slate-400 mt-0.5">
+                            {new Date(e.start).toLocaleTimeString("en-US", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              timeZone: "UTC",
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      <ArrowUpRight size={14} className="text-slate-300" />
+                    </div>
+                    {e.status && (
+                      <div className="mt-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                        {e.status}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="py-12 text-center">
+          <CalendarDays size={32} className="mx-auto text-slate-200 mb-2" />
+          <p className="text-sm text-slate-400">Select a day to view events</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HolidayModal({
+  currentYear,
+  currentMonth,
+  holidays,
+  setEvents,
+  setHolidays,
+  onClose,
+}: {
+  currentYear: number;
+  currentMonth: number;
+  holidays: Holiday[];
+  setEvents: React.Dispatch<React.SetStateAction<CalendarEvent[]>>;
+  setHolidays: React.Dispatch<React.SetStateAction<Holiday[]>>;
+  onClose: () => void;
+}) {
+  const [holidayName, setHolidayName] = useState("");
+  const [holidayDate, setHolidayDate] = useState("");
+  const [holidayType, setHolidayType] = useState("Public");
+  const [holidaySubmitting, setHolidaySubmitting] = useState(false);
+  const savingHolidayRef = useRef(false);
+
+  const refresh = async () => {
+    const data = await loadCalendarData(currentYear, currentMonth);
+    setEvents(data.events);
+    setHolidays(data.holidays);
+  };
+
+  const handleAdd = async () => {
+    if (!holidayName.trim() || !holidayDate) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    if (holidaySubmitting) return;
+    setHolidaySubmitting(true);
+    try {
+      await api.post(
+        "/api/holidays",
+        { name: holidayName.trim(), date: holidayDate, type: holidayType },
+        { showError: false }
+      );
+      toast.success("Holiday added");
+      setHolidayName("");
+      setHolidayDate("");
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add holiday");
+    } finally {
+      setHolidaySubmitting(false);
+    }
+  };
+
+  const handleDelete = async (holiday: Holiday) => {
+    if (savingHolidayRef.current) return;
+    savingHolidayRef.current = true;
+    try {
+      await api.delete(`/api/holidays?id=${holiday.id}`, { showError: false });
+      await refresh();
+      toast.success("Holiday removed");
+    } catch {
+      toast.error("Failed to remove holiday");
+    } finally {
+      savingHolidayRef.current = false;
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      role="presentation"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
+      }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <Sun size={18} className="text-red-500" />
+            Manage Holidays
+          </h2>
+          <button
+            type="button"
+            aria-label="Close dialog"
+            title="Close"
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-slate-100"
+          >
+            <X size={18} className="text-slate-400" />
+          </button>
+        </div>
+
+        <div className="p-5 border-b border-slate-100">
+          <div className="space-y-3">
+            <div>
+              <label
+                htmlFor="holiday-name"
+                className="block text-xs font-semibold text-slate-600 mb-1"
+              >
+                Holiday Name
+              </label>
+              <input
+                id="holiday-name"
+                type="text"
+                value={holidayName}
+                onChange={(e) => setHolidayName(e.target.value)}
+                placeholder="e.g. Dashain"
+                className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-red-300"
+              />
+            </div>
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <label
+                  htmlFor="holiday-date"
+                  className="block text-xs font-semibold text-slate-600 mb-1"
+                >
+                  Date
+                </label>
+                <input
+                  id="holiday-date"
+                  type="date"
+                  value={holidayDate}
+                  onChange={(e) => setHolidayDate(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
+                />
+              </div>
+              <div className="w-36">
+                <label
+                  htmlFor="holiday-type"
+                  className="block text-xs font-semibold text-slate-600 mb-1"
+                >
+                  Type
+                </label>
+                <select
+                  id="holiday-type"
+                  value={holidayType}
+                  onChange={(e) => setHolidayType(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 bg-white"
+                >
+                  <option value="Public">Public</option>
+                  <option value="Private">Private</option>
+                  <option value="Others">Others</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={holidaySubmitting || !holidayName.trim() || !holidayDate}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-600 transition disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {holidaySubmitting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Plus size={14} />
+                )}
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-5">
+          {holidays.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-4">No holidays added yet</p>
+          ) : (
+            <div className="space-y-2">
+              {holidays.map((h) => (
+                <div
+                  key={h.id}
+                  className="flex items-center justify-between p-3 rounded-xl bg-red-50 border border-red-100"
+                >
+                  <div className="flex items-center gap-3">
+                    <Sun size={16} className="text-red-500" />
+                    <div>
+                      <p className="text-base font-extrabold text-slate-800 truncate">{h.name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {new Date(h.date).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          timeZone: "UTC",
+                        })}
+                        <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider bg-red-100 text-red-700">
+                          {h.type}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Delete ${h.name}`}
+                    title={`Delete ${h.name}`}
+                    onClick={() => handleDelete(h)}
+                    className="p-1.5 rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    <Trash2 size={14} className="text-red-400" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CalendarContent() {
   const router = useRouter();
   const today = new Date();
@@ -74,27 +428,25 @@ export default function CalendarContent() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [holidayName, setHolidayName] = useState("");
-  const [holidayDate, setHolidayDate] = useState("");
-  const [holidaySubmitting, setHolidaySubmitting] = useState(false);
-  const [holidayType, setHolidayType] = useState("Public");
 
   const monthStart = new Date(currentYear, currentMonth, 1);
   const monthEnd = new Date(currentYear, currentMonth + 1, 0);
 
   useEffect(() => {
-    const start = new Date(currentYear, currentMonth - 1, 1).toISOString();
-    const end = new Date(currentYear, currentMonth + 2, 0).toISOString();
-    Promise.all([
-      fetch(`/api/calendar?start=${start}&end=${end}`).then(safeJson),
-      fetch("/api/holidays").then(safeJson),
-    ])
-      .then(([evts, hols]) => {
-        setEvents(Array.isArray(evts) ? evts : []);
-        setHolidays(Array.isArray(hols) ? hols : []);
+    let active = true;
+    loadCalendarData(currentYear, currentMonth)
+      .then((data) => {
+        if (!active) return;
+        setEvents(data.events);
+        setHolidays(data.holidays);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [currentMonth, currentYear]);
 
   const daysInMonth = monthEnd.getDate();
@@ -118,9 +470,10 @@ export default function CalendarContent() {
     setSelectedDay(null);
   };
 
-  const monthName = new Date(currentYear, currentMonth).toLocaleString("default", {
+  const monthName = new Date(Date.UTC(currentYear, currentMonth, 1)).toLocaleString("en-US", {
     month: "long",
     year: "numeric",
+    timeZone: "UTC",
   });
 
   const dayEvents = useMemo(() => {
@@ -150,39 +503,15 @@ export default function CalendarContent() {
         <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">Calendar</h1>
         <button
           type="button"
-          onClick={() => {
-            setHolidayDate("");
-            setHolidayName("");
-            setHolidayType("Public");
-            setShowHolidayModal(true);
-          }}
-          className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition-all flex items-center gap-1.5"
+          onClick={() => setShowHolidayModal(true)}
+          className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition flex items-center gap-1.5"
         >
           <Sun size={14} />
           Manage Holidays
         </button>
       </div>
 
-      <div className="flex gap-2 mb-4 flex-wrap">
-        {[
-          ["all", "All"],
-          ["application", "Applications"],
-          ["task", "Tasks"],
-          ["leave", "Leave"],
-          ["followup", "Follow-ups"],
-          ["payment", "Payments"],
-          ["holiday", "Holidays"],
-        ].map(([key, label]) => (
-          <button
-            type="button"
-            key={key}
-            onClick={() => setTypeFilter(key)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${typeFilter === key ? "bg-indigo-600 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <TypeFilters typeFilter={typeFilter} setTypeFilter={setTypeFilter} />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
@@ -190,6 +519,7 @@ export default function CalendarContent() {
             <div className="p-4 flex items-center justify-between border-b border-slate-100">
               <button
                 type="button"
+                aria-label="Previous month"
                 onClick={prevMonth}
                 className="p-2 hover:bg-slate-50 rounded-lg transition-colors"
               >
@@ -198,6 +528,7 @@ export default function CalendarContent() {
               <h2 className="font-bold text-slate-800">{monthName}</h2>
               <button
                 type="button"
+                aria-label="Next month"
                 onClick={nextMonth}
                 className="p-2 hover:bg-slate-50 rounded-lg transition-colors"
               >
@@ -267,267 +598,25 @@ export default function CalendarContent() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-100 p-4">
-          {selectedDay ? (
-            <>
-              <h3 className="font-bold text-slate-800 mb-3">
-                {new Date(currentYear, currentMonth, selectedDay).toLocaleDateString("default", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </h3>
-              {loading ? (
-                <SkeletonText lines={4} />
-              ) : dayEvents.length === 0 ? (
-                <div className="text-sm text-slate-400 py-8 text-center">No events this day</div>
-              ) : (
-                <div className="space-y-2">
-                  {dayEvents.map((e) => {
-                    const config = (e.type && typeConfig[e.type]) || {
-                      label: "Event",
-                      icon: CalendarDays,
-                      color: "bg-slate-100 text-slate-600",
-                    };
-                    const Icon = config.icon;
-                    return (
-                      <div
-                        key={e.id}
-                        className="p-3 rounded-xl border border-slate-100 hover:shadow-sm transition-shadow cursor-pointer"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => e.url && router.push(e.url)}
-                        onKeyDown={(ev) => {
-                          if (ev.key === "Enter" || ev.key === " ") {
-                            ev.preventDefault();
-                            if (e.url) router.push(e.url);
-                          }
-                        }}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`size-7 rounded-lg ${config.color} flex items-center justify-center`}
-                            >
-                              <Icon size={14} />
-                            </div>
-                            <div>
-                              <div className="text-sm font-bold text-slate-700">{e.title}</div>
-                              <div className="text-xs text-slate-400 mt-0.5">
-                                {new Date(e.start).toLocaleTimeString("default", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </div>
-                            </div>
-                          </div>
-                          <ArrowUpRight size={14} className="text-slate-300" />
-                        </div>
-                        {e.status && (
-                          <div className="mt-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                            {e.status}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="py-12 text-center">
-              <CalendarDays size={32} className="mx-auto text-slate-200 mb-2" />
-              <p className="text-sm text-slate-400">Select a day to view events</p>
-            </div>
-          )}
-        </div>
+        <SelectedDayPanel
+          selectedDay={selectedDay}
+          currentYear={currentYear}
+          currentMonth={currentMonth}
+          loading={loading}
+          dayEvents={dayEvents}
+          onNavigate={(url) => router.push(url)}
+        />
       </div>
 
       {showHolidayModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            setHolidayType("Public");
-            setShowHolidayModal(false);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setHolidayType("Public");
-              setShowHolidayModal(false);
-            }
-          }}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-5 border-b border-slate-100">
-              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <Sun size={18} className="text-red-500" />
-                Manage Holidays
-              </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setHolidayType("Public");
-                  setShowHolidayModal(false);
-                }}
-                className="p-1 rounded-lg hover:bg-slate-100"
-              >
-                <X size={18} className="text-slate-400" />
-              </button>
-            </div>
-
-            <div className="p-5 border-b border-slate-100">
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!holidayName.trim() || !holidayDate) {
-                    toast.error("Please fill in all fields");
-                    return;
-                  }
-                  setHolidaySubmitting(true);
-                  try {
-                    const res = await fetch("/api/holidays", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        name: holidayName.trim(),
-                        date: holidayDate,
-                        type: holidayType,
-                      }),
-                    });
-                    if (res.ok) {
-                      toast.success("Holiday added");
-                      setHolidayName("");
-                      setHolidayDate("");
-                      const [evts, hols] = await Promise.all([
-                        fetch(
-                          `/api/calendar?start=${new Date(currentYear, currentMonth - 1, 1).toISOString()}&end=${new Date(currentYear, currentMonth + 2, 0).toISOString()}`
-                        ).then(safeJson),
-                        fetch("/api/holidays").then(safeJson),
-                      ]);
-                      setEvents(Array.isArray(evts) ? evts : []);
-                      setHolidays(Array.isArray(hols) ? hols : []);
-                    } else {
-                      const err = await res.json();
-                      toast.error(err.error || "Failed to add holiday");
-                    }
-                  } catch {
-                    toast.error("Failed to add holiday");
-                  } finally {
-                    setHolidaySubmitting(false);
-                  }
-                }}
-                className="space-y-3"
-              >
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    Holiday Name
-                  </label>
-                  <input
-                    type="text"
-                    value={holidayName}
-                    onChange={(e) => setHolidayName(e.target.value)}
-                    placeholder="e.g. Dashain"
-                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-red-300"
-                  />
-                </div>
-                <div className="flex items-end gap-3">
-                  <div className="flex-1">
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Date</label>
-                    <input
-                      type="date"
-                      value={holidayDate}
-                      onChange={(e) => setHolidayDate(e.target.value)}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
-                    />
-                  </div>
-                  <div className="w-36">
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Type</label>
-                    <select
-                      value={holidayType}
-                      onChange={(e) => setHolidayType(e.target.value)}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 bg-white"
-                    >
-                      <option value="Public">Public</option>
-                      <option value="Private">Private</option>
-                      <option value="Others">Others</option>
-                    </select>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={holidaySubmitting || !holidayName.trim() || !holidayDate}
-                    className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-600 transition-all disabled:opacity-50 flex items-center gap-1.5"
-                  >
-                    {holidaySubmitting ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Plus size={14} />
-                    )}
-                    Add
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <div className="p-5">
-              {holidays.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-4">No holidays added yet</p>
-              ) : (
-                <div className="space-y-2">
-                  {holidays.map((h) => (
-                    <div
-                      key={h.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-red-50 border border-red-100"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Sun size={16} className="text-red-500" />
-                        <div>
-                          <p className="text-base font-extrabold text-slate-800 truncate">
-                            {h.name}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            {new Date(h.date).toLocaleDateString("en-US", {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                            <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider bg-red-100 text-red-700">
-                              {h.type}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await fetch(`/api/holidays?id=${h.id}`, { method: "DELETE" });
-                          const [evts, hols] = await Promise.all([
-                            fetch(
-                              `/api/calendar?start=${new Date(currentYear, currentMonth - 1, 1).toISOString()}&end=${new Date(currentYear, currentMonth + 2, 0).toISOString()}`
-                            ).then(safeJson),
-                            fetch("/api/holidays").then(safeJson),
-                          ]);
-                          setEvents(Array.isArray(evts) ? evts : []);
-                          setHolidays(Array.isArray(hols) ? hols : []);
-                          toast.success("Holiday removed");
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-red-100 transition-colors"
-                      >
-                        <Trash2 size={14} className="text-red-400" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <HolidayModal
+          currentYear={currentYear}
+          currentMonth={currentMonth}
+          holidays={holidays}
+          setEvents={setEvents}
+          setHolidays={setHolidays}
+          onClose={() => setShowHolidayModal(false)}
+        />
       )}
     </>
   );

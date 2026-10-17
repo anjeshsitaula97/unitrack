@@ -4,7 +4,13 @@ import { db } from "@/lib/db";
 import { safeParseArray } from "@/lib/json";
 import { logActivity } from "@/lib/activity";
 import { createNotification } from "@/lib/notifications";
-import { getPaginationParams, paginatedResponse, apiError, getSession, checkRoutePermission } from "@/lib/api-utils";
+import {
+  getPaginationParams,
+  paginatedResponse,
+  apiError,
+  getSession,
+  checkRoutePermission,
+} from "@/lib/api-utils";
 import { logError } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
@@ -94,6 +100,7 @@ export async function POST(req: NextRequest) {
         color: data.color || "#6366f1",
         initials: data.initials || data.name?.substring(0, 2).toUpperCase() || "CX",
         instructor: data.instructor || "TBA",
+        instructorEmail: data.instructorEmail || null,
         description: data.description || "",
         prerequisites: JSON.stringify(data.prerequisites || []),
         intake: data.intake || "",

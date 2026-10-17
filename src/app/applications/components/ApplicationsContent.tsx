@@ -97,7 +97,9 @@ export default function ApplicationsContent() {
 
   const fetchApplications = async () => {
     try {
-      const res = await fetch("/api/applications");
+      // Filtered/paginated client-side, so fetch the full set (the API defaults
+      // to 20, which made anything past page 1 unreachable).
+      const res = await fetch("/api/applications?perPage=500");
       if (res.ok) {
         const data = await res.json();
         setApplications(Array.isArray(data) ? data : data.data);
@@ -144,7 +146,7 @@ export default function ApplicationsContent() {
         </div>
         <button
           onClick={() => router.push("/applications/new")}
-          className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-100"
+          className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center gap-2 shadow-lg shadow-indigo-100"
         >
           <Plus size={18} />
           New Application
@@ -192,7 +194,7 @@ export default function ApplicationsContent() {
                 type="button"
                 onClick={() => setDeletingId(null)}
                 disabled={deleting}
-                className="flex-1 px-6 py-3 border border-slate-200 rounded-2xl font-black text-slate-500 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest disabled:opacity-50"
+                className="flex-1 px-6 py-3 border border-slate-200 rounded-2xl font-black text-slate-500 hover:bg-slate-50 transition text-xs uppercase tracking-widest disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -200,7 +202,7 @@ export default function ApplicationsContent() {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex-1 px-6 py-3 bg-red-600 text-white rounded-2xl font-black hover:bg-red-700 transition-all text-xs uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-red-600 text-white rounded-2xl font-black hover:bg-red-700 transition text-xs uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {deleting && <Loader2 className="animate-spin" size={14} />}
                 {deleting ? "Deleting..." : "Delete"}
@@ -276,7 +278,7 @@ function ApplicationFilterBar({
           placeholder="Search by student, university or course..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+          className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
         />
       </div>
       <div className="flex items-center gap-2">
@@ -321,7 +323,7 @@ function ActionsDropdown({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="p-2 rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-600 transition-all border border-transparent hover:border-slate-100"
+        className="p-2 rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-600 transition border border-transparent hover:border-slate-100"
       >
         <MoreVertical size={16} />
       </button>
@@ -333,7 +335,7 @@ function ActionsDropdown({
               setOpen(false);
               onView(appId);
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all text-left"
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition text-left"
           >
             <Eye size={14} /> View
           </button>
@@ -343,7 +345,7 @@ function ActionsDropdown({
               setOpen(false);
               onView(appId);
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all text-left"
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition text-left"
           >
             <Pencil size={14} /> Edit
           </button>
@@ -354,7 +356,7 @@ function ActionsDropdown({
               setOpen(false);
               onDelete(appId);
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-all text-left"
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition text-left"
           >
             <Trash2 size={14} /> Delete
           </button>
@@ -430,7 +432,7 @@ function ApplicationTable({
                     <button
                       type="button"
                       onClick={() => onView?.(app.id)}
-                      className="text-xs font-mono font-bold text-indigo-600 hover:text-indigo-800 hover:underline transition-all text-left"
+                      className="text-xs font-mono font-bold text-indigo-600 hover:text-indigo-800 hover:underline transition text-left"
                     >
                       #{String(app.id).slice(-8).toUpperCase()}
                     </button>
@@ -512,7 +514,7 @@ function ApplicationTable({
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
               aria-label="Previous page"
             >
               <ChevronLeft size={16} />
@@ -523,7 +525,7 @@ function ApplicationTable({
                   type="button"
                   key={`page-${i}`}
                   onClick={() => setPage(i + 1)}
-                  className={`size-8 rounded-lg text-xs font-bold transition-all ${page === i + 1 ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "text-slate-400 hover:bg-slate-50 border border-slate-100"}`}
+                  className={`size-8 rounded-lg text-xs font-bold transition ${page === i + 1 ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "text-slate-400 hover:bg-slate-50 border border-slate-100"}`}
                 >
                   {i + 1}
                 </button>
@@ -533,7 +535,7 @@ function ApplicationTable({
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
               aria-label="Next page"
             >
               <ChevronRight size={16} />

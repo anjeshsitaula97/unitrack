@@ -41,13 +41,19 @@ export default function StudentDocuments() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/student-portal/documents")
-      .then(safeJson)
+    const controller = new AbortController();
+    fetch("/api/student-portal/documents", { signal: controller.signal })
+      .then((res) => safeJson(res) as Promise<StudentDocumentRow[]>)
       .then((d) => {
         setDocuments(d);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setLoading(false);
+      });
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return (
@@ -103,6 +109,7 @@ export default function StudentDocuments() {
                       href={doc.url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label={`Download ${doc.name}`}
                       className="text-indigo-500 hover:text-indigo-700 transition-colors"
                     >
                       <Download size={16} />

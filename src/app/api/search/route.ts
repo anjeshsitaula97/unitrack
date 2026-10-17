@@ -35,29 +35,32 @@ export async function GET(request: Request) {
         }
       : {};
 
-    // Courses search
-    const courses = await db.course.findMany({
-      where: courseWhere,
-      include: { university: true },
-      take: 20,
-    });
-
-    // Universities search
-    const universities = await db.university.findMany({
-      where: uniWhere,
-      take: 10,
-    });
-
-    // Aggregated filter options (across all data, independent of query)
-    const [allUniversities, allCountries, intakeRecords] = await Promise.all([
-      db.university.findMany({ select: { name: true }, orderBy: { name: "asc" } }),
-      db.university.findMany({
-        select: { country: true },
-        distinct: ["country"],
-        orderBy: { country: "asc" },
-      }),
-      db.course.findMany({ where: { intake: { not: null } }, select: { intake: true } }),
-    ]);
+    const [courses, universities, allUniversities, allCountries, intakeRecords] = await Promise.all(
+      [
+        // Courses search
+        db.course.findMany({
+          where: courseWhere,
+          include: { university: true },
+          take: 20,
+        }),
+        // Universities search
+        db.university.findMany({
+          where: uniWhere,
+          take: 10,
+        }),
+        // Aggregated filter options (across all data, independent of query)
+        db.university.findMany({
+          select: { name: true, country: true },
+          orderBy: { name: "asc" },
+        }),
+        db.university.findMany({
+          select: { country: true },
+          distinct: ["country"],
+          orderBy: { country: "asc" },
+        }),
+        db.course.findMany({ where: { intake: { not: null } }, select: { intake: true } }),
+      ]
+    );
 
     const allIntakes = [
       ...new Set(
@@ -76,6 +79,15 @@ export async function GET(request: Request) {
         })
       ),
     ].sort();
+
+    const universitiesByCountry: Record<string, string[]> = {};
+    for (const u of allUniversities) {
+      const country = u.country || "Unknown";
+      (universitiesByCountry[country] ??= []).push(u.name);
+    }
+    for (const key of Object.keys(universitiesByCountry)) {
+      universitiesByCountry[key].sort();
+    }
 
     const transformedCourses = courses.map((c) => ({
       id: c.id,
@@ -138,6 +150,7 @@ export async function GET(request: Request) {
       universities: transformedUniversities,
       filters: {
         universities: allUniversities.map((u) => u.name),
+        universitiesByCountry,
         countries: allCountries.map((c) => c.country),
         intakes: allIntakes,
       },

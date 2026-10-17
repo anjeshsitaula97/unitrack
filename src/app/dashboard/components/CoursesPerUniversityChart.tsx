@@ -2,16 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { MoreHorizontal, Loader2, BookOpen } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
 import { safeJson } from "@/lib/fetch-client";
 
 const CustomTooltip = ({
@@ -46,6 +36,21 @@ interface ChartEntry {
 export default function CoursesPerUniversityChart() {
   const [data, setData] = useState<ChartEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [charts, setCharts] = useState<typeof import("recharts") | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    import("recharts")
+      .then((mod) => {
+        if (mounted) setCharts(mod);
+      })
+      .catch((err) => {
+        console.error("Failed to load chart library:", err);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -66,7 +71,7 @@ export default function CoursesPerUniversityChart() {
 
   return (
     <div className="card p-5 h-[320px] relative">
-      {loading && (
+      {(loading || !charts) && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
           <Loader2 className="animate-spin text-indigo-500" size={24} />
         </div>
@@ -78,7 +83,7 @@ export default function CoursesPerUniversityChart() {
         </div>
         <button
           type="button"
-          className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all duration-150"
+          className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition duration-150"
           aria-label="MoreHorizontal"
         >
           {" "}
@@ -86,31 +91,36 @@ export default function CoursesPerUniversityChart() {
         </button>
       </div>
       <div className="h-[220px]">
-        {data.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} barSize={24} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-              <XAxis
+        {data.length > 0 && charts ? (
+          <charts.ResponsiveContainer width="100%" height="100%">
+            <charts.BarChart
+              data={data}
+              barSize={24}
+              margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+            >
+              <charts.CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <charts.XAxis
                 dataKey="university"
                 tick={{ fontSize: 10, fill: "#94a3b8", fontFamily: "Plus Jakarta Sans" }}
                 axisLine={false}
                 tickLine={false}
               />
-              <YAxis
+              <charts.YAxis
                 tick={{ fontSize: 10, fill: "#94a3b8", fontFamily: "Plus Jakarta Sans" }}
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f8fafc" }} />
-              <Bar dataKey="courses" radius={[6, 6, 0, 0]}>
+              <charts.Tooltip content={<CustomTooltip />} cursor={{ fill: "#f8fafc" }} />
+              <charts.Bar dataKey="courses" radius={[6, 6, 0, 0]}>
                 {data.map((entry) => (
-                  <Cell key={`cell-${entry.id}`} fill={entry.color} />
+                  <charts.Cell key={`cell-${entry.id}`} fill={entry.color} />
                 ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+              </charts.Bar>
+            </charts.BarChart>
+          </charts.ResponsiveContainer>
         ) : (
-          !loading && (
+          !loading &&
+          charts && (
             <div className="flex flex-col items-center justify-center h-full text-slate-300">
               <BookOpen size={32} strokeWidth={1.5} className="mb-2" />
               <p className="text-xs">No course data available</p>

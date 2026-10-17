@@ -83,6 +83,295 @@ interface CourseDetail {
   englishTestStage?: string;
 }
 
+interface IntakeItem {
+  name?: string;
+  openDate?: string;
+  deadline?: string;
+}
+
+function CourseHeaderCard({ course }: { course: CourseDetail }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
+      <div className="flex items-start gap-5">
+        <div
+          className="size-16 rounded-2xl flex items-center justify-center text-white text-xl font-black shrink-0 shadow-sm"
+          style={{ backgroundColor: course.color }}
+        >
+          {course.initials}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">{course.name}</h1>
+              {course.courseCode && (
+                <span className="text-sm font-medium text-slate-400 mt-0.5 block uppercase">
+                  {course.courseCode}
+                </span>
+              )}
+            </div>
+            <span
+              className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                course.status === "Active"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : course.status === "Draft"
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {course.status}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 mt-3">
+            <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
+              <Building2 size={14} className="text-slate-400" />
+              {course.university.name}
+            </span>
+            {course.university.country && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
+                <MapPin size={14} className="text-slate-400" />
+                {course.university.country}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CourseProgramDetails({ course }: { course: CourseDetail }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5">
+      <h2 className="text-sm font-bold text-slate-900 mb-4">Program Details</h2>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Level
+          </span>
+          <span className="text-sm font-bold text-slate-700">{course.level}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Degree
+          </span>
+          <span className="text-sm font-bold text-slate-700">{course.degreeType}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Faculty
+          </span>
+          <span className="text-sm font-bold text-slate-700">{course.faculty}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Duration
+          </span>
+          <span className="text-sm font-bold text-slate-700">{course.duration} Years</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Credits
+          </span>
+          <span className="text-sm font-bold text-slate-700">{course.credits}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Language
+          </span>
+          <span className="text-sm font-bold text-slate-700">{course.language}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Mode
+          </span>
+          <span className="text-sm font-bold text-slate-700">{course.mode}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CourseRequirementsCard({ course }: { course: CourseDetail }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5">
+      <h2 className="text-sm font-bold text-slate-900 mb-4">Requirements</h2>
+      <div className="space-y-3">
+        {course.percentageRequired && (
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Min. Percentage
+            </span>
+            <span className="text-sm font-bold text-slate-700">{course.percentageRequired}</span>
+          </div>
+        )}
+        {course.gpaRequired && (
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Min. GPA
+            </span>
+            <span className="text-sm font-bold text-slate-700">{course.gpaRequired}</span>
+          </div>
+        )}
+        {course.englishOverallScore && (
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              {course.englishLanguageType || "IELTS"}
+            </span>
+            <span className="text-sm font-bold text-slate-700">{course.englishOverallScore}</span>
+          </div>
+        )}
+        {course.englishOverallScore && (
+          <div className="pt-2 border-t border-slate-100">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+              English Score Submission
+            </span>
+            <span className="text-xs font-bold text-indigo-600">
+              {course.englishTestStage === "After Application"
+                ? "After application — before visa lodgement"
+                : "Before application"}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CourseFeesCard({ course }: { course: CourseDetail }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5">
+      <h2 className="text-sm font-bold text-slate-900 mb-4">Fees</h2>
+      <div className="space-y-3">
+        {course.tuitionFee && (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Tuition
+              </span>
+              <span className="text-sm font-bold text-indigo-600">
+                {course.currency || "USD"}{" "}
+                {isSemesterPeriod(course.tuitionFeePeriod)
+                  ? annualTuition(course.tuitionFee, course.tuitionFeePeriod)?.toLocaleString()
+                  : course.tuitionFee}
+                <span className="text-slate-400 font-semibold"> /yr</span>
+              </span>
+            </div>
+            {isSemesterPeriod(course.tuitionFeePeriod) && (
+              <span className="text-[11px] text-slate-400 text-right">
+                {course.currency || "USD"} {course.tuitionFee} per semester
+              </span>
+            )}
+          </div>
+        )}
+        {course.applicationFee && (
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              App. Fee
+            </span>
+            <span className="text-sm font-bold text-emerald-600">
+              {course.currency || "USD"} {course.applicationFee}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CourseDescriptionCard({ course }: { course: CourseDetail }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5">
+      <h2 className="text-sm font-bold text-slate-900 mb-3">Description</h2>
+      <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+        {course.description}
+      </p>
+    </div>
+  );
+}
+
+function CoursePrerequisitesCard({ prerequisites }: { prerequisites: string[] }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5">
+      <h2 className="text-sm font-bold text-slate-900 mb-4">Prerequisites & Requirements</h2>
+      {prerequisites.length === 0 ? (
+        <p className="text-sm text-slate-400">No prerequisites for this course.</p>
+      ) : (
+        <div className="space-y-2">
+          {prerequisites.map((req) => (
+            <div
+              key={req}
+              className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100"
+            >
+              <div className="size-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+                <FileText size={16} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-slate-700 truncate">{req}</p>
+                <p className="text-[10px] text-slate-400 font-medium">Required document</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CourseIntakesCard({ intake, intakes }: { intake: string; intakes: IntakeItem[] }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5">
+      <h2 className="text-sm font-bold text-slate-900 mb-4">Available Intakes</h2>
+      {intakes.length > 0 ? (
+        <div className="space-y-2">
+          {intakes.map((intakeItem) => {
+            const status = getIntakeStatus(intakeItem as { openDate: string; deadline: string });
+            const key = `${intakeItem.name || "intake"}-${intakeItem.openDate || ""}-${
+              intakeItem.deadline || ""
+            }`;
+            return (
+              <div
+                key={key}
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100"
+              >
+                <div className="flex items-center gap-2">
+                  <Calendar size={14} className="text-slate-400" />
+                  <span className="text-sm font-bold text-slate-700">{intakeItem.name}</span>
+                </div>
+                {status && (
+                  <span
+                    className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${status.className}`}
+                  >
+                    {status.label}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-sm text-slate-400">{intake || "No intake information"}</p>
+      )}
+    </div>
+  );
+}
+
+function CourseInstructorCard({ instructor }: { instructor: string }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5">
+      <h2 className="text-sm font-bold text-slate-900 mb-4">Instructor</h2>
+      <div className="flex items-center gap-3">
+        <div className="size-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shrink-0">
+          <User size={18} />
+        </div>
+        <div>
+          <p className="text-sm font-bold text-slate-700">{instructor}</p>
+          <p className="text-xs text-slate-400">Course Instructor</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CourseDetailContent({ id }: { id: string }) {
   const router = useRouter();
   const [course, setCourse] = useState<CourseDetail | null>(null);
@@ -172,273 +461,22 @@ export default function CourseDetailContent({ id }: { id: string }) {
         </div>
       </div>
 
-      {/* Course Title Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
-        <div className="flex items-start gap-5">
-          <div
-            className="size-16 rounded-2xl flex items-center justify-center text-white text-xl font-black shrink-0 shadow-sm"
-            style={{ backgroundColor: course.color }}
-          >
-            {course.initials}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">{course.name}</h1>
-                {course.courseCode && (
-                  <span className="text-sm font-medium text-slate-400 mt-0.5 block uppercase">
-                    {course.courseCode}
-                  </span>
-                )}
-              </div>
-              <span
-                className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                  course.status === "Active"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : course.status === "Draft"
-                      ? "bg-amber-100 text-amber-700"
-                      : "bg-slate-100 text-slate-600"
-                }`}
-              >
-                {course.status}
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 mt-3">
-              <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
-                <Building2 size={14} className="text-slate-400" />
-                {course.university.name}
-              </span>
-              {course.university.country && (
-                <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
-                  <MapPin size={14} className="text-slate-400" />
-                  {course.university.country}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <CourseHeaderCard course={course} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column - Key Details */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-slate-900 mb-4">Program Details</h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Level
-                </span>
-                <span className="text-sm font-bold text-slate-700">{course.level}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Degree
-                </span>
-                <span className="text-sm font-bold text-slate-700">{course.degreeType}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Faculty
-                </span>
-                <span className="text-sm font-bold text-slate-700">{course.faculty}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Duration
-                </span>
-                <span className="text-sm font-bold text-slate-700">{course.duration} Years</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Credits
-                </span>
-                <span className="text-sm font-bold text-slate-700">{course.credits}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Language
-                </span>
-                <span className="text-sm font-bold text-slate-700">{course.language}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Mode
-                </span>
-                <span className="text-sm font-bold text-slate-700">{course.mode}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-slate-900 mb-4">Requirements</h2>
-            <div className="space-y-3">
-              {course.percentageRequired && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Min. Percentage
-                  </span>
-                  <span className="text-sm font-bold text-slate-700">
-                    {course.percentageRequired}
-                  </span>
-                </div>
-              )}
-              {course.gpaRequired && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Min. GPA
-                  </span>
-                  <span className="text-sm font-bold text-slate-700">{course.gpaRequired}</span>
-                </div>
-              )}
-              {course.englishOverallScore && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    {course.englishLanguageType || "IELTS"}
-                  </span>
-                  <span className="text-sm font-bold text-slate-700">
-                    {course.englishOverallScore}
-                  </span>
-                </div>
-              )}
-              {course.englishOverallScore && (
-                <div className="pt-2 border-t border-slate-100">
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
-                    English Score Submission
-                  </span>
-                  <span className="text-xs font-bold text-indigo-600">
-                    {course.englishTestStage === "After Application"
-                      ? "After application — before visa lodgement"
-                      : "Before application"}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-slate-900 mb-4">Fees</h2>
-            <div className="space-y-3">
-              {course.tuitionFee && (
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      Tuition
-                    </span>
-                    <span className="text-sm font-bold text-indigo-600">
-                      {course.currency || "USD"}{" "}
-                      {isSemesterPeriod(course.tuitionFeePeriod)
-                        ? annualTuition(
-                            course.tuitionFee,
-                            course.tuitionFeePeriod
-                          )?.toLocaleString()
-                        : course.tuitionFee}
-                      <span className="text-slate-400 font-semibold"> /yr</span>
-                    </span>
-                  </div>
-                  {isSemesterPeriod(course.tuitionFeePeriod) && (
-                    <span className="text-[11px] text-slate-400 text-right">
-                      {course.currency || "USD"} {course.tuitionFee} per semester
-                    </span>
-                  )}
-                </div>
-              )}
-              {course.applicationFee && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    App. Fee
-                  </span>
-                  <span className="text-sm font-bold text-emerald-600">
-                    {course.currency || "USD"} {course.applicationFee}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
+          <CourseProgramDetails course={course} />
+          <CourseRequirementsCard course={course} />
+          <CourseFeesCard course={course} />
         </div>
 
         {/* Right column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Description */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-slate-900 mb-3">Description</h2>
-            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-              {course.description}
-            </p>
-          </div>
-
-          {/* Prerequisites */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-slate-900 mb-4">Prerequisites & Requirements</h2>
-            {prerequisites.length === 0 ? (
-              <p className="text-sm text-slate-400">No prerequisites for this course.</p>
-            ) : (
-              <div className="space-y-2">
-                {prerequisites.map((req, i) => (
-                  <div
-                    key={`prereq-${i}`}
-                    className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100"
-                  >
-                    <div className="size-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
-                      <FileText size={16} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-700 truncate">{req}</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Required document</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Intakes */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <h2 className="text-sm font-bold text-slate-900 mb-4">Available Intakes</h2>
-            {intakes.length > 0 ? (
-              <div className="space-y-2">
-                {intakes.map((intakeItem, idx: number) => {
-                  const status = getIntakeStatus(intakeItem);
-                  return (
-                    <div
-                      key={`intake-${idx}`}
-                      className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Calendar size={14} className="text-slate-400" />
-                        <span className="text-sm font-bold text-slate-700">{intakeItem.name}</span>
-                      </div>
-                      {status && (
-                        <span
-                          className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${status.className}`}
-                        >
-                          {status.label}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-400">{course.intake || "No intake information"}</p>
-            )}
-          </div>
-
-          {/* Instructor */}
-          {course.instructor && (
-            <div className="bg-white border border-slate-200 rounded-2xl p-5">
-              <h2 className="text-sm font-bold text-slate-900 mb-4">Instructor</h2>
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shrink-0">
-                  <User size={18} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-700">{course.instructor}</p>
-                  <p className="text-xs text-slate-400">Course Instructor</p>
-                </div>
-              </div>
-            </div>
-          )}
+          <CourseDescriptionCard course={course} />
+          <CoursePrerequisitesCard prerequisites={prerequisites} />
+          <CourseIntakesCard intake={course.intake} intakes={intakes} />
+          {course.instructor && <CourseInstructorCard instructor={course.instructor} />}
 
           {/* Start Date */}
           {course.startDate && (

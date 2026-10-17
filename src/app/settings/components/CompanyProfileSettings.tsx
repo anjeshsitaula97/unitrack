@@ -33,8 +33,10 @@ interface FormState {
   maxUsers: string;
 }
 
+type SetForm = React.Dispatch<React.SetStateAction<FormState | null>>;
+
 const inputClass =
-  "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all";
+  "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition";
 const labelClass = "block text-xs font-semibold text-slate-600 mb-1.5";
 
 function toDateInput(value: string | null): string {
@@ -58,6 +60,192 @@ function toForm(c: Consultancy): FormState {
   };
 }
 
+function BrandingSection({
+  form,
+  setForm,
+  readOnly,
+  isUploading,
+  fileInputRef,
+  onLogoUpload,
+}: {
+  form: FormState;
+  setForm: SetForm;
+  readOnly: boolean;
+  isUploading: boolean;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onLogoUpload: (file: File) => void;
+}) {
+  return (
+    <div>
+      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">Branding</p>
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+          {form.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={form.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+          ) : (
+            <ImageIcon size={22} className="text-slate-400" />
+          )}
+        </div>
+        <div className="flex-1">
+          <label htmlFor="company-logo-url" className="sr-only">
+            Logo URL
+          </label>
+          <input
+            id="company-logo-url"
+            type="text"
+            value={form.logoUrl}
+            onChange={(e) => setForm((f) => (f ? { ...f, logoUrl: e.target.value } : f))}
+            placeholder="Logo URL (or upload a file)"
+            disabled={readOnly}
+            className={`${inputClass} disabled:opacity-60`}
+          />
+          <p className="text-[11px] text-slate-400 mt-1">
+            Displayed in the sidebar in place of the UniTrack logo.
+          </p>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onLogoUpload(file);
+            e.target.value = "";
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading || readOnly}
+          className="btn-secondary inline-flex items-center gap-1.5 disabled:opacity-50"
+        >
+          {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+          Upload
+        </button>
+      </div>
+
+      <div className="mt-4">
+        <label htmlFor="company-name" className={labelClass}>
+          Company Name <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="company-name"
+          type="text"
+          value={form.name}
+          onChange={(e) => setForm((f) => (f ? { ...f, name: e.target.value } : f))}
+          disabled={readOnly}
+          className={`${inputClass} disabled:opacity-60`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ContactSection({
+  form,
+  setForm,
+  readOnly,
+}: {
+  form: FormState;
+  setForm: SetForm;
+  readOnly: boolean;
+}) {
+  const fields: { id: string; label: string; type: string; key: keyof FormState }[] = [
+    { id: "company-email", label: "Email", type: "email", key: "email" },
+    { id: "company-phone", label: "Phone", type: "text", key: "phone" },
+    { id: "company-website", label: "Website", type: "text", key: "website" },
+    { id: "company-address", label: "Address", type: "text", key: "address" },
+  ];
+
+  return (
+    <div>
+      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">Contact</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {fields.map((field) => (
+          <div key={field.id}>
+            <label htmlFor={field.id} className={labelClass}>
+              {field.label}
+            </label>
+            <input
+              id={field.id}
+              type={field.type}
+              value={form[field.key]}
+              onChange={(e) => setForm((f) => (f ? { ...f, [field.key]: e.target.value } : f))}
+              disabled={readOnly}
+              className={`${inputClass} disabled:opacity-60`}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PackageSection({ form, setForm }: { form: FormState; setForm: SetForm }) {
+  return (
+    <div>
+      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3 flex items-center gap-1.5">
+        <CalendarClock size={12} /> Package &amp; Subscription
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="company-package-name" className={labelClass}>
+            Package Name
+          </label>
+          <input
+            id="company-package-name"
+            type="text"
+            value={form.packageName}
+            onChange={(e) => setForm((f) => (f ? { ...f, packageName: e.target.value } : f))}
+            placeholder="e.g. Professional"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label htmlFor="company-max-users" className={labelClass}>
+            Max Users
+          </label>
+          <input
+            id="company-max-users"
+            type="number"
+            min={1}
+            value={form.maxUsers}
+            onChange={(e) => setForm((f) => (f ? { ...f, maxUsers: e.target.value } : f))}
+            placeholder="Unlimited"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label htmlFor="company-start-date" className={labelClass}>
+            Start Date
+          </label>
+          <input
+            id="company-start-date"
+            type="date"
+            value={form.packageStartDate}
+            onChange={(e) => setForm((f) => (f ? { ...f, packageStartDate: e.target.value } : f))}
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label htmlFor="company-expiry-date" className={labelClass}>
+            Expiry Date
+          </label>
+          <input
+            id="company-expiry-date"
+            type="date"
+            value={form.packageExpiryDate}
+            onChange={(e) => setForm((f) => (f ? { ...f, packageExpiryDate: e.target.value } : f))}
+            className={inputClass}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CompanyProfileSettings() {
   const [consultancy, setConsultancy] = useState<Consultancy | null>(null);
   const [canEdit, setCanEdit] = useState(false);
@@ -72,11 +260,12 @@ export default function CompanyProfileSettings() {
     setIsLoading(true);
     try {
       const res = await fetch("/api/consultancy", { cache: "no-store" });
-      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error || "Failed to load consultancy");
+        const errorData = await res.json().catch(() => null);
+        toast.error(errorData?.error || "Failed to load consultancy");
         return;
       }
+      const data = await res.json();
       setConsultancy(data?.consultancy ?? null);
       setCanEdit(Boolean(data?.canEdit));
       setIsSuperAdmin(Boolean(data?.isSuperAdmin));
@@ -98,11 +287,12 @@ export default function CompanyProfileSettings() {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error || "Failed to upload logo");
+        const errorData = await res.json().catch(() => null);
+        toast.error(errorData?.error || "Failed to upload logo");
         return;
       }
+      const data = await res.json();
       setForm((f) => (f ? { ...f, logoUrl: data.url } : f));
       toast.success("Logo uploaded");
     } catch {
@@ -141,11 +331,12 @@ export default function CompanyProfileSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error || "Failed to save");
+        const errorData = await res.json().catch(() => null);
+        toast.error(errorData?.error || "Failed to save");
         return;
       }
+      const data = await res.json();
       setConsultancy(data);
       setForm(toForm(data));
       toast.success("Consultancy profile updated");
@@ -205,171 +396,18 @@ export default function CompanyProfileSettings() {
       </div>
 
       <div className="card p-8 space-y-6">
-        {/* Branding */}
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">
-            Branding
-          </p>
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-              {form.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={form.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-              ) : (
-                <ImageIcon size={22} className="text-slate-400" />
-              )}
-            </div>
-            <div className="flex-1">
-              <input
-                type="text"
-                value={form.logoUrl}
-                onChange={(e) => setForm((f) => (f ? { ...f, logoUrl: e.target.value } : f))}
-                placeholder="Logo URL (or upload a file)"
-                disabled={readOnly}
-                className={`${inputClass} disabled:opacity-60`}
-              />
-              <p className="text-[11px] text-slate-400 mt-1">
-                Displayed in the sidebar in place of the UniTrack logo.
-              </p>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleLogoUpload(file);
-                e.target.value = "";
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading || readOnly}
-              className="btn-secondary inline-flex items-center gap-1.5 disabled:opacity-50"
-            >
-              {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-              Upload
-            </button>
-          </div>
+        <BrandingSection
+          form={form}
+          setForm={setForm}
+          readOnly={readOnly}
+          isUploading={isUploading}
+          fileInputRef={fileInputRef}
+          onLogoUpload={handleLogoUpload}
+        />
 
-          <div className="mt-4">
-            <label className={labelClass}>
-              Company Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm((f) => (f ? { ...f, name: e.target.value } : f))}
-              disabled={readOnly}
-              className={`${inputClass} disabled:opacity-60`}
-            />
-          </div>
-        </div>
+        <ContactSection form={form} setForm={setForm} readOnly={readOnly} />
 
-        {/* Contact */}
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">
-            Contact
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Email</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm((f) => (f ? { ...f, email: e.target.value } : f))}
-                disabled={readOnly}
-                className={`${inputClass} disabled:opacity-60`}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Phone</label>
-              <input
-                type="text"
-                value={form.phone}
-                onChange={(e) => setForm((f) => (f ? { ...f, phone: e.target.value } : f))}
-                disabled={readOnly}
-                className={`${inputClass} disabled:opacity-60`}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Website</label>
-              <input
-                type="text"
-                value={form.website}
-                onChange={(e) => setForm((f) => (f ? { ...f, website: e.target.value } : f))}
-                disabled={readOnly}
-                className={`${inputClass} disabled:opacity-60`}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Address</label>
-              <input
-                type="text"
-                value={form.address}
-                onChange={(e) => setForm((f) => (f ? { ...f, address: e.target.value } : f))}
-                disabled={readOnly}
-                className={`${inputClass} disabled:opacity-60`}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Package (Super Admin only) */}
-        {isSuperAdmin && (
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3 flex items-center gap-1.5">
-              <CalendarClock size={12} /> Package &amp; Subscription
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Package Name</label>
-                <input
-                  type="text"
-                  value={form.packageName}
-                  onChange={(e) => setForm((f) => (f ? { ...f, packageName: e.target.value } : f))}
-                  placeholder="e.g. Professional"
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Max Users</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={form.maxUsers}
-                  onChange={(e) => setForm((f) => (f ? { ...f, maxUsers: e.target.value } : f))}
-                  placeholder="Unlimited"
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Start Date</label>
-                <input
-                  type="date"
-                  value={form.packageStartDate}
-                  onChange={(e) =>
-                    setForm((f) => (f ? { ...f, packageStartDate: e.target.value } : f))
-                  }
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Expiry Date</label>
-                <input
-                  type="date"
-                  value={form.packageExpiryDate}
-                  onChange={(e) =>
-                    setForm((f) => (f ? { ...f, packageExpiryDate: e.target.value } : f))
-                  }
-                  className={inputClass}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+        {isSuperAdmin && <PackageSection form={form} setForm={setForm} />}
 
         {!readOnly && (
           <div className="flex items-center justify-end pt-2 border-t border-slate-100">

@@ -15,6 +15,7 @@ export default function FormHeader({ universityId, formName, onBack }: FormHeade
       <button
         type="button"
         onClick={onBack}
+        aria-label="Go back"
         className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
       >
         <ArrowLeft size={18} />

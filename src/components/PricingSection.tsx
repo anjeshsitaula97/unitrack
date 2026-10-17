@@ -185,7 +185,7 @@ export default function PricingSection() {
                 <button
                   className={
                     featured
-                      ? "w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-indigo-600 text-white font-label-btn text-label-btn text-center shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 transition-all"
+                      ? "w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-indigo-600 text-white font-label-btn text-label-btn text-center shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 transition"
                       : "w-full py-3 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-label-btn text-label-btn text-center transition-colors"
                   }
                   onClick={() => setCheckoutPlan(plan)}

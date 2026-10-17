@@ -35,6 +35,7 @@ interface AccessUser {
 interface LoginLog {
   id: string;
   createdAt: string;
+  createdAtLabel?: string;
   ipAddress?: string | null;
   userAgent?: string | null;
 }
@@ -44,6 +45,7 @@ interface ActivityLog {
   action: string;
   target: string;
   createdAt: string;
+  createdAtLabel?: string;
 }
 
 interface UserDetails {
@@ -51,6 +53,51 @@ interface UserDetails {
   lastSeenAt?: string | null;
   loginLogs?: LoginLog[];
   activities?: ActivityLog[];
+}
+
+interface InviteResult {
+  user: AccessUser;
+  credentialsEmail?: { attempted: boolean; sent: boolean; error?: string };
+  generatedPassword?: string;
+  apiKey?: string;
+}
+
+function buildInviteMessage(
+  data: InviteResult,
+  inviteName: string,
+  inviteEmail: string
+): { message: string; emailFailed: boolean } {
+  const email = data.credentialsEmail;
+  const emailFailed = Boolean(email?.attempted && !email.sent);
+
+  const parts = [`User ${inviteName} created`];
+  if (email?.sent) parts.push(`Login details emailed to ${inviteEmail}`);
+  else if (emailFailed) {
+    const reason = email?.error ? email.error.replace(/\.\s*$/, "") : "";
+    parts.push(
+      reason
+        ? `Could not email login details: ${reason}. Share the password manually`
+        : "Could not email login details. Share the password manually"
+    );
+  } else if (!email?.attempted) parts.push("No email was sent");
+  if (data.generatedPassword) parts.push(`Temporary password: ${data.generatedPassword}`);
+  if (data.apiKey) parts.push("API key generated");
+  const message = parts.join(". ") + (parts[parts.length - 1].endsWith(".") ? "" : ".");
+  return { message, emailFailed };
+}
+
+function decorateUserDetails(data: UserDetails): UserDetails {
+  return {
+    ...data,
+    loginLogs: (data.loginLogs ?? []).map((log) => ({
+      ...log,
+      createdAtLabel: new Date(log.createdAt).toLocaleString(),
+    })),
+    activities: (data.activities ?? []).map((act) => ({
+      ...act,
+      createdAtLabel: new Date(act.createdAt).toLocaleString(),
+    })),
+  };
 }
 
 export default function AccessContent() {
@@ -115,7 +162,7 @@ export default function AccessContent() {
       const res = await fetch(`/api/access/${id}/details`);
       if (res.ok) {
         const data = await res.json();
-        setUserDetails(data);
+        setUserDetails(decorateUserDetails(data));
       } else {
         toast.error("Failed to load user details");
       }
@@ -239,23 +286,7 @@ export default function AccessContent() {
         const data = await res.json();
         setUsers([data.user, ...users]); // optimistic local update
 
-        const email = data.credentialsEmail as
-          { attempted: boolean; sent: boolean; error?: string } | undefined;
-        const emailFailed = Boolean(email?.attempted && !email.sent);
-
-        const parts = [`User ${inviteName} created`];
-        if (email?.sent) parts.push(`Login details emailed to ${inviteEmail}`);
-        else if (emailFailed) {
-          const reason = email?.error ? email.error.replace(/\.\s*$/, "") : "";
-          parts.push(
-            reason
-              ? `Could not email login details: ${reason}. Share the password manually`
-              : "Could not email login details. Share the password manually"
-          );
-        } else if (!email?.attempted) parts.push("No email was sent");
-        if (data.generatedPassword) parts.push(`Temporary password: ${data.generatedPassword}`);
-        if (data.apiKey) parts.push("API key generated");
-        const message = parts.join(". ") + (parts[parts.length - 1].endsWith(".") ? "" : ".");
+        const { message, emailFailed } = buildInviteMessage(data, inviteName, inviteEmail);
 
         // The invite succeeded either way, so a mail failure is a warning, not an error.
         if (emailFailed) {
@@ -289,202 +320,30 @@ export default function AccessContent() {
           <Loader2 className="animate-spin text-indigo-500" size={32} />
         </div>
       )}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-1">User Access Management</h1>
-          <p className="text-sm text-slate-400">
-            {filtered.length.toLocaleString()} users matching your current filters
-          </p>
-        </div>
-        <button type="button" onClick={() => setIsInviteModalOpen(true)} className="btn-primary">
-          <Plus size={15} /> Add User
-        </button>
-      </div>
+      <AccessPageHeader count={filtered.length} onAddUser={() => setIsInviteModalOpen(true)} />
 
-      <div className="card px-5 py-4 mb-5">
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all"
-            />
-          </div>
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          >
-            <option value="">All Roles</option>
-            {roles.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <AccessFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        roleFilter={roleFilter}
+        onRoleFilterChange={setRoleFilter}
+        roles={roles}
+      />
 
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50/60">
-              <tr className="border-b border-slate-100">
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase">
-                  User
-                </th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase">
-                  Role
-                </th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase">
-                  Status
-                </th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase">
-                  Connection
-                </th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase">
-                  Last Login
-                </th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {filtered.map((user) => (
-                <tr
-                  key={user.id}
-                  className="hover:bg-slate-50 group cursor-pointer"
-                  onClick={() => {
-                    setViewingUser(user);
-                    fetchUserDetails(user.id);
-                  }}
-                >
-                  <td className="py-3 px-5">
-                    <div className="flex items-center gap-3">
-                      <div className="size-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden relative">
-                        {user?.avatar &&
-                        (user.avatar.startsWith("http") ||
-                          user.avatar.startsWith("/") ||
-                          user.avatar.startsWith("data:")) ? (
-                          <Image
-                            src={user.avatar}
-                            alt={user?.name ?? ""}
-                            width={32}
-                            height={32}
-                            className="object-cover size-full"
-                            unoptimized
-                          />
-                        ) : (
-                          user?.avatar ||
-                          (user?.name ? user.name.substring(0, 2).toUpperCase() : "??")
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-slate-800 flex items-center gap-1 truncate">
-                          {user?.name}{" "}
-                          {user?.role === "Super Admin" && (
-                            <ShieldAlert size={12} className="text-indigo-500 flex-shrink-0" />
-                          )}
-                        </p>
-                        <p className="text-xs text-slate-500 truncate">{user.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-5 text-sm">
-                    <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-medium whitespace-nowrap">
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="py-3 px-5">
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-md font-medium ${user.status === "Active" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}
-                    >
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-5 whitespace-nowrap" suppressHydrationWarning>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`size-2 rounded-full ${
-                          user.lastSeenAt && new Date(user.lastSeenAt).getTime() > fiveMinCutoff
-                            ? "bg-emerald-500 animate-pulse"
-                            : "bg-slate-300"
-                        }`}
-                      ></span>
-                      <div className="flex flex-col">
-                        <span
-                          className={`text-[10px] font-bold ${
-                            user.lastSeenAt && new Date(user.lastSeenAt).getTime() > fiveMinCutoff
-                              ? "text-emerald-600"
-                              : "text-slate-500"
-                          }`}
-                        >
-                          {user.lastSeenAt && new Date(user.lastSeenAt).getTime() > fiveMinCutoff
-                            ? "ONLINE"
-                            : "OFFLINE"}
-                        </span>
-                        {user.loginLogs && user.loginLogs[0] && (
-                          <span className="text-[10px] font-semibold text-slate-600 flex items-center gap-1 mt-0.5">
-                            <Globe size={11} className="text-indigo-400" />{" "}
-                            {user.loginLogs[0].ipAddress || "0.0.0.0"}
-                          </span>
-                        )}
-                        {(!user.loginLogs || user.loginLogs.length === 0) && (
-                          <span className="text-[9px] text-slate-400 italic mt-0.5">
-                            No IP logged
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-5 text-sm text-slate-500 whitespace-nowrap">
-                    {user.lastLogin}
-                  </td>
-                  <td className="py-3 px-5 text-right">
-                    <div
-                      className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        type="button"
-                        aria-label="Reset Password"
-                        onClick={() => {
-                          setResetPwUser(user);
-                          setResetPwValue("");
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400"
-                        title="Reset Password"
-                      >
-                        <Key size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Edit Permissions"
-                        onClick={() => setEditingUser(user)}
-                        className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400"
-                        title="Edit Permissions"
-                      >
-                        <UserCheck size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Delete User"
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                        title="Delete User"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <AccessUsersTable
+        users={filtered}
+        fiveMinCutoff={fiveMinCutoff}
+        onView={(user) => {
+          setViewingUser(user);
+          fetchUserDetails(user.id);
+        }}
+        onEdit={setEditingUser}
+        onResetPassword={(user) => {
+          setResetPwUser(user);
+          setResetPwValue("");
+        }}
+        onDelete={handleDeleteUser}
+      />
 
       <InviteUserModal
         isInviteModalOpen={isInviteModalOpen}
@@ -537,6 +396,245 @@ export default function AccessContent() {
           handleResetPassword={handleResetPassword}
         />
       )}
+    </div>
+  );
+}
+
+function AccessPageHeader({ count, onAddUser }: { count: number; onAddUser: () => void }) {
+  return (
+    <div className="flex items-start justify-between mb-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-800 mb-1">User Access Management</h1>
+        <p className="text-sm text-slate-400">
+          {count.toLocaleString()} users matching your current filters
+        </p>
+      </div>
+      <button type="button" onClick={onAddUser} className="btn-primary">
+        <Plus size={15} /> Add User
+      </button>
+    </div>
+  );
+}
+
+function AccessFilterBar({
+  search,
+  onSearchChange,
+  roleFilter,
+  onRoleFilterChange,
+  roles,
+}: {
+  search: string;
+  onSearchChange: (v: string) => void;
+  roleFilter: string;
+  onRoleFilterChange: (v: string) => void;
+  roles: string[];
+}) {
+  return (
+    <div className="card px-5 py-4 mb-5">
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            aria-label="Search users"
+            placeholder="Search users..."
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
+          />
+        </div>
+        <select
+          aria-label="Filter by role"
+          value={roleFilter}
+          onChange={(e) => onRoleFilterChange(e.target.value)}
+          className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+        >
+          <option value="">All Roles</option>
+          {roles.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function AccessUsersTable({
+  users,
+  fiveMinCutoff,
+  onView,
+  onEdit,
+  onResetPassword,
+  onDelete,
+}: {
+  users: AccessUser[];
+  fiveMinCutoff: number;
+  onView: (user: AccessUser) => void;
+  onEdit: (user: AccessUser) => void;
+  onResetPassword: (user: AccessUser) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div className="card overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-slate-50/60">
+            <tr className="border-b border-slate-100">
+              <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase">
+                User
+              </th>
+              <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase">
+                Role
+              </th>
+              <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase">
+                Status
+              </th>
+              <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase">
+                Connection
+              </th>
+              <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase">
+                Last Login
+              </th>
+              <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {users.map((user) => (
+              <tr
+                key={user.id}
+                tabIndex={0}
+                className="hover:bg-slate-50 group cursor-pointer"
+                onClick={() => onView(user)}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onView(user);
+                  }
+                }}
+              >
+                <td className="py-3 px-5">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden relative">
+                      {user?.avatar &&
+                      (user.avatar.startsWith("http") ||
+                        user.avatar.startsWith("/") ||
+                        user.avatar.startsWith("data:")) ? (
+                        <Image
+                          src={user.avatar}
+                          alt={user?.name ?? ""}
+                          width={32}
+                          height={32}
+                          className="object-cover size-full"
+                          unoptimized
+                        />
+                      ) : (
+                        user?.avatar ||
+                        (user?.name ? user.name.substring(0, 2).toUpperCase() : "??")
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 flex items-center gap-1 truncate">
+                        {user?.name}{" "}
+                        {user?.role === "Super Admin" && (
+                          <ShieldAlert size={12} className="text-indigo-500 flex-shrink-0" />
+                        )}
+                      </p>
+                      <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="py-3 px-5 text-sm">
+                  <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-medium whitespace-nowrap">
+                    {user.role}
+                  </span>
+                </td>
+                <td className="py-3 px-5">
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-md font-medium ${user.status === "Active" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}
+                  >
+                    {user.status}
+                  </span>
+                </td>
+                <td className="py-3 px-5 whitespace-nowrap" suppressHydrationWarning>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`size-2 rounded-full ${
+                        user.lastSeenAt && new Date(user.lastSeenAt).getTime() > fiveMinCutoff
+                          ? "bg-emerald-500 animate-pulse"
+                          : "bg-slate-300"
+                      }`}
+                    ></span>
+                    <div className="flex flex-col">
+                      <span
+                        className={`text-[10px] font-bold ${
+                          user.lastSeenAt && new Date(user.lastSeenAt).getTime() > fiveMinCutoff
+                            ? "text-emerald-600"
+                            : "text-slate-500"
+                        }`}
+                      >
+                        {user.lastSeenAt && new Date(user.lastSeenAt).getTime() > fiveMinCutoff
+                          ? "ONLINE"
+                          : "OFFLINE"}
+                      </span>
+                      {user.loginLogs && user.loginLogs[0] && (
+                        <span className="text-[10px] font-semibold text-slate-600 flex items-center gap-1 mt-0.5">
+                          <Globe size={11} className="text-indigo-400" />{" "}
+                          {user.loginLogs[0].ipAddress || "0.0.0.0"}
+                        </span>
+                      )}
+                      {(!user.loginLogs || user.loginLogs.length === 0) && (
+                        <span className="text-[9px] text-slate-400 italic mt-0.5">
+                          No IP logged
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="py-3 px-5 text-sm text-slate-500 whitespace-nowrap">
+                  {user.lastLogin}
+                </td>
+                <td className="py-3 px-5 text-right">
+                  <div
+                    className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      aria-label="Reset Password"
+                      onClick={() => onResetPassword(user)}
+                      className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400"
+                      title="Reset Password"
+                    >
+                      <Key size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Edit Permissions"
+                      onClick={() => onEdit(user)}
+                      className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400"
+                      title="Edit Permissions"
+                    >
+                      <UserCheck size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Delete User"
+                      onClick={() => onDelete(user.id)}
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                      title="Delete User"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1064,27 +1162,7 @@ function UserDetailsModal({
           </div>
           <div className="flex items-center gap-3" suppressHydrationWarning>
             {userDetails && (
-              <span
-                className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
-                  userDetails.lastSeenAt &&
-                  new Date(userDetails.lastSeenAt).getTime() > fiveMinCutoff
-                    ? "bg-emerald-50 text-emerald-600"
-                    : "bg-slate-50 text-slate-500"
-                }`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    userDetails.lastSeenAt &&
-                    new Date(userDetails.lastSeenAt).getTime() > fiveMinCutoff
-                      ? "bg-emerald-500 animate-pulse"
-                      : "bg-slate-400"
-                  }`}
-                ></span>
-                {userDetails.lastSeenAt &&
-                new Date(userDetails.lastSeenAt).getTime() > fiveMinCutoff
-                  ? "Online Now"
-                  : "Offline"}
-              </span>
+              <PresenceBadge lastSeenAt={userDetails.lastSeenAt} fiveMinCutoff={fiveMinCutoff} />
             )}
             <button
               type="button"
@@ -1108,108 +1186,8 @@ function UserDetailsModal({
             </div>
           ) : userDetails ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2 uppercase tracking-wider">
-                    <Clock size={16} className="text-indigo-500" /> Login History
-                  </h4>
-                  <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded uppercase">
-                    Last 50 Logins
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {(userDetails.loginLogs?.length ?? 0) > 0 ? (
-                    userDetails.loginLogs?.map((log) => (
-                      <div
-                        key={log.id}
-                        className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between group hover:border-indigo-100 hover:bg-white transition-all shadow-sm"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="size-9 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-indigo-500 shadow-sm transition-colors">
-                            <Monitor size={16} />
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-slate-700">
-                              {new Date(log.createdAt).toLocaleString()}
-                            </p>
-                            <p className="text-[10px] font-bold text-indigo-600 flex items-center gap-1.5 mt-0.5">
-                              <Globe size={11} /> {log.ipAddress || "Unknown IP"}
-                              <span className="size-1 rounded-full bg-slate-300"></span>
-                              <span className="text-slate-400 font-medium">
-                                {log.userAgent?.includes("Windows")
-                                  ? "Windows"
-                                  : log.userAgent?.includes("Mac")
-                                    ? "MacOS"
-                                    : "Mobile"}
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                          SUCCESS
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                      <p className="text-xs text-slate-400">No login records found</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2 uppercase tracking-wider">
-                    <Activity size={16} className="text-indigo-500" /> Activity Logs
-                  </h4>
-                  <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded uppercase">
-                    Full Audit Trail
-                  </span>
-                </div>
-                <div className="space-y-3 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
-                  {(userDetails.activities?.length ?? 0) > 0 ? (
-                    userDetails.activities?.map((act) => (
-                      <div key={act.id} className="relative pl-9 group">
-                        <div
-                          className={`absolute left-2.5 top-1.5 size-3 rounded-full border-2 border-white shadow-sm z-10 ${
-                            act.action.includes("delete")
-                              ? "bg-red-500"
-                              : act.action.includes("create")
-                                ? "bg-emerald-500"
-                                : "bg-indigo-500"
-                          }`}
-                        ></div>
-                        <div className="p-3 bg-white border border-slate-100 rounded-xl group-hover:border-indigo-100 group-hover:shadow-sm transition-all">
-                          <p className="text-xs font-bold text-slate-800">
-                            {act.action} <span className="text-indigo-600">{act.target}</span>
-                          </p>
-                          <div className="flex items-center justify-between mt-1.5">
-                            <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
-                              <Calendar size={10} /> {new Date(act.createdAt).toLocaleString()}
-                            </span>
-                            <span
-                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                                act.action.includes("delete")
-                                  ? "text-red-600 bg-red-50"
-                                  : act.action.includes("create")
-                                    ? "text-emerald-600 bg-emerald-50"
-                                    : "text-indigo-600 bg-indigo-50"
-                              }`}
-                            >
-                              {act.action.split(" ")[0]}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                      <p className="text-xs text-slate-400">No activity logs found</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <LoginHistoryPanel logs={userDetails.loginLogs ?? []} />
+              <ActivityPanel activities={userDetails.activities ?? []} />
             </div>
           ) : (
             <div className="py-20 text-center">
@@ -1238,6 +1216,137 @@ function UserDetailsModal({
             Close View
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PresenceBadge({
+  lastSeenAt,
+  fiveMinCutoff,
+}: {
+  lastSeenAt?: string | null;
+  fiveMinCutoff: number;
+}) {
+  const online = Boolean(lastSeenAt && new Date(lastSeenAt).getTime() > fiveMinCutoff);
+  return (
+    <span
+      className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
+        online ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-500"
+      }`}
+    >
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${online ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`}
+      ></span>
+      {online ? "Online Now" : "Offline"}
+    </span>
+  );
+}
+
+function LoginHistoryPanel({ logs }: { logs: LoginLog[] }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2 uppercase tracking-wider">
+          <Clock size={16} className="text-indigo-500" /> Login History
+        </h4>
+        <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded uppercase">
+          Last 50 Logins
+        </span>
+      </div>
+      <div className="space-y-3">
+        {logs.length > 0 ? (
+          logs.map((log) => (
+            <div
+              key={log.id}
+              className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between group hover:border-indigo-100 hover:bg-white transition shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-indigo-500 shadow-sm transition-colors">
+                  <Monitor size={16} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-700">{log.createdAtLabel}</p>
+                  <p className="text-[10px] font-bold text-indigo-600 flex items-center gap-1.5 mt-0.5">
+                    <Globe size={11} /> {log.ipAddress || "Unknown IP"}
+                    <span className="size-1 rounded-full bg-slate-300"></span>
+                    <span className="text-slate-400 font-medium">
+                      {log.userAgent?.includes("Windows")
+                        ? "Windows"
+                        : log.userAgent?.includes("Mac")
+                          ? "MacOS"
+                          : "Mobile"}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                SUCCESS
+              </span>
+            </div>
+          ))
+        ) : (
+          <div className="py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <p className="text-xs text-slate-400">No login records found</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ActivityPanel({ activities }: { activities: ActivityLog[] }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2 uppercase tracking-wider">
+          <Activity size={16} className="text-indigo-500" /> Activity Logs
+        </h4>
+        <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded uppercase">
+          Full Audit Trail
+        </span>
+      </div>
+      <div className="space-y-3 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
+        {activities.length > 0 ? (
+          activities.map((act) => (
+            <div key={act.id} className="relative pl-9 group">
+              <div
+                className={`absolute left-2.5 top-1.5 size-3 rounded-full border-2 border-white shadow-sm z-10 ${
+                  act.action.includes("delete")
+                    ? "bg-red-500"
+                    : act.action.includes("create")
+                      ? "bg-emerald-500"
+                      : "bg-indigo-500"
+                }`}
+              ></div>
+              <div className="p-3 bg-white border border-slate-100 rounded-xl group-hover:border-indigo-100 group-hover:shadow-sm transition">
+                <p className="text-xs font-bold text-slate-800">
+                  {act.action} <span className="text-indigo-600">{act.target}</span>
+                </p>
+                <div className="flex items-center justify-between mt-1.5">
+                  <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
+                    <Calendar size={10} /> {act.createdAtLabel}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                      act.action.includes("delete")
+                        ? "text-red-600 bg-red-50"
+                        : act.action.includes("create")
+                          ? "text-emerald-600 bg-emerald-50"
+                          : "text-indigo-600 bg-indigo-50"
+                    }`}
+                  >
+                    {act.action.split(" ")[0]}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <p className="text-xs text-slate-400">No activity logs found</p>
+          </div>
+        )}
       </div>
     </div>
   );

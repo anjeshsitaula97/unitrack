@@ -28,9 +28,10 @@ export function diffChanges(
 ): ChangeDetail[] {
   if (!before || !after) return [];
   const changes: ChangeDetail[] = [];
+  const ignoreSet = new Set(ignore);
   const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
   for (const key of keys) {
-    if (ignore.includes(key)) continue;
+    if (ignoreSet.has(key)) continue;
     const from = formatChangeValue(before[key]);
     const to = formatChangeValue(after[key]);
     if (from !== to) {

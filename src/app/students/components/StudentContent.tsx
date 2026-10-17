@@ -571,7 +571,7 @@ export default function StudentContent() {
           <button
             type="button"
             onClick={() => router.push("/students/new")}
-            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-100"
+            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center gap-2 shadow-lg shadow-indigo-100"
           >
             <Plus size={18} />
             Add Student
@@ -590,10 +590,10 @@ export default function StudentContent() {
                 placeholder="Search by name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
               />
             </div>
-            <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -623,10 +623,24 @@ export default function StudentContent() {
                 ))}
               </select>
 
+              <select
+                value={staffFilter}
+                onChange={(e) => setStaffFilter(e.target.value)}
+                aria-label="Filter by assigned staff"
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer h-9"
+              >
+                <option value="all">All Assignees</option>
+                {(allUsers ?? []).map((u) => (
+                  <option key={u.id} value={u.name}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
+
               <button
                 type="button"
                 onClick={() => setShowMoreFilters(!showMoreFilters)}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 h-9 ${showMoreFilters ? "bg-indigo-600 text-white shadow-md" : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 h-9 ${showMoreFilters ? "bg-indigo-600 text-white shadow-md" : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
               >
                 <Filter size={14} />
                 {showMoreFilters ? "Hide Filters" : "More Filters"}
@@ -643,7 +657,7 @@ export default function StudentContent() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all flex items-center gap-1 h-9"
+                  className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition flex items-center gap-1 h-9"
                   aria-label="Close"
                 >
                   {" "}
@@ -656,7 +670,7 @@ export default function StudentContent() {
               <button
                 type="button"
                 onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                className={`p-2 rounded-lg transition ${viewMode === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
                 title="Grid view"
               >
                 <LayoutGrid size={16} />
@@ -664,7 +678,7 @@ export default function StudentContent() {
               <button
                 type="button"
                 onClick={() => setViewMode("table")}
-                className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                className={`p-2 rounded-lg transition ${viewMode === "table" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
                 title="Table view"
               >
                 <Table size={16} />
@@ -672,7 +686,7 @@ export default function StudentContent() {
               <button
                 type="button"
                 onClick={() => setViewMode("kanban")}
-                className={`p-2 rounded-lg transition-all ${viewMode === "kanban" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                className={`p-2 rounded-lg transition ${viewMode === "kanban" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
                 title="Kanban view"
               >
                 <Columns3 size={16} />
@@ -767,28 +781,6 @@ export default function StudentContent() {
                         <option value="high_english">IELTS 7+ / PTE 65+</option>
                       </select>
                     </div>
-
-                    <div className="space-y-1.5">
-                      <label
-                        htmlFor="filter-staff"
-                        className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1"
-                      >
-                        Staff Member
-                      </label>
-                      <select
-                        id="filter-staff"
-                        value={staffFilter}
-                        onChange={(e) => setStaffFilter(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                      >
-                        <option value="all">All Staff</option>
-                        {(allUsers ?? []).map((u) => (
-                          <option key={u.id} value={u.name}>
-                            {u.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -827,7 +819,7 @@ export default function StudentContent() {
                 <div
                   key={student.id}
                   onClick={() => router.push(`/students/${student.id}`)}
-                  className="card group relative cursor-pointer overflow-hidden rounded-2xl p-0 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                  className="card group relative cursor-pointer overflow-hidden rounded-2xl p-0 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   <div className={`h-1.5 w-full bg-gradient-to-r ${style.accent}`} />
                   <div
@@ -971,7 +963,7 @@ export default function StudentContent() {
                     {studentsInCol.map((student) => (
                       <div
                         key={student.id}
-                        className="card p-4 hover:shadow-md transition-all group relative cursor-pointer overflow-hidden"
+                        className="card p-4 hover:shadow-md transition group relative cursor-pointer overflow-hidden"
                         role="button"
                         tabIndex={0}
                         onClick={() => router.push(`/students/${student.id}`)}
@@ -1185,7 +1177,7 @@ export default function StudentContent() {
                         <button
                           type="button"
                           onClick={() => router.push(`/students/${student.id}/edit`)}
-                          className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                          className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                           title="Edit"
                         >
                           <Edit2 size={15} />
@@ -1193,7 +1185,7 @@ export default function StudentContent() {
                         <button
                           type="button"
                           onClick={() => handleDeleteStudent(student)}
-                          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                           title="Delete"
                         >
                           <Trash2 size={15} />
@@ -1297,7 +1289,7 @@ export default function StudentContent() {
                   <button
                     type="button"
                     onClick={() => setSelectedStudent(null)}
-                    className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-all"
+                    className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition"
                   >
                     Close
                   </button>
@@ -1428,7 +1420,7 @@ export default function StudentContent() {
                 <button
                   type="button"
                   onClick={() => setShowAppsModal(false)}
-                  className="px-6 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-all text-sm"
+                  className="px-6 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition text-sm"
                 >
                   Close
                 </button>
@@ -1502,7 +1494,7 @@ export default function StudentContent() {
                           navigator.clipboard.writeText(credsData.email);
                           toast.success("Email copied");
                         }}
-                        className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-50 transition-all"
+                        className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-50 transition"
                         title="Copy email"
                       >
                         <Copy size={16} />
@@ -1525,7 +1517,7 @@ export default function StudentContent() {
                           toast.success("Password copied");
                           setTimeout(() => setCopied(false), 2000);
                         }}
-                        className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-50 transition-all"
+                        className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-50 transition"
                         title="Copy password"
                       >
                         {copied ? (
@@ -1554,7 +1546,7 @@ export default function StudentContent() {
                       setShowCredsModal(false);
                       setCopied(false);
                     }}
-                    className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all text-sm"
+                    className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition text-sm"
                   >
                     Done
                   </button>

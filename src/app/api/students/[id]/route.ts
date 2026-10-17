@@ -8,6 +8,7 @@ import { isBcryptHash } from "@/lib/crypto";
 import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logError } from "@/lib/logger";
 import { logActivity, diffChanges, getActorName } from "@/lib/activity";
+import { filterEmailChanges, renderChangeList, sendTemplatedEmail } from "@/lib/email-templates";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -230,7 +231,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     if (incomingDocs) {
       const stored = await db.studentDocument.findMany({ where: { studentId: numId } });
+      const storedById = new Map(stored.map((d) => [d.id, d]));
+      const storedByUrl = new Map(stored.map((d) => [d.url, d]));
       const kept = new Set<number>();
+      const updates = new Map<number, { name: string; type: string | null; status: string }>();
+      const creates: Prisma.StudentDocumentUncheckedCreateInput[] = [];
       for (const doc of incomingDocs as {
         id?: string | number;
         type?: string;
@@ -243,34 +248,33 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         const url = typeof doc?.url === "string" ? doc.url.trim() : "";
         if (!url || !doc?.name) continue;
         const idNum = Number(doc.id);
-        const byId = Number.isInteger(idNum) ? stored.find((d) => d.id === idNum) : undefined;
-        const row = byId ?? stored.find((d) => d.url === url);
+        const byId = Number.isInteger(idNum) ? storedById.get(idNum) : undefined;
+        const row = byId ?? storedByUrl.get(url);
         if (row) {
           kept.add(row.id);
           const type = doc.type || row.type;
           const status = doc.status || row.status || "Uploaded";
           if (row.name !== doc.name || row.type !== type || row.status !== status) {
-            await db.studentDocument.update({
-              where: { id: row.id },
-              data: { name: doc.name, type, status },
-            });
+            updates.set(row.id, { name: doc.name, type, status });
           }
         } else {
-          const created = await db.studentDocument.create({
-            data: {
-              studentId: numId,
-              type: doc.type || null,
-              name: doc.name,
-              url,
-              status: doc.status || "Uploaded",
-              fileSize: typeof doc.fileSize === "number" ? doc.fileSize : null,
-              fileType: doc.fileType || null,
-            },
+          creates.push({
+            studentId: numId,
+            type: doc.type || null,
+            name: doc.name,
+            url,
+            status: doc.status || "Uploaded",
+            fileSize: typeof doc.fileSize === "number" ? doc.fileSize : null,
+            fileType: doc.fileType || null,
           });
-          kept.add(created.id);
         }
       }
-      // Deletes run last so a failure part way through cannot lose documents.
+      // Writes for distinct rows are independent, so they run together; deletes
+      // still run last so a failure part way through cannot lose documents.
+      await Promise.all([
+        ...[...updates].map(([id, data]) => db.studentDocument.update({ where: { id }, data })),
+        ...creates.map((data) => db.studentDocument.create({ data })),
+      ]);
       const removed = stored.filter((d) => !kept.has(d.id)).map((d) => d.id);
       if (removed.length) {
         await db.studentDocument.deleteMany({ where: { id: { in: removed } } });
@@ -278,8 +282,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const changes = diffChanges(existing, student);
+    const actorName = await getActorName(session?.id);
     await logActivity({
-      actorName: await getActorName(session?.id),
+      actorName,
       userId: session?.id,
       action: "updated a student",
       target:
@@ -320,6 +325,28 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         title: "Student Updated",
         message: `Student "${updateData.name as string}" has been updated.`,
         type: "Info",
+      });
+    }
+
+    // Notify the student of the change. This never blocks the save: a failed or
+    // unconfigured email is logged by the helper and the record still updates.
+    // Skipped when the only differences are internal/presentational fields.
+    const emailChanges = filterEmailChanges(changes);
+    if (emailChanges.length > 0 && student.email) {
+      await sendTemplatedEmail({
+        key: "student-updated",
+        to: student.email,
+        actorName,
+        vars: {
+          studentName:
+            student.name ||
+            `${student.firstName || ""} ${student.lastName || ""}`.trim() ||
+            "Student",
+          studentEmail: student.email,
+          actorName,
+          changes: renderChangeList(emailChanges),
+        },
+        rawKeys: ["changes"],
       });
     }
 

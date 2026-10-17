@@ -43,6 +43,7 @@ interface QuickFilterEntry {
 }
 
 interface IntakeEntry {
+  id?: string;
   name: string;
   startDate: string;
   openDate: string;
@@ -50,6 +51,7 @@ interface IntakeEntry {
 }
 
 interface EnglishTestEntry {
+  id?: string;
   type: string;
   overall: string;
   reading: string;
@@ -57,6 +59,9 @@ interface EnglishTestEntry {
   listening: string;
   speaking: string;
 }
+
+let entryIdCounter = 0;
+const makeEntryId = () => `entry-${Date.now().toString(36)}-${(entryIdCounter += 1)}`;
 
 export default function AddCourseContent({ courseId }: { courseId?: string }) {
   const [universities, setUniversities] = React.useState<UniversityOption[]>([]);
@@ -111,9 +116,16 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
     englishTestStage: "Before Application",
     quickFilters: [] as string[],
     requirements: [] as string[],
-    intakesData: [] as { name: string; startDate: string; openDate: string; deadline: string }[],
+    intakesData: [] as {
+      id: string;
+      name: string;
+      startDate: string;
+      openDate: string;
+      deadline: string;
+    }[],
     courseCode: "",
     englishTestsData: [] as {
+      id: string;
       type: string;
       overall: string;
       reading: string;
@@ -147,10 +159,18 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
       // page so a newly added university always appears in the dropdown.
       const universityList = Array.isArray(uData) ? uData : (uData?.data ?? []);
       const universityPages = Array.isArray(uData) ? 1 : (uData?.totalPages ?? 1);
-      for (let page = 2; page <= universityPages; page++) {
-        const pageRes = await fetch(`/api/universities?perPage=100&page=${page}`);
-        const pageData = await pageRes.json();
-        universityList.push(...(Array.isArray(pageData) ? pageData : (pageData?.data ?? [])));
+      if (universityPages > 1) {
+        const pageNumbers = Array.from({ length: universityPages - 1 }, (_, i) => i + 2);
+        const pageResults = await Promise.all(
+          pageNumbers.map(async (page) => {
+            const pageRes = await fetch(`/api/universities?perPage=100&page=${page}`);
+            if (!pageRes.ok) throw new Error("Failed to load universities");
+            return pageRes.json();
+          })
+        );
+        for (const pageData of pageResults) {
+          universityList.push(...(Array.isArray(pageData) ? pageData : (pageData?.data ?? [])));
+        }
       }
       setUniversities(universityList);
       setFaculties(Array.isArray(fData) ? fData : []);
@@ -203,8 +223,14 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
             prerequisites: safeParseArray(data.prerequisites),
             quickFilters: safeParseArray(data.quickFilters),
             requirements: safeParseArray(data.requirements),
-            intakesData: safeParseArray(data.intake),
-            englishTestsData: safeParseArray(data.englishTests),
+            intakesData: safeParseArray<IntakeEntry>(data.intake).map((entry) => ({
+              ...entry,
+              id: entry.id ?? makeEntryId(),
+            })),
+            englishTestsData: safeParseArray<EnglishTestEntry>(data.englishTests).map((entry) => ({
+              ...entry,
+              id: entry.id ?? makeEntryId(),
+            })),
           }));
         }
       }
@@ -340,6 +366,9 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
     );
   }, [universities, universitySearch]);
 
+  const quickFilterSet = new Set(form.quickFilters);
+  const requirementSet = new Set(form.requirements);
+
   if (submitted) {
     return (
       <div className="animate-fade-in text-center">
@@ -458,7 +487,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 onChange={(e) => update("name", e.target.value)}
                 placeholder="e.g. Machine Learning Fundamentals"
                 aria-label="Course name"
-                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all ${errors.name ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
+                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition ${errors.name ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
               />
               {errors.name && (
                 <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
@@ -482,7 +511,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 onChange={(e) => update("courseCode", e.target.value)}
                 placeholder="e.g. CS101"
                 aria-label="Course code"
-                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all"
+                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
               />
             </div>
 
@@ -500,7 +529,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 onClick={() => setShowUnivDropdown(!showUnivDropdown)}
               >
                 <div
-                  className={`w-full px-3 py-2.5 text-sm border rounded-lg bg-slate-50 flex items-center justify-between transition-all ${errors.university ? "border-red-300" : "border-slate-200 group-hover:border-indigo-300"}`}
+                  className={`w-full px-3 py-2.5 text-sm border rounded-lg bg-slate-50 flex items-center justify-between transition ${errors.university ? "border-red-300" : "border-slate-200 group-hover:border-indigo-300"}`}
                 >
                   <span
                     className={form.university ? "text-slate-700 font-medium" : "text-slate-400"}
@@ -612,6 +641,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
               {showUnivDropdown && (
                 <button
                   type="button"
+                  aria-label="Close university dropdown"
                   className="fixed inset-0 z-40"
                   onClick={() => setShowUnivDropdown(false)}
                 />
@@ -743,7 +773,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 placeholder="Describe what students will learn in this course..."
                 rows={4}
                 aria-label="Course description"
-                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none transition-all ${errors.description ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
+                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none transition ${errors.description ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
               />
               {errors.description && (
                 <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
@@ -893,7 +923,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 placeholder="e.g. 12"
                 min="1"
                 aria-label="Credits"
-                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all ${errors.credits ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
+                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition ${errors.credits ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
               />
               {errors.credits && (
                 <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
@@ -918,7 +948,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 onChange={(e) => update("duration", e.target.value)}
                 placeholder="e.g. 3"
                 aria-label="Duration in years"
-                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all ${errors.duration ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
+                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition ${errors.duration ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
               />
               {errors.duration && (
                 <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
@@ -991,7 +1021,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
               onClick={() => {
                 const newList = [
                   ...form.intakesData,
-                  { name: "", startDate: "", openDate: "", deadline: "" },
+                  { id: makeEntryId(), name: "", startDate: "", openDate: "", deadline: "" },
                 ];
                 update("intakesData", newList);
               }}
@@ -1006,7 +1036,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
             <div className="space-y-4">
               {form.intakesData.map((intake, idx) => (
                 <div
-                  key={`intake-${intake.name}-${idx}`}
+                  key={intake.id}
                   className="p-4 rounded-xl border border-slate-100 bg-slate-50 relative group"
                 >
                   <button
@@ -1016,7 +1046,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                       const newList = form.intakesData.filter((_, i) => i !== idx);
                       update("intakesData", newList);
                     }}
-                    className="absolute -top-2 -right-2 size-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 shadow-sm opacity-0 group-hover:opacity-100 transition-all z-10"
+                    className="absolute -top-2 -right-2 size-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 shadow-sm opacity-0 group-hover:opacity-100 transition z-10"
                   >
                     <X size={12} />
                   </button>
@@ -1161,7 +1191,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 onChange={(e) => update("instructor", e.target.value)}
                 placeholder="e.g. Prof. Andrew Chen"
                 aria-label="Instructor name"
-                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all ${errors.instructor ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
+                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition ${errors.instructor ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
               />
               {errors.instructor && (
                 <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
@@ -1350,6 +1380,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                     const newList = [
                       ...form.englishTestsData,
                       {
+                        id: makeEntryId(),
                         type: "IELTS",
                         overall: "",
                         reading: "",
@@ -1370,7 +1401,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 <div className="space-y-4">
                   {form.englishTestsData.map((test, idx) => (
                     <div
-                      key={`test-${test.type}-${idx}`}
+                      key={test.id}
                       className="p-4 rounded-xl border border-slate-100 bg-slate-50 relative group"
                     >
                       <button
@@ -1380,7 +1411,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                           const newList = form.englishTestsData.filter((_, i) => i !== idx);
                           update("englishTestsData", newList);
                         }}
-                        className="absolute -top-2 -right-2 size-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 shadow-sm opacity-0 group-hover:opacity-100 transition-all z-10"
+                        className="absolute -top-2 -right-2 size-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 shadow-sm opacity-0 group-hover:opacity-100 transition z-10"
                       >
                         <X size={12} />
                       </button>
@@ -1680,7 +1711,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
               {quickFilters.map((filter) => {
                 const IconComponent =
                   (Icons as unknown as Record<string, LucideIcon>)[filter.icon] || Icons.Filter;
-                const isSelected = form.quickFilters.includes(filter.label);
+                const isSelected = quickFilterSet.has(filter.label);
 
                 return (
                   <button
@@ -1693,7 +1724,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                       update("quickFilters", next);
                     }}
                     className={`
-                      flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group
+                      flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer group
                       ${
                         isSelected
                           ? "bg-purple-50 border-purple-200 ring-1 ring-purple-200"
@@ -1733,7 +1764,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {(academicDocsList ?? []).map((doc) => {
               const name = typeof doc === "string" ? doc : doc.name;
-              const isSelected = form.requirements.includes(name);
+              const isSelected = requirementSet.has(name);
               return (
                 <button
                   type="button"
@@ -1745,7 +1776,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                     update("requirements", next);
                   }}
                   className={`
-                    flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer
+                    flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer
                     ${
                       isSelected
                         ? "bg-amber-50 border-amber-200 ring-1 ring-amber-200"
@@ -1789,7 +1820,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {REQUIREMENTS_LIST.map((req) => {
-              const isSelected = form.requirements.includes(req);
+              const isSelected = requirementSet.has(req);
               return (
                 <button
                   type="button"
@@ -1801,7 +1832,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                     update("requirements", next);
                   }}
                   className={`
-                    flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer
+                    flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer
                     ${
                       isSelected
                         ? "bg-blue-50 border-blue-200 ring-1 ring-blue-200"

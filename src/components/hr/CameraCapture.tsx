@@ -66,7 +66,9 @@ export default function CameraCapture({ onCapture, onClose: _onClose }: CameraCa
     if (!captured) return;
     setUploading(true);
     try {
-      const blob = await (await fetch(captured)).blob();
+      const captureRes = await fetch(captured);
+      if (!captureRes.ok) throw new Error(`HTTP ${captureRes.status}`);
+      const blob = await captureRes.blob();
       const fd = new FormData();
       fd.append("file", blob, `checkin-${Date.now()}.jpg`);
       const res = await fetch("/api/upload", { method: "POST", body: fd });

@@ -13,85 +13,107 @@ import {
   Clock,
   Globe,
 } from "lucide-react";
-import { safeJson } from "@/lib/fetch-client";
+import {
+  fetchPortalStudent,
+  fetchVisaTimeline,
+  type PortalStudent,
+  type VisaStage,
+  type VisaTimeline,
+} from "./student-portal-api";
 
-interface PortalStudent {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string | null;
-  nationality?: string | null;
-  studyLevel?: string | null;
-  interestedCountry?: string | null;
-  status?: string | null;
-  counselor?: string | null;
-  _count?: {
-    applications: number;
-    payments: number;
-    documents: number;
-  };
+function formatDueDate(dueDate: string) {
+  return new Date(dueDate).toLocaleDateString("en-US", { timeZone: "UTC" });
 }
 
-interface VisaTask {
-  id: number;
-  title: string;
-  status: string;
-  dueDate: string | null;
+function StageStatusBadge({ stage }: { stage: VisaStage }) {
+  return (
+    <span
+      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+        stage.progress === 100
+          ? "text-emerald-600 bg-emerald-50"
+          : stage.isActive
+            ? "text-indigo-600 bg-indigo-50"
+            : "text-slate-400 bg-slate-50"
+      }`}
+    >
+      {stage.progress === 100 ? "Completed" : stage.isActive ? "In Progress" : "Pending"}
+    </span>
+  );
 }
 
-interface VisaStage {
-  id: number;
-  name: string;
-  progress: number;
-  isActive: boolean;
-  tasks: VisaTask[];
+function VisaTimelineStageRow({ stage, isLast }: { stage: VisaStage; isLast: boolean }) {
+  const Icon = stage.progress === 100 ? CheckCircle : stage.isActive ? Clock : Circle;
+  const color =
+    stage.progress === 100
+      ? "text-emerald-500"
+      : stage.isActive
+        ? "text-indigo-500"
+        : "text-slate-300";
+  return (
+    <div className="relative flex gap-4 pb-6">
+      {!isLast && (
+        <div
+          className={`absolute left-[15px] top-8 w-0.5 h-full ${stage.progress === 100 ? "bg-emerald-200" : "bg-slate-200"}`}
+        />
+      )}
+      <div className="flex flex-col items-center">
+        <div
+          className={`size-8 rounded-full border-2 flex items-center justify-center ${stage.progress === 100 ? "border-emerald-400 bg-emerald-50" : stage.isActive ? "border-indigo-400 bg-indigo-50" : "border-slate-200 bg-white"}`}
+        >
+          <Icon size={16} className={color} />
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-sm font-bold text-slate-800">{stage.name}</h3>
+          <StageStatusBadge stage={stage} />
+        </div>
+        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
+          <div
+            className={`h-full rounded-full transition ${stage.progress === 100 ? "bg-emerald-400" : "bg-indigo-400"}`}
+            style={{ width: `${stage.progress}%` }}
+          />
+        </div>
+        {stage.tasks?.length > 0 && (
+          <div className="space-y-1">
+            {stage.tasks.map((task) => (
+              <div
+                key={task.id}
+                className="flex items-center justify-between py-1 px-3 rounded-lg bg-slate-50"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div
+                    className={`size-2 rounded-full shrink-0 ${task.status === "Done" || task.status === "Completed" ? "bg-emerald-400" : task.status === "In Progress" ? "bg-indigo-400" : "bg-slate-300"}`}
+                  />
+                  <span
+                    className={`text-xs ${task.status === "Done" || task.status === "Completed" ? "text-slate-400 line-through" : "text-slate-700"}`}
+                  >
+                    {task.title}
+                  </span>
+                </div>
+                {task.dueDate && (
+                  <span className="text-[10px] text-slate-400 shrink-0">
+                    {formatDueDate(task.dueDate)}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
-interface VisaTimeline {
-  stages: VisaStage[];
-  summary: {
-    completedStages: number;
-    totalStages: number;
-    overallProgress: number;
-  };
-}
-
-export default function StudentDashboard() {
-  const router = useRouter();
-  const [student, setStudent] = useState<PortalStudent | null>(null);
-  const [loading, setLoading] = useState(true);
+function VisaWorkflowPanel({
+  student,
+}: {
+  student: Pick<PortalStudent, "id" | "interestedCountry">;
+}) {
+  const interestedCountry = student.interestedCountry;
+  const [prevCountry, setPrevCountry] = useState(interestedCountry);
   const [timeline, setTimeline] = useState<VisaTimeline | null>(null);
   const [loadingTimeline, setLoadingTimeline] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      try {
-        const r = await fetch("/api/student-portal/me", { cache: "no-store" });
-        if (!r.ok) {
-          window.location.replace("/login");
-          return;
-        }
-        const s = await r.json();
-        if (cancelled) return;
-        setStudent(s);
-      } catch {
-        if (!cancelled) window.location.replace("/login");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const interestedCountry = student?.interestedCountry;
-  const [prevCountry, setPrevCountry] = useState(interestedCountry);
 
   if (prevCountry !== interestedCountry) {
     setPrevCountry(interestedCountry);
@@ -101,15 +123,106 @@ export default function StudentDashboard() {
   }
 
   useEffect(() => {
-    if (!interestedCountry || !student) return;
-    fetch(
-      `/api/visa-timeline?country=${encodeURIComponent(interestedCountry)}&studentId=${student.id}`
-    )
-      .then(safeJson)
-      .then((d) => setTimeline(d))
+    if (!interestedCountry) return;
+    let cancelled = false;
+    fetchVisaTimeline(interestedCountry, student.id)
+      .then((d) => {
+        if (!cancelled) setTimeline(d);
+      })
       .catch(() => {})
-      .finally(() => setLoadingTimeline(false));
-  }, [interestedCountry, student?.id, student]);
+      .finally(() => {
+        if (!cancelled) setLoadingTimeline(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [interestedCountry, student.id]);
+
+  if (!interestedCountry) return null;
+
+  if (loadingTimeline) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 p-8 flex items-center justify-center">
+        <Loader2 className="animate-spin text-indigo-400" size={24} />
+      </div>
+    );
+  }
+
+  const timelineStages = timeline?.stages ?? [];
+  const timelineSummary = timeline?.summary;
+
+  if (timelineStages.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 p-6 text-center">
+        <Globe size={32} className="mx-auto mb-3 text-slate-200" />
+        <p className="text-sm font-medium text-slate-500">
+          No visa workflow configured for {interestedCountry}
+        </p>
+        <p className="text-xs text-slate-400 mt-1">Contact your counselor for more information.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Globe size={18} className="text-indigo-600" />
+          <h2 className="font-bold text-slate-800">Visa Workflow — {interestedCountry}</h2>
+        </div>
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-slate-500">
+            {timelineSummary?.completedStages || 0}/{timelineSummary?.totalStages || 0} stages
+          </span>
+          <span className="text-indigo-600 font-bold">
+            {timelineSummary?.overallProgress || 0}%
+          </span>
+        </div>
+      </div>
+      <div className="p-6">
+        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-6">
+          <div
+            className="h-full bg-indigo-500 rounded-full transition"
+            style={{ width: `${timelineSummary?.overallProgress || 0}%` }}
+          />
+        </div>
+        <div className="space-y-0">
+          {timelineStages.map((stage, index) => (
+            <VisaTimelineStageRow
+              key={stage.id}
+              stage={stage}
+              isLast={index === timelineStages.length - 1}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function StudentDashboard() {
+  const router = useRouter();
+  const [student, setStudent] = useState<PortalStudent | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchPortalStudent()
+      .then((s) => {
+        if (!cancelled) setStudent(s);
+      })
+      .catch(() => {
+        if (!cancelled) window.location.replace("/login");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -118,9 +231,6 @@ export default function StudentDashboard() {
       </div>
     );
   }
-
-  const timelineStages = timeline?.stages ?? [];
-  const timelineSummary = timeline?.summary;
 
   const links = [
     {
@@ -163,7 +273,7 @@ export default function StudentDashboard() {
             type="button"
             key={link.href}
             onClick={() => router.push(link.href)}
-            className="bg-white rounded-2xl border border-slate-100 p-5 hover:shadow-md transition-all text-left group"
+            className="bg-white rounded-2xl border border-slate-100 p-5 hover:shadow-md transition text-left group"
           >
             <div
               className={`size-10 rounded-xl ${link.color} flex items-center justify-center mb-3`}
@@ -180,128 +290,7 @@ export default function StudentDashboard() {
         ))}
       </div>
 
-      {interestedCountry &&
-        (loadingTimeline ? (
-          <div className="bg-white rounded-2xl border border-slate-100 p-8 flex items-center justify-center">
-            <Loader2 className="animate-spin text-indigo-400" size={24} />
-          </div>
-        ) : timelineStages.length > 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Globe size={18} className="text-indigo-600" />
-                <h2 className="font-bold text-slate-800">Visa Workflow — {interestedCountry}</h2>
-              </div>
-              <div className="flex items-center gap-4 text-sm">
-                <span className="text-slate-500">
-                  {timelineSummary?.completedStages || 0}/{timelineSummary?.totalStages || 0} stages
-                </span>
-                <span className="text-indigo-600 font-bold">
-                  {timelineSummary?.overallProgress || 0}%
-                </span>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-6">
-                <div
-                  className="h-full bg-indigo-500 rounded-full transition-all"
-                  style={{ width: `${timelineSummary?.overallProgress || 0}%` }}
-                />
-              </div>
-              <div className="space-y-0">
-                {timelineStages.map((stage, index: number) => {
-                  const Icon =
-                    stage.progress === 100 ? CheckCircle : stage.isActive ? Clock : Circle;
-                  const color =
-                    stage.progress === 100
-                      ? "text-emerald-500"
-                      : stage.isActive
-                        ? "text-indigo-500"
-                        : "text-slate-300";
-                  const isLast = index === timelineStages.length - 1;
-                  return (
-                    <div key={stage.id} className="relative flex gap-4 pb-6">
-                      {!isLast && (
-                        <div
-                          className={`absolute left-[15px] top-8 w-0.5 h-full ${stage.progress === 100 ? "bg-emerald-200" : "bg-slate-200"}`}
-                        />
-                      )}
-                      <div className="flex flex-col items-center">
-                        <div
-                          className={`size-8 rounded-full border-2 flex items-center justify-center ${stage.progress === 100 ? "border-emerald-400 bg-emerald-50" : stage.isActive ? "border-indigo-400 bg-indigo-50" : "border-slate-200 bg-white"}`}
-                        >
-                          <Icon size={16} className={color} />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className="text-sm font-bold text-slate-800">{stage.name}</h3>
-                          <span
-                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                              stage.progress === 100
-                                ? "text-emerald-600 bg-emerald-50"
-                                : stage.isActive
-                                  ? "text-indigo-600 bg-indigo-50"
-                                  : "text-slate-400 bg-slate-50"
-                            }`}
-                          >
-                            {stage.progress === 100
-                              ? "Completed"
-                              : stage.isActive
-                                ? "In Progress"
-                                : "Pending"}
-                          </span>
-                        </div>
-                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
-                          <div
-                            className={`h-full rounded-full transition-all ${stage.progress === 100 ? "bg-emerald-400" : "bg-indigo-400"}`}
-                            style={{ width: `${stage.progress}%` }}
-                          />
-                        </div>
-                        {stage.tasks?.length > 0 && (
-                          <div className="space-y-1">
-                            {stage.tasks.map((task) => (
-                              <div
-                                key={task.id}
-                                className="flex items-center justify-between py-1 px-3 rounded-lg bg-slate-50"
-                              >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <div
-                                    className={`size-2 rounded-full shrink-0 ${task.status === "Done" || task.status === "Completed" ? "bg-emerald-400" : task.status === "In Progress" ? "bg-indigo-400" : "bg-slate-300"}`}
-                                  />
-                                  <span
-                                    className={`text-xs ${task.status === "Done" || task.status === "Completed" ? "text-slate-400 line-through" : "text-slate-700"}`}
-                                  >
-                                    {task.title}
-                                  </span>
-                                </div>
-                                {task.dueDate && (
-                                  <span className="text-[10px] text-slate-400 shrink-0">
-                                    {new Date(task.dueDate).toLocaleDateString()}
-                                  </span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        ) : interestedCountry ? (
-          <div className="bg-white rounded-2xl border border-slate-100 p-6 text-center">
-            <Globe size={32} className="mx-auto mb-3 text-slate-200" />
-            <p className="text-sm font-medium text-slate-500">
-              No visa workflow configured for {interestedCountry}
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Contact your counselor for more information.
-            </p>
-          </div>
-        ) : null)}
+      {student?.interestedCountry && <VisaWorkflowPanel student={student} />}
 
       <div className="bg-white rounded-2xl border border-slate-100 p-6">
         <h2 className="font-bold text-slate-800 mb-4">Quick Info</h2>

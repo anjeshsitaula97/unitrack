@@ -28,8 +28,12 @@ export default function MarketingHeader() {
                 <span className="material-symbols-outlined text-indigo-600 text-[20px]">hub</span>
               </div>
               <div className="hidden sm:flex flex-col leading-none">
-                <span className="font-headline-sm text-[15px] font-bold tracking-tight text-slate-900">UniTrack</span>
-                <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">By Avenlixx</span>
+                <span className="font-headline-sm text-[15px] font-bold tracking-tight text-slate-900">
+                  UniTrack
+                </span>
+                <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
+                  By Avenlixx
+                </span>
               </div>
             </a>
 
@@ -59,7 +63,7 @@ export default function MarketingHeader() {
                 Login
               </Link>
               <a
-                className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-[13px] font-semibold bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20"
+                className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-[13px] font-semibold bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition shadow-md shadow-indigo-600/20"
                 href="#live-demo"
               >
                 <span>Book a Demo</span>
@@ -71,7 +75,9 @@ export default function MarketingHeader() {
                 className="lg:hidden flex items-center justify-center w-9 h-9 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                 aria-label="Toggle navigation menu"
               >
-                <span className="material-symbols-outlined text-[18px]">{mobileOpen ? "close" : "menu"}</span>
+                <span className="material-symbols-outlined text-[18px]">
+                  {mobileOpen ? "close" : "menu"}
+                </span>
               </button>
             </div>
           </div>

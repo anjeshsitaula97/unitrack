@@ -75,6 +75,8 @@ export default function RecentUniversitiesTable() {
     return true;
   });
 
+  const selectedSet = new Set(selected);
+
   const toggleRow = (id: string) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
@@ -102,7 +104,7 @@ export default function RecentUniversitiesTable() {
         </div>
         <button
           type="button"
-          className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all duration-150"
+          className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition duration-150"
           aria-label="MoreHorizontal"
         >
           {" "}
@@ -118,7 +120,7 @@ export default function RecentUniversitiesTable() {
               type="button"
               key={`tab-${tab.key}`}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition duration-150 ${
                 activeTab === tab.key
                   ? "bg-slate-100 text-slate-800"
                   : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
@@ -131,7 +133,7 @@ export default function RecentUniversitiesTable() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-all duration-150"
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition duration-150"
             aria-label="Filter"
           >
             {" "}
@@ -140,7 +142,7 @@ export default function RecentUniversitiesTable() {
           </button>
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-all duration-150"
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition duration-150"
             aria-label="ArrowUpDown"
           >
             {" "}
@@ -178,6 +180,7 @@ export default function RecentUniversitiesTable() {
               <th className="text-left py-2 pr-4 w-8">
                 <input
                   type="checkbox"
+                  aria-label="Select all universities"
                   checked={selected.length === filtered.length && filtered.length > 0}
                   onChange={toggleAll}
                   className="size-3.5 rounded border-slate-300 text-indigo-600 cursor-pointer"
@@ -207,7 +210,7 @@ export default function RecentUniversitiesTable() {
             {filtered.length > 0
               ? filtered.map((row) => {
                   const status = statusConfig[row.status] || statusConfig["Active"];
-                  const isSelected = selected.includes(row.id);
+                  const isSelected = selectedSet.has(row.id);
                   return (
                     <tr
                       key={row.id}
@@ -216,6 +219,7 @@ export default function RecentUniversitiesTable() {
                       <td className="py-2.5 pr-4">
                         <input
                           type="checkbox"
+                          aria-label={`Select ${row.name}`}
                           checked={isSelected}
                           onChange={() => toggleRow(row.id)}
                           className="size-3.5 rounded border-slate-300 text-indigo-600 cursor-pointer"

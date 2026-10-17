@@ -69,7 +69,7 @@ export default function StudentPortalLayout({ children }: { children: React.Reac
       <StudentSidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
       <StudentTopbar sidebarCollapsed={collapsed} student={student} />
       <main
-        className={`transition-all duration-300 pt-14 min-h-screen ${collapsed ? "ml-16" : "ml-60"}`}
+        className={`transition duration-300 pt-14 min-h-screen ${collapsed ? "ml-16" : "ml-60"}`}
       >
         <div className="p-6 max-w-screen-2xl mx-auto">{children}</div>
       </main>

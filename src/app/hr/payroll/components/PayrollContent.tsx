@@ -64,10 +64,16 @@ interface EmployeeOption {
 }
 
 interface PayrollFormItem {
+  key: string;
   label: string;
   type: string;
   amount: string;
 }
+
+const makeItemKey = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 interface PayrollForm {
   userId: string;
@@ -202,7 +208,10 @@ export default function PayrollContent() {
   };
 
   const addItem = () => {
-    setForm({ ...form, items: [...form.items, { label: "", type: "Earnings", amount: "0" }] });
+    setForm({
+      ...form,
+      items: [...form.items, { key: makeItemKey(), label: "", type: "Earnings", amount: "0" }],
+    });
   };
 
   const updateItem = (index: number, field: keyof PayrollFormItem, value: string) => {
@@ -244,6 +253,7 @@ export default function PayrollContent() {
 
       <div className="flex items-center gap-3 mb-5">
         <select
+          aria-label="Month"
           value={month}
           onChange={(e) => {
             setMonth(parseInt(e.target.value));
@@ -258,6 +268,7 @@ export default function PayrollContent() {
           ))}
         </select>
         <select
+          aria-label="Year"
           value={year}
           onChange={(e) => {
             setYear(parseInt(e.target.value));
@@ -275,139 +286,17 @@ export default function PayrollContent() {
 
       <PayrollStats payrolls={payrolls} totalNet={totalNet} paidCount={paidCount} />
 
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50/60 border-b border-slate-100">
-              <tr>
-                <th className="py-3 px-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Employee
-                </th>
-                <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Basic
-                </th>
-                <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Allowances
-                </th>
-                <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Deductions
-                </th>
-                <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Net
-                </th>
-                <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Status
-                </th>
-                <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right pr-5">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center">
-                    <Loader2 className="animate-spin text-indigo-500 mx-auto" size={24} />
-                  </td>
-                </tr>
-              ) : paginated.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 text-sm">
-                    No payroll records for this period
-                  </td>
-                </tr>
-              ) : (
-                paginated.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-4 px-5">
-                      <div className="flex items-center gap-2">
-                        <div className="size-8 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500">
-                          {p.user.name.substring(0, 2)}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-slate-700">{p.user.name}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-3">
-                      <span className="text-xs font-semibold text-slate-700">
-                        ${p.basicSalary.toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="py-4 px-3">
-                      <span className="text-xs text-emerald-600 font-semibold">
-                        +${p.allowances.toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="py-4 px-3">
-                      <span className="text-xs text-rose-600 font-semibold">
-                        -${p.deductions.toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="py-4 px-3">
-                      <span className="text-sm font-bold text-slate-800">
-                        ${calcNet(p).toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="py-4 px-3">
-                      <span
-                        className={`text-xs font-bold px-2.5 py-1 rounded-lg ${
-                          p.status === "Paid"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : p.status === "Approved"
-                              ? "bg-blue-50 text-blue-700"
-                              : "bg-amber-50 text-amber-700"
-                        }`}
-                      >
-                        {p.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-3 text-right pr-5">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedPayroll(p)}
-                        className="p-1.5 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                      >
-                        <FileText size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
-          <p className="text-xs text-slate-500">
-            Showing {(page - 1) * perPage + 1} to {Math.min(page * perPage, filtered.length)} of{" "}
-            {filtered.length}
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="p-1.5 rounded border border-slate-200 disabled:opacity-50"
-              aria-label="Previous page"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span className="text-xs font-bold px-3">
-              Page {page} of {totalPages || 1}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages || totalPages === 0}
-              className="p-1.5 rounded border border-slate-200 disabled:opacity-50"
-              aria-label="Next page"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
-      </div>
+      <PayrollTable
+        loading={loading}
+        rows={paginated}
+        page={page}
+        totalPages={totalPages}
+        perPage={perPage}
+        totalCount={filtered.length}
+        onPrev={() => setPage((p) => Math.max(1, p - 1))}
+        onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+        onView={setSelectedPayroll}
+      />
 
       <PayrollFormModal
         showModal={showModal}
@@ -429,6 +318,197 @@ export default function PayrollContent() {
         handleStatus={handleStatus}
         submitting={submitting}
       />
+    </div>
+  );
+}
+
+function PagerButton({
+  onClick,
+  disabled,
+  label,
+  children,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      className="p-1.5 rounded border border-slate-200 disabled:opacity-50"
+    >
+      {children}
+    </button>
+  );
+}
+
+function TablePager({
+  page,
+  totalPages,
+  onPrev,
+  onNext,
+}: {
+  page: number;
+  totalPages: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <PagerButton onClick={onPrev} disabled={page === 1} label="Previous page">
+        <ChevronLeft size={14} />
+      </PagerButton>
+      <span className="text-xs font-bold px-3">
+        Page {page} of {totalPages || 1}
+      </span>
+      <PagerButton
+        onClick={onNext}
+        disabled={page === totalPages || totalPages === 0}
+        label="Next page"
+      >
+        <ChevronRight size={14} />
+      </PagerButton>
+    </div>
+  );
+}
+
+function PayrollTable({
+  loading,
+  rows,
+  page,
+  totalPages,
+  perPage,
+  totalCount,
+  onPrev,
+  onNext,
+  onView,
+}: {
+  loading: boolean;
+  rows: PayrollRecord[];
+  page: number;
+  totalPages: number;
+  perPage: number;
+  totalCount: number;
+  onPrev: () => void;
+  onNext: () => void;
+  onView: (p: PayrollRecord) => void;
+}) {
+  return (
+    <div className="card overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="bg-slate-50/60 border-b border-slate-100">
+            <tr>
+              <th className="py-3 px-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                Employee
+              </th>
+              <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                Basic
+              </th>
+              <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                Allowances
+              </th>
+              <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                Deductions
+              </th>
+              <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                Net
+              </th>
+              <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                Status
+              </th>
+              <th className="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right pr-5">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="py-12 text-center">
+                  <Loader2 className="animate-spin text-indigo-500 mx-auto" size={24} />
+                </td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-12 text-center text-slate-400 text-sm">
+                  No payroll records for this period
+                </td>
+              </tr>
+            ) : (
+              rows.map((p) => (
+                <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="py-4 px-5">
+                    <div className="flex items-center gap-2">
+                      <div className="size-8 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                        {p.user.name.substring(0, 2)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-700">{p.user.name}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-4 px-3">
+                    <span className="text-xs font-semibold text-slate-700">
+                      ${p.basicSalary.toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="py-4 px-3">
+                    <span className="text-xs text-emerald-600 font-semibold">
+                      +${p.allowances.toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="py-4 px-3">
+                    <span className="text-xs text-rose-600 font-semibold">
+                      -${p.deductions.toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="py-4 px-3">
+                    <span className="text-sm font-bold text-slate-800">
+                      ${calcNet(p).toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="py-4 px-3">
+                    <span
+                      className={`text-xs font-bold px-2.5 py-1 rounded-lg ${
+                        p.status === "Paid"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : p.status === "Approved"
+                            ? "bg-blue-50 text-blue-700"
+                            : "bg-amber-50 text-amber-700"
+                      }`}
+                    >
+                      {p.status}
+                    </span>
+                  </td>
+                  <td className="py-4 px-3 text-right pr-5">
+                    <button
+                      type="button"
+                      onClick={() => onView(p)}
+                      aria-label="View payslip"
+                      className="p-1.5 text-indigo-800 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                    >
+                      <FileText size={14} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
+        <p className="text-xs text-slate-500">
+          Showing {(page - 1) * perPage + 1} to {Math.min(page * perPage, totalCount)} of{" "}
+          {totalCount}
+        </p>
+        <TablePager page={page} totalPages={totalPages} onPrev={onPrev} onNext={onNext} />
+      </div>
     </div>
   );
 }
@@ -512,6 +592,7 @@ function PayrollFormModal({
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
+                aria-label="Close dialog"
                 className="text-slate-400 hover:text-slate-600 p-1"
               >
                 <X size={20} />
@@ -530,7 +611,7 @@ function PayrollFormModal({
                   required
                   value={form.userId}
                   onChange={(e) => handleEmployeeSelect(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
                 >
                   <option value="">Select employee…</option>
                   {employees.map((e) => (
@@ -554,7 +635,7 @@ function PayrollFormModal({
                     required
                     value={form.basicSalary}
                     onChange={(e) => setForm({ ...form, basicSalary: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
                   />
                 </div>
                 <div>
@@ -569,7 +650,7 @@ function PayrollFormModal({
                     type="number"
                     value={form.allowances}
                     onChange={(e) => setForm({ ...form, allowances: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
                   />
                 </div>
                 <div>
@@ -584,7 +665,7 @@ function PayrollFormModal({
                     type="number"
                     value={form.deductions}
                     onChange={(e) => setForm({ ...form, deductions: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
                   />
                 </div>
                 <div>
@@ -599,7 +680,7 @@ function PayrollFormModal({
                     type="number"
                     value={form.bonus}
                     onChange={(e) => setForm({ ...form, bonus: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
                   />
                 </div>
               </div>
@@ -616,18 +697,17 @@ function PayrollFormModal({
                   </button>
                 </div>
                 {form.items.map((item: PayrollFormItem, i: number) => (
-                  <div
-                    key={`${item.label}-${item.type}-${item.amount}-${i}`}
-                    className="flex items-center gap-2 mb-2"
-                  >
+                  <div key={item.key} className="flex items-center gap-2 mb-2">
                     <input
                       type="text"
+                      aria-label="Item label"
                       placeholder="Label"
                       value={item.label}
                       onChange={(e) => updateItem(i, "label", e.target.value)}
                       className="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                     />
                     <select
+                      aria-label="Item type"
                       value={item.type}
                       onChange={(e) => updateItem(i, "type", e.target.value)}
                       className="px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
@@ -637,6 +717,7 @@ function PayrollFormModal({
                     </select>
                     <input
                       type="number"
+                      aria-label="Item amount"
                       placeholder="0"
                       value={item.amount}
                       onChange={(e) => updateItem(i, "amount", e.target.value)}
@@ -645,6 +726,7 @@ function PayrollFormModal({
                     <button
                       type="button"
                       onClick={() => removeItem(i)}
+                      aria-label="Remove item"
                       className="p-1 text-slate-400 hover:text-red-500"
                     >
                       <X size={14} />
@@ -709,6 +791,7 @@ function PayslipDetailModal({
               <button
                 type="button"
                 onClick={() => setSelectedPayroll(null)}
+                aria-label="Close dialog"
                 className="text-slate-400 hover:text-slate-600 p-1"
               >
                 <X size={20} />
@@ -815,7 +898,12 @@ function PayslipDetailModal({
                   {selectedPayroll.status}
                 </span>
                 {selectedPayroll.paidAt && (
-                  <span>Paid on {new Date(selectedPayroll.paidAt).toLocaleDateString()}</span>
+                  <span>
+                    Paid on{" "}
+                    {new Date(selectedPayroll.paidAt).toLocaleDateString("en-US", {
+                      timeZone: "UTC",
+                    })}
+                  </span>
                 )}
               </div>
 

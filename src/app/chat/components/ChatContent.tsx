@@ -32,12 +32,358 @@ interface ChatRoom {
   messages: ChatMessage[];
 }
 
-function formatTime(iso: string) {
+type SessionUser = { id: string; name: string } | null;
+
+function initialsOf(name: string) {
+  return name
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function getOtherMember(room: ChatRoom, sessionUser: SessionUser) {
+  if (!sessionUser) return null;
+  return room.members.find((m) => m.id !== sessionUser.id) || room.members[0];
+}
+
+function getRoomName(room: ChatRoom, sessionUser: SessionUser) {
+  if (room.name) return room.name;
+  const om = getOtherMember(room, sessionUser);
+  return om ? om.name : "Unknown";
+}
+
+function MessageTime({ iso }: { iso: string }) {
   const d = new Date(iso);
-  const now = new Date();
-  const isToday = d.toDateString() === now.toDateString();
-  if (isToday) return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const isToday = d.toDateString() === new Date().toDateString();
+  return (
+    <>
+      {isToday
+        ? d.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "UTC",
+          })
+        : d.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            timeZone: "UTC",
+          })}
+    </>
+  );
+}
+
+function RoomAvatar({ room, sessionUser }: { room: ChatRoom; sessionUser: SessionUser }) {
+  const om = getOtherMember(room, sessionUser);
+  return (
+    <div className="size-9 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0">
+      {om?.avatar ? (
+        <Image
+          src={om.avatar}
+          alt=""
+          width={36}
+          height={36}
+          className="size-9 rounded-full object-cover"
+        />
+      ) : (
+        initialsOf(om?.name || "?")
+      )}
+    </div>
+  );
+}
+
+function ConversationList({
+  rooms,
+  activeRoomId,
+  searchQuery,
+  sessionUser,
+  onSearchChange,
+  onSelect,
+  onNewChat,
+}: {
+  rooms: ChatRoom[];
+  activeRoomId: string | null;
+  searchQuery: string;
+  sessionUser: SessionUser;
+  onSearchChange: (value: string) => void;
+  onSelect: (roomId: string) => void;
+  onNewChat: () => void;
+}) {
+  const visibleRooms = searchQuery
+    ? rooms.filter((r) =>
+        getRoomName(r, sessionUser).toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : rooms;
+
+  return (
+    <div className="w-80 shrink-0 border-r border-slate-200 flex flex-col bg-slate-50/50">
+      <div className="p-3 border-b border-slate-200 flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            aria-label="Search conversations"
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full pl-8 pr-2 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={onNewChat}
+          title="New Chat"
+          aria-label="New chat"
+          className="size-8 flex items-center justify-center rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+        >
+          <Plus size={16} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {rooms.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400 p-6">
+            <MessageSquare size={36} className="mb-3 opacity-40" />
+            <p className="text-xs font-medium">No conversations yet</p>
+            <p className="text-[11px] mt-1">Click + to start a new chat</p>
+          </div>
+        )}
+        {visibleRooms.map((room) => {
+          const isActive = room.id === activeRoomId;
+          const lastMsg = room.messages?.[0];
+          return (
+            <button
+              type="button"
+              key={room.id}
+              onClick={() => onSelect(room.id)}
+              className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors border-b border-slate-100 ${
+                isActive ? "bg-indigo-50" : "hover:bg-slate-100"
+              }`}
+            >
+              <RoomAvatar room={room} sessionUser={sessionUser} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`text-sm font-medium truncate ${isActive ? "text-indigo-700" : "text-slate-700"}`}
+                  >
+                    {getRoomName(room, sessionUser)}
+                  </span>
+                  {lastMsg && (
+                    <span className="text-[10px] text-slate-400 ml-2 shrink-0">
+                      <MessageTime iso={lastMsg.createdAt} />
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                  {lastMsg
+                    ? (lastMsg.senderId === sessionUser?.id ? "You: " : "") + lastMsg.content
+                    : "No messages yet"}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MessageThread({
+  room,
+  messages,
+  sessionUser,
+  inputText,
+  busy,
+  messagesEndRef,
+  inputRef,
+  onInputChange,
+  onSend,
+  onKeyDown,
+}: {
+  room: ChatRoom;
+  messages: ChatMessage[];
+  sessionUser: SessionUser;
+  inputText: string;
+  busy: boolean;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onInputChange: (value: string) => void;
+  onSend: () => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+}) {
+  return (
+    <div className="flex-1 flex flex-col">
+      <div className="px-4 py-3 border-b border-slate-200 flex items-center gap-3 bg-white">
+        <RoomAvatar room={room} sessionUser={sessionUser} />
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800">{getRoomName(room, sessionUser)}</h3>
+          <p className="text-[11px] text-slate-400">
+            {room.type === "GROUP" ? "Group" : "Direct message"}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-slate-50/30">
+        {messages.length === 0 && (
+          <div className="flex items-center justify-center h-full text-slate-400">
+            <p className="text-xs">No messages yet. Say hello!</p>
+          </div>
+        )}
+        {messages.map((msg) => {
+          const isMine = msg.senderId === sessionUser?.id;
+          const senderName = msg.sender?.name || "Unknown";
+          return (
+            <div key={msg.id} className={`flex gap-2.5 ${isMine ? "flex-row-reverse" : ""}`}>
+              <div
+                className={`size-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${
+                  isMine ? "bg-indigo-100 text-indigo-600" : "bg-slate-200 text-slate-500"
+                }`}
+              >
+                {msg.sender?.avatar ? (
+                  <Image
+                    src={msg.sender.avatar}
+                    alt=""
+                    width={28}
+                    height={28}
+                    className="size-7 rounded-full object-cover"
+                  />
+                ) : (
+                  initialsOf(senderName)
+                )}
+              </div>
+              <div className={`max-w-[70%] ${isMine ? "items-end" : "items-start"} flex flex-col`}>
+                <div
+                  className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+                    isMine
+                      ? "bg-indigo-600 text-white rounded-br-md"
+                      : "bg-white text-slate-700 border border-slate-200 rounded-bl-md"
+                  }`}
+                >
+                  {msg.content}
+                </div>
+                <span
+                  className={`text-[10px] text-slate-400 mt-1 ${isMine ? "text-right" : "text-left"} px-1`}
+                >
+                  <MessageTime iso={msg.createdAt} />
+                </span>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="px-4 py-3 border-t border-slate-200 bg-white">
+        <div className="flex items-center gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            aria-label="Type a message"
+            placeholder="Type a message..."
+            value={inputText}
+            onChange={(e) => onInputChange(e.target.value)}
+            onKeyDown={onKeyDown}
+            className="flex-1 px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
+          />
+          <button
+            type="button"
+            onClick={onSend}
+            disabled={!inputText.trim() || busy}
+            aria-label="Send message"
+            className="size-9 flex items-center justify-center rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Send size={15} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NewChatModal({
+  filteredUsers,
+  searchQuery,
+  onSearchChange,
+  onSelectUser,
+  onClose,
+}: {
+  filteredUsers: ChatUser[];
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  onSelectUser: (userId: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <button
+        type="button"
+        aria-label="Close new chat"
+        className="absolute inset-0 bg-black/40"
+        onClick={onClose}
+      />
+      <div className="relative bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+          <h3 className="text-sm font-semibold text-slate-800">New Conversation</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="text-slate-400 hover:text-slate-600"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="p-3">
+          <div className="relative mb-3">
+            <Search
+              size={15}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              aria-label="Search users"
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
+            />
+          </div>
+          <div className="max-h-72 overflow-y-auto space-y-0.5">
+            {filteredUsers.length === 0 && (
+              <p className="text-xs text-slate-400 text-center py-8">No users found</p>
+            )}
+            {filteredUsers.map((u) => (
+              <button
+                type="button"
+                key={u.id}
+                onClick={() => onSelectUser(u.id)}
+                className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <div className="size-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0">
+                  {u.avatar ? (
+                    <Image
+                      src={u.avatar}
+                      alt=""
+                      width={32}
+                      height={32}
+                      className="size-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    initialsOf(u.name)
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-700">{u.name}</p>
+                  <p className="text-[11px] text-slate-400">
+                    {u.role} &middot; {u.email}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function ChatContent() {
@@ -46,7 +392,7 @@ export default function ChatContent() {
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
-  const [sending, setSending] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
   const [users, setUsers] = useState<ChatUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,12 +402,14 @@ export default function ChatContent() {
   const activeRoom = rooms.find((r) => r.id === activeRoomId);
 
   useEffect(() => {
-    fetch("/api/auth/me", { credentials: "include" })
+    const ac = new AbortController();
+    fetch("/api/auth/me", { credentials: "include", signal: ac.signal })
       .then(safeJson)
       .then((data) => {
         if (data.id) setSessionUser({ id: data.id, name: data.name || "" });
       })
       .catch(() => {});
+    return () => ac.abort();
   }, []);
 
   const fetchRooms = useCallback(async () => {
@@ -102,8 +450,8 @@ export default function ChatContent() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!inputText.trim() || !activeRoomId || sending) return;
-    setSending(true);
+    if (!inputText.trim() || !activeRoomId || busy) return;
+    setBusy(true);
     try {
       const res = await fetch("/api/chat/messages", {
         method: "POST",
@@ -118,7 +466,7 @@ export default function ChatContent() {
       }
     } catch {
     } finally {
-      setSending(false);
+      setBusy(false);
     }
   };
 
@@ -157,43 +505,6 @@ export default function ChatContent() {
     } catch {}
   };
 
-  const otherMember = (room: ChatRoom) => {
-    if (!sessionUser) return null;
-    return room.members.find((m) => m.id !== sessionUser.id) || room.members[0];
-  };
-
-  const roomName = (room: ChatRoom) => {
-    if (room.name) return room.name;
-    const om = otherMember(room);
-    return om ? om.name : "Unknown";
-  };
-
-  const roomAvatar = (room: ChatRoom) => {
-    const om = otherMember(room);
-    const name = om?.name || "?";
-    const initials = name
-      .split(" ")
-      .map((s) => s[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-    return (
-      <div className="size-9 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0">
-        {om?.avatar ? (
-          <Image
-            src={om.avatar}
-            alt=""
-            width={36}
-            height={36}
-            className="size-9 rounded-full object-cover"
-          />
-        ) : (
-          initials
-        )}
-      </div>
-    );
-  };
-
   const filteredUsers = users.filter(
     (u) =>
       u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -203,80 +514,15 @@ export default function ChatContent() {
   return (
     <div className="flex h-[calc(100vh-7rem)] gap-0 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
       {/* Left panel – conversation list */}
-      <div className="w-80 shrink-0 border-r border-slate-200 flex flex-col bg-slate-50/50">
-        <div className="p-3 border-b border-slate-200 flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search
-              size={15}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              placeholder="Search conversations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-2 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={openNewChat}
-            title="New Chat"
-            className="size-8 flex items-center justify-center rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-          >
-            <Plus size={16} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {rooms.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-slate-400 p-6">
-              <MessageSquare size={36} className="mb-3 opacity-40" />
-              <p className="text-xs font-medium">No conversations yet</p>
-              <p className="text-[11px] mt-1">Click + to start a new chat</p>
-            </div>
-          )}
-          {(searchQuery
-            ? rooms.filter((r) => roomName(r).toLowerCase().includes(searchQuery.toLowerCase()))
-            : rooms
-          ).map((room) => {
-            const isActive = room.id === activeRoomId;
-            const lastMsg = room.messages?.[0];
-            return (
-              <button
-                type="button"
-                key={room.id}
-                onClick={() => setActiveRoomId(room.id)}
-                className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors border-b border-slate-100 ${
-                  isActive
-                    ? "bg-indigo-50"
-                    : "hover:bg-slate-100"
-                }`}
-              >
-                {roomAvatar(room)}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-sm font-medium truncate ${isActive ? "text-indigo-700" : "text-slate-700"}`}
-                    >
-                      {roomName(room)}
-                    </span>
-                    {lastMsg && (
-                      <span className="text-[10px] text-slate-400 ml-2 shrink-0">
-                        {formatTime(lastMsg.createdAt)}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                    {lastMsg
-                      ? (lastMsg.senderId === sessionUser?.id ? "You: " : "") + lastMsg.content
-                      : "No messages yet"}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <ConversationList
+        rooms={rooms}
+        activeRoomId={activeRoomId}
+        searchQuery={searchQuery}
+        sessionUser={sessionUser}
+        onSearchChange={setSearchQuery}
+        onSelect={setActiveRoomId}
+        onNewChat={openNewChat}
+      />
 
       {/* Right panel – messages */}
       <div className="flex-1 flex flex-col">
@@ -289,193 +535,30 @@ export default function ChatContent() {
             </div>
           </div>
         ) : (
-          <>
-            {/* Header */}
-            <div className="px-4 py-3 border-b border-slate-200 flex items-center gap-3 bg-white">
-              {activeRoom && roomAvatar(activeRoom)}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-800">
-                  {roomName(activeRoom)}
-                </h3>
-                <p className="text-[11px] text-slate-400">
-                  {activeRoom.type === "GROUP" ? "Group" : "Direct message"}
-                </p>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-slate-50/30">
-              {messages.length === 0 && (
-                <div className="flex items-center justify-center h-full text-slate-400">
-                  <p className="text-xs">No messages yet. Say hello!</p>
-                </div>
-              )}
-              {messages.map((msg) => {
-                const isMine = msg.senderId === sessionUser?.id;
-                const senderName = msg.sender?.name || "Unknown";
-                const initials = senderName
-                  .split(" ")
-                  .map((s) => s[0])
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2);
-                return (
-                  <div key={msg.id} className={`flex gap-2.5 ${isMine ? "flex-row-reverse" : ""}`}>
-                    <div
-                      className={`size-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${
-                        isMine
-                          ? "bg-indigo-100 text-indigo-600"
-                          : "bg-slate-200 text-slate-500"
-                      }`}
-                    >
-                      {msg.sender?.avatar ? (
-                        <Image
-                          src={msg.sender.avatar}
-                          alt=""
-                          width={28}
-                          height={28}
-                          className="size-7 rounded-full object-cover"
-                        />
-                      ) : (
-                        initials
-                      )}
-                    </div>
-                    <div
-                      className={`max-w-[70%] ${isMine ? "items-end" : "items-start"} flex flex-col`}
-                    >
-                      <div
-                        className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${
-                          isMine
-                            ? "bg-indigo-600 text-white rounded-br-md"
-                            : "bg-white text-slate-700 border border-slate-200 rounded-bl-md"
-                        }`}
-                      >
-                        {msg.content}
-                      </div>
-                      <span
-                        className={`text-[10px] text-slate-400 mt-1 ${isMine ? "text-right" : "text-left"} px-1`}
-                      >
-                        {formatTime(msg.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input */}
-            <div className="px-4 py-3 border-t border-slate-200 bg-white">
-              <div className="flex items-center gap-2">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Type a message..."
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="flex-1 px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
-                />
-                <button
-                  type="button"
-                  onClick={sendMessage}
-                  disabled={!inputText.trim() || sending}
-                  className="size-9 flex items-center justify-center rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Send size={15} />
-                </button>
-              </div>
-            </div>
-          </>
+          <MessageThread
+            room={activeRoom}
+            messages={messages}
+            sessionUser={sessionUser}
+            inputText={inputText}
+            busy={busy}
+            messagesEndRef={messagesEndRef}
+            inputRef={inputRef}
+            onInputChange={setInputText}
+            onSend={sendMessage}
+            onKeyDown={handleKeyDown}
+          />
         )}
       </div>
 
       {/* New Chat Modal */}
       {showNewChat && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          role="button"
-          tabIndex={0}
-          onClick={() => setShowNewChat(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setShowNewChat(false);
-            }
-          }}
-        >
-          <div
-            className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-              <h3 className="text-sm font-semibold text-slate-800">
-                New Conversation
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowNewChat(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="p-3">
-              <div className="relative mb-3">
-                <Search
-                  size={15}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  placeholder="Search users..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30"
-                />
-              </div>
-              <div className="max-h-72 overflow-y-auto space-y-0.5">
-                {filteredUsers.length === 0 && (
-                  <p className="text-xs text-slate-400 text-center py-8">No users found</p>
-                )}
-                {filteredUsers.map((u) => (
-                  <button
-                    type="button"
-                    key={u.id}
-                    onClick={() => startDirectChat(u.id)}
-                    className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
-                  >
-                    <div className="size-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0">
-                      {u.avatar ? (
-                        <Image
-                          src={u.avatar}
-                          alt=""
-                          width={32}
-                          height={32}
-                          className="size-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        u.name
-                          .split(" ")
-                          .map((s) => s[0])
-                          .join("")
-                          .toUpperCase()
-                          .slice(0, 2)
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-700">
-                        {u.name}
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                        {u.role} &middot; {u.email}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <NewChatModal
+          filteredUsers={filteredUsers}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSelectUser={startDirectChat}
+          onClose={() => setShowNewChat(false)}
+        />
       )}
     </div>
   );
