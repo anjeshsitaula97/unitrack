@@ -131,16 +131,24 @@ describe("env validation", () => {
     expect(errors.some((i) => i.variable === "JWT_SECRET")).toBe(true);
   });
 
-  it("flags reusing JWT_SECRET as ENCRYPTION_KEY as a non-blocking warning", () => {
+  it("ignores a leftover ENCRYPTION_KEY (dead config, no longer validated)", () => {
+    // The AES helpers it belonged to (src/lib/encryption*.ts) were insecure
+    // dead code and have been deleted, so nothing reads the variable. A stale
+    // entry must neither fail readiness nor emit advisories — it just needs to
+    // be deleted from the environment.
     const { ok, issues, warnings } = checkEnv({
       ...good,
       ENCRYPTION_KEY: good.JWT_SECRET,
     } as unknown as NodeJS.ProcessEnv);
-    // Advisory: must be fixed, but does not stop the instance from serving
-    // traffic (so it must not fail readiness / pull the box from rotation).
     expect(ok).toBe(true);
-    expect(warnings.some((i) => i.variable === "ENCRYPTION_KEY")).toBe(true);
-    expect(issues.some((i) => i.variable === "ENCRYPTION_KEY")).toBe(true);
+    expect(issues).toHaveLength(0);
+    expect(warnings).toHaveLength(0);
+  });
+
+  it("produces no advisories for a complete configuration", () => {
+    const { issues, warnings } = checkEnv(good);
+    expect(issues).toHaveLength(0);
+    expect(warnings).toHaveLength(0);
   });
 });
 

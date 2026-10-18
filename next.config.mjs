@@ -25,6 +25,17 @@ const nextConfig = {
   },
   serverExternalPackages: ['@prisma/client', 'prisma'],
 
+  // @vladmandic/face-api resolves its tfjs backends with a dynamic require(),
+  // which webpack cannot statically analyse. Known harmless false positive from
+  // the HR face-enrollment feature; ignore only that exact message so any other
+  // real warning still surfaces in the build output.
+  webpack: (config) => {
+    config.ignoreWarnings = [
+      /Critical dependency: require function is used in a way in which dependencies cannot be statically extracted/,
+    ];
+    return config;
+  },
+
   async rewrites() {
     return {
       beforeFiles: [],
