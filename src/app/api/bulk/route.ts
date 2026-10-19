@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
 import { getSession, apiError, checkPermission } from "@/lib/api-utils";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { createNotification } from "@/lib/notifications";
 import { buildXlsx } from "@/lib/spreadsheet";
 import { readSpreadsheetRows } from "@/lib/spreadsheet-read";
@@ -63,6 +64,13 @@ export async function POST(req: NextRequest) {
     const deniedPOST = checkPermission(session, "bulk:create");
     if (deniedPOST) return deniedPOST;
 
+    // bcrypt(cost 12) runs per row (up to 5000) — without a limit this is an
+    // authenticated CPU-exhaustion vector as well as a data-flood vector.
+    const rl = await checkRateLimit(`bulk-import:${getClientIp(req)}`, 10, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many import requests" }, { status: 429 });
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const type = formData.get("type") as string;
@@ -115,6 +123,7 @@ export async function POST(req: NextRequest) {
 
     let imported = 0;
     const errors: string[] = [];
+    const generatedPasswords: string[] = [];
 
     switch (type) {
       case "students": {
@@ -340,6 +349,8 @@ export async function POST(req: NextRequest) {
       }
 
       case "staff": {
+        const { generateStrongPassword } = await import("@/lib/password");
+        const { validateRoleAssignment } = await import("@/lib/role-assignment");
         for (let i = 0; i < rows.length; i++) {
           try {
             const row = rows[i];
@@ -347,18 +358,34 @@ export async function POST(req: NextRequest) {
               errors.push(`Row ${i + 2}: name and email are required`);
               continue;
             }
+            // Roles arriving from a spreadsheet are untrusted input: without
+            // this check an Admin could import `role=Super Admin` and escalate
+            // past every guard enforced in the invite/edit flows.
+            const requestedRole = row.role?.trim() || "Staff";
+            const roleError = await validateRoleAssignment(session?.role, requestedRole);
+            if (roleError) {
+              errors.push(`Row ${i + 2}: ${roleError}`);
+              continue;
+            }
             const bcrypt = await import("bcryptjs");
-            const hashed = await bcrypt.hash(row.password || "password123", 12);
+            // No shared default credential: each imported account without an
+            // explicit password gets a unique random one (returned to the
+            // importer below) instead of the public "password123".
+            const plainPassword = row.password || generateStrongPassword();
+            const hashed = await bcrypt.hash(plainPassword, 12);
             await db.user.create({
               data: {
                 name: row.name,
                 email: row.email,
                 password: hashed,
-                role: row.role || "Staff",
+                role: requestedRole,
                 phone: row.phone?.toString(),
                 status: row.status || "Active",
               },
             });
+            if (!row.password) {
+              generatedPasswords.push(`Row ${i + 2} (${row.email}): ${plainPassword}`);
+            }
             imported++;
           } catch (err: unknown) {
             const error = err as { code?: string; message?: string };
@@ -434,7 +461,12 @@ export async function POST(req: NextRequest) {
       type: errors.length > 0 ? "Warning" : "Success",
     });
 
-    return NextResponse.json({ imported, errors, total: rows.length });
+    return NextResponse.json({
+      imported,
+      errors,
+      total: rows.length,
+      ...(generatedPasswords.length > 0 ? { generatedPasswords } : {}),
+    });
   } catch (error) {
     logError("Bulk import", error);
     return apiError("Bulk import failed");

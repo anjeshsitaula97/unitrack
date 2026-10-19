@@ -18,6 +18,13 @@ export async function GET(req: Request) {
     const activities = await db.activityLog.findMany({
       orderBy: { createdAt: "desc" },
       take: limit,
+      // Resolve the acting account so audit rows can show who performed the
+      // action, including the email address associated with the account.
+      include: {
+        user: {
+          select: { name: true, email: true },
+        },
+      },
     });
 
     const formatted = activities.map((act) => {
@@ -34,7 +41,8 @@ export async function GET(req: Request) {
 
       return {
         id: act.id,
-        actorName: act.actorName,
+        actorName: act.user?.name || act.actorName,
+        actorEmail: act.user?.email ?? null,
         actorInitials: act.actorInitials,
         actorColor: act.actorColor,
         action: act.action,

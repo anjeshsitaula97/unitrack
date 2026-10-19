@@ -6,6 +6,15 @@ import { db } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { logError } from "@/lib/logger";
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req);
@@ -67,7 +76,7 @@ export async function POST(req: NextRequest) {
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <h2 style="color: #059669;">Password Reset Request</h2>
-              <p>Hello ${student.name},</p>
+              <p>Hello ${escapeHtml(student.name)},</p>
               <p>We received a request to reset your password. Use the OTP below to verify your identity.</p>
               <div style="text-align: center; margin: 30px 0;">
                 <div style="display: inline-block; background: #f0fdf4; border: 2px dashed #059669; border-radius: 12px; padding: 16px 32px;">

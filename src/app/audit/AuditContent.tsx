@@ -12,6 +12,7 @@ interface ChangeDetail {
 interface AuditLog {
   id: string;
   actorName?: string;
+  actorEmail?: string | null;
   actorInitials?: string;
   target?: string;
   action?: string;
@@ -61,6 +62,7 @@ export default function AuditContent() {
     if (
       search &&
       !log.actorName?.toLowerCase().includes(search.toLowerCase()) &&
+      !log.actorEmail?.toLowerCase().includes(search.toLowerCase()) &&
       !log.target?.toLowerCase().includes(search.toLowerCase()) &&
       !log.action?.toLowerCase().includes(search.toLowerCase())
     )
@@ -82,9 +84,7 @@ export default function AuditContent() {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-          Audit Trail
-        </h1>
+        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">Audit Trail</h1>
         <span className="text-sm text-slate-400">{filtered.length} entries</span>
       </div>
 
@@ -193,18 +193,23 @@ export default function AuditContent() {
                       "?"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-slate-800">
-                      {log.actorName}
-                    </span>{" "}
-                    <span className="text-slate-500">{log.action}</span>{" "}
-                    <span className="font-medium text-slate-700">
-                      {log.target}
-                    </span>
-                    {changes.length > 0 && (
-                      <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 text-[10px] font-semibold">
-                        {changes.length} change{changes.length > 1 ? "s" : ""}
-                      </span>
-                    )}
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="font-semibold text-slate-800">{log.actorName}</span>
+                      {log.actorEmail && (
+                        <span className="text-[11px] text-slate-400 truncate">
+                          ({log.actorEmail})
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5">
+                      <span className="text-slate-500">{log.action}</span>{" "}
+                      <span className="font-medium text-slate-700">{log.target}</span>
+                      {changes.length > 0 && (
+                        <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 text-[10px] font-semibold">
+                          {changes.length} change{changes.length > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="text-xs text-slate-400 flex-shrink-0">
                     {new Date(log.createdAt).toLocaleString()}
@@ -227,9 +232,7 @@ export default function AuditContent() {
                           {c.from || "—"}
                         </span>
                         <span className="text-slate-300 flex-shrink-0">→</span>
-                        <span className="text-slate-700 font-medium break-all">
-                          {c.to || "—"}
-                        </span>
+                        <span className="text-slate-700 font-medium break-all">{c.to || "—"}</span>
                       </div>
                     ))}
                   </div>

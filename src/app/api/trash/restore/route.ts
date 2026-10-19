@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
 
     await logActivity({
       actorName: user?.name || "System",
+      userId: session.id,
       action: "restored from trash",
       target: `${restored.entityType}: ${restored.entityName}`,
     });

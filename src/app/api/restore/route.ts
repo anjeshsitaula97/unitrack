@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { decryptBackup } from "@/lib/crypto";
 import type { EncryptedPayload } from "@/lib/crypto";
 import { getSession, apiError, checkPermission } from "@/lib/api-utils";
+import { validateRoleAssignment } from "@/lib/role-assignment";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const ALLOWED_TABLES = new Set([
   "universities",
@@ -59,8 +61,16 @@ export async function POST(req: NextRequest) {
     const session = await getSession();
     const deniedPOST = checkPermission(session, "admin:access");
     if (deniedPOST) return deniedPOST;
-    if (!session || !["Admin", "Super Admin"].includes(session.role as string))
-      return apiError("Unauthorized", 401);
+    // Restore rewrites every table from client-supplied rows — including
+    // `users.role`. An Admin could otherwise craft a backup containing a
+    // Super Admin account and bypass the invite/edit guards, so only a
+    // Super Admin may restore.
+    if (!session || session.role !== "Super Admin") return apiError("Unauthorized", 401);
+
+    const rl = await checkRateLimit(`restore:${getClientIp(req)}`, 5, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many restore requests" }, { status: 429 });
+    }
 
     let payload = await req.json();
 
@@ -130,6 +140,39 @@ export async function POST(req: NextRequest) {
         data[tableName].length > 0
       );
     };
+
+    // Scrub row contents for privilege-bearing tables. Table names alone are
+    // not enough: a crafted backup could carry `users` rows with arbitrary
+    // `role` values or malformed permission grants. Every restored user role
+    // must pass the same validation used by the invite/edit flows.
+    if (shouldRestore("users") && Array.isArray(data.users)) {
+      for (const row of data.users as Array<Record<string, unknown>>) {
+        const roleError = await validateRoleAssignment(session.role, row?.role);
+        if (roleError) {
+          return NextResponse.json(
+            { error: `Invalid backup: users row has ${roleError}` },
+            { status: 400 }
+          );
+        }
+      }
+    }
+    if (shouldRestore("roles") && Array.isArray(data.roles)) {
+      for (const row of data.roles as Array<Record<string, unknown>>) {
+        if (typeof row?.name !== "string" || !row.name.trim()) {
+          return NextResponse.json(
+            { error: "Invalid backup: roles rows must have a non-empty name" },
+            { status: 400 }
+          );
+        }
+        const perms = row.permissions;
+        if (perms !== undefined && perms !== null && typeof perms !== "string") {
+          return NextResponse.json(
+            { error: "Invalid backup: role permissions must be a JSON string" },
+            { status: 400 }
+          );
+        }
+      }
+    }
 
     await db.$transaction(async (tx) => {
       // 1. Delete existing data in reverse dependency order

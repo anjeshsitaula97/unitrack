@@ -116,7 +116,8 @@ export async function POST(req: NextRequest) {
       });
 
       await logActivity({
-        actorName: await getActorName(),
+        actorName: await getActorName(session.id),
+        userId: session.id,
         action: "created an email template",
         target: `${type || "Email template"} - ${fromEmail}`,
       });
@@ -149,7 +150,8 @@ export async function DELETE(req: NextRequest) {
     });
 
     await logActivity({
-      actorName: await getActorName(),
+      actorName: await getActorName(session.id),
+      userId: session.id,
       action: "deleted an email template",
       target: existing?.fromEmail || id,
     });

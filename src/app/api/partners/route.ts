@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
       const user = await db.user.findUnique({ where: { id: session.id } });
       await logActivity({
         actorName: user?.name || "System",
+        userId: session.id,
         action: "created a new partner",
         target: newPartner.name,
       });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/activity";
-import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
+import { getSession, checkRoutePermission } from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(_req: NextRequest) {
@@ -28,7 +28,10 @@ export async function POST(req: NextRequest) {
     // Rate limit expense creation
     const rl = await checkRateLimit(`create-expense:${getClientIp(req)}`, 30, 60000);
     if (!rl.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const data = await req.json();
@@ -70,6 +73,7 @@ export async function POST(req: NextRequest) {
 
     await logActivity({
       actorName: user?.name || "System",
+      userId: session!.id,
       action: "recorded an expense",
       target: `${newExpense.category} - ${newExpense.currency} ${newExpense.amount}`,
     });

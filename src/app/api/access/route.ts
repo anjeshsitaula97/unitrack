@@ -52,7 +52,35 @@ export async function GET() {
 
     const users = await db.user.findMany({
       orderBy: { createdAt: "desc" },
-      include: {
+      // Never ship credential material to the browser, even to Admins: a
+      // leaked bcrypt hash enables offline cracking and credential stuffing.
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        employeeId: true,
+        phone: true,
+        gender: true,
+        designationId: true,
+        departmentId: true,
+        hireDate: true,
+        employmentType: true,
+        basicSalary: true,
+        bankName: true,
+        bankAccount: true,
+        panNumber: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+        consultancyId: true,
+        isFirstLogin: true,
+        branchId: true,
+        subscriptionPackage: true,
+        subscriptionExpiry: true,
+        lastLogin: true,
+        lastSeenAt: true,
         loginLogs: {
           orderBy: { createdAt: "desc" },
           take: 1,

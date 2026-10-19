@@ -261,6 +261,7 @@ export async function POST(req: NextRequest) {
       await sendTemplatedEmail({
         key: "student-created",
         to: student.email,
+        actorUserId: session!.id,
         vars: {
           studentName: name,
           studentEmail: student.email,

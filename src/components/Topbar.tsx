@@ -15,6 +15,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { clearAuthCache } from "@/lib/auth-state";
 import { deactivateSession } from "@/lib/client-session";
 import { api } from "@/lib/fetch-client";
+import { toast } from "sonner";
 import ConsultancySwitcher from "./ConsultancySwitcher";
 
 interface AppUser {
@@ -242,11 +243,16 @@ export default function Topbar({
   const [isMounted] = useState(true);
   const eventSourceRef = useRef<EventSource | null>(null);
   const markAllReadBusyRef = useRef(false);
+  // IDs already displayed/toasted — the SSE stream re-sends the latest batch on
+  // every poll, so only ids never seen before should raise a popup.
+  const seenNotificationIdsRef = useRef<Set<string>>(new Set());
 
   const fetchNotifications = async () => {
     try {
       const data = await api.get<Notification[]>("/api/notifications", { showError: false });
       if (Array.isArray(data)) {
+        // The initial load is history, not new events — mark it seen silently.
+        data.forEach((n) => seenNotificationIdsRef.current.add(n.id));
         setNotifications(data);
         setUnreadCount(data.filter((n) => !n.read).length);
       }
@@ -265,6 +271,12 @@ export default function Topbar({
       try {
         const data = JSON.parse(event.data);
         if (data.type === "notifications" && data.notifications?.length > 0) {
+          const fresh = (data.notifications as Notification[]).filter((n) => {
+            if (seenNotificationIdsRef.current.has(n.id)) return false;
+            seenNotificationIdsRef.current.add(n.id);
+            return true;
+          });
+
           setNotifications((prev) => {
             const existing = prev || [];
             const newIds = new Set(data.notifications.map((n: Notification) => n.id));
@@ -275,6 +287,15 @@ export default function Topbar({
             return merged.slice(0, 50);
           });
           setUnreadCount(data.unreadCount);
+
+          // Raise a popup near the top notification bell for each new item.
+          for (const n of fresh) {
+            toast.info(n.title, {
+              description: n.message,
+              duration: 6000,
+              position: "top-right",
+            });
+          }
         }
       } catch {}
     };

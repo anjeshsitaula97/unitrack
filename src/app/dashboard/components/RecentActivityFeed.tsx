@@ -6,7 +6,8 @@ import DashboardCardHeader from "./DashboardCardHeader";
 
 interface Activity {
   id: string | number;
-  actor: string;
+  actorName: string;
+  actorEmail?: string | null;
   actorColor: string;
   actorInitials: string;
   action: string;
@@ -67,7 +68,10 @@ export default function RecentActivityFeed() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-slate-700 leading-relaxed">
-                <span className="font-semibold">{act.actor}</span>{" "}
+                <span className="font-semibold">{act.actorName}</span>{" "}
+                {act.actorEmail && (
+                  <span className="text-[10px] text-slate-400">({act.actorEmail}) </span>
+                )}
                 <span className="text-slate-500">{act.action}</span>{" "}
                 <span className="font-semibold text-indigo-600">{act.target}</span>{" "}
                 {act.targetBy && (

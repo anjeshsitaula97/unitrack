@@ -57,8 +57,14 @@ export function getClientIp(req: Request): string {
         .filter(Boolean);
       if (hops.length > 0) return hops[0];
     }
+    // cf-connecting-ip / x-real-ip are only meaningful when set by an
+    // infrastructure proxy (Cloudflare, nginx) that strips client-supplied
+    // values. Without TRUST_PROXY they are attacker-settable and would let
+    // any caller rotate a fake IP to reset every rate-limit bucket.
+    const edge = req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip");
+    if (edge) return edge;
   }
-  return req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || "unknown";
+  return "unknown";
 }
 
 export async function checkRateLimit(

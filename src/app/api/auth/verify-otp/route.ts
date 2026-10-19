@@ -4,6 +4,13 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import crypto from "crypto";
 import { logError } from "@/lib/logger";
 
+function timingSafeEqualString(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req);
@@ -19,6 +26,21 @@ export async function POST(req: NextRequest) {
 
     if (!email || !otp) {
       return NextResponse.json({ error: "Email and OTP are required." }, { status: 400 });
+    }
+
+    // Per-account throttle: the IP limiter above is necessary but not
+    // sufficient (a single attacker can rotate IPs), so also cap attempts
+    // against one email address to stop OTP brute-forcing.
+    const accountRl = await checkRateLimit(
+      `verify-otp-acc:${String(email).toLowerCase()}`,
+      5,
+      600000
+    );
+    if (!accountRl.allowed) {
+      return NextResponse.json(
+        { error: "Too many attempts for this account. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const record = await db.passwordResetToken.findFirst({
@@ -40,23 +62,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (record.otp !== otp.trim()) {
+    if (!timingSafeEqualString(record.otp, String(otp).trim())) {
       return NextResponse.json({ error: "Invalid OTP. Please try again." }, { status: 400 });
     }
 
-    // OTP matched — mark as verified and generate a reset token
-    await db.passwordResetToken.update({
-      where: { id: record.id },
-      data: { verified: true },
-    });
-
     const resetToken = crypto.randomBytes(32).toString("hex");
-
-    // Store the reset token in a new record linked to this verified email
     const resetExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-    await db.passwordResetToken.create({
-      data: { email, otp: resetToken, expiresAt: resetExpiresAt, verified: true },
-    });
+
+    // Consume the OTP and mint the reset token in one transaction. Deleting the
+    // OTP record is what stops the 6-digit code (≈20 bits) from being replayed
+    // as the reset token in /api/auth/reset-password — only the 64-hex token,
+    // which never leaves the server except to the verified mailbox, can match.
+    await db.$transaction([
+      db.passwordResetToken.deleteMany({ where: { email, verified: false } }),
+      db.passwordResetToken.create({
+        data: { email, otp: resetToken, expiresAt: resetExpiresAt, verified: true },
+      }),
+    ]);
 
     return NextResponse.json({ success: true, expiresAt: resetExpiresAt });
   } catch (error) {

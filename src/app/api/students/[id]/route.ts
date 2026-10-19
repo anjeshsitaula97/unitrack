@@ -337,6 +337,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         key: "student-updated",
         to: student.email,
         actorName,
+        actorUserId: session?.id ?? null,
         vars: {
           studentName:
             student.name ||

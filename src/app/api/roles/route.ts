@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
 
     await logActivity({
       actorName: session.name || "System",
+      userId: session.id,
       action: "created new role",
       target: name,
       targetBy: "Admin",

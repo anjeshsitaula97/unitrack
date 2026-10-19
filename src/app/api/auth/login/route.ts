@@ -56,6 +56,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
 
+    // A correct password is not enough — disabled, suspended or still-pending
+    // accounts must not receive a session. getSession() enforces this on data
+    // APIs; enforcing it here stops the account from ever getting a token.
+    if (user.status && user.status.toLowerCase() !== "active") {
+      return NextResponse.json(
+        { error: "Your account is not active. Please contact an administrator." },
+        { status: 403 }
+      );
+    }
+
     // The dedicated Super Admin portal only admits Super Administrators.
     if (parsed.data.portal === "super-admin" && !isSuperAdminRole(user.role)) {
       return NextResponse.json(

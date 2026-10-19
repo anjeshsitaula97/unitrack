@@ -21,14 +21,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Token and password are required." }, { status: 400 });
     }
 
-    if (password.length < 6) {
+    // The reset token is a 32-byte random value rendered as 64 hex chars. Only
+    // that shape is accepted, so a 6-digit email OTP can never be used as a
+    // reset token even if a stale verified record somehow exists.
+    if (typeof token !== "string" || !/^[0-9a-f]{64}$/i.test(token)) {
       return NextResponse.json(
-        { error: "Password must be at least 6 characters." },
+        { error: "Invalid or expired reset link. Please start over." },
         { status: 400 }
       );
     }
 
-    // The "token" here is actually the reset token stored in the otp field of a verified record
+    const accountRl = await checkRateLimit(`reset-pw-acc:${token.slice(0, 16)}`, 5, 600000);
+    if (!accountRl.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: "Password must be at least 8 characters." },
+        { status: 400 }
+      );
+    }
+
+    // Only the 64-hex reset token fits this filter; the OTP row is consumed at
+    // verification time (see verify-otp) so it cannot match here.
     const record = await db.passwordResetToken.findFirst({
       where: { otp: token, verified: true },
       orderBy: { createdAt: "desc" },

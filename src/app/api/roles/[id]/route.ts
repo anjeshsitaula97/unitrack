@@ -43,15 +43,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const existing = await db.role.findUnique({ where: { id: Number(id) } });
 
-      const role = await db.role.update({
-        where: { id: Number(id) },
-        data: data as Prisma.RoleUpdateInput,
-      });
+    const role = await db.role.update({
+      where: { id: Number(id) },
+      data: data as Prisma.RoleUpdateInput,
+    });
 
-      invalidateRoleCache();
+    invalidateRoleCache();
 
     await logActivity({
       actorName: session.name || "System",
+      userId: session.id,
       action: "updated role",
       target: role.name,
       targetBy: "Admin",
@@ -98,8 +99,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const role = await db.role.findUnique({ where: { id: Number(id) } });
     if (!role) return NextResponse.json({ error: "Role not found" }, { status: 404 });
 
-      await db.role.delete({ where: { id: Number(id) } });
-      invalidateRoleCache();
+    await db.role.delete({ where: { id: Number(id) } });
+    invalidateRoleCache();
 
     await logActivity({
       actorName: session.name || "System",

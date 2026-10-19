@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
 import { logActivity } from "@/lib/activity";
+import { formatTemplateDate, sendTemplatedEmail } from "@/lib/email-templates";
 import {
   getPaginationParams,
   paginatedResponse,
@@ -112,16 +113,47 @@ export async function POST(req: NextRequest) {
           courseId: Number(courseId),
           status: "Submitted",
         },
-        include: { student: true, course: true },
+        include: {
+          student: { select: { firstName: true, lastName: true, name: true, email: true } },
+          university: { select: { name: true, country: true } },
+          course: { select: { name: true, startDate: true, intake: true } },
+        },
       }),
       db.user.findUnique({ where: { id: session!.id } }),
     ]);
 
     await logActivity({
       actorName: user?.name || "System",
+      userId: session!.id,
       action: "created an application",
       target: `${newApplication.student.firstName} ${newApplication.student.lastName} for ${newApplication.course.name}`,
     });
+
+    const studentName =
+      [newApplication.student.firstName, newApplication.student.lastName]
+        .filter(Boolean)
+        .join(" ")
+        .trim() || newApplication.student.name;
+
+    if (newApplication.student.email) {
+      await sendTemplatedEmail({
+        key: "application-submitted",
+        to: newApplication.student.email,
+        actorName: user?.name || "System",
+        actorUserId: session!.id,
+        vars: {
+          studentName,
+          studentEmail: newApplication.student.email,
+          universityName: newApplication.university.name,
+          universityCountry: newApplication.university.country || "",
+          courseName: newApplication.course.name,
+          courseStartDate: formatTemplateDate(newApplication.course.startDate),
+          courseIntake: newApplication.course.intake || "To be confirmed",
+          applicationStatus: newApplication.status,
+          actorName: user?.name || "System",
+        },
+      });
+    }
 
     return NextResponse.json(newApplication, { status: 201 });
   } catch (error) {

@@ -61,6 +61,7 @@ export async function POST(req: Request) {
 
     await logActivity({
       actorName: session.name || "System",
+      userId: session.id,
       action: "invited new staff",
       target: user.name,
       targetBy: role || "Viewer",

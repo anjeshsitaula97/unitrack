@@ -15,7 +15,29 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const userDetails = await db.user.findUnique({
       where: { id: Number(id) },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        employeeId: true,
+        phone: true,
+        gender: true,
+        designationId: true,
+        departmentId: true,
+        hireDate: true,
+        employmentType: true,
+        basicSalary: true,
+        bankName: true,
+        bankAccount: true,
+        panNumber: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+        consultancyId: true,
+        lastLogin: true,
+        branchId: true,
         loginLogs: {
           orderBy: { createdAt: "desc" },
           take: 50,

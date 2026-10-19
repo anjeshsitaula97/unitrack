@@ -5,6 +5,12 @@ import { softDeleteApplication } from "@/lib/trash";
 import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { logActivity, diffChanges } from "@/lib/activity";
 import { getApplicationStatuses } from "@/lib/application-statuses";
+import {
+  applicationEmailTemplateKey,
+  formatTemplateDate,
+  getAutoStatusEmailsEnabled,
+  sendTemplatedEmail,
+} from "@/lib/email-templates";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -74,19 +80,50 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { id: Number(id) },
       data: { status },
       include: {
-        student: { select: { firstName: true, lastName: true, email: true } },
+        student: { select: { firstName: true, lastName: true, name: true, email: true } },
         university: { select: { name: true, country: true } },
-        course: { select: { name: true, level: true } },
+        course: { select: { name: true, level: true, startDate: true, intake: true } },
       },
     });
 
     await logActivity({
       actorName: user?.name || existing.student.firstName + " " + existing.student.lastName,
+      userId: session.id,
       action: "updated application status",
       target: `${existing.student.firstName} ${existing.student.lastName} — ${existing.course.name}`,
       targetBy: `${existing.status} → ${status}`,
       changes: diffChanges(existing, updated, ["student", "university", "course"]),
     });
+
+    if (
+      existing.status !== status &&
+      updated.student.email &&
+      (await getAutoStatusEmailsEnabled())
+    ) {
+      const studentName =
+        [updated.student.firstName, updated.student.lastName].filter(Boolean).join(" ").trim() ||
+        updated.student.name;
+
+      await sendTemplatedEmail({
+        key: applicationEmailTemplateKey(status),
+        to: updated.student.email,
+        actorName: user?.name || "System",
+        actorUserId: session.id,
+        vars: {
+          studentName,
+          studentEmail: updated.student.email,
+          universityName: updated.university.name,
+          universityCountry: updated.university.country || "",
+          courseName: updated.course.name,
+          courseStartDate: formatTemplateDate(updated.course.startDate),
+          courseIntake: updated.course.intake || "To be confirmed",
+          previousStatus: existing.status,
+          newStatus: status,
+          applicationStatus: status,
+          actorName: user?.name || "System",
+        },
+      });
+    }
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -126,6 +163,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     await logActivity({
       actorName: user?.name || existing.student.firstName + " " + existing.student.lastName,
+      userId: session.id,
       action: "deleted an application",
       target: `${existing.student.firstName} ${existing.student.lastName} — ${existing.course.name}`,
     });

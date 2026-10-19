@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, Edit2, Eye, MailPlus, RotateCcw, Sparkles, X } from "lucide-react";
+import { AlertTriangle, Edit2, Eye, MailPlus, RotateCcw, Sparkles, X, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { loadEmailTemplates, type EmailTemplateItem } from "./settings-shared";
 import SettingsHeader from "./SettingsHeader";
@@ -46,6 +46,8 @@ export default function EmailTemplatesSettings() {
   });
   const [showPreview, setShowPreview] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplateItem | null>(null);
+  const [autoStatusEmails, setAutoStatusEmails] = useState(true);
+  const [autoStatusLoading, setAutoStatusLoading] = useState(true);
   const busyRef = useRef(false);
 
   const load = (signal: AbortSignal) => {
@@ -59,6 +61,46 @@ export default function EmailTemplatesSettings() {
     load(ac.signal);
     return () => ac.abort();
   }, []);
+
+  useEffect(() => {
+    const ac = new AbortController();
+    fetch("/api/settings/email-templates/auto-status", { signal: ac.signal })
+      .then((res) => res.json())
+      .then((data) => setAutoStatusEmails(data?.enabled !== false))
+      .catch((err) => {
+        if (err?.name !== "AbortError") setAutoStatusEmails(true);
+      })
+      .finally(() => setAutoStatusLoading(false));
+    return () => ac.abort();
+  }, []);
+
+  const handleToggleAutoStatus = async () => {
+    if (busyRef.current || autoStatusLoading) return;
+    const next = !autoStatusEmails;
+    busyRef.current = true;
+    setAutoStatusEmails(next);
+    try {
+      const res = await fetch("/api/settings/email-templates/auto-status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      if (!res.ok) {
+        setAutoStatusEmails(!next);
+        const result = await res.json().catch(() => ({}));
+        toast.error(result.error || "Failed to update automatic emails");
+        return;
+      }
+      toast.success(
+        next ? "Automatic status-change emails enabled" : "Automatic status-change emails disabled"
+      );
+    } catch (_error) {
+      setAutoStatusEmails(!next);
+      toast.error("Error updating automatic emails");
+    } finally {
+      busyRef.current = false;
+    }
+  };
 
   const startEdit = (template: EmailTemplateItem) => {
     setEditing(template);
@@ -151,6 +193,50 @@ export default function EmailTemplatesSettings() {
           title="Email Templates"
           description="Customise the messages the system sends to students."
         />
+      </div>
+
+      <div className="card p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-4 min-w-0">
+          <div className="size-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+            <Zap size={24} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-bold text-slate-800">Automatic status-change emails</h3>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                  autoStatusEmails
+                    ? "bg-emerald-50 text-emerald-600"
+                    : "bg-slate-100 text-slate-400"
+                }`}
+              >
+                {autoStatusEmails ? "Enabled" : "Disabled"}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 font-medium mt-1">
+              When enabled, students automatically receive the matching email whenever an
+              application status changes — application updates, interviews, admission tests, offers
+              and rejections. Individual templates still need to be enabled below.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={autoStatusEmails}
+          aria-label="Automatic status-change emails"
+          disabled={autoStatusLoading}
+          onClick={handleToggleAutoStatus}
+          className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
+            autoStatusEmails ? "bg-emerald-500" : "bg-slate-300"
+          }`}
+        >
+          <span
+            className={`inline-block size-5 rounded-full bg-white shadow transform transition-transform ${
+              autoStatusEmails ? "translate-x-5" : "translate-x-0.5"
+            }`}
+          />
+        </button>
       </div>
 
       {editing && (
@@ -440,10 +526,15 @@ function TemplateEditor({
                 <span className="font-semibold text-slate-600">Subject:</span>{" "}
                 <span className="text-slate-800">{renderPreview(form.subject)}</span>
               </div>
-              <div
-                className="overflow-auto max-h-[420px]"
-                // Preview renders the admin's own HTML template with sample data.
-                dangerouslySetInnerHTML={{ __html: renderPreview(form.body) }}
+              {/* Rendered in a locked-down iframe (no allow-scripts) so a
+                  template body containing markup cannot execute script in the
+                  app origin. Email clients render this HTML out-of-band; the
+                  preview must not be a same-origin XSS sink. */}
+              <iframe
+                title="Template preview"
+                sandbox=""
+                srcDoc={renderPreview(form.body)}
+                className="w-full h-[420px] border-0"
               />
             </div>
           ) : (

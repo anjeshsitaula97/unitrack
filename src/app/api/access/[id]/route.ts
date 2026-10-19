@@ -58,6 +58,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     const user = await db.user.update({
       where: { id: Number(id) },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        consultancyId: true,
+        createdAt: true,
+      },
       data: updateData,
     });
 

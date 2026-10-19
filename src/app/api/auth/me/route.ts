@@ -25,6 +25,7 @@ export async function GET() {
         email: true,
         role: true,
         avatar: true,
+        status: true,
         subscriptionPackage: true,
         subscriptionExpiry: true,
         isFirstLogin: true,
@@ -51,6 +52,12 @@ export async function GET() {
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // A token issued before the account was disabled must not keep granting
+    // access to the app shell / profile payload.
+    if (user.status && user.status.toLowerCase() !== "active") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // The branding shown in the app shell follows the session's consultancy. A
