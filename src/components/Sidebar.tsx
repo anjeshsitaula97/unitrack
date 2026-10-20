@@ -110,12 +110,6 @@ const navSections: NavSection[] = [
         icon: <LayoutDashboard size={18} />,
         href: "/dashboard",
       },
-      {
-        id: "nav-console",
-        label: "SA Console",
-        icon: <ShieldCheck size={18} />,
-        href: "/om",
-      },
     ],
   },
   {
@@ -190,6 +184,7 @@ const navSections: NavSection[] = [
     title: "Communication",
     items: [
       { id: "nav-chat", label: "Chat", icon: <MessageSquare size={18} />, href: "/chat" },
+      { id: "nav-news", label: "News", icon: <Megaphone size={18} />, href: "/news" },
       { id: "nav-email", label: "Email", icon: <Mail size={18} />, href: "/email" },
       {
         id: "nav-notifications",
@@ -481,7 +476,6 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
       "nav-students",
       "nav-applications",
       "nav-onboarding",
-      "nav-console",
       "nav-search",
       "nav-compare",
       "nav-calendar",
@@ -507,7 +501,6 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
         items: section.items
           .filter((item) => {
             if (item.id === "nav-consultancies" && !isSuperAdmin) return false;
-            if (item.id === "nav-console" && !isSuperAdmin) return false;
             if (isSADashboard && saDashboardHiddenItems.has(item.id)) return false;
             const matchingModule = MODULES.find((m) => m.routes.includes(item.href));
             if (matchingModule && !enabledModuleIds.includes(matchingModule.id)) return false;
