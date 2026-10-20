@@ -185,3 +185,166 @@ select:has(option[value=""]:checked) {
   color: rgb(156 163 175);
   font-weight: 500;
 }
+
+/* ── Landing motion system · dark cinematic ──────────────────────────────────
+   Motion language (motion-art-direction → "Premium tech, calm-sharp"):
+   • enter   = cubic-bezier(0.16, 1, 0.3, 1)     decelerate into rest
+   • micro   = 120-200ms    UI = 400ms    hero = 700ms    cinematic = 800ms
+   • stagger = 60ms cascade, group cap ~700ms
+   • intensity = travel ≤ 24px (hero ≤ 40px), scale 0.96→1, no overshoot
+   • transform + opacity only — compositor thread, no per-frame layout
+   Scroll reveals / parallax / counters run through framer-motion inside
+   <MotionShell> (MotionConfig reducedMotion="user" → tiered a11y for free).
+   CSS below owns ambient texture, gradients and micro-interactions; every
+   looping or moving rule is gated behind prefers-reduced-motion: no-preference
+   (the global 0.01ms net above stays as backstop).                            */
+:root {
+  --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-dur-hero: 700ms;
+  --motion-dur-card: 400ms;
+}
+
+/* Gradient display text — indigo → violet → cyan, clipped to glyphs. */
+.text-grad {
+  background-image: linear-gradient(105deg, #e0e7ff 0%, #818cf8 42%, #22d3ee 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Fine engineering grid, masked to a soft ellipse behind the hero. */
+.grid-lines {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 72px 72px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 26%, #000 20%, transparent 76%);
+  mask-image: radial-gradient(ellipse 70% 55% at 50% 26%, #000 20%, transparent 76%);
+}
+
+/* Film grain — static, painted once (no animation cost). */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+/* Gradient hairline divider between sections. */
+.hairline {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(129, 140, 248, 0.35),
+    rgba(34, 211, 238, 0.22),
+    transparent
+  );
+}
+
+/* Card hover glow — radial light fades in via opacity only (no shadow repaint). */
+.glow-hover {
+  position: relative;
+}
+.glow-hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(150px 110px at 50% -8%, rgba(99, 102, 241, 0.24), transparent 72%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.glow-hover:hover::after {
+  opacity: 1;
+}
+
+/* Ambient texture keyframes — transform-only loops (Tier: texture). */
+@keyframes motion-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -22px, 0) scale(1.06);
+  }
+}
+
+@keyframes motion-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@keyframes motion-pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes marquee-scroll {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll var(--marquee-duration, 44s) linear infinite;
+}
+.marquee-track[data-paused="true"] {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-drift {
+    animation: motion-drift 22s ease-in-out infinite;
+  }
+  .motion-drift-slow {
+    animation: motion-drift 34s ease-in-out infinite;
+    animation-direction: reverse;
+  }
+  .motion-float {
+    animation: motion-float 6s ease-in-out infinite;
+  }
+  .motion-pulse {
+    animation: motion-pulse-dot 2.4s ease-in-out infinite;
+  }
+
+  /* Anticipation: press-dip on non-framer CTAs. */
+  .motion-cta {
+    transition:
+      transform 120ms var(--motion-ease-pop),
+      background-color 150ms ease;
+  }
+  .motion-cta:active {
+    transform: scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none !important;
+  }
+}

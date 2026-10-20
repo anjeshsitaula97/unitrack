@@ -1,4 +1,20 @@
 /** @type {import('tailwindcss').Config} */
+
+// Self-hosted via next/font (--font-jakarta on <html>). The literal family plus
+// system fallbacks keep text readable if the web font is unavailable.
+const jakarta = [
+  'var(--font-jakarta)',
+  'Plus Jakarta Sans',
+  'ui-sans-serif',
+  'system-ui',
+  '-apple-system',
+  'Segoe UI',
+  'Roboto',
+  'Helvetica Neue',
+  'Arial',
+  'sans-serif',
+];
+
 module.exports = {
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -11,18 +27,18 @@ module.exports = {
         sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
         display: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
         mono: ['"SF Mono"', '"SF Pro Mono"', '"JetBrains Mono"', 'Consolas', 'monospace'],
-        "label-pill": ["Plus Jakarta Sans"],
-        "headline-md": ["Plus Jakarta Sans"],
-        "headline-sm": ["Plus Jakarta Sans"],
-        "headline-lg": ["Plus Jakarta Sans"],
-        "body-sm": ["Plus Jakarta Sans"],
-        "body-lg": ["Plus Jakarta Sans"],
-        "metric-display": ["Plus Jakarta Sans"],
-        "label-btn": ["Plus Jakarta Sans"],
-        "display-hero-mobile": ["Plus Jakarta Sans"],
-        "display-hero": ["Plus Jakarta Sans"],
-        "body-md": ["Plus Jakarta Sans"],
-        "headline-lg-mobile": ["Plus Jakarta Sans"],
+        "label-pill": jakarta,
+        "headline-md": jakarta,
+        "headline-sm": jakarta,
+        "headline-lg": jakarta,
+        "body-sm": jakarta,
+        "body-lg": jakarta,
+        "metric-display": jakarta,
+        "label-btn": jakarta,
+        "display-hero-mobile": jakarta,
+        "display-hero": jakarta,
+        "body-md": jakarta,
+        "headline-lg-mobile": jakarta,
       },
       colors: {
         primary: {

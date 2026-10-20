@@ -87,15 +87,15 @@ export default function ScrollIndicator() {
   return (
     <>
       {/* 1. Top Reading Scroll Progress Bar */}
-      <div className="fixed top-0 left-0 w-full h-1 z-[100] bg-outline/20 pointer-events-none">
+      <div className="fixed top-0 left-0 w-full h-1 z-[100] bg-white/[0.06] pointer-events-none">
         <div
-          className="h-full bg-gradient-to-r from-[#286c00] via-[#58ce18] to-[#85fe4b] shadow-sm transition duration-150 ease-out"
+          className="h-full bg-gradient-to-r from-indigo-500 via-violet-400 to-cyan-400 transition duration-150 ease-out"
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
 
       {/* 2. Side Section Dot Progress Indicator (Very Large Screens Only) */}
-      <div className="fixed right-5 top-1/2 -translate-y-1/2 z-40 hidden 2xl:flex flex-col gap-2.5 p-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant">
+      <div className="fixed right-5 top-1/2 -translate-y-1/2 z-40 hidden 2xl:flex flex-col gap-2.5 p-2 bg-[#0a0b13]/80 backdrop-blur-md rounded-full ring-1 ring-white/10 shadow-2xl">
         {SECTIONS.map((sec) => {
           const isActive = activeSection === sec.id;
           return (
@@ -106,15 +106,15 @@ export default function ScrollIndicator() {
               aria-label={`Scroll to ${sec.label}`}
             >
               {/* Floating Tooltip */}
-              <span className="absolute right-8 opacity-0 pointer-events-none group-hover:opacity-100 transition duration-200 px-3 py-1 bg-inverse-surface text-inverse-on-surface text-xs font-semibold rounded-md shadow-md whitespace-nowrap">
+              <span className="absolute right-8 opacity-0 pointer-events-none group-hover:opacity-100 transition duration-200 px-3 py-1 bg-white text-[#05060b] text-xs font-semibold rounded-md shadow-md whitespace-nowrap">
                 {sec.label}
               </span>
               {/* Indicator Dot */}
               <span
                 className={`transition duration-300 rounded-full ${
                   isActive
-                    ? "w-3 h-3 bg-primary ring-4 ring-primary-container/40 scale-110"
-                    : "w-2 h-2 bg-outline group-hover:bg-primary group-hover:scale-125"
+                    ? "w-3 h-3 bg-indigo-400 ring-4 ring-indigo-500/30 scale-110"
+                    : "w-2 h-2 bg-white/25 group-hover:bg-indigo-400 group-hover:scale-125"
                 }`}
               />
             </button>
@@ -129,7 +129,7 @@ export default function ScrollIndicator() {
             onClick={scrollToTop}
             aria-label="Scroll to top"
             title={`Scroll to top (${Math.round(scrollProgress)}%)`}
-            className="relative p-3.5 bg-primary hover:bg-on-surface text-inverse-on-surface rounded-full shadow-2xl hover:shadow-primary/40 hover:scale-110 active:scale-95 transition duration-300 flex items-center justify-center cursor-pointer group"
+            className="relative p-3.5 bg-gradient-to-br from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white rounded-full ring-1 ring-white/20 shadow-2xl shadow-indigo-950/70 hover:scale-110 active:scale-95 transition duration-300 flex items-center justify-center cursor-pointer group"
           >
             {/* Circular SVG Gauge */}
             <svg className="absolute inset-0 w-full h-full -rotate-90 p-0.5" viewBox="0 0 48 48">
