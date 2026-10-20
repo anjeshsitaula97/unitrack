@@ -115,6 +115,7 @@ export function getRoutePermission(pathname: string): string | null {
     ["/trash", "trash:read"],
     ["/backups", "backups:read"],
     ["/branches", "branches:read"],
+    ["/news", "news:read"],
   ];
 
   for (const [prefix, permission] of rules) {

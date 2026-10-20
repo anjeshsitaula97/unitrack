@@ -185,6 +185,14 @@ export const MODULES: ModuleDefinition[] = [
     icon: "Bell",
   },
   {
+    id: "news",
+    label: "News",
+    description: "Platform and consultancy announcements",
+    routes: ["/news"],
+    defaultEnabled: true,
+    icon: "Megaphone",
+  },
+  {
     id: "tickets",
     label: "Tickets",
     description: "Support ticket management",

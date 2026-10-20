@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Bell } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bell, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import SettingsHeader from "./SettingsHeader";
 
@@ -38,6 +38,44 @@ const DEFAULT_NOTIF_PREFS = [
 
 export default function NotificationSettings() {
   const [notifPrefs, setNotifPrefs] = useState(DEFAULT_NOTIF_PREFS);
+  const [showNewsOnLogin, setShowNewsOnLogin] = useState(true);
+  const [newsSettingLoaded, setNewsSettingLoaded] = useState(false);
+  const [newsSettingSaving, setNewsSettingSaving] = useState(false);
+
+  useEffect(() => {
+    const ac = new AbortController();
+    fetch("/api/settings/news", { signal: ac.signal })
+      .then((res) => res.json())
+      .then((data) => setShowNewsOnLogin(data?.showNewsOnLogin !== false))
+      .catch(() => {})
+      .finally(() => setNewsSettingLoaded(true));
+    return () => ac.abort();
+  }, []);
+
+  const toggleNewsOnLogin = async () => {
+    if (newsSettingSaving || !newsSettingLoaded) return;
+    const next = !showNewsOnLogin;
+    setShowNewsOnLogin(next);
+    setNewsSettingSaving(true);
+    try {
+      const res = await fetch("/api/settings/news", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ showNewsOnLogin: next }),
+      });
+      if (!res.ok) {
+        setShowNewsOnLogin(!next);
+        toast.error("Failed to update news setting");
+        return;
+      }
+      toast.success(next ? "News popup enabled on login" : "News popup disabled on login");
+    } catch {
+      setShowNewsOnLogin(!next);
+      toast.error("Error updating news setting");
+    } finally {
+      setNewsSettingSaving(false);
+    }
+  };
 
   const toggleNotif = (id: string, key: "email" | "push") => {
     setNotifPrefs((prev) => prev.map((p) => (p.id === id ? { ...p, [key]: !p[key] } : p)));
@@ -55,6 +93,37 @@ export default function NotificationSettings() {
         title="Notification Preferences"
         description="Choose how you want to receive alerts across the platform."
       />
+
+      <div className="bg-white border border-slate-200 rounded-xl p-6 flex items-center justify-between gap-4">
+        <div className="flex gap-4">
+          <div className="size-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+            <Megaphone size={20} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800">News popup on login</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Show unread platform and consultancy news when users sign in.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={showNewsOnLogin}
+          aria-label="Show news popup on login"
+          disabled={!newsSettingLoaded || newsSettingSaving}
+          onClick={toggleNewsOnLogin}
+          className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
+            showNewsOnLogin ? "bg-indigo-600" : "bg-slate-300"
+          }`}
+        >
+          <span
+            className={`inline-block size-5 transform rounded-full bg-white shadow transition-transform ${
+              showNewsOnLogin ? "translate-x-5" : "translate-x-0.5"
+            }`}
+          />
+        </button>
+      </div>
 
       <div className="bg-white border border-slate-200 rounded-xl p-6">
         <div className="flex items-center justify-between mb-6">

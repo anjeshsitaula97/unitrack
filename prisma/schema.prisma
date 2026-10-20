@@ -228,6 +228,8 @@ model User {
   studentConversations      StudentConversation[]
   applicationNotes          ApplicationNote[]
   marketingRequests         MarketingRequest[]    @relation("MarketingRequestRequester")
+  news                      News[]
+  newsReads                 NewsRead[]
   assignedMarketingRequests MarketingRequest[]    @relation("MarketingRequestAssignee")
   uploadedMaterials         MarketingMaterial[]   @relation("MarketingMaterialUploader")
 
@@ -284,6 +286,7 @@ model SystemSettings {
   officeRadius        Float?   @default(100)
   enabledModules      String   @default("[]")
   applicationStatuses String   @default("[]")
+  showNewsOnLogin     Boolean  @default(true)
   updatedAt           DateTime @updatedAt
 
   @@index([consultancyId])
@@ -348,6 +351,41 @@ model EmailTemplate {
 
   @@unique([consultancyId, key])
   @@index([consultancyId])
+}
+
+// Internal announcement/news posts. A row with a null consultancyId (created
+// under platform scope by a Super Admin) is visible to every consultancy;
+// otherwise the row belongs to one consultancy. Reads are tracked per user so
+// the login popup only surfaces news the user has not dismissed yet.
+model News {
+  consultancyId Int?
+  id            Int       @id @default(autoincrement())
+  title         String
+  body          String    @db.LongText
+  audience      String    @default("consultancy") // "all" (platform-wide) or "consultancy"
+  isPublished   Boolean   @default(true)
+  publishedAt   DateTime?
+  authorId      Int?
+  author        User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  reads         NewsRead[]
+
+  @@index([consultancyId])
+}
+
+model NewsRead {
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  newsId        Int
+  userId        Int
+  readAt        DateTime @default(now())
+  news          News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([newsId, userId])
+  @@index([consultancyId])
+  @@index([userId])
 }
 
 model Lead {

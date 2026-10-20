@@ -42,6 +42,7 @@ const moduleMap: Record<string, string> = {
   chat: "chat",
   email: "email",
   notifications: "notifications",
+  news: "news",
   tasks: "tasks",
   audit: "audit",
   trash: "trash",
