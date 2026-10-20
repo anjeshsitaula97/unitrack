@@ -2,16 +2,14 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Bell, CheckCircle, Info, AlertTriangle, XCircle, Trash2 } from "lucide-react";
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  read: boolean;
-  time: string;
-  createdAt: string;
-}
+import {
+  clearNotificationsRemote,
+  deleteNotificationRemote,
+  markAllNotificationsReadRemote,
+  markNotificationReadRemote,
+  subscribeNotifications,
+  type AppNotification,
+} from "@/lib/notification-client";
 
 const getIcon = (type: string) => {
   switch (type) {
@@ -27,7 +25,7 @@ const getIcon = (type: string) => {
 };
 
 export default function NotificationsContent() {
-  const [notifications, setNotifications] = useState<Notification[] | undefined>(undefined);
+  const [notifications, setNotifications] = useState<AppNotification[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [isMounted] = useState(true);
 
@@ -53,49 +51,54 @@ export default function NotificationsContent() {
       fetchNotificationsRef.current(true);
     }, 10000);
 
-    return () => clearInterval(interval);
+    // Keep this list in sync when another surface (e.g. the topbar bell)
+    // deletes, clears or reads a notification.
+    const unsubscribe = subscribeNotifications((event) => {
+      if (event.kind === "cleared") {
+        setNotifications([]);
+        return;
+      }
+      if (event.kind === "removed") {
+        const gone = new Set(event.ids);
+        setNotifications((prev) => prev?.filter((n) => !gone.has(n.id)));
+        return;
+      }
+      if (event.kind === "read") {
+        const done = new Set(event.ids);
+        setNotifications((prev) => prev?.map((n) => (done.has(n.id) ? { ...n, read: true } : n)));
+        return;
+      }
+      if (event.kind === "readAll") {
+        setNotifications((prev) => prev?.map((n) => ({ ...n, read: true })));
+      }
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, []);
 
   if (!isMounted) return null;
 
   const markRead = async (id: string) => {
-    try {
-      await fetch("/api/notifications", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, read: true }),
-      });
-      fetchNotifications();
-    } catch (err) {
-      console.error("Failed to mark read:", err);
-    }
+    setNotifications((prev) => prev?.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    await markNotificationReadRemote(id);
   };
 
   const markAllRead = async () => {
-    try {
-      await fetch("/api/notifications", { method: "PUT", body: JSON.stringify({ read: true }) });
-      fetchNotifications();
-    } catch (err) {
-      console.error("Failed to mark all read:", err);
-    }
+    setNotifications((prev) => prev?.map((n) => ({ ...n, read: true })));
+    await markAllNotificationsReadRemote();
   };
 
   const deleteNotification = async (id: string) => {
-    try {
-      await fetch(`/api/notifications?id=${id}`, { method: "DELETE" });
-      fetchNotifications();
-    } catch (err) {
-      console.error("Failed to delete notification:", err);
-    }
+    setNotifications((prev) => prev?.filter((n) => n.id !== id));
+    await deleteNotificationRemote(id);
   };
 
   const clearAll = async () => {
-    try {
-      await fetch("/api/notifications", { method: "DELETE" });
-      fetchNotifications();
-    } catch (err) {
-      console.error("Failed to clear notifications:", err);
-    }
+    setNotifications([]);
+    await clearNotificationsRemote();
   };
 
   return (

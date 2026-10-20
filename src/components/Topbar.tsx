@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   Bell,
   Settings,
@@ -10,6 +10,12 @@ import {
   User,
   HelpCircle,
   ShieldCheck,
+  Trash2,
+  X,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Info,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { clearAuthCache } from "@/lib/auth-state";
@@ -17,6 +23,15 @@ import { deactivateSession } from "@/lib/client-session";
 import { api } from "@/lib/fetch-client";
 import { toast } from "sonner";
 import ConsultancySwitcher from "./ConsultancySwitcher";
+import {
+  clearNotificationsRemote,
+  countUnread,
+  deleteNotificationRemote,
+  markAllNotificationsReadRemote,
+  markNotificationReadRemote,
+  subscribeNotifications,
+  type NotificationEvent,
+} from "@/lib/notification-client";
 
 interface AppUser {
   id: number;
@@ -44,6 +59,33 @@ interface Notification {
   type: string;
   read: boolean;
   time: string;
+}
+
+const NOTIFICATION_TONE: Record<string, { icon: React.ReactNode; ring: string; bg: string }> = {
+  Success: {
+    icon: <CheckCircle2 size={16} />,
+    ring: "text-emerald-600",
+    bg: "bg-emerald-50",
+  },
+  Warning: {
+    icon: <AlertTriangle size={16} />,
+    ring: "text-amber-600",
+    bg: "bg-amber-50",
+  },
+  Error: {
+    icon: <XCircle size={16} />,
+    ring: "text-rose-600",
+    bg: "bg-rose-50",
+  },
+  Info: {
+    icon: <Info size={16} />,
+    ring: "text-indigo-600",
+    bg: "bg-indigo-50",
+  },
+};
+
+function toneFor(type: string) {
+  return NOTIFICATION_TONE[type] ?? NOTIFICATION_TONE.Info;
 }
 
 const breadcrumbMap: Record<string, string[]> = {
@@ -144,22 +186,69 @@ function SettingsMenu({
 function NotificationItem({
   notification,
   onRead,
+  onDelete,
 }: {
   notification: Notification;
   onRead: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
+  const tone = toneFor(notification.type);
   return (
-    <button
-      type="button"
-      onClick={() => onRead(notification.id)}
-      className={`w-full px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors text-left ${
-        !notification.read ? "bg-indigo-50/30" : ""
+    <div
+      className={`group/item relative flex items-start gap-3 px-4 py-3 transition-colors ${
+        !notification.read ? "bg-indigo-50/40" : "hover:bg-slate-50"
       }`}
     >
-      <p className="text-[11px] font-semibold text-slate-800 mb-0.5">{notification.title}</p>
-      <p className="text-xs text-slate-700 leading-relaxed">{notification.message}</p>
-      <p className="text-[10px] text-slate-400 mt-1">{notification.time}</p>
-    </button>
+      <button
+        type="button"
+        onClick={() => onRead(notification.id)}
+        className="flex flex-1 min-w-0 items-start gap-3 text-left cursor-pointer"
+      >
+        <span
+          className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${tone.bg} ${tone.ring}`}
+        >
+          {tone.icon}
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="flex items-center gap-2">
+            <span className="truncate text-sm font-semibold text-slate-800">
+              {notification.title}
+            </span>
+            {!notification.read && (
+              <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-500" />
+            )}
+          </span>
+          <span className="mt-0.5 block text-xs leading-relaxed text-slate-600">
+            {notification.message}
+          </span>
+          <span className="mt-1 block text-[11px] font-medium text-slate-400">
+            {notification.time}
+          </span>
+        </span>
+      </button>
+      <div className="flex flex-shrink-0 items-center gap-0.5">
+        {!notification.read && (
+          <button
+            type="button"
+            onClick={() => onRead(notification.id)}
+            title="Mark as read"
+            aria-label="Mark as read"
+            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
+          >
+            <CheckCircle2 size={14} />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => onDelete(notification.id)}
+          title="Delete notification"
+          aria-label="Delete notification"
+          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -169,58 +258,151 @@ function NotificationsMenu({
   unreadCount,
   onClose,
   onMarkAllRead,
+  onClearAll,
   onRead,
+  onDelete,
 }: {
   open: boolean;
   notifications: Notification[] | undefined;
   unreadCount: number;
   onClose: () => void;
   onMarkAllRead: () => void;
+  onClearAll: () => void;
   onRead: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const router = useRouter();
   if (!open) return null;
 
+  const hasAny = (notifications?.length ?? 0) > 0;
+
   return (
-    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl border border-slate-200 shadow-lg z-50 animate-fade-in">
-      <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-        <span className="font-semibold text-slate-800 text-sm">Notifications</span>
-        {unreadCount > 0 && (
-          <button
-            type="button"
-            onClick={onMarkAllRead}
-            className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline"
-          >
-            Mark all read
-          </button>
-        )}
+    <div className="absolute right-0 top-full mt-2 w-[360px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl z-50 animate-fade-in">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-slate-800">Notifications</span>
+          {unreadCount > 0 && (
+            <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-600">
+              {unreadCount} new
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {unreadCount > 0 && (
+            <button
+              type="button"
+              onClick={onMarkAllRead}
+              className="rounded-md px-2 py-1 text-xs font-semibold text-indigo-600 transition-colors hover:bg-indigo-50"
+            >
+              Mark all read
+            </button>
+          )}
+          {hasAny && (
+            <button
+              type="button"
+              onClick={onClearAll}
+              className="rounded-md px-2 py-1 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
       </div>
-      <div className="max-h-[400px] overflow-y-auto divide-y divide-slate-100">
-        {(notifications?.length ?? 0) === 0 && (
-          <div className="px-4 py-8 text-center">
-            <p className="text-xs text-slate-400">No notifications yet.</p>
+      <div className="max-h-[380px] divide-y divide-slate-100 overflow-y-auto">
+        {!hasAny && (
+          <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+              <Bell size={18} />
+            </span>
+            <p className="text-xs text-slate-400">You&rsquo;re all caught up.</p>
           </div>
         )}
         {(notifications ?? []).map((n) => (
-          <NotificationItem key={n.id} notification={n} onRead={onRead} />
+          <NotificationItem key={n.id} notification={n} onRead={onRead} onDelete={onDelete} />
         ))}
       </div>
-      {(notifications?.length ?? 0) > 0 && (
-        <div className="px-4 py-2 border-t border-slate-100 text-center">
+      {hasAny && (
+        <div className="border-t border-slate-100 p-2">
           <button
             type="button"
             onClick={() => {
               router.push("/notifications");
               onClose();
             }}
-            className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
+            className="w-full rounded-lg py-2 text-center text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-600"
           >
-            View All
+            View all notifications
           </button>
         </div>
       )}
     </div>
   );
+}
+
+/**
+ * Popup card raised by the bell for each newly-arrived notification. Carries an
+ * explicit dismiss (X) and a delete action that removes the row server-side.
+ */
+function NotificationPopup({
+  id,
+  title,
+  message,
+  type,
+  onDelete,
+}: {
+  id: number | string;
+  title: string;
+  message: string;
+  type: string;
+  onDelete: (id: string) => void;
+}) {
+  const tone = toneFor(type);
+  return (
+    <div className="pointer-events-auto flex w-[340px] items-start gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xl">
+      <span
+        className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${tone.bg} ${tone.ring}`}
+      >
+        {tone.icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-slate-800">{title}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{message}</p>
+        <div className="mt-2 flex items-center gap-3">
+          <a
+            href="/notifications"
+            className="text-[11px] font-semibold text-indigo-600 hover:underline"
+          >
+            View
+          </a>
+          <button
+            type="button"
+            onClick={() => onDelete(titleId(id))}
+            className="flex items-center gap-1 text-[11px] font-semibold text-rose-600 hover:underline"
+          >
+            <Trash2 size={12} /> Delete
+          </button>
+        </div>
+      </div>
+      <button
+        type="button"
+        aria-label="Dismiss notification"
+        onClick={() => toast.dismiss(id)}
+        className="-mr-1 -mt-1 flex-shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+      >
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
+
+/** The bucket id is prefixed with the notification id: `notification:<id>`. */
+function notificationToastId(id: string): string {
+  return `notification:${id}`;
+}
+
+/** Recover the notification id from a sonner toast id. */
+function titleId(toastId: number | string): string {
+  return String(toastId).replace(/^notification:/, "");
 }
 
 export default function Topbar({
@@ -239,13 +421,18 @@ export default function Topbar({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [notifications, setNotifications] = useState<Notification[] | undefined>(undefined);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const unreadCount = useMemo(() => countUnread(notifications ?? []), [notifications]);
   const [isMounted] = useState(true);
-  const eventSourceRef = useRef<EventSource | null>(null);
   const markAllReadBusyRef = useRef(false);
-  // IDs already displayed/toasted — the SSE stream re-sends the latest batch on
-  // every poll, so only ids never seen before should raise a popup.
+  // IDs already surfaced — the SSE stream resends the current list on every
+  // change, so only ids never seen before should raise a popup. The first list
+  // (history) is recorded silently.
   const seenNotificationIdsRef = useRef<Set<string>>(new Set());
+  const historyLoadedRef = useRef(false);
+  // Latest delete handler, so the SSE effect (which runs once) never captures a
+  // stale closure and can be declared before `handleDelete` exists.
+  const deleteHandlerRef = useRef<(id: string) => void>(() => {});
+  const notificationsRef = useRef<Notification[] | undefined>(undefined);
 
   const fetchNotifications = async () => {
     try {
@@ -253,8 +440,8 @@ export default function Topbar({
       if (Array.isArray(data)) {
         // The initial load is history, not new events — mark it seen silently.
         data.forEach((n) => seenNotificationIdsRef.current.add(n.id));
+        historyLoadedRef.current = true;
         setNotifications(data);
-        setUnreadCount(data.filter((n) => !n.read).length);
       }
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
@@ -265,37 +452,46 @@ export default function Topbar({
     Promise.resolve().then(fetchNotifications);
 
     const es = new EventSource("/api/notifications/stream");
-    eventSourceRef.current = es;
 
     es.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data.type === "notifications" && data.notifications?.length > 0) {
-          const fresh = (data.notifications as Notification[]).filter((n) => {
-            if (seenNotificationIdsRef.current.has(n.id)) return false;
-            seenNotificationIdsRef.current.add(n.id);
-            return true;
-          });
+        if (data.type !== "notifications") return;
 
-          setNotifications((prev) => {
-            const existing = prev || [];
-            const newIds = new Set(data.notifications.map((n: Notification) => n.id));
-            const merged = [
-              ...data.notifications,
-              ...existing.filter((n: Notification) => !newIds.has(n.id)),
-            ];
-            return merged.slice(0, 50);
-          });
-          setUnreadCount(data.unreadCount);
+        const list = (data.notifications as Notification[]) ?? [];
 
-          // Raise a popup near the top notification bell for each new item.
-          for (const n of fresh) {
-            toast.info(n.title, {
-              description: n.message,
-              duration: 6000,
-              position: "top-right",
-            });
-          }
+        // Only ids never seen before raise a popup; a fresh delete/clear simply
+        // drops rows from the list without a toast.
+        const fresh = list.filter((n) => {
+          if (seenNotificationIdsRef.current.has(n.id)) return false;
+          seenNotificationIdsRef.current.add(n.id);
+          return true;
+        });
+
+        // The stream is authoritative: replace the list wholesale so deletions
+        // and "clear all" from the notifications page propagate to the bell.
+        setNotifications(list);
+
+        if (!historyLoadedRef.current) {
+          // First payload may arrive before the initial fetch resolves — do not
+          // toast the backlog.
+          historyLoadedRef.current = true;
+          return;
+        }
+
+        for (const n of fresh) {
+          toast.custom(
+            (id) => (
+              <NotificationPopup
+                id={id}
+                title={n.title}
+                message={n.message}
+                type={n.type}
+                onDelete={(id) => deleteHandlerRef.current(id)}
+              />
+            ),
+            { id: notificationToastId(n.id), duration: 8000, position: "top-right" }
+          );
         }
       } catch {}
     };
@@ -309,13 +505,44 @@ export default function Topbar({
     };
   }, []);
 
+  // Stay in sync with mutations made anywhere in the app (notifications page,
+  // another surface) without waiting for the next SSE cycle.
+  useEffect(() => {
+    return subscribeNotifications((event: NotificationEvent) => {
+      if (event.kind === "cleared") {
+        notificationsRef.current?.forEach((n) => toast.dismiss(notificationToastId(n.id)));
+        setNotifications([]);
+        return;
+      }
+      if (event.kind === "removed") {
+        const gone = new Set(event.ids);
+        gone.forEach((id) => toast.dismiss(notificationToastId(id)));
+        setNotifications((prev) => prev?.filter((n) => !gone.has(n.id)));
+        return;
+      }
+      if (event.kind === "read") {
+        const done = new Set(event.ids);
+        setNotifications((prev) => prev?.map((n) => (done.has(n.id) ? { ...n, read: true } : n)));
+        return;
+      }
+      if (event.kind === "readAll") {
+        setNotifications((prev) => prev?.map((n) => ({ ...n, read: true })));
+      }
+    });
+  }, []);
+
+  // Mirror the list into a ref so imperative callbacks (SSE, bus) can dismiss
+  // the matching toasts without capturing a stale closure.
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
+
   const markAllRead = async () => {
     if (markAllReadBusyRef.current) return;
     markAllReadBusyRef.current = true;
+    setNotifications((prev) => prev?.map((n) => ({ ...n, read: true })));
     try {
-      await api.put("/api/notifications", { read: true }, { showError: false });
-      setNotifications((prev) => prev?.map((n) => ({ ...n, read: true })));
-      setUnreadCount(0);
+      await markAllNotificationsReadRemote();
     } catch (err) {
       console.error("Failed to mark all read:", err);
     } finally {
@@ -324,14 +551,38 @@ export default function Topbar({
   };
 
   const markRead = async (id: string) => {
+    setNotifications((prev) => prev?.map((n) => (n.id === id ? { ...n, read: true } : n)));
     try {
-      await api.put("/api/notifications", { id, read: true }, { showError: false });
-      setNotifications((prev) => prev?.map((n) => (n.id === id ? { ...n, read: true } : n)));
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+      await markNotificationReadRemote(id);
     } catch (err) {
       console.error("Failed to mark notification as read:", err);
     }
   };
+
+  const handleDelete = async (id: string) => {
+    toast.dismiss(notificationToastId(id));
+    setNotifications((prev) => prev?.filter((n) => n.id !== id));
+    try {
+      await deleteNotificationRemote(id);
+    } catch (err) {
+      console.error("Failed to delete notification:", err);
+    }
+  };
+
+  const handleClearAll = async () => {
+    notificationsRef.current?.forEach((n) => toast.dismiss(notificationToastId(n.id)));
+    setNotifications([]);
+    try {
+      await clearNotificationsRemote();
+    } catch (err) {
+      console.error("Failed to clear notifications:", err);
+    }
+  };
+
+  // Keep the popup's delete callback pointed at the current handler.
+  useEffect(() => {
+    deleteHandlerRef.current = handleDelete;
+  });
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -419,7 +670,9 @@ export default function Topbar({
             unreadCount={unreadCount}
             onClose={() => setNotifOpen(false)}
             onMarkAllRead={markAllRead}
+            onClearAll={handleClearAll}
             onRead={markRead}
+            onDelete={handleDelete}
           />
         )}
       </div>

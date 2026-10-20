@@ -35,8 +35,6 @@ export async function GET(req: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      let lastCheck = new Date();
-
       const sendEvent = (data: unknown) => {
         try {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
@@ -45,16 +43,18 @@ export async function GET(req: NextRequest) {
 
       sendEvent({ type: "connected", message: "SSE connected" });
 
+      // Signature of the last list we pushed. Any change (new, deleted, cleared
+      // or read toggled) produces a new signature, so removals in one tab/page
+      // propagate to every other surface instead of only ever adding rows.
+      let lastSignature = "";
+
       const check = async () => {
         try {
           const [notifications, unreadCount] = await Promise.all([
             db.notification.findMany({
-              where: {
-                OR: [{ userId: String(payload.id) }, { userId: null }],
-                createdAt: { gt: lastCheck },
-              },
+              where: { OR: [{ userId: String(payload.id) }, { userId: null }] },
               orderBy: { createdAt: "desc" },
-              take: 10,
+              take: 50,
             }),
             db.notification.count({
               where: {
@@ -64,17 +64,19 @@ export async function GET(req: NextRequest) {
             }),
           ]);
 
-          if (notifications.length > 0) {
-            const formatted = notifications.map((n) => ({
-              ...n,
-              time: formatTime(n.createdAt),
-            }));
+          const formatted = notifications.map((n) => ({
+            ...n,
+            time: formatTime(n.createdAt),
+          }));
+
+          const signature = `${formatted.length}:${formatted[0]?.id ?? "-"}:${unreadCount}`;
+
+          if (signature !== lastSignature) {
+            lastSignature = signature;
             sendEvent({ type: "notifications", notifications: formatted, unreadCount });
           } else {
             sendEvent({ type: "heartbeat", timestamp: new Date().toISOString(), unreadCount });
           }
-
-          lastCheck = new Date();
         } catch {
           // silently continue
         }
@@ -83,7 +85,7 @@ export async function GET(req: NextRequest) {
       // Initial check immediately
       await check();
 
-      const interval = setInterval(check, 10000);
+      const interval = setInterval(check, 3000);
 
       req.signal.addEventListener("abort", () => {
         clearInterval(interval);
@@ -97,8 +99,9 @@ export async function GET(req: NextRequest) {
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
+      "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
     },
   });
 }
