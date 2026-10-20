@@ -6,6 +6,7 @@ import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { createNotification } from "@/lib/notifications";
 import { logActivity } from "@/lib/activity";
 import { normalizeRecipients } from "@/lib/email-recipients";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +15,12 @@ export async function POST(req: NextRequest) {
     if (deniedPOST) return deniedPOST;
     if (!session || !["Admin", "Super Admin", "Staff"].includes(session.role as string))
       return apiError("Unauthorized", 401);
+
+    // Sending is expensive and abuse-prone: cap per account + IP.
+    const rl = await checkRateLimit(`email-send:${session.id}:${getClientIp(req)}`, 10, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many email requests" }, { status: 429 });
+    }
 
     const { to, subject, body, studentId: rawStudentId, type: _type } = await req.json();
     const studentId = rawStudentId ? Number(rawStudentId) : null;

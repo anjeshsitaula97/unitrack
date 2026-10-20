@@ -3,6 +3,7 @@ import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { readUploadedFile, writeUploadedBuffer, UploadError } from "@/lib/upload-security";
 import { checkRoutePermission, getSession } from "@/lib/api-utils";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
@@ -24,6 +25,11 @@ export async function POST(req: NextRequest) {
     if (deniedPOST) return deniedPOST;
     if (!session?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rl = await checkRateLimit(`files-upload:${session.id}:${getClientIp(req)}`, 30, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many uploads" }, { status: 429 });
     }
 
     const { searchParams } = new URL(req.url);

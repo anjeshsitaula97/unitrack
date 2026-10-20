@@ -113,14 +113,14 @@ Stateless JWTs, no `jti`/token-version. Logout only deletes the cookie (`logout/
 
 | Priority | Fix | Status |
 |---|---|---|
-| 1 | Bulk import: run roles through `validateRoleAssignment`, reject `Super Admin`, drop `password123` default, add rate limit | todo |
-| 2 | `/api/restore`: Super Admin only + scrub `users.role` / secrets rows | todo |
-| 3 | `rate-limit.ts`: only trust `cf-connecting-ip`/`x-real-ip` when `TRUST_PROXY=true` | todo |
-| 4 | OTP: consume after verification; `reset-password` accepts only the 32-byte token; store hashed | todo |
-| 5 | `select`-omit `password`/`faceDescriptor`/`applicationEmailPassword` from access & HR responses | todo |
-| 6 | `npm audit fix` (next, sharp, dompurify, …) | todo |
-| 7 | Check `status === "Active"` in login + `/api/auth/me` | todo |
-| 8 | OTP: `timingSafeEqual` + per-email attempt lockout | todo |
-| 9 | Rate-limit uploads/bulk/backup/reports/email; backup password via header/POST | todo |
-| 10 | Sandbox email-template preview; escape `student.name` in OTP email | todo |
-| later | Session token-version claim (revocation on password change); delete `seed-admin2.ts`; remove CSRF Bearer bypass; tighten CSP; chat membership checks; plaintext third-party creds → encrypted at rest |
+| 1 | Bulk import: run roles through `validateRoleAssignment`, reject `Super Admin`, drop `password123` default, add rate limit | **done** |
+| 2 | `/api/restore`: Super Admin only + scrub `users.role` / secrets rows | **done** |
+| 3 | `rate-limit.ts`: only trust `cf-connecting-ip`/`x-real-ip` when `TRUST_PROXY=true` | **done** |
+| 4 | OTP: consume after verification; `reset-password` accepts only the 32-byte token; store hashed | **partial** — consumed once, 64-hex format, per-account lockout; token still stored at rest (high-entropy, moves to `later`) |
+| 5 | `select`-omit `password`/`faceDescriptor`/`applicationEmailPassword` from access & HR responses | **done** |
+| 6 | `npm audit fix` (next, sharp, dompurify, …) | **done** — 14 → 0 production-relevant; the 10 left are dev-only tailwind/eslint toolchain (tailwind v4 major) |
+| 7 | Check `status === "Active"` in login + `/api/auth/me` | **done** |
+| 8 | OTP: `timingSafeEqual` + per-email attempt lockout | **done** |
+| 9 | Rate-limit uploads/bulk/backup/reports/email; backup password via header/POST | **done** — backup (5/min), reports/generate (20/min), email/send (10/min), uploads (30/min); backup password moved to `x-backup-password` header |
+| 10 | Sandbox email-template preview; escape `student.name` in OTP email | **done** |
+| later | Hash reset tokens at rest; session token-version claim (revocation on password change); delete `seed-admin2.ts`; remove CSRF Bearer bypass; tighten CSP; chat membership checks; plaintext third-party creds → encrypted at rest |

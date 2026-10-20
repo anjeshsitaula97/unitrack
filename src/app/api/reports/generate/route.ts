@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
 import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +14,15 @@ export async function POST(req: NextRequest) {
     });
     if (deniedPOST) return deniedPOST;
     if (!session) return apiError("Unauthorized", 401);
+
+    const rl = await checkRateLimit(
+      `reports-generate:${session.id}:${getClientIp(req)}`,
+      20,
+      60000
+    );
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many report requests" }, { status: 429 });
+    }
 
     const { entity, fields, filters, chartType: _chartType } = await req.json();
     if (!entity || !fields?.length) {

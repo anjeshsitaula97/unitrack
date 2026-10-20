@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { encryptBackup } from "@/lib/crypto";
 import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { logError } from "@/lib/logger";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: Request) {
   try {
@@ -12,9 +13,17 @@ export async function GET(req: Request) {
     if (!session || !["Admin", "Super Admin"].includes(session.role as string))
       return apiError("Unauthorized", 401);
 
+    // Heavy, full-database export: few requests per minute per admin.
+    const rl = await checkRateLimit(`backup:${session.id}:${getClientIp(req)}`, 5, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many backup requests" }, { status: 429 });
+    }
+
     const { searchParams } = new URL(req.url);
     const tablesParam = searchParams.get("tables");
-    const password = searchParams.get("password");
+    // The password travels in a header, never the URL: query strings are
+    // written to access logs, browser history and Referer headers.
+    const password = req.headers.get("x-backup-password");
     const selectedTables = tablesParam ? tablesParam.split(",") : null;
 
     const exportTable = async (tableName: string, fetchFn: () => Promise<unknown>) => {

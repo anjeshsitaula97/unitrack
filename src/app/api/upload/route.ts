@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { storeUploadedFile, UploadError, MAX_UPLOAD_SIZE } from "@/lib/upload-security";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,6 +10,11 @@ export async function POST(req: NextRequest) {
     const deniedPOST = checkRoutePermission(session, { url: "/api/upload", method: "POST" });
     if (deniedPOST) return deniedPOST;
     if (!session) return apiError("Unauthorized", 401);
+
+    const rl = await checkRateLimit(`upload:${session.id}:${getClientIp(req)}`, 30, 60000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many uploads" }, { status: 429 });
+    }
 
     const formData = await req.formData();
     const file = formData.get("file") as File;

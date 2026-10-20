@@ -180,12 +180,12 @@ export default function BackupsPage() {
         return acc;
       }, []);
 
-      let url = `/api/backup?tables=${allTables.join(",")}`;
-      if (encryptBackup && backupPassword) {
-        url += `&password=${encodeURIComponent(backupPassword)}`;
-      }
+      const url = `/api/backup?tables=${allTables.join(",")}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers:
+          encryptBackup && backupPassword ? { "x-backup-password": backupPassword } : undefined,
+      });
       if (!response.ok) throw new Error("Backup failed");
 
       const blob = await response.blob();
