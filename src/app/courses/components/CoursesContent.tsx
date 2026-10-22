@@ -1694,7 +1694,19 @@ function CourseCard({
   );
 }
 
-export default function CoursesContent({ initialData }: { initialData?: Course[] }) {
+interface CourseFilterOptions {
+  universities: string[];
+  universitiesByCountry: Record<string, string[]>;
+  countries: string[];
+}
+
+export default function CoursesContent({
+  initialData,
+  filterOptions,
+}: {
+  initialData?: Course[];
+  filterOptions?: CourseFilterOptions;
+}) {
   const router = useRouter();
   const [COURSES_DATA, setCoursesData] = useState<Course[]>(initialData || []);
   const [quickFilters] = useState<QuickFilter[]>([]);
@@ -1743,17 +1755,25 @@ export default function CoursesContent({ initialData }: { initialData?: Course[]
   const _universities = Array.from(new Set(COURSES_DATA.map((c) => c.university))).sort();
   const faculties = Array.from(new Set(COURSES_DATA.map((c) => c.faculty))).sort();
   const _degreeTypes = Array.from(new Set(COURSES_DATA.map((c) => c.degreeType))).sort();
-  const countries = Array.from(new Set(COURSES_DATA.map((c) => c.country)))
+
+  const computedCountries = Array.from(new Set(COURSES_DATA.map((c) => c.country)))
     .filter((c): c is string => !!c)
     .sort();
+  const countries = filterOptions?.countries?.length ? filterOptions.countries : computedCountries;
 
   const universityOptions = useMemo(() => {
+    if (filterOptions?.universitiesByCountry && countryFilter !== "all") {
+      return filterOptions.universitiesByCountry[countryFilter] || [];
+    }
+    if (filterOptions?.universities && countryFilter === "all") {
+      return filterOptions.universities;
+    }
     const source =
       countryFilter !== "all"
         ? COURSES_DATA.filter((c) => c.country === countryFilter)
         : COURSES_DATA;
     return Array.from(new Set(source.map((c) => c.university))).sort();
-  }, [COURSES_DATA, countryFilter]);
+  }, [COURSES_DATA, countryFilter, filterOptions]);
 
   const filtered = useMemo(() => {
     let data = [...COURSES_DATA];
