@@ -16,12 +16,7 @@ import {
 } from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { generateStrongPassword } from "@/lib/password";
-import {
-  parseJson,
-  zodResponse,
-  emailField,
-  optionalTrimmedString,
-} from "@/lib/validate";
+import { parseJson, zodResponse, emailField, optionalTrimmedString } from "@/lib/validate";
 
 // JSON string or array — the student model stores education/work/training as
 // JSON strings. Accept either a pre-stringified value or a raw array/object and

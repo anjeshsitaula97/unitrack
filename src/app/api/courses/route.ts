@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
         universityId: Number(data.universityId),
         faculty: data.faculty || "General",
         degreeType: data.degreeType || "None",
-        level: data.studyLevel || "Undergraduate",
+        level: data.level || data.studyLevel || "Undergraduate",
         credits: parseCourseCredits(data.credits),
         duration: data.duration || "0",
         startDate:

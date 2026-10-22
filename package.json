@@ -76,7 +76,7 @@
     "nodemailer": "^10.0.12",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "recharts": "^2.15.2",
+    "recharts": "^3.10.1",
     "sonner": "^1.0.0",
     "three": "^0.186.1"
   },
@@ -93,7 +93,7 @@
     "@typescript-eslint/parser": "^8.29.0",
     "autoprefixer": "10.4.2",
     "dotenv": "^17.4.2",
-    "eslint": "^9",
+    "eslint": "^10.13.0",
     "eslint-config-next": "^16.2.6",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",

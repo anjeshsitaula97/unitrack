@@ -1,4 +1,8 @@
 import { imageHosts } from "./image-hosts.config.mjs";
+import { createRequire } from "node:module";
+// Pre-patch fs.readlink for Node v24 + Windows before webpack captures its
+// internal fs reference (the platform check inside makes this a no-op on Linux).
+createRequire(import.meta.url)("./scripts/patch-readlink.cjs");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -41,6 +45,9 @@ const nextConfig = {
     config.ignoreWarnings = [
       /Critical dependency: require function is used in a way in which dependencies cannot be statically extracted/,
     ];
+    // Node v24 on Windows: enhanced-resolve readlink crashes (EISDIR bug).
+    // Disable symlink resolution; project has no symlinks in src/.
+    if (config.resolve) config.resolve.symlinks = false;
     return config;
   },
 
