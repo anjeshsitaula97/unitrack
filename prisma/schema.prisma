@@ -86,7 +86,7 @@ model Course {
   faculty                String
   degreeType             String
   level                  String
-  credits                Int
+  credits                Decimal           @db.Decimal(6, 2)
   duration               String
   enrolled               Int           @default(0)
   status                 String        @default("Active")
@@ -96,12 +96,12 @@ model Course {
   initials               String
   instructor             String
   instructorEmail        String?
-  description            String
+  description            String        @db.LongText
   prerequisites          String        @db.LongText
-  intake                 String?
+  intake                 String?       @db.LongText
   language               String        @default("English")
   mode                   String        @default("Online")
-  academicRequirement    String?
+  academicRequirement    String?       @db.LongText
   percentageRequired     String?
   gpaRequired            String?
   englishLanguageType    String        @default("IELTS")
@@ -119,6 +119,12 @@ model Course {
   tuitionFeePeriod       String?       @default("Year") // "Year" or "Semester"
   applicationFee         String?
   applicationFeeCurrency String?
+  /// A deposit payable on enrolment, distinct from the application fee.
+  depositFee             String?
+  depositFeeCurrency     String?
+  /// Whether the deposit is returned to the student. A non-refundable deposit
+  /// is forfeited if the student withdraws.
+  depositFeeRefundable   Boolean           @default(false)
   quickFilters           String?       @db.LongText
   requirements           String?       @db.LongText
   applicationDeadline    DateTime?
@@ -178,6 +184,10 @@ model User {
   avatar                    String?
   lastLogin                 String                @default("Never")
   lastSeenAt                DateTime?
+  activeSessionId           String?
+  activeSessionAt           DateTime?
+  activeSessionIp           String?
+  activeSessionUserAgent    String?
   isFirstLogin              Boolean               @default(true)
   createdAt                 DateTime              @default(now())
   updatedAt                 DateTime              @updatedAt
@@ -264,12 +274,16 @@ model PasswordResetToken {
   consultancyId Int?
   id            Int      @id @default(autoincrement())
   email         String
-  otp           String
+  /// SHA-256 digest of the secret. The plaintext OTP or reset token is never
+  /// stored, so a leaked database row cannot be replayed as a credential.
+  tokenHash     String
   expiresAt     DateTime
   verified      Boolean  @default(false)
   createdAt     DateTime @default(now())
 
   @@index([consultancyId])
+  @@index([email])
+  @@index([tokenHash])
 }
 
 model SystemSettings {
@@ -359,16 +373,16 @@ model EmailTemplate {
 // the login popup only surfaces news the user has not dismissed yet.
 model News {
   consultancyId Int?
-  id            Int       @id @default(autoincrement())
+  id            Int        @id @default(autoincrement())
   title         String
-  body          String    @db.LongText
-  audience      String    @default("consultancy") // "all" (platform-wide) or "consultancy"
-  isPublished   Boolean   @default(true)
+  body          String     @db.LongText
+  audience      String     @default("consultancy") // "all" (platform-wide) or "consultancy"
+  isPublished   Boolean    @default(true)
   publishedAt   DateTime?
   authorId      Int?
-  author        User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  author        User?      @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   reads         NewsRead[]
 
   @@index([consultancyId])
@@ -459,92 +473,96 @@ model Notification {
 }
 
 model Student {
-  consultancyId         Int?
-  id                    Int                   @id @default(autoincrement())
-  name                  String
-  firstName             String?
-  lastName              String?
-  email                 String                @unique
-  admissionEmail        String?
-  studentPassword       String?
+  consultancyId            Int?
+  id                       Int                   @id @default(autoincrement())
+  name                     String
+  firstName                String?
+  lastName                 String?
+  email                    String                @unique
+  admissionEmail           String?
+  studentPassword          String?
   // Plaintext password for the admission (application) email. This is a shared
   // credential shown back to staff in the student detail view, unlike
   // studentPassword which is a bcrypt hash for the student portal login.
   applicationEmailPassword String?
-  phone                 String?
-  whatsappNumber        String?
-  gender                String?
-  dob                   String?
-  dobAd                 String?
-  dobBs                 String?
-  nationality           String?
-  maritalStatus         String?
-  photoUrl              String?
-  address               String?
-  permanentProvince     String?
-  permanentDistrict     String?
-  permanentMunicipality String?
-  permanentWardNo       String?
-  permanentAddress      String?
-  temporaryProvince     String?
-  temporaryDistrict     String?
-  temporaryMunicipality String?
-  temporaryWardNo       String?
-  temporaryAddress      String?
-  passportNumber        String?
-  passportNationality   String?
-  passportIssueDate     String?
-  passportExpiryDate    String?
-  passportIssuePlace    String?
+  phone                    String?
+  whatsappNumber           String?
+  gender                   String?
+  dob                      String?
+  dobAd                    String?
+  dobBs                    String?
+  nationality              String?
+  maritalStatus            String?
+  photoUrl                 String?
+  address                  String?
+  permanentProvince        String?
+  permanentDistrict        String?
+  permanentMunicipality    String?
+  permanentWardNo          String?
+  permanentAddress         String?
+  temporaryProvince        String?
+  temporaryDistrict        String?
+  temporaryMunicipality    String?
+  temporaryWardNo          String?
+  temporaryAddress         String?
+  passportNumber           String?
+  passportNationality      String?
+  passportIssueDate        String?
+  passportExpiryDate       String?
+  passportIssuePlace       String?
   // These hold JSON arrays written by the form. A bare String? maps to
   // VARCHAR(191) on MySQL, which silently truncated longer histories and left
   // unparseable values behind, so they are explicitly LONGTEXT.
-  education             String?               @db.LongText
-  workExperience        String?               @db.LongText
-  training              String?               @db.LongText
-  testType              String?
-  overallScore          String?
-  readingScore          String?
-  writingScore          String?
-  listeningScore        String?
-  speakingScore         String?
-  moi                   String?
-  testDate              String?
-  testRegNumber         String?
-  studyLevel            String?
-  intakeTerm            String?
-  major                 String?
-  interestedCountry     String?
-  partnerId             Int?
-  partner               Partner?              @relation(fields: [partnerId], references: [id], onDelete: SetNull)
-  targetUniversities    String?               @db.LongText
-  spouseName            String?
-  childrenDetails       String?               @default("[]") @db.LongText
-  guardianName          String?
-  guardianPhone         String?
-  guardianEmail         String?
-  guardianRelation      String?
-  guardianAddress       String?
+  education                String?               @db.LongText
+  workExperience           String?               @db.LongText
+  training                 String?               @db.LongText
+  testType                 String?
+  overallScore             String?
+  readingScore             String?
+  writingScore             String?
+  listeningScore           String?
+  speakingScore            String?
+  moi                      String?
+  testDate                 String?
+  testRegNumber            String?
+  studyLevel               String?
+  intakeTerm               String?
+  major                    String?
+  interestedCountry        String?
+  partnerId                Int?
+  partner                  Partner?              @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  targetUniversities       String?               @db.LongText
+  spouseName               String?
+  childrenDetails          String?               @default("[]") @db.LongText
+  guardianName             String?
+  guardianPhone            String?
+  guardianEmail            String?
+  guardianRelation         String?
+  guardianAddress          String?
   // Additional guardians beyond the primary one, stored as a JSON array
   // (LONGTEXT for the same truncation reason as the other list fields above).
-  otherGuardians        String?               @default("[]") @db.LongText
-  status                String                @default("New Leads")
-  statusColor           String?
-  initials              String?
-  color                 String?
-  university            String?
-  country               String?
-  lastActivity          String?
-  counselor             String?
-  lead                  String?
-  branchId              String?
-  createdAt             DateTime              @default(now())
-  updatedAt             DateTime              @updatedAt
-  applications          Application[]
-  payments              Payment[]
-  documents             StudentDocument[]
-  conversations         StudentConversation[]
-  notes                 StudentNote[]
+  otherGuardians           String?               @default("[]") @db.LongText
+  status                   String                @default("New Leads")
+  statusColor              String?
+  initials                 String?
+  color                    String?
+  university               String?
+  country                  String?
+  lastActivity             String?
+  counselor                String?
+  lead                     String?
+  branchId                 Int?
+  activeSessionId          String?
+  activeSessionAt          DateTime?
+  activeSessionIp          String?
+  activeSessionUserAgent   String?
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+  applications             Application[]
+  payments                 Payment[]
+  documents                StudentDocument[]
+  conversations            StudentConversation[]
+  notes                    StudentNote[]
 
   @@index([consultancyId])
 }

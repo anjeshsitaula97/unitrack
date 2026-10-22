@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { toCourseCredits } from "@/lib/course-credits";
 import { logError } from "@/lib/logger";
 import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -65,11 +66,13 @@ export async function POST(req: NextRequest) {
         });
         break;
       case "Course":
-        data = await db.course.findMany({
-          where: where as Prisma.CourseWhereInput,
-          include: include as Prisma.CourseInclude,
-          take: 500,
-        });
+        data = (
+          await db.course.findMany({
+            where: where as Prisma.CourseWhereInput,
+            include: include as Prisma.CourseInclude,
+            take: 500,
+          })
+        ).map((course) => ({ ...course, credits: toCourseCredits(course.credits) }));
         break;
       case "Lead":
         data = await db.lead.findMany({ where: where as Prisma.LeadWhereInput, take: 500 });

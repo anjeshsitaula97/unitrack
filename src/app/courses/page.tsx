@@ -5,7 +5,7 @@ import CoursesContent from "./components/CoursesContent";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/api-utils";
 import { safeParseArray } from "@/lib/json";
-import { Prisma } from "@prisma/client";
+import { toCourseCredits } from "@/lib/course-credits";
 
 export const metadata = {
   title: "Courses | UniTrack",
@@ -28,6 +28,9 @@ async function getCourses() {
 
     return courses.map((course) => ({
       ...course,
+      // A Prisma.Decimal is not a plain object, so it cannot be handed to a
+      // client component. Convert it to a number on the way out.
+      credits: toCourseCredits(course.credits),
       university: course.university?.name || "Unknown",
       universityLogo: course.university?.logo || null,
       country: course.university?.country || null,

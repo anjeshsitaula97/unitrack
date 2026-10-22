@@ -16,30 +16,9 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 import { annualTuition, isSemesterPeriod } from "@/lib/tuition";
+import { formatIntakeLabel, getIntakeStatus, parseIntakes } from "@/lib/intake";
 
-const _formatIntake = (intakeStr: string | undefined) => {
-  if (!intakeStr) return "TBA";
-  try {
-    if (typeof intakeStr === "string" && intakeStr.startsWith("[")) {
-      const intakes = JSON.parse(intakeStr);
-      if (Array.isArray(intakes) && intakes.length > 0) {
-        const first = intakes[0];
-        return `${first.name}${intakes.length > 1 ? ` (+${intakes.length - 1})` : ""}`;
-      }
-    }
-  } catch (_e) {}
-  return intakeStr;
-};
-
-const getIntakeStatus = (intake: { openDate: string; deadline: string }) => {
-  if (!intake.openDate || !intake.deadline) return null;
-  const now = new Date();
-  const open = new Date(intake.openDate);
-  const deadline = new Date(intake.deadline);
-  if (now < open) return { label: "Upcoming", className: "text-amber-600 bg-amber-50" };
-  if (now > deadline) return { label: "Closed", className: "text-rose-600 bg-rose-50" };
-  return { label: "Open", className: "text-emerald-600 bg-emerald-50 ring-1 ring-emerald-500/20" };
-};
+const _formatIntake = (intakeStr: string | undefined) => formatIntakeLabel(intakeStr);
 
 interface UniversityInfo {
   id: string;
@@ -76,6 +55,9 @@ interface CourseDetail {
   tuitionFee?: string;
   tuitionFeePeriod?: string;
   applicationFee?: string;
+  depositFee?: string;
+  depositFeeCurrency?: string;
+  depositFeeRefundable?: boolean;
   currency?: string;
   courseCode?: string;
   englishOverallScore?: string;
@@ -273,6 +255,21 @@ function CourseFeesCard({ course }: { course: CourseDetail }) {
             </span>
           </div>
         )}
+        {course.depositFee && (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Deposit
+              </span>
+              <span className="text-sm font-bold text-emerald-600">
+                {course.depositFeeCurrency || course.currency || "USD"} {course.depositFee}
+              </span>
+            </div>
+            <span className="text-[11px] text-slate-400 text-right">
+              {course.depositFeeRefundable ? "Refundable" : "Non-refundable"}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -324,7 +321,7 @@ function CourseIntakesCard({ intake, intakes }: { intake: string; intakes: Intak
       {intakes.length > 0 ? (
         <div className="space-y-2">
           {intakes.map((intakeItem) => {
-            const status = getIntakeStatus(intakeItem as { openDate: string; deadline: string });
+            const status = getIntakeStatus(intakeItem);
             const key = `${intakeItem.name || "intake"}-${intakeItem.openDate || ""}-${
               intakeItem.deadline || ""
             }`;
@@ -406,15 +403,7 @@ export default function CourseDetailContent({ id }: { id: string }) {
     }
   }, [course]);
 
-  const intakes = useMemo(() => {
-    if (!course?.intake || !course.intake.startsWith("[")) return [];
-    try {
-      const parsed = JSON.parse(course.intake);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }, [course]);
+  const intakes = useMemo(() => parseIntakes(course?.intake), [course]);
 
   if (loading) {
     return (

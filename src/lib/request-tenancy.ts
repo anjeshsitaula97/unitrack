@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { verifyAuth } from "./session";
 import { baseDb } from "./base-db";
+import { isSessionCurrent } from "./session-registry";
 
 /**
  * Resolves the consultancy a request should be scoped to, directly from the
@@ -62,13 +63,25 @@ export async function resolveRequestConsultancyId(): Promise<number | null> {
         where: { id: payload.id },
         select: { consultancyId: true },
       });
-      cid = student ? (student.consultancyId ?? null) : DENIED;
+      if (!student) {
+        cid = DENIED;
+      } else if (!(await isSessionCurrent("student", payload.id, payload.sid))) {
+        // The token was superseded by a newer login for the same account, so it
+        // no longer grants access to any tenancy.
+        cid = DENIED;
+      } else {
+        cid = student.consultancyId ?? null;
+      }
     } else {
       const user = await baseDb.user.findUnique({
         where: { id: payload.id },
         select: { role: true, consultancyId: true },
       });
       if (!user) {
+        cid = DENIED;
+      } else if (!(await isSessionCurrent("user", payload.id, payload.sid))) {
+        // The token was superseded by a newer login for the same account, so it
+        // no longer grants access to any tenancy.
         cid = DENIED;
       } else if (user.role === "Super Admin") {
         if (active && active !== "all") {

@@ -22,6 +22,8 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { COUNTRIES } from "@/lib/data/countries";
 import { safeParseArray } from "@/lib/json";
+import { parseIntakes, serializeIntakes } from "@/lib/intake";
+import { isValidCourseCredits } from "@/lib/course-credits";
 import { annualTuition } from "@/lib/tuition";
 
 interface SelectOption {
@@ -91,12 +93,14 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
     credits: "",
     duration: "",
     startDate: "",
-    intake: "",
     tuitionFee: "",
     tuitionFeePeriod: "Year",
     applicationFee: "",
     currency: "",
     applicationFeeCurrency: "",
+    depositFee: "",
+    depositFeeCurrency: "",
+    depositFeeRefundable: false,
     instructor: "",
     instructorEmail: "",
     description: "",
@@ -135,49 +139,59 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
     }[],
   });
 
+  /**
+   * Refreshes the catalog dropdown options (universities, faculties, degree
+   * types, intakes, quick filters, academic documents) without touching the
+   * form state. Used after creating a new lookup value so the new option shows
+   * up in the dropdown while the user's unsaved edits stay intact.
+   */
+  const loadCatalogOptions = React.useCallback(async () => {
+    const [uRes, fRes, dRes, iRes, qRes, aRes] = await Promise.all([
+      fetch("/api/universities?perPage=100"),
+      fetch("/api/faculties"),
+      fetch("/api/degree-types"),
+      fetch("/api/intakes"),
+      fetch("/api/quick-filters"),
+      fetch("/api/academic-documents"),
+    ]);
+    const [uData, fData, dData, iData, qData, aData] = await Promise.all([
+      uRes.json(),
+      fRes.json(),
+      dRes.json(),
+      iRes.json(),
+      qRes.json(),
+      aRes.json(),
+    ]);
+
+    // /api/universities returns a paginated object ({ data, totalPages, ... }),
+    // unlike the other catalog endpoints which return bare arrays. Load every
+    // page so a newly added university always appears in the dropdown.
+    const universityList = Array.isArray(uData) ? uData : (uData?.data ?? []);
+    const universityPages = Array.isArray(uData) ? 1 : (uData?.totalPages ?? 1);
+    if (universityPages > 1) {
+      const pageNumbers = Array.from({ length: universityPages - 1 }, (_, i) => i + 2);
+      const pageResults = await Promise.all(
+        pageNumbers.map(async (page) => {
+          const pageRes = await fetch(`/api/universities?perPage=100&page=${page}`);
+          if (!pageRes.ok) throw new Error("Failed to load universities");
+          return pageRes.json();
+        })
+      );
+      for (const pageData of pageResults) {
+        universityList.push(...(Array.isArray(pageData) ? pageData : (pageData?.data ?? [])));
+      }
+    }
+    setUniversities(universityList);
+    setFaculties(Array.isArray(fData) ? fData : []);
+    setDegreeTypes(Array.isArray(dData) ? dData : []);
+    setIntakes(Array.isArray(iData) ? iData : []);
+    setQuickFilters(Array.isArray(qData) ? qData : []);
+    setAcademicDocsList(Array.isArray(aData) ? aData : undefined);
+  }, []);
+
   const loadInitialData = React.useCallback(async () => {
     try {
-      const [uRes, fRes, dRes, iRes, qRes, aRes] = await Promise.all([
-        fetch("/api/universities?perPage=100"),
-        fetch("/api/faculties"),
-        fetch("/api/degree-types"),
-        fetch("/api/intakes"),
-        fetch("/api/quick-filters"),
-        fetch("/api/academic-documents"),
-      ]);
-      const [uData, fData, dData, iData, qData, aData] = await Promise.all([
-        uRes.json(),
-        fRes.json(),
-        dRes.json(),
-        iRes.json(),
-        qRes.json(),
-        aRes.json(),
-      ]);
-
-      // /api/universities returns a paginated object ({ data, totalPages, ... }),
-      // unlike the other catalog endpoints which return bare arrays. Load every
-      // page so a newly added university always appears in the dropdown.
-      const universityList = Array.isArray(uData) ? uData : (uData?.data ?? []);
-      const universityPages = Array.isArray(uData) ? 1 : (uData?.totalPages ?? 1);
-      if (universityPages > 1) {
-        const pageNumbers = Array.from({ length: universityPages - 1 }, (_, i) => i + 2);
-        const pageResults = await Promise.all(
-          pageNumbers.map(async (page) => {
-            const pageRes = await fetch(`/api/universities?perPage=100&page=${page}`);
-            if (!pageRes.ok) throw new Error("Failed to load universities");
-            return pageRes.json();
-          })
-        );
-        for (const pageData of pageResults) {
-          universityList.push(...(Array.isArray(pageData) ? pageData : (pageData?.data ?? [])));
-        }
-      }
-      setUniversities(universityList);
-      setFaculties(Array.isArray(fData) ? fData : []);
-      setDegreeTypes(Array.isArray(dData) ? dData : []);
-      setIntakes(Array.isArray(iData) ? iData : []);
-      setQuickFilters(Array.isArray(qData) ? qData : []);
-      setAcademicDocsList(Array.isArray(aData) ? aData : undefined);
+      await loadCatalogOptions();
 
       if (courseId) {
         const res = await fetch(`/api/courses/${courseId}`);
@@ -200,6 +214,9 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
             applicationFee: data.applicationFee || "",
             currency: data.currency || "",
             applicationFeeCurrency: data.applicationFeeCurrency || "",
+            depositFee: data.depositFee || "",
+            depositFeeCurrency: data.depositFeeCurrency || "",
+            depositFeeRefundable: Boolean(data.depositFeeRefundable),
             instructor: data.instructor || "",
             instructorEmail: data.instructorEmail || "",
             description: data.description || "",
@@ -223,9 +240,12 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
             prerequisites: safeParseArray(data.prerequisites),
             quickFilters: safeParseArray(data.quickFilters),
             requirements: safeParseArray(data.requirements),
-            intakesData: safeParseArray<IntakeEntry>(data.intake).map((entry) => ({
-              ...entry,
-              id: entry.id ?? makeEntryId(),
+            intakesData: parseIntakes(data.intake).map((entry) => ({
+              id: makeEntryId(),
+              name: entry.name,
+              startDate: entry.startDate || "",
+              openDate: entry.openDate || "",
+              deadline: entry.deadline || "",
             })),
             englishTestsData: safeParseArray<EnglishTestEntry>(data.englishTests).map((entry) => ({
               ...entry,
@@ -239,7 +259,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
     } finally {
       setIsLoading(false);
     }
-  }, [courseId]);
+  }, [courseId, loadCatalogOptions]);
 
   const loadInitialDataRef = useRef(loadInitialData);
   React.useEffect(() => {
@@ -268,13 +288,30 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
       if (res.ok) {
         const added = await res.json();
         toast.success(`New ${type} added`);
-        update(type, added.name);
+        if (type === "intake") {
+          // An intake is a per-course row, not a global lookup value: append it
+          // to the course's own intake list instead of overwriting the field.
+          update("intakesData", [
+            ...form.intakesData,
+            {
+              id: makeEntryId(),
+              name: added.name,
+              startDate: "",
+              openDate: "",
+              deadline: "",
+            },
+          ]);
+        } else {
+          update(type, added.name);
+        }
         setNewItemName("");
         setShowAddFaculty(false);
         setShowAddDegreeType(false);
         setShowAddIntake(false);
         setShowAddQuickFilter(false);
-        loadInitialData();
+        // Only refresh the dropdown options: reloading the form from the server
+        // would discard the unsaved selection that was just made.
+        loadCatalogOptions().catch(() => {});
       } else {
         const err = await res.json();
         toast.error(err.error || `Failed to add ${type}`);
@@ -288,7 +325,10 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
   const [prereqInput, setPrereqInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const update = (field: string, value: string | string[] | IntakeEntry[] | EnglishTestEntry[]) => {
+  const update = (
+    field: string,
+    value: string | string[] | IntakeEntry[] | EnglishTestEntry[] | boolean
+  ) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field])
       setErrors((prev) => {
@@ -320,6 +360,8 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
     if (!form.instructor.trim()) e.instructor = "Instructor name is required";
     if (!form.description.trim()) e.description = "Course description is required";
     if (!form.credits) e.credits = "Credits are required";
+    else if (!isValidCourseCredits(form.credits))
+      e.credits = "Credits must be a positive number (decimals allowed)";
     if (!form.duration.trim()) e.duration = "Duration is required";
     return e;
   };
@@ -341,7 +383,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          intake: JSON.stringify(form.intakesData),
+          intake: serializeIntakes(form.intakesData),
           englishTests: JSON.stringify(form.englishTestsData),
         }),
       });
@@ -403,12 +445,14 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 credits: "",
                 duration: "",
                 startDate: "",
-                intake: "",
                 tuitionFee: "",
                 tuitionFeePeriod: "Year",
                 applicationFee: "",
                 currency: "",
                 applicationFeeCurrency: "",
+                depositFee: "",
+                depositFeeCurrency: "",
+                depositFeeRefundable: false,
                 instructor: "",
                 instructorEmail: "",
                 description: "",
@@ -910,6 +954,68 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
             </div>
             <div>
               <label
+                htmlFor="deposit-fee"
+                className="block text-xs font-semibold text-slate-600 mb-1.5"
+              >
+                Deposit Fee
+              </label>
+              <div className="flex gap-2">
+                <div className="w-32">
+                  <select
+                    value={form.depositFeeCurrency}
+                    onChange={(e) => update("depositFeeCurrency", e.target.value)}
+                    aria-label="Deposit fee currency"
+                    className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer"
+                  >
+                    <option value="">Currency</option>
+                    <optgroup label="Popular">
+                      <option value="USD">USD - US Dollar</option>
+                      <option value="EUR">EUR - Euro</option>
+                      <option value="GBP">GBP - British Pound</option>
+                      <option value="AUD">AUD - Australian Dollar</option>
+                      <option value="CAD">CAD - Canadian Dollar</option>
+                      <option value="NZD">NZD - New Zealand Dollar</option>
+                      <option value="NPR">NPR - Nepalese Rupee</option>
+                    </optgroup>
+                    <optgroup label="All Currencies">
+                      {Array.from(new Set(COUNTRIES.map((c) => c.currency)))
+                        .sort()
+                        .map((code) => (
+                          <option key={code} value={code}>
+                            {code}
+                          </option>
+                        ))}
+                    </optgroup>
+                  </select>
+                </div>
+                <input
+                  id="deposit-fee"
+                  type="text"
+                  value={form.depositFee}
+                  onChange={(e) => update("depositFee", e.target.value)}
+                  placeholder="e.g. 1000"
+                  aria-label="Deposit fee amount"
+                  className="flex-1 min-w-[100px] px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
+              <label className="mt-2 flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.depositFeeRefundable}
+                  onChange={(e) => update("depositFeeRefundable", e.target.checked)}
+                  aria-label="Deposit fee is refundable"
+                  className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-300"
+                />
+                <span className="text-xs text-slate-600">
+                  Deposit is refundable
+                  <span className="block text-[11px] text-slate-400">
+                    Uncheck this when the deposit is forfeited if the student withdraws.
+                  </span>
+                </span>
+              </label>
+            </div>
+            <div>
+              <label
                 htmlFor="credits"
                 className="block text-xs font-semibold text-slate-600 mb-1.5"
               >
@@ -920,8 +1026,9 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 type="number"
                 value={form.credits}
                 onChange={(e) => update("credits", e.target.value)}
-                placeholder="e.g. 12"
-                min="1"
+                placeholder="e.g. 120 or 22.5"
+                min="0"
+                step="0.5"
                 aria-label="Credits"
                 className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition ${errors.credits ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
               />

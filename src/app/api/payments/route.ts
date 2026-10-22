@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -11,6 +12,18 @@ import {
   checkRoutePermission,
 } from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { parseJson, zodResponse, coercedInt, isoDateOrNull, optionalTrimmedString } from "@/lib/validate";
+
+const createPaymentSchema = z.object({
+  studentId: coercedInt({ min: 1 }),
+  amount: z.coerce.number().positive("Amount must be a positive number"),
+  currency: optionalTrimmedString(10).default("NPR"),
+  status: optionalTrimmedString(60).default("Pending"),
+  method: optionalTrimmedString(60).default("Cash"),
+  date: isoDateOrNull,
+  description: optionalTrimmedString(2000).default(""),
+  proofUrl: optionalTrimmedString(1000),
+});
 
 export async function GET(req: NextRequest) {
   try {
@@ -76,25 +89,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const data = await req.json();
-    const studentId = Number(data.studentId);
-    const { amount, currency, status, method, date, description, proofUrl } = data;
+    const parsed = await parseJson(req, createPaymentSchema);
+    if (!parsed.ok) return zodResponse(parsed.error);
 
-    if (!studentId || !amount) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
+    const { studentId, amount, currency, status, method, date, description, proofUrl } =
+      parsed.data;
 
     const [newPayment, user] = await Promise.all([
       db.payment.create({
         data: {
           studentId,
-          amount: parseFloat(amount),
-          currency: currency || "NPR",
-          status: status || "Pending",
-          method: method || "Cash",
-          date: date ? new Date(date) : new Date(),
-          description: description || "",
-          proofUrl: proofUrl || null,
+          amount,
+          currency: currency ?? "NPR",
+          status: status ?? "Pending",
+          method: method ?? "Cash",
+          date: date ?? new Date(),
+          description: description ?? "",
+          proofUrl: proofUrl ?? null,
         },
         include: { student: true },
       }),

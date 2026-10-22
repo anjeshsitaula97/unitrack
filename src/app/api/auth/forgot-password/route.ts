@@ -4,6 +4,7 @@ import nodemailer from "nodemailer";
 import { normalizeRecipients } from "@/lib/email-recipients";
 import { db } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { hashResetToken } from "@/lib/reset-token";
 import { logError } from "@/lib/logger";
 
 function escapeHtml(value: string): string {
@@ -50,8 +51,11 @@ export async function POST(req: NextRequest) {
     const otp = String(crypto.randomInt(100000, 999999));
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+    // Only the digest is stored. The plaintext OTP exists in this request's
+    // memory and in the email, never at rest, so a leaked database row cannot
+    // be replayed as a reset credential.
     await db.passwordResetToken.create({
-      data: { email, otp, expiresAt },
+      data: { email, tokenHash: hashResetToken(otp), expiresAt },
     });
 
     // Try to send email

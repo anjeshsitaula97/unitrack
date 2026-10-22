@@ -17,6 +17,22 @@ class FetchError extends Error {
   }
 }
 
+/**
+ * Redirects to the login page once, after the session has been rejected by the
+ * server. The guard keeps a burst of parallel 401s from stacking navigation
+ * calls.
+ */
+let redirectingToLogin = false;
+
+function handleUnauthorized() {
+  if (redirectingToLogin) return;
+  redirectingToLogin = true;
+  if (typeof window !== "undefined") {
+    // `replace` so the expired page does not stay in the history stack.
+    window.location.replace("/login");
+  }
+}
+
 async function apiFetch<T = unknown>(url: string, options: FetchOptions = {}): Promise<T> {
   const { showError = true, showSuccess = false, successMessage, ...fetchOptions } = options;
 
@@ -29,6 +45,12 @@ async function apiFetch<T = unknown>(url: string, options: FetchOptions = {}): P
     if (!res.ok) {
       const errorData = await res.json().catch(() => null);
       const errorMsg = errorData?.error || `Request failed with status ${res.status}`;
+      // A 401 means the session is gone — expired, revoked, or superseded by a
+      // newer login on another device. Send the user back to the login form
+      // instead of leaving them on a dead page.
+      if (res.status === 401 && !url.startsWith("/api/auth/")) {
+        handleUnauthorized();
+      }
       if (showError) {
         toast.error(errorMsg);
       }

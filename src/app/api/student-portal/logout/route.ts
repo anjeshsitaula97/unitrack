@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getStudentSession } from "@/lib/api-utils";
 import { logActivity, getActorName } from "@/lib/activity";
 import { logError } from "@/lib/logger";
+import { endSession } from "@/lib/session-registry";
 
 export async function POST() {
   try {
@@ -25,9 +26,11 @@ export async function POST() {
             action: "logged out",
             target: session.email as string,
           });
+          // Rotate the stored session id so the discarded token cannot be
+          // replayed after the cookie is cleared.
+          await endSession("student", session.id);
         }
-      } catch {
-      }
+      } catch {}
     }
 
     cookieStore.delete("student_token");

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifyAuth } from "./session";
 import type { SessionPayload } from "./session";
 import { isSuperAdminRole } from "./permission-catalog";
+import { isSessionCurrent } from "./session-registry";
 
 export type { SessionPayload } from "./session";
 
@@ -127,6 +128,11 @@ export async function getSession(): Promise<SessionPayload | null> {
     const session = await verifyAuth(token);
     // Student subjects belong to the student portal and must never reach admin APIs.
     if (session.subject === "student") return null;
+
+    // Only one session per account is permitted. The token carries the id of
+    // the session it was issued for; if the account has since started another
+    // one, this token is stale and must stop working immediately.
+    if (!(await isSessionCurrent("user", session.id, session.sid))) return null;
 
     // Trust the stored account state, not the role claim baked into the token.
     const account = await getCurrentAccountRole(session.id);

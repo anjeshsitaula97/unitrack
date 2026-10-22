@@ -71,7 +71,9 @@ describe("authorizeUploadAccess", () => {
   });
 
   it("allows an unclaimed image so a just-uploaded logo can be previewed", async () => {
-    expect(await authorizeUploadAccess("orphan.png", staff(2, "Super Admin"), none())).toBe("allow");
+    expect(await authorizeUploadAccess("orphan.png", staff(2, "Super Admin"), none())).toBe(
+      "allow"
+    );
     expect(await authorizeUploadAccess("orphan.svg", staff(4, "Staff"), none())).toBe("allow");
   });
 

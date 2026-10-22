@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { verifyAuth, type SessionPayload } from "@/lib/session";
+import { isSessionCurrent } from "@/lib/session-registry";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -28,6 +29,12 @@ export async function GET(req: NextRequest) {
   try {
     payload = await verifyAuth(token);
   } catch {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  // Only one session per account is allowed; a token superseded by a newer
+  // login must not keep streaming notifications.
+  if (!(await isSessionCurrent("user", payload.id, payload.sid))) {
     return new Response("Unauthorized", { status: 401 });
   }
 

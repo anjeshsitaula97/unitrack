@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/fetch-client";
+import { formatIntakeLabel } from "@/lib/intake";
 
 const statusColors: Record<string, string> = {
   Submitted: "bg-blue-50 text-blue-700 border-blue-100",
@@ -180,7 +181,7 @@ function CourseInfoCard({
         {course.intake && (
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <Calendar size={12} className="text-slate-400" />
-            Intake: {course.intake}
+            Intake: {formatIntakeLabel(course.intake)}
           </div>
         )}
         {course.tuitionFee && (

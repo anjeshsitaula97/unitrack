@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { logError } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -15,6 +16,133 @@ import {
 } from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { generateStrongPassword } from "@/lib/password";
+import {
+  parseJson,
+  zodResponse,
+  emailField,
+  optionalTrimmedString,
+  isoDateOrNull,
+} from "@/lib/validate";
+
+// JSON string or array — the student model stores education/work/training as
+// JSON strings. Accept either a pre-stringified value or a raw array/object and
+// serialize it here so Prisma always receives a string.
+const jsonStringOrArray = z
+  .union([z.string(), z.array(z.unknown()), z.record(z.unknown())])
+  .optional()
+  .transform((v) => {
+    if (v === undefined) return JSON.stringify([]);
+    if (typeof v === "string") return v;
+    return JSON.stringify(v);
+  });
+
+// Province pickers are numeric selects but the column is String?. Coerce and
+// normalize the unset sentinel 0 to null.
+const provinceField = z
+  .union([z.string(), z.number(), z.null()])
+  .optional()
+  .transform((v) => {
+    if (v === null || v === undefined || v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? String(n) : null;
+  });
+
+// The partner <select> yields a string id or "" when nothing is chosen.
+const partnerIdField = z
+  .union([z.string(), z.number(), z.null()])
+  .optional()
+  .transform((v) => {
+    if (v === null || v === undefined || v === "") return null;
+    const n = Number(v);
+    return Number.isInteger(n) && n > 0 ? n : null;
+  });
+
+const createStudentSchema = z
+  .object({
+    // Either a full name or first+last — at least one combination must be present
+    name: z.string().trim().max(200).optional(),
+    firstName: z.string().trim().max(100).optional(),
+    lastName: z.string().trim().max(100).optional(),
+    email: emailField.optional(),
+    admissionEmail: emailField.optional(),
+    studentPassword: z.string().max(200).optional(),
+    applicationEmailPassword: optionalTrimmedString(200),
+    phone: optionalTrimmedString(40),
+    whatsappNumber: optionalTrimmedString(40),
+    gender: optionalTrimmedString(20),
+    dob: isoDateOrNull,
+    dobAd: optionalTrimmedString(20),
+    dobBs: optionalTrimmedString(20),
+    nationality: optionalTrimmedString(60),
+    maritalStatus: optionalTrimmedString(40),
+    photoUrl: optionalTrimmedString(1000),
+    address: optionalTrimmedString(500),
+    permanentProvince: provinceField,
+    permanentDistrict: optionalTrimmedString(100),
+    permanentMunicipality: optionalTrimmedString(100),
+    permanentWardNo: optionalTrimmedString(20),
+    permanentAddress: optionalTrimmedString(500),
+    temporaryProvince: provinceField,
+    temporaryDistrict: optionalTrimmedString(100),
+    temporaryMunicipality: optionalTrimmedString(100),
+    temporaryWardNo: optionalTrimmedString(20),
+    temporaryAddress: optionalTrimmedString(500),
+    passportNumber: optionalTrimmedString(40),
+    passportNationality: optionalTrimmedString(60),
+    passportIssueDate: isoDateOrNull,
+    passportExpiryDate: isoDateOrNull,
+    passportIssuePlace: optionalTrimmedString(100),
+    education: jsonStringOrArray,
+    workExperience: jsonStringOrArray,
+    training: jsonStringOrArray,
+    testType: optionalTrimmedString(40),
+    overallScore: optionalTrimmedString(20),
+    readingScore: optionalTrimmedString(20),
+    writingScore: optionalTrimmedString(20),
+    listeningScore: optionalTrimmedString(20),
+    speakingScore: optionalTrimmedString(20),
+    moi: optionalTrimmedString(200),
+    testDate: isoDateOrNull,
+    testRegNumber: optionalTrimmedString(60),
+    studyLevel: optionalTrimmedString(60),
+    intakeTerm: optionalTrimmedString(60),
+    major: optionalTrimmedString(100),
+    interestedCountry: optionalTrimmedString(100),
+    partnerId: partnerIdField,
+    targetUniversities: optionalTrimmedString(2000),
+    spouseName: optionalTrimmedString(200),
+    childrenDetails: jsonStringOrArray,
+    guardianName: optionalTrimmedString(200),
+    guardianPhone: optionalTrimmedString(40),
+    guardianEmail: emailField.optional(),
+    guardianRelation: optionalTrimmedString(60),
+    guardianAddress: optionalTrimmedString(500),
+    otherGuardians: jsonStringOrArray,
+    status: optionalTrimmedString(60).default("In Review"),
+    statusColor: optionalTrimmedString(20),
+    initials: optionalTrimmedString(10),
+    color: optionalTrimmedString(20),
+    university: optionalTrimmedString(200),
+    country: optionalTrimmedString(100),
+    lastActivity: optionalTrimmedString(200),
+    counselor: optionalTrimmedString(120),
+    lead: optionalTrimmedString(200),
+    branchId: z.coerce.number().int().positive().optional().nullable(),
+    documents: z
+      .array(
+        z.object({
+          type: z.string().trim().min(1).max(100),
+          name: z.string().trim().min(1).max(200),
+          url: z.string().trim().min(1).max(1000),
+          status: z.string().trim().max(60).optional().default("Uploaded"),
+        })
+      )
+      .optional(),
+  })
+  .refine((data) => data.name || (data.firstName && data.lastName) || data.firstName, {
+    message: "Name is required",
+    path: ["name"],
+  });
 
 export async function GET(req: NextRequest) {
   try {
@@ -89,31 +217,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const data = await req.json();
+    const parsed = await parseJson(req, createStudentSchema);
+    if (!parsed.ok) return zodResponse(parsed.error);
 
-    if (!data.name && (!data.firstName || !data.lastName)) {
-      return NextResponse.json({ error: "Name is required" }, { status: 400 });
-    }
-
+    const data = parsed.data;
     const name = data.name || `${data.firstName || ""} ${data.lastName || ""}`.trim();
-
-    // The province pickers are numeric selects (they feed the district lookup by
-    // province id) but the columns are String?. Coerce here so the create does
-    // not fail on "Expected String or Null, provided Int", and normalise the
-    // unset sentinel 0 to null rather than storing a meaningless "0".
-    const toProvince = (value: unknown): string | null => {
-      if (value === null || value === undefined || value === "") return null;
-      const n = Number(value);
-      return Number.isFinite(n) && n > 0 ? String(n) : null;
-    };
-
-    // The partner <select> yields a string id, and "" when nothing is chosen,
-    // while partnerId is an Int foreign key. Coerce to a real integer or null.
-    const toPartnerId = (value: unknown): number | null => {
-      if (value === null || value === undefined || value === "") return null;
-      const n = Number(value);
-      return Number.isInteger(n) && n > 0 ? n : null;
-    };
 
     const generatedPassword = generateStrongPassword();
     const passwordToUse = data.studentPassword || generatedPassword;
@@ -127,7 +235,7 @@ export async function POST(req: NextRequest) {
         email: data.email,
         admissionEmail: data.admissionEmail,
         studentPassword: hashedPassword,
-        applicationEmailPassword: data.applicationEmailPassword || null,
+        applicationEmailPassword: data.applicationEmailPassword ?? null,
         phone: data.phone,
         whatsappNumber: data.whatsappNumber,
         gender: data.gender,
@@ -138,12 +246,12 @@ export async function POST(req: NextRequest) {
         maritalStatus: data.maritalStatus,
         photoUrl: data.photoUrl,
         address: data.address,
-        permanentProvince: toProvince(data.permanentProvince),
+        permanentProvince: data.permanentProvince,
         permanentDistrict: data.permanentDistrict,
         permanentMunicipality: data.permanentMunicipality,
         permanentWardNo: data.permanentWardNo,
         permanentAddress: data.permanentAddress,
-        temporaryProvince: toProvince(data.temporaryProvince),
+        temporaryProvince: data.temporaryProvince,
         temporaryDistrict: data.temporaryDistrict,
         temporaryMunicipality: data.temporaryMunicipality,
         temporaryWardNo: data.temporaryWardNo,
@@ -153,16 +261,9 @@ export async function POST(req: NextRequest) {
         passportIssueDate: data.passportIssueDate,
         passportExpiryDate: data.passportExpiryDate,
         passportIssuePlace: data.passportIssuePlace,
-        education:
-          typeof data.education === "string"
-            ? data.education
-            : JSON.stringify(data.education || []),
-        workExperience:
-          typeof data.workExperience === "string"
-            ? data.workExperience
-            : JSON.stringify(data.workExperience || []),
-        training:
-          typeof data.training === "string" ? data.training : JSON.stringify(data.training || []),
+        education: data.education,
+        workExperience: data.workExperience,
+        training: data.training,
         testType: data.testType,
         overallScore: data.overallScore,
         readingScore: data.readingScore,
@@ -176,23 +277,17 @@ export async function POST(req: NextRequest) {
         intakeTerm: data.intakeTerm,
         major: data.major,
         interestedCountry: data.interestedCountry,
-        partnerId: toPartnerId(data.partnerId),
+        partnerId: data.partnerId,
         targetUniversities: data.targetUniversities,
         spouseName: data.spouseName,
-        childrenDetails:
-          typeof data.childrenDetails === "string"
-            ? data.childrenDetails
-            : JSON.stringify(data.childrenDetails || []),
+        childrenDetails: data.childrenDetails,
         guardianName: data.guardianName,
         guardianPhone: data.guardianPhone,
         guardianEmail: data.guardianEmail,
         guardianRelation: data.guardianRelation,
         guardianAddress: data.guardianAddress,
-        otherGuardians:
-          typeof data.otherGuardians === "string"
-            ? data.otherGuardians
-            : JSON.stringify(data.otherGuardians || []),
-        status: data.status || "In Review",
+        otherGuardians: data.otherGuardians,
+        status: data.status ?? "In Review",
         statusColor: data.statusColor,
         initials: data.initials,
         color: data.color,
@@ -204,14 +299,12 @@ export async function POST(req: NextRequest) {
         branchId: data.branchId,
         documents: data.documents
           ? {
-              create: data.documents.map(
-                (doc: { type: string; name: string; url: string; status?: string }) => ({
-                  type: doc.type,
-                  name: doc.name,
-                  url: doc.url,
-                  status: doc.status || "Uploaded",
-                })
-              ),
+              create: data.documents.map((doc) => ({
+                type: doc.type,
+                name: doc.name,
+                url: doc.url,
+                status: doc.status ?? "Uploaded",
+              })),
             }
           : undefined,
       },

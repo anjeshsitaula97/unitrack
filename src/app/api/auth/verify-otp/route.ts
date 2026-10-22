@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import crypto from "crypto";
+import { createResetToken, hashResetToken, timingSafeEqualDigest } from "@/lib/reset-token";
 import { logError } from "@/lib/logger";
-
-function timingSafeEqualString(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) return false;
-  return crypto.timingSafeEqual(bufA, bufB);
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -62,11 +55,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!timingSafeEqualString(record.otp, String(otp).trim())) {
+    // The row holds the digest of the OTP, not the OTP itself, so the digest
+    // of what the caller typed is what gets compared. The comparison is
+    // constant-time so a wrong OTP cannot be narrowed down by timing.
+    if (!timingSafeEqualDigest(record.tokenHash, hashResetToken(String(otp).trim()))) {
       return NextResponse.json({ error: "Invalid OTP. Please try again." }, { status: 400 });
     }
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    const { token: resetToken, hash: resetTokenHash } = createResetToken();
     const resetExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     // Consume the OTP and mint the reset token in one transaction. Deleting the
@@ -76,11 +72,14 @@ export async function POST(req: NextRequest) {
     await db.$transaction([
       db.passwordResetToken.deleteMany({ where: { email, verified: false } }),
       db.passwordResetToken.create({
-        data: { email, otp: resetToken, expiresAt: resetExpiresAt, verified: true },
+        data: { email, tokenHash: resetTokenHash, expiresAt: resetExpiresAt, verified: true },
       }),
     ]);
 
-    return NextResponse.json({ success: true, expiresAt: resetExpiresAt });
+    // The reset token is handed to the browser that proved it owns the
+    // mailbox. Only its digest is stored, so the secret does not survive in
+    // the database; it is single-use and expires in 15 minutes.
+    return NextResponse.json({ success: true, resetToken, expiresAt: resetExpiresAt });
   } catch (error) {
     logError("Verify OTP", error);
     return NextResponse.json({ error: "Something went wrong." }, { status: 500 });

@@ -74,6 +74,12 @@ api_output.json
 scratch/
 .stitch/
 
+# One-off analysis output and tooling directories (not part of the app)
+/graphify-out/
+/scanner-agent/
+/Technologies/
+/data/
+
 # macOS AppleDouble resource-fork files (noisy on external volumes)
 ._*
 .DS_Store

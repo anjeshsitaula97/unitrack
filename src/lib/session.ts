@@ -20,6 +20,12 @@ export interface SessionPayload {
   name?: string;
   subject?: "user" | "student";
   /**
+   * Id of the session this token was issued for. Only one session per account
+   * is allowed, so the server compares this against the id stored on the
+   * account row and rejects every other token.
+   */
+  sid?: string;
+  /**
    * The consultancy this session is bound to. `null` denotes the platform scope
    * used by a Super Admin who is viewing every consultancy.
    */
@@ -80,7 +86,12 @@ export const verifyAuth = async (token: string): Promise<SessionPayload> => {
   }
 };
 
-export const signToken = async (payload: { id: number; email: string; role: string }) => {
+export const signToken = async (payload: {
+  id: number;
+  email: string;
+  role: string;
+  sid?: string;
+}) => {
   const token = await new SignJWT({ ...payload, subject: "user" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(TOKEN_ISSUER)
@@ -92,7 +103,7 @@ export const signToken = async (payload: { id: number; email: string; role: stri
   return token;
 };
 
-export const signStudentToken = async (payload: { id: number; email: string }) => {
+export const signStudentToken = async (payload: { id: number; email: string; sid?: string }) => {
   const token = await new SignJWT({ ...payload, role: "Student", subject: "student" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(TOKEN_ISSUER)

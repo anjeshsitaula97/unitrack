@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { baseDb } from "@/lib/base-db";
 import { normalizeEnabledModulesJson } from "@/lib/modules";
 import { isSuperAdminRole } from "@/lib/permission-catalog";
+import { isSessionCurrent } from "@/lib/session-registry";
 
 export async function GET() {
   try {
@@ -15,6 +16,12 @@ export async function GET() {
     }
 
     const payload = await verifyAuth(token);
+
+    // Only one session per account is allowed. A staff token whose session has
+    // been superseded by a newer login must not keep returning the profile.
+    if (payload.subject !== "student" && !(await isSessionCurrent("user", payload.id, payload.sid))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     let user = await baseDb.user.findUnique({
       where: { id: payload.id },

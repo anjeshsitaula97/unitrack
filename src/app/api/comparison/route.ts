@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { toCourseCredits } from "@/lib/course-credits";
 import { logError } from "@/lib/logger";
 import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 
@@ -25,10 +26,10 @@ export async function POST(req: NextRequest) {
         include: { _count: { select: { courses: true } }, partner: true },
       });
     } else if (type === "courses") {
-      data = await db.course.findMany({
+      data = (await db.course.findMany({
         where: { id: { in: numericIds } },
         include: { university: true },
-      });
+      })).map((course) => ({ ...course, credits: toCourseCredits(course.credits) }));
     } else if (type === "students") {
       data = await db.student.findMany({
         where: { id: { in: numericIds } },

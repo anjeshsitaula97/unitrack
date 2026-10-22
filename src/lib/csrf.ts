@@ -66,16 +66,18 @@ export function validateCsrfHeaders(req: NextRequest): { valid: boolean; error?:
   }
 
   // Neither header is present. A browser always attaches Origin to a
-  // cross-site state-changing request, so this is a non-browser client. Those
-  // callers must identify themselves with a bearer token, which a cross-site
-  // form post cannot set; anything else is rejected rather than waved through.
-  const authorization = req.headers.get("authorization");
-  if (authorization?.toLowerCase().startsWith("bearer ")) {
-    return { valid: true };
-  }
-
+  // cross-site state-changing request, so this is a non-browser client.
+  //
+  // There is no bearer-token API path in this application: every API route
+  // authenticates with the session cookie, and stored API keys are records
+  // that are never presented as credentials. The Authorization header was
+  // previously accepted here as a stand-in for a non-browser caller, but that
+  // only relaxed the check — it never proved the caller was who it claimed to
+  // be, and a cross-site request can set arbitrary headers anyway. It is
+  // removed so the rule is the same for every caller: state-changing requests
+  // must carry an origin or a referer that matches this host.
   return {
     valid: false,
-    error: "CSRF validation failed: missing origin, referer and authorization",
+    error: "CSRF validation failed: missing origin and referer",
   };
 }

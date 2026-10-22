@@ -34,6 +34,7 @@ import { getLatestRates, convertToNPR, formatNPR } from "@/lib/forex";
 import { safeJson } from "@/lib/fetch-client";
 import { annualTuition, isSemesterPeriod } from "@/lib/tuition";
 import { evaluateCourseEligibility, type EligibilityResult } from "@/lib/eligibility";
+import { formatIntakeLabel, parseIntakes } from "@/lib/intake";
 
 const categoryColors: Record<string, string> = {
   "Computer Science": "bg-indigo-50 text-indigo-700",
@@ -871,7 +872,8 @@ function computeFilteredCourses(
   if (levelFilter !== "all") data = data.filter((c) => c.level === levelFilter);
   if (universityFilter !== "all") data = data.filter((c) => c.university === universityFilter);
   if (countryFilter !== "all") data = data.filter((c) => c.country === countryFilter);
-  if (intakeFilter !== "all") data = data.filter((c) => c.intake?.includes(intakeFilter));
+  if (intakeFilter !== "all")
+    data = data.filter((c) => parseIntakes(c.intake).some((entry) => entry.name === intakeFilter));
   if (durationFilter !== "all") data = data.filter((c) => c.duration === durationFilter);
 
   data = data.filter((c) => {
@@ -936,7 +938,7 @@ function computeAvailableIntakes(
 ): string[] {
   return filterOptions.intakes.length > 0
     ? filterOptions.intakes
-    : Array.from(new Set(courses.map((c) => c.intake)))
+    : Array.from(new Set(courses.flatMap((c) => parseIntakes(c.intake).map((entry) => entry.name))))
         .filter(Boolean)
         .sort();
 }
@@ -1636,7 +1638,7 @@ function CourseFeeBlock({
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           {course.intake && (
             <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[9px] font-bold whitespace-nowrap">
-              {course.intake.split(",")[0]?.trim()}
+              {formatIntakeLabel(course.intake)}
             </span>
           )}
           <span className="text-[9px] font-bold text-slate-400">

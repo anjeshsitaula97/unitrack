@@ -12,6 +12,7 @@ import {
   checkRoutePermission,
 } from "@/lib/api-utils";
 import { logError } from "@/lib/logger";
+import { parseCourseCredits, toCourseCredits } from "@/lib/course-credits";
 
 export async function GET(req: NextRequest) {
   try {
@@ -60,6 +61,7 @@ export async function GET(req: NextRequest) {
 
     const transformed = courses.map((course) => ({
       ...course,
+      credits: toCourseCredits(course.credits),
       university: course.university?.name || "Unknown",
       universityLogo: course.university?.logo || null,
       faculty: course.faculty || "General",
@@ -91,7 +93,7 @@ export async function POST(req: NextRequest) {
         faculty: data.faculty || "General",
         degreeType: data.degreeType || "None",
         level: data.studyLevel || "Undergraduate",
-        credits: parseInt(data.credits) || 0,
+        credits: parseCourseCredits(data.credits),
         duration: data.duration || "0",
         startDate:
           data.startDate && !isNaN(new Date(data.startDate).getTime())
@@ -120,6 +122,9 @@ export async function POST(req: NextRequest) {
         tuitionFeePeriod: data.tuitionFeePeriod || "Year",
         applicationFee: data.applicationFee || "",
         applicationFeeCurrency: data.applicationFeeCurrency || "",
+        depositFee: data.depositFee || "",
+        depositFeeCurrency: data.depositFeeCurrency || "",
+        depositFeeRefundable: Boolean(data.depositFeeRefundable),
         currency: data.currency || "",
         quickFilters: JSON.stringify(data.quickFilters || []),
         requirements: JSON.stringify(data.requirements || []),
@@ -160,7 +165,8 @@ export async function POST(req: NextRequest) {
       type: "Success",
     });
 
-    return NextResponse.json(newCourse, { status: 201 });
+    // A Prisma.Decimal serialises to a string; send a plain number instead.
+    return NextResponse.json({ ...newCourse, credits: toCourseCredits(newCourse.credits) }, { status: 201 });
   } catch (error) {
     logError("Create Course", error);
     return NextResponse.json(

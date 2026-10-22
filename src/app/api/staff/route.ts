@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { logActivity } from "@/lib/activity";
 import { getSession, checkPermission } from "@/lib/api-utils";
+import { parseJson, zodResponse, emailField } from "@/lib/validate";
+
+const createStaffSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(200),
+  email: emailField,
+  password: z.string().min(8, "Password must be at least 8 characters").max(200),
+  role: z.string().trim().max(60).optional().default("Viewer"),
+});
 
 export async function GET() {
   try {
@@ -41,12 +50,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { name, email, password, role } = body;
+    const parsed = await parseJson(req, createStaffSchema);
+    if (!parsed.ok) return zodResponse(parsed.error);
 
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
+    const { name, email, password, role } = parsed.data;
 
     const hashedPassword = await bcrypt.hash(password, 12);
 

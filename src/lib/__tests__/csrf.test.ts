@@ -54,10 +54,13 @@ describe("validateCsrfHeaders", () => {
     expect(r.error).toMatch(/missing origin/);
   });
 
-  it("allows a non-browser caller that presents a bearer token", () => {
+  it("rejects a non-browser caller that only presents a bearer token", () => {
+    // No route authenticates with a bearer token, so the header proves
+    // nothing and must not bypass the origin check.
     const r = validateCsrfHeaders(
       req({ host: "localhost:4028", authorization: "Bearer some-service-token" })
     );
-    expect(r.valid).toBe(true);
+    expect(r.valid).toBe(false);
+    expect(r.error).toMatch(/missing origin/);
   });
 });

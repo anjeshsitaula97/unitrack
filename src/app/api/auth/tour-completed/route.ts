@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { verifyAuth } from "@/lib/session";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/api-utils";
 

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
+import { parseIntakes } from "@/lib/intake";
+import { toCourseCredits } from "@/lib/course-credits";
 
 export async function GET(request: Request) {
   try {
@@ -64,19 +66,11 @@ export async function GET(request: Request) {
 
     const allIntakes = [
       ...new Set(
-        intakeRecords.flatMap((r) => {
-          const val = r.intake || "";
-          if (val.startsWith("["))
-            try {
-              return JSON.parse(val)
-                .map((s: string) => s.trim())
-                .filter(Boolean);
-            } catch {}
-          return val
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
-        })
+        intakeRecords.flatMap((r) =>
+          parseIntakes(r.intake)
+            .map((entry) => entry.name)
+            .filter(Boolean)
+        )
       ),
     ].sort();
 
@@ -96,7 +90,7 @@ export async function GET(request: Request) {
       university: c.university.name,
       category: c.faculty,
       level: c.level,
-      credits: c.credits,
+      credits: toCourseCredits(c.credits),
       duration: c.duration,
       enrolled: c.enrolled,
       status: c.status,

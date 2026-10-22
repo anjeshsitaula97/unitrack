@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { toCourseCredits } from "@/lib/course-credits";
 import { logError } from "@/lib/logger";
 import { getSession, apiError, checkRoutePermission } from "@/lib/api-utils";
 
@@ -19,6 +20,7 @@ type ReportRow = {
   method?: string;
   description?: string;
   proofUrl?: string;
+  credits?: Prisma.Decimal | number | string;
   prerequisites?: unknown;
   university?: { name?: string } | null;
   student?: { name?: string; email?: string } | null;
@@ -70,6 +72,7 @@ export async function GET(req: NextRequest) {
           const c = row as ReportRow;
           return {
             ...c,
+            credits: toCourseCredits(c.credits as unknown as Prisma.Decimal),
             universityName: c.university?.name || "Unknown",
             prerequisites: undefined, // removing raw JSON from report
             university: undefined,

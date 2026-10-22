@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { hashResetToken, isResetTokenFormat } from "@/lib/reset-token";
 import { logError } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
     // The reset token is a 32-byte random value rendered as 64 hex chars. Only
     // that shape is accepted, so a 6-digit email OTP can never be used as a
     // reset token even if a stale verified record somehow exists.
-    if (typeof token !== "string" || !/^[0-9a-f]{64}$/i.test(token)) {
+    if (!isResetTokenFormat(token)) {
       return NextResponse.json(
         { error: "Invalid or expired reset link. Please start over." },
         { status: 400 }
@@ -47,9 +48,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Only the 64-hex reset token fits this filter; the OTP row is consumed at
-    // verification time (see verify-otp) so it cannot match here.
+    // verification time (see verify-otp) so it cannot match here. The stored
+    // value is the token's digest, so the digest of the submitted token is what
+    // is looked up — the secret itself never reaches the database.
     const record = await db.passwordResetToken.findFirst({
-      where: { otp: token, verified: true },
+      where: { tokenHash: hashResetToken(token), verified: true },
       orderBy: { createdAt: "desc" },
     });
 

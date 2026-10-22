@@ -11,6 +11,7 @@ import { logError } from "@/lib/logger";
 import { normalizeEnabledModulesJson } from "@/lib/modules";
 import { logActivity } from "@/lib/activity";
 import { isSuperAdminRole } from "@/lib/permission-catalog";
+import { startSession } from "@/lib/session-registry";
 
 const prisma = db;
 
@@ -80,11 +81,22 @@ export async function POST(req: Request) {
     // explicitly because the session cookie is not readable from cookies() until
     // the response is sent.
     return await runWithConsultancy({ consultancyId: user.consultancyId ?? null }, async () => {
+      // Only one session per account is allowed. Rotating the stored session id
+      // here revokes whatever session was previously active for this account,
+      // so signing in on a new device immediately locks the old one out.
+      const sid = await startSession({
+        subject: "user",
+        accountId: user.id,
+        ip: getClientIp(req),
+        userAgent: req.headers.get("user-agent") || "Unknown",
+      });
+
       // Set token
       const token = await signToken({
         id: user.id,
         email: user.email,
         role: user.role,
+        sid,
       });
 
       const cookieStore = await cookies();

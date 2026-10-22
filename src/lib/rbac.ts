@@ -118,9 +118,7 @@ const moduleMap: Record<string, string> = {
  * Falls back to the static catalog when absent so unit tests and any caller
  * that builds a bare session object keep working.
  */
-function sessionPermissions(
-  session: SessionPayload
-): ReadonlySet<string> | undefined {
+function sessionPermissions(session: SessionPayload): ReadonlySet<string> | undefined {
   const granted = session.permissions;
   if (!Array.isArray(granted) || granted.length === 0) return undefined;
   return new Set(granted as string[]);

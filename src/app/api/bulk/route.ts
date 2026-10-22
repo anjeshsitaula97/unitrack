@@ -7,6 +7,7 @@ import { createNotification } from "@/lib/notifications";
 import { buildXlsx } from "@/lib/spreadsheet";
 import { readSpreadsheetRows } from "@/lib/spreadsheet-read";
 import { Prisma } from "@prisma/client";
+import { parseCourseCredits } from "@/lib/course-credits";
 
 interface CsvRow {
   name?: string;
@@ -227,7 +228,7 @@ export async function POST(req: NextRequest) {
               level: row.level || "Undergraduate",
               university:
                 row.university as unknown as Prisma.UniversityCreateNestedOneWithoutCoursesInput,
-              credits: parseInt(String(row.credits)) || 0,
+              credits: parseCourseCredits(row.credits),
               duration: row.duration || "0",
               instructor: row.instructor || "TBA",
               instructorEmail: row.instructorEmail || null,

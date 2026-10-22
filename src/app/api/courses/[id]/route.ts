@@ -6,6 +6,7 @@ import { logActivity, diffChanges, getActorName } from "@/lib/activity";
 import { logError } from "@/lib/logger";
 import { getSession, checkRoutePermission, checkPermission } from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { parseCourseCredits, toCourseCredits } from "@/lib/course-credits";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
-    return NextResponse.json(course);
+    return NextResponse.json({ ...course, credits: toCourseCredits(course.credits) });
   } catch (error) {
     logError("Fetch Course", error);
     return NextResponse.json({ error: "Failed to fetch course" }, { status: 500 });
@@ -46,7 +47,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         faculty: data.faculty,
         degreeType: data.degreeType,
         level: data.level,
-        credits: parseInt(data.credits) || 0,
+        credits: parseCourseCredits(data.credits),
         duration: data.duration,
         startDate:
           data.startDate && !isNaN(new Date(data.startDate).getTime())
@@ -77,6 +78,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         tuitionFeePeriod: data.tuitionFeePeriod,
         applicationFee: data.applicationFee,
         applicationFeeCurrency: data.applicationFeeCurrency,
+        depositFee: data.depositFee,
+        depositFeeCurrency: data.depositFeeCurrency,
+        depositFeeRefundable: Boolean(data.depositFeeRefundable),
         currency: data.currency,
         quickFilters: Array.isArray(data.quickFilters)
           ? JSON.stringify(data.quickFilters)
@@ -122,7 +126,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       changes,
     });
 
-    return NextResponse.json(course);
+    return NextResponse.json({ ...course, credits: toCourseCredits(course.credits) });
   } catch (error) {
     logError("Update Course", error);
     return NextResponse.json(

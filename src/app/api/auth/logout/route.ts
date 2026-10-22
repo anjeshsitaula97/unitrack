@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/session";
 import { logActivity, getActorName } from "@/lib/activity";
 import { logError } from "@/lib/logger";
+import { endSession } from "@/lib/session-registry";
 
 export async function POST() {
   try {
@@ -19,6 +20,9 @@ export async function POST() {
           action: "logged out",
           target: session.email as string,
         });
+        // Rotate the stored session id so the discarded token cannot be
+        // replayed after the cookie is cleared.
+        await endSession("user", session.id);
       } catch {
         // Token invalid or already expired — skip logout logging.
       }

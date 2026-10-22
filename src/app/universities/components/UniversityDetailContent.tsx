@@ -35,21 +35,10 @@ import {
 } from "framer-motion";
 import { getLatestRates, convertToNPR, formatNPR } from "@/lib/forex";
 import { api } from "@/lib/fetch-client";
+import { formatIntakeLabel, getIntakeStatus, parseIntakes } from "@/lib/intake";
 import AppLayoutWrapper from "@/components/AppLayoutWrapper";
 
-const formatIntake = (intakeStr: string | undefined) => {
-  if (!intakeStr) return "TBA";
-  try {
-    if (typeof intakeStr === "string" && intakeStr.startsWith("[")) {
-      const intakes = JSON.parse(intakeStr);
-      if (Array.isArray(intakes) && intakes.length > 0) {
-        const first = intakes[0];
-        return `${first.name}${intakes.length > 1 ? ` (+${intakes.length - 1})` : ""}`;
-      }
-    }
-  } catch (_e) {}
-  return intakeStr;
-};
+const formatIntake = (intakeStr: string | undefined) => formatIntakeLabel(intakeStr);
 
 const formatCities = (cityStr: string | undefined) => {
   if (!cityStr) return "N/A";
@@ -746,20 +735,11 @@ function CampusGallery({
 }
 
 function IntakeCell({ course, now }: { course: Course; now: Date }) {
-  let openIntakeName: string | null = null;
-  try {
-    if (course.intake && course.intake.startsWith("[")) {
-      const intakes = JSON.parse(course.intake);
-      if (Array.isArray(intakes) && intakes.length > 0) {
-        const openIntake = intakes.find((i) => {
-          const open = new Date(i.openDate);
-          const deadline = new Date(i.deadline);
-          return now >= open && now <= deadline;
-        });
-        if (openIntake) openIntakeName = openIntake.name;
-      }
-    }
-  } catch (_e) {}
+  const openIntake = parseIntakes(course.intake).find((entry) => {
+    const status = getIntakeStatus(entry, now);
+    return status?.label === "Open";
+  });
+  const openIntakeName = openIntake?.name ?? null;
 
   if (openIntakeName) {
     return (

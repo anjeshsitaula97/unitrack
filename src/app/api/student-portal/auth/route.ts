@@ -6,6 +6,7 @@ import { signStudentToken } from "@/lib/session";
 import { apiError } from "@/lib/api-utils";
 import { normalizeEnabledModulesJson } from "@/lib/modules";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { startSession } from "@/lib/session-registry";
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,9 +39,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
+    // Only one session per student account is allowed; starting a new one
+    // revokes whatever session was previously active.
+    const sid = await startSession({
+      subject: "student",
+      accountId: student.id,
+      ip: getClientIp(req),
+      userAgent: req.headers.get("user-agent") || "Unknown",
+    });
+
     const token = await signStudentToken({
       id: student.id,
       email: student.email,
+      sid,
     });
 
     const response = NextResponse.json({
