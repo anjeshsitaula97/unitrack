@@ -545,8 +545,12 @@ function ScanDialog({
     }
   };
 
+  const scannerInFlightRef = useRef(false);
+
   const handleScannerScan = async () => {
-    if (!selectedScannerId || scannerScanning) return;
+    if (scannerInFlightRef.current) return;
+    if (!selectedScannerId) return;
+    scannerInFlightRef.current = true;
     setScannerScanning(true);
     try {
       const res = await fetch("http://localhost:5899/scan", {
@@ -572,6 +576,7 @@ function ScanDialog({
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Scanner device failed");
     } finally {
+      scannerInFlightRef.current = false;
       setScannerScanning(false);
     }
   };

@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { Eyebrow, Parallax, Reveal, Stagger, revealVariants } from "./motion";
+import { m } from "framer-motion";
+import { Eyebrow, Parallax, Reveal, Stagger } from "./motion";
+import { revealVariants } from "./motion-tokens";
 import BrowserFrame from "./BrowserFrame";
 
 const COUNTRIES = [
@@ -12,9 +13,9 @@ const COUNTRIES = [
     visa: "Subclass 500 Visa",
     tag: "CRICOS",
     rows: [
-      { k: "Avg COE Turnaround:", v: "3-5 Days", accent: false },
-      { k: "GTE Assessment Engine:", v: "Pre-Integrated", accent: true },
-      { k: "Embassy Visa Success:", v: "99.4%", accent: false },
+      { k: "Avg COE Time:", v: "3-5 Days", accent: false },
+      { k: "GTE Check:", v: "Built-in", accent: true },
+      { k: "Visa Success:", v: "99.4%", accent: false },
     ],
     footer: "180+ Active Universities",
   },
@@ -24,9 +25,9 @@ const COUNTRIES = [
     visa: "Study Permit (SDS / Non-SDS)",
     tag: "DLI Sync",
     rows: [
-      { k: "PAL Verification:", v: "Automated", accent: true },
-      { k: "GIC Bank Tracking:", v: "Integrated", accent: false },
-      { k: "Visa Approval Rate:", v: "97.8%", accent: false },
+      { k: "PAL Check:", v: "Automatic", accent: true },
+      { k: "GIC Bank Tracking:", v: "Built-in", accent: false },
+      { k: "Visa Success:", v: "97.8%", accent: false },
     ],
     footer: "210+ Colleges & Universities",
   },
@@ -36,9 +37,9 @@ const COUNTRIES = [
     visa: "Student Route (CAS)",
     tag: "UCAS Ready",
     rows: [
-      { k: "CAS Issuance Speed:", v: "48 Hours", accent: false },
-      { k: "28-Day Bank Rules:", v: "Auto Calculator", accent: true },
-      { k: "Visa Approval Rate:", v: "99.1%", accent: false },
+      { k: "CAS Speed:", v: "48 Hours", accent: false },
+      { k: "28-Day Bank Rule:", v: "Auto Calculator", accent: true },
+      { k: "Visa Success:", v: "99.1%", accent: false },
     ],
     footer: "140+ Russell & Modern Unis",
   },
@@ -48,9 +49,9 @@ const COUNTRIES = [
     visa: "F-1 Student Visa",
     tag: "SEVIS / I-20",
     rows: [
-      { k: "DS-160 Prep Audit:", v: "Standardized", accent: true },
-      { k: "Mock Visa Interview LMS:", v: "Included", accent: false },
-      { k: "Offer Ratio:", v: "96.5%", accent: false },
+      { k: "DS-160 Prep:", v: "Standardized", accent: true },
+      { k: "Mock Visa Interview:", v: "Included", accent: false },
+      { k: "Offer Rate:", v: "96.5%", accent: false },
     ],
     footer: "300+ Accredited Campuses",
   },
@@ -66,25 +67,25 @@ export default function Destinations() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <Reveal className="lg:col-span-7 space-y-5">
             <div className="space-y-4">
-              <Eyebrow>Global Jurisdiction Matrix</Eyebrow>
+              <Eyebrow>Study Destinations</Eyebrow>
               <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-white">
-                Automated Rules for <span className="text-grad">Every Major Study Destination</span>
+                Set Up for <span className="text-grad">Every Major Destination</span>
               </h2>
             </div>
             <p className="font-body-md text-body-md text-slate-400 max-w-xl">
-              Each country comes pre-configured with embassy checklists, financial formula
-              calculators, and immigration compliance frameworks.
+              Each country comes ready with embassy checklists, money and funds calculators, and
+              visa rules already set up.
             </p>
-            <motion.a
+            <m.a
               href="#live-demo"
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 340, damping: 24 }}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-sm font-semibold shadow-[0_16px_36px_-14px_rgba(99,102,241,0.8)] ring-1 ring-white/15 hover:from-indigo-400 hover:to-violet-400 transition-colors"
             >
-              Explore University Network
+              Explore Universities
               <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-            </motion.a>
+            </m.a>
           </Reveal>
 
           <Parallax className="lg:col-span-5" distance={28}>
@@ -102,7 +103,7 @@ export default function Destinations() {
 
         <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {COUNTRIES.map((c) => (
-            <motion.article
+            <m.article
               key={c.code}
               variants={revealVariants}
               whileHover={{ y: -4 }}
@@ -140,7 +141,7 @@ export default function Destinations() {
               <div className="pt-2 border-t border-white/[0.07] text-label-pill text-label-pill uppercase text-grad font-bold">
                 {c.footer}
               </div>
-            </motion.article>
+            </m.article>
           ))}
         </Stagger>
       </div>

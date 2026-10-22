@@ -15,6 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import Pagination from "@/components/Pagination";
 import Link from "next/link";
 
 interface PayrollUser {
@@ -502,13 +503,14 @@ function PayrollTable({
         </table>
       </div>
 
-      <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
-        <p className="text-xs text-slate-500">
-          Showing {(page - 1) * perPage + 1} to {Math.min(page * perPage, totalCount)} of{" "}
-          {totalCount}
-        </p>
-        <TablePager page={page} totalPages={totalPages} onPrev={onPrev} onNext={onNext} />
-      </div>
+      <Pagination
+        page={page}
+        perPage={perPage}
+        total={totalCount}
+        totalPages={totalPages}
+        onPrev={onPrev}
+        onNext={onNext}
+      />
     </div>
   );
 }

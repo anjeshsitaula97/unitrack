@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import Link from "next/link";
 import {
   Bell,
   Settings,
@@ -368,12 +369,12 @@ function NotificationPopup({
         <p className="truncate text-sm font-semibold text-slate-800">{title}</p>
         <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{message}</p>
         <div className="mt-2 flex items-center gap-3">
-          <a
+          <Link
             href="/notifications"
             className="text-[11px] font-semibold text-indigo-600 hover:underline"
           >
             View
-          </a>
+          </Link>
           <button
             type="button"
             onClick={() => onDelete(titleId(id))}

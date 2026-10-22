@@ -99,6 +99,13 @@ interface NavSection {
   items: NavItem[];
 }
 
+const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
 const navSections: NavSection[] = [
   {
     id: "overview",
@@ -347,20 +354,26 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
   const navRef = React.useRef<HTMLElement>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchStats = async () => {
       try {
-        const res = await fetch("/api/dashboard/stats");
+        const res = await fetch("/api/dashboard/stats", { signal: controller.signal });
+        if (!res.ok) throw new Error(`Failed to load stats: ${res.status}`);
         const data = await res.json();
-        if (!data.error) {
+        if (!controller.signal.aborted && !data.error) {
           setStats(data);
         }
       } catch (err) {
+        if (controller.signal.aborted) return;
         console.error("Failed to fetch stats:", err);
       }
     };
-    fetchStats();
+    void fetchStats();
     const interval = setInterval(fetchStats, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+    };
   }, []);
 
   // Persist scroll position
@@ -434,14 +447,22 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
   };
 
   useEffect(() => {
-    fetch("/api/settings/localization")
-      .then((r) => r.json())
-      .then((data) => {
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const res = await fetch("/api/settings/localization", { signal: controller.signal });
+        if (!res.ok) throw new Error(`Failed to load localization: ${res.status}`);
+        const data = await res.json();
+        if (controller.signal.aborted) return;
         if (data?.enabledModules) {
           setEnabledModuleIds(getEnabledModuleIds(data.enabledModules));
         }
-      })
-      .catch(() => {});
+      } catch {
+        if (controller.signal.aborted) return;
+      }
+    };
+    void load();
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -495,6 +516,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
       "nav-student-messages",
     ]);
 
+    const enabledModuleIdSet = new Set(enabledModuleIds);
     const sectionsWithModules = navSections
       .map((section) => ({
         ...section,
@@ -503,7 +525,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
             if (item.id === "nav-consultancies" && !isSuperAdmin) return false;
             if (isSADashboard && saDashboardHiddenItems.has(item.id)) return false;
             const matchingModule = MODULES.find((m) => m.routes.includes(item.href));
-            if (matchingModule && !enabledModuleIds.includes(matchingModule.id)) return false;
+            if (matchingModule && !enabledModuleIdSet.has(matchingModule.id)) return false;
             if (!matchingModule) return true;
             return enabledRoutes.has(item.href);
           })
@@ -534,73 +556,14 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
         ${collapsed ? "w-16" : "w-60"}
       `}
     >
-      {/* Logo */}
-      <div
-        className={`flex items-center h-14 border-b border-slate-100 px-3 ${collapsed ? "justify-center" : "justify-between"}`}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <AppLogo size={28} src={user?.consultancy?.logoUrl || undefined} />
-          {!collapsed && (
-            <span className="font-bold text-slate-800 text-base tracking-tight truncate">
-              {user?.consultancy?.name || "UniTrack"}
-            </span>
-          )}
-        </div>
-        {!collapsed && (
-          <button
-            type="button"
-            onClick={onToggle}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition duration-150"
-            aria-label="Collapse sidebar"
-          >
-            {" "}
-            <ChevronLeft size={16} />
-          </button>
-        )}
-      </div>
+      <SidebarHeader collapsed={collapsed} onToggle={onToggle} user={user} />
 
-      {/* Search */}
-      {!collapsed && (
-        <div className="p-3 border-b border-slate-100">
-          <div className="relative group">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors pointer-events-none"
-              size={14}
-            />
-            <input
-              ref={searchInputRef}
-              id="unitrack-sidebar-search-input"
-              type="search"
-              name="unitrack-sidebar-search-field"
-              placeholder="Search menu..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.currentTarget.focus()}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-              aria-label="Search menu"
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition placeholder:text-slate-400 pointer-events-auto relative z-10"
-            />
-            {!searchQuery && (
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-white border border-slate-200 rounded px-1 py-0.5 text-slate-400 pointer-events-none uppercase">
-                /
-              </kbd>
-            )}
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                aria-label="Clear search"
-              >
-                <X size={12} />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      <SidebarSearch
+        collapsed={collapsed}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        inputRef={searchInputRef}
+      />
 
       <NavSectionList
         filteredSections={filteredSections}
@@ -632,6 +595,97 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
   );
 }
 
+function SidebarHeader({
+  collapsed,
+  onToggle,
+  user,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+  user?: AppUser | null;
+}) {
+  return (
+    <div
+      className={`flex items-center h-14 border-b border-slate-100 px-3 ${collapsed ? "justify-center" : "justify-between"}`}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <AppLogo size={28} src={user?.consultancy?.logoUrl || undefined} />
+        {!collapsed && (
+          <span className="font-bold text-slate-800 text-base tracking-tight truncate">
+            {user?.consultancy?.name || "UniTrack"}
+          </span>
+        )}
+      </div>
+      {!collapsed && (
+        <button
+          type="button"
+          onClick={onToggle}
+          className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition duration-150"
+          aria-label="Collapse sidebar"
+        >
+          {" "}
+          <ChevronLeft size={16} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SidebarSearch({
+  collapsed,
+  searchQuery,
+  setSearchQuery,
+  inputRef,
+}: {
+  collapsed: boolean;
+  searchQuery: string;
+  setSearchQuery: (value: string) => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  if (collapsed) return null;
+  return (
+    <div className="p-3 border-b border-slate-100">
+      <div className="relative group">
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors pointer-events-none"
+          size={14}
+        />
+        <input
+          ref={inputRef}
+          id="unitrack-sidebar-search-input"
+          type="search"
+          name="unitrack-sidebar-search-field"
+          placeholder="Search menu..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.currentTarget.focus()}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
+          aria-label="Search menu"
+          className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition placeholder:text-slate-400 pointer-events-auto relative z-10"
+        />
+        {!searchQuery && (
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-white border border-slate-200 rounded px-1 py-0.5 text-slate-400 pointer-events-none uppercase">
+            /
+          </kbd>
+        )}
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            aria-label="Clear search"
+          >
+            <X size={12} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function NavSectionList({
   filteredSections,
   collapsed,
@@ -653,6 +707,7 @@ function NavSectionList({
   onToggleSection: (id: string) => void;
   searchActive: boolean;
 }) {
+  const collapsedSectionIdSet = new Set(collapsedSectionIds);
   return (
     <nav
       ref={navRef}
@@ -660,7 +715,7 @@ function NavSectionList({
       className="flex-1 overflow-y-auto py-3 px-2 scrollbar-thin"
     >
       {filteredSections.map((section) => {
-        const isCollapsed = collapsedSectionIds.includes(section.id);
+        const isCollapsed = collapsedSectionIdSet.has(section.id);
         const itemsVisible = collapsed || searchActive || !isCollapsed;
 
         return (
@@ -811,53 +866,12 @@ function UserBottomSection({
         </button>
       )}
 
-      <div className="relative">
-        <button
-          type="button"
-          aria-label="Settings"
-          onClick={() => setSettingsOpen(!settingsOpen)}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition duration-150 ${collapsed ? "justify-center" : ""} ${settingsOpen ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
-          title={collapsed ? "Settings" : undefined}
-        >
-          <Settings size={18} />
-          {!collapsed && <span>Settings</span>}
-        </button>
-
-        {settingsOpen && !collapsed && (
-          <div className="absolute left-full ml-2 top-0 w-48 bg-white rounded-xl border border-slate-200 shadow-lg z-50 animate-fade-in py-1">
-            <button
-              type="button"
-              onClick={() => {
-                router.push("/settings?tab=profile");
-                setSettingsOpen(false);
-              }}
-              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
-            >
-              <User size={14} /> My Profile
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                router.push("/settings?tab=roles");
-                setSettingsOpen(false);
-              }}
-              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
-            >
-              <Settings size={14} /> System Settings
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                router.push("/support");
-                setSettingsOpen(false);
-              }}
-              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
-            >
-              <HelpCircle size={14} /> Support Hub
-            </button>
-          </div>
-        )}
-      </div>
+      <SettingsMenu
+        collapsed={collapsed}
+        settingsOpen={settingsOpen}
+        setSettingsOpen={setSettingsOpen}
+        router={router}
+      />
 
       <Link
         href="/tickets"
@@ -883,76 +897,157 @@ function UserBottomSection({
         {!collapsed && <span>{isLoggingOut ? "Logging out..." : "Sign Out"}</span>}
       </button>
 
-      {!collapsed && (
-        <div className="mx-1 mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
-          {user?.role?.includes("Admin") ? (
-            <>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-600">Storage</span>
-                <span className="text-xs text-slate-400">68% used</span>
-              </div>
-              <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                <div className="h-full w-[68%] bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full" />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Your Plan
-                </span>
-                <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold">
-                  {user?.subscriptionPackage || "Basic"}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <p className="text-[10px] text-slate-500 font-medium">
-                  Expires:{" "}
-                  <span className="text-slate-700 font-bold">
-                    {user?.subscriptionExpiry
-                      ? new Date(user.subscriptionExpiry).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      : "Never"}
-                  </span>
-                </p>
-              </div>
-            </>
-          )}
+      {!collapsed && <PlanStatusCard user={user} />}
+
+      <UserIdentity
+        user={user}
+        userName={userName}
+        userRole={userRole}
+        userInitials={userInitials}
+        collapsed={collapsed}
+      />
+    </div>
+  );
+}
+
+function SettingsMenu({
+  collapsed,
+  settingsOpen,
+  setSettingsOpen,
+  router,
+}: {
+  collapsed: boolean;
+  settingsOpen: boolean;
+  setSettingsOpen: (v: boolean) => void;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const go = (href: string) => {
+    router.push(href);
+    setSettingsOpen(false);
+  };
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label="Settings"
+        onClick={() => setSettingsOpen(!settingsOpen)}
+        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition duration-150 ${collapsed ? "justify-center" : ""} ${settingsOpen ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
+        title={collapsed ? "Settings" : undefined}
+      >
+        <Settings size={18} />
+        {!collapsed && <span>Settings</span>}
+      </button>
+
+      {settingsOpen && !collapsed && (
+        <div className="absolute left-full ml-2 top-0 w-48 bg-white rounded-xl border border-slate-200 shadow-lg z-50 animate-fade-in py-1">
+          <button
+            type="button"
+            onClick={() => go("/settings?tab=profile")}
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+          >
+            <User size={14} /> My Profile
+          </button>
+          <button
+            type="button"
+            onClick={() => go("/settings?tab=roles")}
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
+          >
+            <Settings size={14} /> System Settings
+          </button>
+          <button
+            type="button"
+            onClick={() => go("/support")}
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors border-b border-slate-50"
+          >
+            <HelpCircle size={14} /> Support Hub
+          </button>
         </div>
       )}
+    </div>
+  );
+}
 
-      <div
-        className={`flex items-center gap-3 px-3 py-2 mt-1 ${collapsed ? "justify-center" : ""}`}
-      >
-        {user?.avatar &&
-        (user.avatar.startsWith("http") ||
-          user.avatar.startsWith("/") ||
-          user.avatar.startsWith("data:")) ? (
-          <div className="size-7 rounded-full overflow-hidden flex-shrink-0 relative">
-            <Image
-              src={user.avatar}
-              alt={userName}
-              width={28}
-              height={28}
-              className="object-cover size-full"
-              unoptimized
-            />
-          </div>
-        ) : (
-          <div className="size-7 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-            {userInitials}
-          </div>
-        )}
-        {!collapsed && (
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-slate-800 truncate">{userName}</p>
-            <p className="text-[10px] text-slate-400 truncate">{userRole}</p>
-          </div>
-        )}
+function PlanStatusCard({ user }: { user?: AppUser | null }) {
+  if (user?.role?.includes("Admin")) {
+    return (
+      <div className="mx-1 mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-slate-600">Storage</span>
+          <span className="text-xs text-slate-400">68% used</span>
+        </div>
+        <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+          <div className="h-full w-[68%] bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full" />
+        </div>
       </div>
+    );
+  }
+  return (
+    <div className="mx-1 mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          Your Plan
+        </span>
+        <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold">
+          {user?.subscriptionPackage || "Basic"}
+        </span>
+      </div>
+      <div className="flex flex-col gap-1">
+        <p className="text-[10px] text-slate-500 font-medium">
+          Expires:{" "}
+          <span className="text-slate-700 font-bold">
+            {user?.subscriptionExpiry
+              ? shortDateFormatter.format(new Date(user.subscriptionExpiry))
+              : "Never"}
+          </span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function UserIdentity({
+  user,
+  userName,
+  userRole,
+  userInitials,
+  collapsed,
+}: {
+  user?: AppUser | null;
+  userName: string;
+  userRole: string;
+  userInitials: string;
+  collapsed: boolean;
+}) {
+  const hasImage = Boolean(
+    user?.avatar &&
+    (user.avatar.startsWith("http") ||
+      user.avatar.startsWith("/") ||
+      user.avatar.startsWith("data:"))
+  );
+  return (
+    <div className={`flex items-center gap-3 px-3 py-2 mt-1 ${collapsed ? "justify-center" : ""}`}>
+      {hasImage && user?.avatar ? (
+        <div className="size-7 rounded-full overflow-hidden flex-shrink-0 relative">
+          <Image
+            src={user.avatar}
+            alt={userName}
+            width={28}
+            height={28}
+            className="object-cover size-full"
+            unoptimized
+          />
+        </div>
+      ) : (
+        <div className="size-7 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+          {userInitials}
+        </div>
+      )}
+      {!collapsed && (
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-slate-800 truncate">{userName}</p>
+          <p className="text-[10px] text-slate-400 truncate">{userRole}</p>
+        </div>
+      )}
     </div>
   );
 }

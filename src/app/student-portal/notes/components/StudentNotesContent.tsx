@@ -2,29 +2,10 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { Send, Loader2, ArrowLeft, MessageSquare, Trash2, StickyNote } from "lucide-react";
+import { Send, Loader2, ArrowLeft, MessageSquare, StickyNote } from "lucide-react";
+import NoteThread from "./NoteThread";
+import type { Note } from "./note-types";
 import { toast } from "sonner";
-
-interface Note {
-  id: string;
-  studentId: string;
-  content: string;
-  authorType: "staff" | "student";
-  authorName: string;
-  authorRole: string | null;
-  authorId: string | null;
-  parentId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const initials = (name: string) =>
-  name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
 const formatTime = (dateStr: string) => {
   const d = new Date(dateStr);
@@ -74,9 +55,12 @@ export default function StudentNotesContent() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [notes.length]);
 
+  const noteInFlightRef = useRef(false);
+
   const addNote = async () => {
     const content = noteText.trim();
-    if (!content || posting) return;
+    if (!content || noteInFlightRef.current) return;
+    noteInFlightRef.current = true;
     setPosting(true);
     try {
       const res = await fetch("/api/student-portal/notes", {
@@ -96,13 +80,15 @@ export default function StudentNotesContent() {
     } catch {
       toast.error("Error connecting to server");
     } finally {
+      noteInFlightRef.current = false;
       setPosting(false);
     }
   };
 
   const reply = async (parentId: string) => {
     const content = replyText.trim();
-    if (!content || posting) return;
+    if (!content || noteInFlightRef.current) return;
+    noteInFlightRef.current = true;
     setPosting(true);
     try {
       const res = await fetch("/api/student-portal/notes", {
@@ -123,6 +109,7 @@ export default function StudentNotesContent() {
     } catch {
       toast.error("Error connecting to server");
     } finally {
+      noteInFlightRef.current = false;
       setPosting(false);
     }
   };
@@ -182,6 +169,7 @@ export default function StudentNotesContent() {
             </p>
           </div>
           <textarea
+            aria-label="Ask a question or send an update to the team…"
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Ask a question or send an update to the team…"
@@ -208,148 +196,21 @@ export default function StudentNotesContent() {
               <p className="text-sm text-slate-400">No messages yet. Send the first one above!</p>
             </div>
           ) : (
-            topNotes.map((note) => {
-              const mine = note.authorType === "student";
-              const replies = repliesOf(note.id);
-              return (
-                <div key={note.id}>
-                  <div
-                    className={`p-3.5 rounded-2xl border ${
-                      mine
-                        ? "bg-indigo-600 text-white border-indigo-600 ml-10"
-                        : "bg-white text-slate-700 border-slate-200 shadow-sm mr-0"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`size-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
-                          mine ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-600"
-                        }`}
-                      >
-                        {initials(note.authorName)}
-                      </div>
-                      <p
-                        className={`text-xs font-semibold ${mine ? "text-indigo-100" : "text-slate-700"}`}
-                      >
-                        {mine ? "You" : note.authorName}
-                      </p>
-                      <span
-                        className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
-                          mine
-                            ? "bg-white/15 text-indigo-50"
-                            : "bg-indigo-50 text-indigo-600 border border-indigo-100"
-                        }`}
-                      >
-                        {mine ? "Student" : note.authorRole || "Staff"}
-                      </span>
-                      <span
-                        className={`text-[10px] ml-auto ${mine ? "text-indigo-200" : "text-slate-400"}`}
-                      >
-                        {formatTime(note.createdAt)}
-                      </span>
-                      {mine && (
-                        <button
-                          type="button"
-                          onClick={() => removeNote(note)}
-                          className={`p-1 rounded-lg ${mine ? "hover:bg-white/15" : "hover:bg-red-50"} ${mine ? "text-indigo-200" : "text-slate-400"} hover:text-red-500 transition-colors`}
-                          title="Delete"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
-                    </div>
-                    <p
-                      className={`mt-1.5 text-sm leading-relaxed whitespace-pre-wrap ${
-                        mine ? "text-white" : "text-slate-700"
-                      }`}
-                    >
-                      {note.content}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setReplyTarget(replyTarget === note.id ? null : note.id);
-                        setReplyText("");
-                      }}
-                      className={`mt-1 text-[11px] font-semibold ${
-                        mine
-                          ? "text-indigo-200 hover:text-white"
-                          : "text-indigo-600 hover:text-indigo-800"
-                      }`}
-                    >
-                      Reply
-                    </button>
-                  </div>
-
-                  {replyTarget === note.id && (
-                    <div className="mt-2 ml-8 flex items-start gap-2">
-                      <textarea
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        placeholder={`Reply to ${mine ? "the team" : note.authorName}…`}
-                        rows={2}
-                        autoFocus
-                        className="flex-1 px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => reply(note.id)}
-                        disabled={!replyText.trim() || posting}
-                        className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Send reply"
-                      >
-                        {posting ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          <Send size={16} />
-                        )}
-                      </button>
-                    </div>
-                  )}
-
-                  {replies.length > 0 && (
-                    <div className="mt-2 ml-8 space-y-2 border-l-2 border-indigo-100 pl-3">
-                      {replies.map((r) => {
-                        const rMine = r.authorType === "student";
-                        return (
-                          <div
-                            key={r.id}
-                            className={`p-3 rounded-xl border ${
-                              rMine
-                                ? "bg-indigo-50 border-indigo-100 text-slate-700"
-                                : "bg-white border-slate-200 text-slate-700 shadow-sm"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <p className="text-[11px] font-semibold text-slate-700">
-                                {rMine ? "You" : r.authorName}
-                              </p>
-                              <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
-                                {rMine ? "Student" : r.authorRole || "Staff"}
-                              </span>
-                              <span className="text-[10px] text-slate-400 ml-auto">
-                                {formatTime(r.createdAt)}
-                              </span>
-                              {rMine && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeNote(r)}
-                                  className="p-1 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={12} />
-                                </button>
-                              )}
-                            </div>
-                            <p className="mt-1 text-sm whitespace-pre-wrap">{r.content}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })
+            topNotes.map((note) => (
+              <NoteThread
+                key={note.id}
+                note={note}
+                replies={repliesOf(note.id)}
+                formatTime={formatTime}
+                replyTarget={replyTarget}
+                setReplyTarget={setReplyTarget}
+                replyText={replyText}
+                setReplyText={setReplyText}
+                posting={posting}
+                onReply={reply}
+                onRemove={removeNote}
+              />
+            ))
           )}
           <div ref={endRef} />
         </div>

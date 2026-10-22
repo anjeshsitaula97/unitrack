@@ -7,9 +7,7 @@ export default function DemoForm() {
 
   return (
     <div className="lg:col-span-5 bg-white/5 backdrop-blur-md p-6 lg:p-8 rounded-2xl space-y-4">
-      <div className="font-headline-sm text-[18px] text-white font-bold">
-        Schedule Personalized Agency Demo
-      </div>
+      <div className="font-headline-sm text-[18px] text-white font-bold">Book a Free Demo</div>
       {!submitted ? (
         <form
           className="space-y-3"
@@ -54,7 +52,7 @@ export default function DemoForm() {
                 className="block font-label-pill text-label-pill uppercase text-slate-400 mb-1"
                 htmlFor="demo-intake-hub"
               >
-                Primary Intake Hub
+                Main Office
               </label>
               <select
                 className="w-full px-3 py-2.5 rounded-xl bg-white/10 text-white font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
@@ -86,14 +84,13 @@ export default function DemoForm() {
             className="w-full mt-2 py-3 px-4 rounded-full bg-indigo-600 text-white font-label-btn text-label-btn font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-indigo-700 transition"
             type="submit"
           >
-            <span>Confirm Walkthrough Session</span>
+            <span>Book My Demo</span>
             <span className="material-symbols-outlined text-[16px]">send</span>
           </button>
         </form>
       ) : (
         <div className="p-4 rounded-xl bg-indigo-500/20 text-indigo-200 text-[14px] font-body-sm text-center">
-          Request received. A senior education solution consultant will WhatsApp you within 30
-          minutes.
+          Thanks! Our team will WhatsApp you within 30 minutes.
         </div>
       )}
     </div>

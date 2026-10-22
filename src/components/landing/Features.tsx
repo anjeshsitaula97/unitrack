@@ -1,46 +1,47 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
-import { Stagger, Reveal, Eyebrow, revealVariants } from "./motion";
+import { m } from "framer-motion";
+import { Stagger, Reveal, Eyebrow } from "./motion";
+import { revealVariants } from "./motion-tokens";
 
 const ParticleFlow = dynamic(() => import("./ParticleFlow"), { ssr: false });
 
 const PILLARS = [
   {
     icon: "hub",
-    title: "Omnichannel Lead & Walk-in CRM",
-    body: "Capture student queries automatically from Meta Ads, Google Forms, study expos, and Putalisadak/Kalyan walk-ins. Smart algorithms assign qualified leads to specific branch counselors in real time.",
-    highlight: "Zero lost inquiry guarantee",
+    title: "Lead & Walk-in CRM",
+    body: "Collect every student enquiry from Meta Ads, Google Forms, study expos, and office walk-ins. The system assigns each new lead to the right counselor straight away.",
+    highlight: "Never lose an enquiry",
   },
   {
     icon: "lock_clock",
-    title: "Digital Document Vault & AI Pre-Screening",
-    body: "Centralize SOPs, transcripts, IELTS scorecards, relationship certificates, and bank audit balance proofs. Built-in OCR checks verify validity and flag embassy red-flags instantly.",
+    title: "Document Vault & Pre-Screening",
+    body: "Keep SOPs, transcripts, IELTS scorecards, relationship certificates, and bank statements in one secure place. Built-in checks scan each file and point out possible embassy issues early.",
     highlight: "99.8% GTE compliance",
   },
   {
     icon: "public",
-    title: "Direct University Application Pipeline",
-    body: "Submit applications seamlessly to over 1,200+ universities and colleges across Australia (CRICOS), UK (UCAS/Direct), Canada (DLI), and the US (SEVP) with synchronized live statuses.",
-    highlight: "Fast-track admission desk",
+    title: "University Application Pipeline",
+    body: "Send applications to 1,200+ universities and colleges in Australia (CRICOS), the UK (UCAS/Direct), Canada (DLI), and the US (SEVP), and follow each one's live status.",
+    highlight: "Faster admissions desk",
   },
   {
     icon: "receipt_long",
-    title: "Multi-Branch & Sub-Agent Commission Engine",
-    body: "Manage multi-branch revenue splits, regional affiliate referrals, and sub-agent commission ledgers. Generate automated settlement invoices and payout records with complete transparency.",
-    highlight: "NepalPay & SWIFT reconciliation",
+    title: "Branch & Sub-Agent Commissions",
+    body: "Handle revenue splits across branches, affiliate referrals, and sub-agent commissions. Get automatic settlement invoices and clear payout records.",
+    highlight: "NepalPay & SWIFT ready",
   },
   {
     icon: "menu_book",
-    title: "Test Prep & Batch LMS (IELTS, PTE, TOEFL)",
-    body: "Schedule morning/evening batches, monitor student biometric attendances, grade mock tests, and upload diagnostic scorecards. Nurture high scorers into admission candidates automatically.",
-    highlight: "LMS & Mock test sync",
+    title: "Test Prep & Class Management",
+    body: "Plan IELTS, PTE, and TOEFL batches, track student attendance, grade mock tests, and upload scorecards. Turn top scorers into admission candidates automatically.",
+    highlight: "Classes & mock tests in sync",
   },
   {
     icon: "chat",
-    title: "Parent & Student WhatsApp Portal",
-    body: "Keep students and anxious parents in the loop at every milestone: Offer Received, GTE Clearance, Tuition Fee Remitted, and Visa Lodgement via official WhatsApp templates.",
+    title: "WhatsApp Portal for Students & Parents",
+    body: "Keep students and parents updated at every step: offer received, GTE cleared, tuition paid, and visa submitted &mdash; through official WhatsApp messages.",
     highlight: "WhatsApp Cloud API ready",
   },
 ];
@@ -49,32 +50,32 @@ const OPERATIONS = [
   {
     icon: "person_search",
     title: "Leads Management",
-    desc: "Capture enquiries from Meta Ads, walk-ins, website forms and sub-agents into one pipeline. Score, assign and chase every lead with automated follow-up reminders, stage tracking and conversion analytics.",
+    desc: "Bring enquiries from Meta Ads, walk-ins, website forms, and sub-agents into one list. Score, assign, and follow up on every lead with reminders, stage tracking, and conversion reports.",
     highlight: "No enquiry left behind",
   },
   {
     icon: "engineering",
     title: "HR & Payroll",
-    desc: "Run your whole team on one system: employee records, departments and designations, contract terms, leave balances and salary structures with a full audit trail on every change.",
-    highlight: "From onboarding to payday",
+    desc: "Run your whole team in one place: staff records, departments and roles, contracts, leave balances, and salary details, with a full history of every change.",
+    highlight: "From hiring to payday",
   },
   {
     icon: "fingerprint",
-    title: "E-Attendance",
-    desc: "Staff clock in and out with biometric, kiosk or mobile check-in. Daily timesheets, late/early flags, shift rosters and instant monthly attendance registers — no paper registers, no manual counting.",
-    highlight: "Real-time attendance registers",
+    title: "Attendance",
+    desc: "Staff check in and out with biometric, kiosk, or mobile. Get daily timesheets, late and early flags, shift rosters, and monthly attendance sheets &mdash; no paper registers.",
+    highlight: "Attendance updates live",
   },
   {
     icon: "receipt_long",
-    title: "Payslip Management",
-    desc: "Generate payslips automatically from attendance and salary rules. Handle allowances, deductions, tax and PF, then publish secure digital payslips employees can download any time.",
-    highlight: "One-click monthly payroll",
+    title: "Payslips",
+    desc: "Create payslips automatically from attendance and salary rules. Handle allowances, deductions, tax, and PF, then share secure digital payslips staff can download anytime.",
+    highlight: "Monthly payroll in one click",
   },
   {
     icon: "account_balance_wallet",
-    title: "Payments & Expense Management",
-    desc: "Track every rupee in and out — consultancy fees, commissions, vendor bills, office expenses and refunds. Categorised ledgers, payment records and expense reports that reconcile against your bank statement.",
-    highlight: "Books that always reconcile",
+    title: "Payments & Expenses",
+    desc: "Track every rupee in and out: consultancy fees, commissions, vendor bills, office expenses, and refunds. Categorised ledgers and reports that match your bank statement.",
+    highlight: "Books that always balance",
   },
 ];
 
@@ -92,7 +93,7 @@ function FeatureCard({
   index?: number;
 }) {
   return (
-    <motion.article
+    <m.article
       variants={revealVariants}
       whileHover={{ y: -4 }}
       transition={{ type: "spring", stiffness: 340, damping: 24 }}
@@ -119,7 +120,7 @@ function FeatureCard({
           <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
         </div>
       </div>
-    </motion.article>
+    </m.article>
   );
 }
 
@@ -135,14 +136,13 @@ export function Pillars() {
       />
       <div className="relative max-w-[1440px] mx-auto px-6 lg:px-12 space-y-12">
         <Reveal className="max-w-2xl space-y-4">
-          <Eyebrow>Enterprise Capabilities</Eyebrow>
+          <Eyebrow>Features</Eyebrow>
           <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-white">
-            Engineered Specifically for <span className="text-grad">Modern Education Agencies</span>
+            Made for <span className="text-grad">Study Abroad Agencies</span>
           </h2>
           <p className="font-body-lg text-body-lg text-slate-400">
-            Generic CRMs fail to understand GTE checks, IELTS score matrices, sub-agent commissions,
-            and embassy deadlines. UniTrack is designed from the ground up for international student
-            recruiters.
+            Most CRMs don&rsquo;t understand GTE checks, IELTS scores, sub-agent commissions, or
+            embassy deadlines. UniTrack is built for the way education consultancies actually work.
           </p>
         </Reveal>
 
@@ -170,14 +170,13 @@ export function Operations() {
 
       <div className="relative max-w-[1440px] mx-auto px-6 lg:px-12 space-y-12">
         <Reveal className="max-w-2xl space-y-4">
-          <Eyebrow>Back-Office Operations Suite</Eyebrow>
+          <Eyebrow>Back-Office Tools</Eyebrow>
           <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-white">
-            Leads, People and Money — <span className="text-grad">Managed in One Place</span>
+            Leads, People and Money &mdash; <span className="text-grad">All in One Place</span>
           </h2>
           <p className="font-body-lg text-body-lg text-slate-400">
-            Beyond student operations, UniTrack runs the business side of your consultancy: your
-            sales pipeline, your team&rsquo;s attendance and payroll, and every payment and expense
-            in your books.
+            Alongside student work, UniTrack also runs your business: your sales leads, your
+            team&rsquo;s attendance and payroll, and every payment and expense in your books.
           </p>
         </Reveal>
 

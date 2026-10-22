@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform, type Transition } from "framer-motion";
+import { m, useReducedMotion, useScroll, useTransform, type Transition } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { Counter, KineticHeadline, Reveal, Eyebrow } from "./motion";
@@ -11,8 +11,8 @@ const GlobeScene = dynamic(() => import("./GlobeScene"), { ssr: false });
 const SPRING: Transition = { type: "spring", stiffness: 320, damping: 26, mass: 0.9 };
 
 const METRICS = [
-  { to: 50, decimals: 0, suffix: "K+", label: "Students Processed", accent: false },
-  { to: 99.2, decimals: 1, suffix: "%", label: "Visa Accuracy Rate", accent: true },
+  { to: 50, decimals: 0, suffix: "K+", label: "Students Handled", accent: false },
+  { to: 99.2, decimals: 1, suffix: "%", label: "Visa Success Rate", accent: true },
   { to: 3.5, decimals: 1, suffix: "x", label: "Faster Offer Letters", accent: false },
   { to: 4, decimals: 0, suffix: "+", label: "Study Destinations (AU, UK, US, CA)", accent: false },
 ];
@@ -70,7 +70,7 @@ export default function Hero() {
         className="hidden lg:flex motion-float absolute left-[5%] top-[46%] items-center gap-2 rounded-full bg-white/[0.05] ring-1 ring-white/10 backdrop-blur-md px-4 py-2 text-[12px] font-semibold text-slate-300"
       >
         <span className="motion-pulse w-2 h-2 rounded-full bg-emerald-400" />
-        Live pipeline sync
+        Updates in real time
       </div>
       <div
         aria-hidden
@@ -78,10 +78,10 @@ export default function Hero() {
         style={{ animationDelay: "1.6s" }}
       >
         <span className="w-2 h-2 rounded-full bg-indigo-400" />
-        GTE engine · 99.8% pass
+        GTE checks · 99.8% pass
       </div>
 
-      <motion.div
+      <m.div
         className="relative max-w-[1440px] mx-auto px-6 lg:px-12"
         style={reduced ? undefined : { y: contentY, opacity: contentFade }}
       >
@@ -99,34 +99,33 @@ export default function Hero() {
             className="font-display-hero text-display-hero-mobile md:text-display-hero text-white tracking-tight"
             delay={0.18}
             parts={[
-              { text: "Supercharge Your Study Abroad Consultancy with" },
-              { text: "Intelligent Automation", className: "text-grad" },
+              { text: "Run Your Study Abroad Consultancy" },
+              { text: "From One Simple System", className: "text-grad" },
             ]}
           />
 
           <Reveal delay={0.55}>
             <p className="font-body-lg text-body-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
-              From walk-in lead capture and IELTS/PTE preparation batches to university offer
-              letters, document verification vaults, and commission payouts &mdash; UniTrack unites
-              your entire international education operations in one compliant platform.
+              Track every student from the first enquiry to their visa. Manage leads, IELTS and PTE
+              classes, offer letters, documents, and commission payments &mdash; all in one place.
             </p>
           </Reveal>
 
           <Reveal delay={0.66}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-              <motion.a
+              <m.a
                 href="#live-demo"
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.97 }}
                 transition={SPRING}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-label-btn text-label-btn px-7 py-3.5 rounded-full shadow-[0_20px_45px_-15px_rgba(99,102,241,0.75)] ring-1 ring-white/15 hover:from-indigo-400 hover:to-violet-400 transition-colors group"
               >
-                <span>Request an Agency Walkthrough</span>
+                <span>See a Live Demo</span>
                 <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
                   <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                 </div>
-              </motion.a>
-              <motion.a
+              </m.a>
+              <m.a
                 href="#crm-showcase"
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.97 }}
@@ -136,8 +135,8 @@ export default function Hero() {
                 <div className="w-5 h-5 rounded-full bg-indigo-500/25 ring-1 ring-indigo-400/40 flex items-center justify-center text-indigo-300">
                   <span className="material-symbols-outlined text-[14px]">play_arrow</span>
                 </div>
-                <span>Watch 3-Min Interactive Tour</span>
-              </motion.a>
+                <span>Take a Quick Tour</span>
+              </m.a>
             </div>
           </Reveal>
         </div>
@@ -150,8 +149,7 @@ export default function Hero() {
               className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-400/50 to-transparent"
             />
             <div className="text-center font-label-pill text-label-pill uppercase text-slate-500 tracking-wider mb-6">
-              Powering 80+ Premier Educational Consultancies Across Kathmandu, New Delhi, Sydney
-              &amp; Toronto
+              Trusted by 80+ Consultancies in Kathmandu, New Delhi, Sydney &amp; Toronto
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 text-center">
               {METRICS.map((m, i) => (
@@ -175,7 +173,7 @@ export default function Hero() {
             </div>
           </div>
         </Reveal>
-      </motion.div>
+      </m.div>
 
       {/* Scroll cue */}
       <div className="relative mt-12 flex flex-col items-center gap-1.5 text-slate-600">

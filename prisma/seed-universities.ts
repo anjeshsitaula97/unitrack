@@ -1143,36 +1143,34 @@ const universities = [
   },
 ];
 
-async function main() {
-  console.log("Seeding universities and courses...");
+async function seedUniversityCourses(uni: (typeof universities)[number]) {
+  const { courses, ...uniData } = uni;
 
-  for (const uni of universities) {
-    const { courses, ...uniData } = uni;
+  let university = await prisma.university.findFirst({ where: { name: uniData.name } });
 
-    let university = await prisma.university.findFirst({ where: { name: uniData.name } });
+  if (!university) {
+    university = await prisma.university.create({
+      data: {
+        ...uniData,
+        status: "Active",
+        isFeatured: false,
+        type: uniData.type || "Public",
+      },
+    });
+    console.log(`  Created university: ${university.name}`);
+  } else {
+    console.log(`  Skipped (exists): ${university.name}`);
+  }
 
-    if (!university) {
-      university = await prisma.university.create({
-        data: {
-          ...uniData,
-          status: "Active",
-          isFeatured: false,
-          type: uniData.type || "Public",
-        },
-      });
-      console.log(`  Created university: ${university.name}`);
-    } else {
-      console.log(`  Skipped (exists): ${university.name}`);
-    }
-
-    for (const course of courses) {
+  await Promise.all(
+    courses.map(async (course) => {
       const existing = await prisma.course.findFirst({
         where: { name: course.name, universityId: university.id },
       });
 
       if (existing) {
         console.log(`    Skipped (exists): ${course.name}`);
-        continue;
+        return;
       }
 
       const initials = course.name
@@ -1214,8 +1212,14 @@ async function main() {
       });
 
       console.log(`    Created course: ${course.name}`);
-    }
-  }
+    })
+  );
+}
+
+async function main() {
+  console.log("Seeding universities and courses...");
+
+  await Promise.all(universities.map(seedUniversityCourses));
 
   console.log("Done! All universities and courses seeded.");
 }

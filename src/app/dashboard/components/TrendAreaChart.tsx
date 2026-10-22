@@ -2,6 +2,9 @@
 
 import React from "react";
 import { LineChart as LineIcon } from "lucide-react";
+// This component is itself lazy-loaded via next/dynamic({ ssr: false }) by
+// EnrollmentTrendChart, so recharts is already fetched on demand.
+// eslint-disable-next-line react-doctor/prefer-dynamic-import
 import {
   XAxis,
   YAxis,

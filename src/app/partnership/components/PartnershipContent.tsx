@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -17,6 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import StatsStrip from "@/components/StatsStrip";
 import { COUNTRIES } from "@/lib/data/countries";
 import { getCountryFlag } from "@/lib/country-flags";
 
@@ -83,35 +84,38 @@ export default function PartnershipContent() {
   });
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     (async () => {
       setLoading(true);
       try {
         const [partnersRes, univRes] = await Promise.all([
-          fetch("/api/partners"),
-          fetch("/api/universities?perPage=500&status=Active"),
+          fetch("/api/partners", { signal: controller.signal }),
+          fetch("/api/universities?perPage=500&status=Active", { signal: controller.signal }),
         ]);
+        if (controller.signal.aborted) return;
         if (partnersRes.ok) {
           const p = await partnersRes.json();
-          if (!cancelled) setPartners(Array.isArray(p) ? p : []);
+          setPartners(Array.isArray(p) ? p : []);
         }
         if (univRes.ok) {
           const u = await univRes.json();
           const list = Array.isArray(u) ? u : u.data || [];
-          if (!cancelled) setUniversities(list);
+          setUniversities(list);
         }
       } catch {
+        if (controller.signal.aborted) return;
         toast.error("Failed to load partnership data");
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, []);
 
+  const addPartnerInFlightRef = useRef(false);
+
   const handleAddPartner = async () => {
+    if (addPartnerInFlightRef.current) return;
     if (!newPartner.name) {
       toast.error("Partner name is required");
       return;
@@ -120,6 +124,7 @@ export default function PartnershipContent() {
       toast.error("Select at least one country");
       return;
     }
+    addPartnerInFlightRef.current = true;
     try {
       const res = await fetch("/api/partners", {
         method: "POST",
@@ -144,6 +149,8 @@ export default function PartnershipContent() {
       }
     } catch {
       toast.error("Error adding partner");
+    } finally {
+      addPartnerInFlightRef.current = false;
     }
   };
 
@@ -396,7 +403,7 @@ export default function PartnershipContent() {
                 className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm font-black text-slate-700 transition"
               >
                 <option value="">Select a country...</option>
-                {COUNTRIES.filter((c) => !newPartner.countries.includes(c.name)).map((c) => (
+                {COUNTRIES.filter((c) => !new Set(newPartner.countries).has(c.name)).map((c) => (
                   <option key={c.name} value={c.name}>
                     {c.name}
                   </option>
@@ -420,21 +427,7 @@ export default function PartnershipContent() {
       )}
 
       {/* Stats strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        {stats.map((s) => (
-          <div key={s.id} className="card px-4 py-3 flex items-center gap-3">
-            <div
-              className={`size-8 rounded-lg ${s.bg} ${s.color} flex items-center justify-center flex-shrink-0`}
-            >
-              {s.icon}
-            </div>
-            <div>
-              <div className="text-xs text-slate-400 font-medium">{s.label}</div>
-              <div className={`text-lg font-bold ${s.color} font-tabular`}>{s.value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <StatsStrip stats={stats} />
 
       {/* Search + Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">

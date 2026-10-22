@@ -23,6 +23,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+const formatShortDate = (value: string | Date) => shortDateFormatter.format(new Date(value));
+
 interface Application {
   id: string;
   studentId: string;
@@ -75,8 +84,12 @@ export default function ApplicationsContent() {
     router.push(`/applications/${id}`);
   };
 
+  const deleteInFlight = useRef(false);
+
   const handleDelete = async () => {
+    if (deleteInFlight.current) return;
     if (!deletingId) return;
+    deleteInFlight.current = true;
     setDeleting(true);
     try {
       const res = await fetch(`/api/applications/${deletingId}`, { method: "DELETE" });
@@ -91,15 +104,16 @@ export default function ApplicationsContent() {
     } catch {
       toast.error("Failed to delete application");
     } finally {
+      deleteInFlight.current = false;
       setDeleting(false);
     }
   };
 
-  const fetchApplications = async () => {
+  const fetchApplications = async (signal?: AbortSignal) => {
     try {
       // Filtered/paginated client-side, so fetch the full set (the API defaults
       // to 20, which made anything past page 1 unreachable).
-      const res = await fetch("/api/applications?perPage=500");
+      const res = await fetch("/api/applications?perPage=500", { signal });
       if (res.ok) {
         const data = await res.json();
         setApplications(Array.isArray(data) ? data : data.data);
@@ -112,7 +126,24 @@ export default function ApplicationsContent() {
   };
 
   useEffect(() => {
-    fetchApplications();
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const res = await fetch("/api/applications?perPage=500", {
+          signal: controller.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setApplications(Array.isArray(data) ? data : data.data);
+        }
+      } catch (_err) {
+        if (controller.signal.aborted) return;
+        toast.error("Failed to load applications");
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    })();
+    return () => controller.abort();
   }, []);
 
   const filtered = useMemo(() => {
@@ -274,6 +305,7 @@ function ApplicationFilterBar({
       <div className="relative flex-1 w-full max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
         <input
+          aria-label="Search by student, university or course..."
           type="text"
           placeholder="Search by student, university or course..."
           value={searchQuery}
@@ -283,6 +315,7 @@ function ApplicationFilterBar({
       </div>
       <div className="flex items-center gap-2">
         <select
+          aria-label="Filter applications by status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -321,6 +354,7 @@ function ActionsDropdown({
   return (
     <div className="relative" ref={ref}>
       <button
+        aria-label="More options"
         type="button"
         onClick={() => setOpen(!open)}
         className="p-2 rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-600 transition border border-transparent hover:border-slate-100"
@@ -480,11 +514,7 @@ function ApplicationTable({
                     <div className="flex items-center gap-1.5 text-slate-500">
                       <Calendar size={12} />
                       <span className="text-xs font-medium">
-                        {new Date(app.appliedDate).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                        {formatShortDate(app.appliedDate)}
                       </span>
                     </div>
                   </td>

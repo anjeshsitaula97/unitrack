@@ -33,6 +33,7 @@ import {
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
+import TaskPriorityStatusFields from "@/components/TaskPriorityStatusFields";
 
 interface Task {
   id: string;
@@ -555,7 +556,7 @@ export default function VisaWorkflowDashboard({
             type="button"
             key={tab.id}
             onClick={() => setActiveTab(tab.id as "process" | "embassy" | "checklists" | "tasks")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium text-sm transition-all ${
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium text-sm transition-[color,background-color,border-color,box-shadow,transform,opacity] ${
               activeTab === tab.id
                 ? "bg-white text-indigo-600 shadow-sm font-semibold"
                 : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
@@ -580,7 +581,7 @@ export default function VisaWorkflowDashboard({
             <button
               type="button"
               onClick={() => setShowStageModal(true)}
-              className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-100"
+              className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-[color,background-color,border-color,box-shadow,transform,opacity] flex items-center gap-2 shadow-lg shadow-indigo-100"
             >
               <Plus size={16} /> New Stage
             </button>
@@ -613,7 +614,7 @@ export default function VisaWorkflowDashboard({
                         )}
 
                         {/* Stage Circle */}
-                        <div className="relative z-10 size-16 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200/50 mb-4 group-hover:shadow-xl group-hover:shadow-indigo-300/50 group-hover:scale-105 transition-all duration-300">
+                        <div className="relative z-10 size-16 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200/50 mb-4 group-hover:shadow-xl group-hover:shadow-indigo-300/50 group-hover:scale-105 transition-[color,background-color,border-color,box-shadow,transform,opacity] duration-300">
                           <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                           {(() => {
                             const Icon = [
@@ -630,18 +631,19 @@ export default function VisaWorkflowDashboard({
                           })()}
 
                           <button
+                            aria-label="Delete stage"
                             type="button"
                             onClick={() =>
                               deleteItem("/api/workflow-stages", stage.id, fetchStages)
                             }
-                            className="absolute -top-1.5 -right-1.5 p-1.5 bg-white shadow-md text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded-lg border border-slate-50 hover:scale-110 active:scale-90"
+                            className="absolute -top-1.5 -right-1.5 p-1.5 bg-white shadow-md text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-[color,background-color,border-color,box-shadow,transform,opacity] rounded-lg border border-slate-50 hover:scale-110 active:scale-90"
                           >
                             <Trash2 size={10} />
                           </button>
                         </div>
 
                         {/* Content Card */}
-                        <div className="px-3 py-4 rounded-2xl bg-white border border-slate-100 shadow-sm group-hover:shadow-lg group-hover:border-indigo-100 transition-all duration-300 w-full mx-auto relative overflow-hidden">
+                        <div className="px-3 py-4 rounded-2xl bg-white border border-slate-100 shadow-sm group-hover:shadow-lg group-hover:border-indigo-100 transition-[color,background-color,border-color,box-shadow,transform,opacity] duration-300 w-full mx-auto relative overflow-hidden">
                           <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5 group-hover:text-indigo-600 transition-colors">
                             {stage.name}
@@ -656,6 +658,7 @@ export default function VisaWorkflowDashboard({
                                 {subs.map((sub) => (
                                   <div key={sub.id} className="flex items-center gap-1.5 group/sub">
                                     <button
+                                      aria-label="Toggle subtask completion"
                                       type="button"
                                       onClick={() => toggleSubtask(stage.id, sub.id)}
                                       className={`size-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${sub.done ? "bg-emerald-500 border-emerald-500 text-white" : "border-slate-300 hover:border-indigo-400"}`}
@@ -668,9 +671,10 @@ export default function VisaWorkflowDashboard({
                                       {sub.title}
                                     </span>
                                     <button
+                                      aria-label="Delete subtask"
                                       type="button"
                                       onClick={() => deleteSubtask(stage.id, sub.id)}
-                                      className="text-slate-300 hover:text-red-500 opacity-0 group-hover/sub:opacity-100 transition-all"
+                                      className="text-slate-300 hover:text-red-500 opacity-0 group-hover/sub:opacity-100 transition-[color,background-color,border-color,box-shadow,transform,opacity]"
                                     >
                                       <Trash2 size={8} />
                                     </button>
@@ -682,6 +686,7 @@ export default function VisaWorkflowDashboard({
                           {addingSubtaskStageId === stage.id ? (
                             <div className="flex items-center gap-1 mt-2">
                               <input
+                                aria-label="Subtask title..."
                                 type="text"
                                 value={newSubtaskTitle}
                                 onChange={(e) => setNewSubtaskTitle(e.target.value)}
@@ -697,6 +702,7 @@ export default function VisaWorkflowDashboard({
                                 className="flex-1 px-2 py-1 text-[10px] border border-indigo-200 rounded-lg outline-none focus:ring-1 focus:ring-indigo-400"
                               />
                               <button
+                                aria-label="Add subtask"
                                 type="button"
                                 onClick={() => addSubtask(stage.id)}
                                 className="p-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
@@ -704,6 +710,7 @@ export default function VisaWorkflowDashboard({
                                 <Plus size={8} />
                               </button>
                               <button
+                                aria-label="Cancel adding subtask"
                                 type="button"
                                 onClick={() => {
                                   setAddingSubtaskStageId(null);
@@ -741,18 +748,20 @@ export default function VisaWorkflowDashboard({
 
                 {canScrollLeft && (
                   <button
+                    aria-label="Scroll stages left"
                     type="button"
                     onClick={() => scrollBy("left")}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 z-20 size-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-slate-100 flex items-center justify-center text-slate-600 hover:text-indigo-600 hover:bg-white transition-all"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-20 size-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-slate-100 flex items-center justify-center text-slate-600 hover:text-indigo-600 hover:bg-white transition-[color,background-color,border-color,box-shadow,transform,opacity]"
                   >
                     <ChevronLeft size={20} />
                   </button>
                 )}
                 {canScrollRight && (
                   <button
+                    aria-label="Scroll stages right"
                     type="button"
                     onClick={() => scrollBy("right")}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-20 size-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-slate-100 flex items-center justify-center text-slate-600 hover:text-indigo-600 hover:bg-white transition-all"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-20 size-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-slate-100 flex items-center justify-center text-slate-600 hover:text-indigo-600 hover:bg-white transition-[color,background-color,border-color,box-shadow,transform,opacity]"
                   >
                     <ChevronRight size={20} />
                   </button>
@@ -777,14 +786,14 @@ export default function VisaWorkflowDashboard({
               <button
                 type="button"
                 onClick={generateChecklistPDF}
-                className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-emerald-700 transition-all flex items-center gap-2 shadow-lg shadow-emerald-100"
+                className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-emerald-700 transition-[color,background-color,border-color,box-shadow,transform,opacity] flex items-center gap-2 shadow-lg shadow-emerald-100"
               >
                 <FileText size={16} /> Generate PDF
               </button>
               <button
                 type="button"
                 onClick={() => setShowChecklistModal(true)}
-                className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-100"
+                className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-[color,background-color,border-color,box-shadow,transform,opacity] flex items-center gap-2 shadow-lg shadow-indigo-100"
               >
                 <Plus size={16} /> Add Requirement
               </button>
@@ -840,8 +849,8 @@ export default function VisaWorkflowDashboard({
                         }
                         return descs.length > 0 ? (
                           <ul className="space-y-1">
-                            {descs.map((d: string, i: number) => (
-                              <li key={i} className="text-sm text-slate-500 flex items-start gap-2">
+                            {descs.map((d: string) => (
+                              <li key={d} className="text-sm text-slate-500 flex items-start gap-2">
                                 <span className="mt-1.5 size-1.5 rounded-full bg-slate-300 shrink-0" />
                                 {d}
                               </li>
@@ -883,7 +892,7 @@ export default function VisaWorkflowDashboard({
                             setDescriptionInput("");
                             setShowChecklistModal(true);
                           }}
-                          className="p-2 text-indigo-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-all"
+                          className="p-2 text-indigo-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-[color,background-color,border-color,box-shadow,transform,opacity]"
                           title="Edit requirement"
                         >
                           <Edit2 size={14} />
@@ -893,7 +902,7 @@ export default function VisaWorkflowDashboard({
                           onClick={() =>
                             deleteItem("/api/visa-checklists", item.id, fetchChecklists)
                           }
-                          className="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all"
+                          className="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-[color,background-color,border-color,box-shadow,transform,opacity]"
                           title="Delete requirement"
                         >
                           <Trash2 size={14} />
@@ -927,7 +936,7 @@ export default function VisaWorkflowDashboard({
             <button
               type="button"
               onClick={() => setShowEmbassyModal(true)}
-              className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-100"
+              className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-[color,background-color,border-color,box-shadow,transform,opacity] flex items-center gap-2 shadow-lg shadow-indigo-100"
             >
               <Edit2 size={16} /> {embassyDetail ? "Modify Records" : "Setup Embassy"}
             </button>
@@ -960,7 +969,7 @@ export default function VisaWorkflowDashboard({
                 {embassyDetail.address && (
                   <div className="group">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center text-white group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                      <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center text-white group-hover:bg-indigo-600 group-hover:text-white transition-[color,background-color,border-color,box-shadow,transform,opacity]">
                         <MapPin size={20} />
                       </div>
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -975,7 +984,7 @@ export default function VisaWorkflowDashboard({
                 {embassyDetail.phone && (
                   <div className="group">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center text-white group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                      <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center text-white group-hover:bg-indigo-600 group-hover:text-white transition-[color,background-color,border-color,box-shadow,transform,opacity]">
                         <Phone size={20} />
                       </div>
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -990,7 +999,7 @@ export default function VisaWorkflowDashboard({
                 {embassyDetail.email && (
                   <div className="group">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center text-white group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                      <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center text-white group-hover:bg-indigo-600 group-hover:text-white transition-[color,background-color,border-color,box-shadow,transform,opacity]">
                         <Mail size={20} />
                       </div>
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -1005,7 +1014,7 @@ export default function VisaWorkflowDashboard({
                 {embassyDetail.website && (
                   <div className="group">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center text-white group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                      <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center text-white group-hover:bg-indigo-600 group-hover:text-white transition-[color,background-color,border-color,box-shadow,transform,opacity]">
                         <Globe size={20} />
                       </div>
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -1029,7 +1038,7 @@ export default function VisaWorkflowDashboard({
                 {embassyDetail.workingHours && (
                   <div className="group">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center text-white group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                      <div className="size-10 bg-slate-50 rounded-xl flex items-center justify-center text-white group-hover:bg-indigo-600 group-hover:text-white transition-[color,background-color,border-color,box-shadow,transform,opacity]">
                         <Clock size={20} />
                       </div>
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -1058,7 +1067,7 @@ export default function VisaWorkflowDashboard({
               <button
                 type="button"
                 onClick={() => setShowEmbassyModal(true)}
-                className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-[color,background-color,border-color,box-shadow,transform,opacity] shadow-lg shadow-indigo-100"
               >
                 Configure Embassy
               </button>
@@ -1082,7 +1091,7 @@ export default function VisaWorkflowDashboard({
                 <button
                   type="button"
                   onClick={() => setTaskView("grid")}
-                  className={`p-2 rounded-lg transition-all ${taskView === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                  className={`p-2 rounded-lg transition-[color,background-color,border-color,box-shadow,transform,opacity] ${taskView === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
                   title="Kanban Board"
                 >
                   <LayoutGrid size={18} />
@@ -1090,7 +1099,7 @@ export default function VisaWorkflowDashboard({
                 <button
                   type="button"
                   onClick={() => setTaskView("list")}
-                  className={`p-2 rounded-lg transition-all ${taskView === "list" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                  className={`p-2 rounded-lg transition-[color,background-color,border-color,box-shadow,transform,opacity] ${taskView === "list" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
                   title="List View"
                 >
                   <List size={18} />
@@ -1099,7 +1108,7 @@ export default function VisaWorkflowDashboard({
               <button
                 type="button"
                 onClick={() => setShowTaskModal(true)}
-                className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-100"
+                className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-[color,background-color,border-color,box-shadow,transform,opacity] flex items-center gap-2 shadow-lg shadow-indigo-100"
               >
                 <Plus size={16} /> New Objective
               </button>
@@ -1144,7 +1153,7 @@ export default function VisaWorkflowDashboard({
                       {statusTasks.map((task) => (
                         <div
                           key={task.id}
-                          className="bg-white p-6 rounded-[1.75rem] shadow-sm border border-slate-100 hover:shadow-xl hover:border-indigo-100 transition-all group relative"
+                          className="bg-white p-6 rounded-[1.75rem] shadow-sm border border-slate-100 hover:shadow-xl hover:border-indigo-100 transition-[color,background-color,border-color,box-shadow,transform,opacity] group relative"
                         >
                           <div className="flex items-start justify-between mb-4">
                             <div
@@ -1161,9 +1170,10 @@ export default function VisaWorkflowDashboard({
                               {task.priority}
                             </div>
                             <button
+                              aria-label="Delete task"
                               type="button"
                               onClick={() => deleteItem("/api/tasks", task.id, fetchTasks)}
-                              className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                              className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-[color,background-color,border-color,box-shadow,transform,opacity]"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -1188,9 +1198,10 @@ export default function VisaWorkflowDashboard({
                             </div>
                             <div className="relative group/select">
                               <select
+                                aria-label="Task status"
                                 value={task.status}
                                 onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                                className="appearance-none text-[9px] font-black uppercase tracking-widest bg-slate-50 text-white hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-all outline-none cursor-pointer pr-6"
+                                className="appearance-none text-[9px] font-black uppercase tracking-widest bg-slate-50 text-white hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-[color,background-color,border-color,box-shadow,transform,opacity] outline-none cursor-pointer pr-6"
                               >
                                 {statuses.map((s) => (
                                   <option key={s} value={s}>
@@ -1279,9 +1290,10 @@ export default function VisaWorkflowDashboard({
                         <td className="px-6 py-4">
                           <div className="relative w-fit">
                             <select
+                              aria-label="Task status"
                               value={task.status}
                               onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                              className="appearance-none text-[9px] font-black uppercase tracking-widest bg-slate-100 text-white hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-all outline-none cursor-pointer pr-6"
+                              className="appearance-none text-[9px] font-black uppercase tracking-widest bg-slate-100 text-white hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-[color,background-color,border-color,box-shadow,transform,opacity] outline-none cursor-pointer pr-6"
                             >
                               {statuses.map((s) => (
                                 <option key={s} value={s}>
@@ -1307,9 +1319,10 @@ export default function VisaWorkflowDashboard({
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button
+                            aria-label="Delete task"
                             type="button"
                             onClick={() => deleteItem("/api/tasks", task.id, fetchTasks)}
-                            className="p-2 text-red-800 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                            className="p-2 text-red-800 hover:text-red-500 hover:bg-red-50 rounded-lg transition-[color,background-color,border-color,box-shadow,transform,opacity]"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -1330,6 +1343,7 @@ export default function VisaWorkflowDashboard({
       {showTaskModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
           <button
+            aria-label="Close task dialog"
             type="button"
             className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
             onClick={() => setShowTaskModal(false)}
@@ -1340,36 +1354,22 @@ export default function VisaWorkflowDashboard({
             </div>
             <form onSubmit={handleTaskSubmit} className="p-6 space-y-4">
               <input
+                aria-label="Task Title"
                 required
                 placeholder="Task Title"
                 value={taskForm.title}
                 onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-sm focus:border-indigo-500"
               />
-              <div className="grid grid-cols-2 gap-4">
-                <select
-                  value={taskForm.priority}
-                  onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}
-                  className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-sm text-slate-600"
-                >
-                  <option value="Low">Low Priority</option>
-                  <option value="Medium">Medium Priority</option>
-                  <option value="High">High Priority</option>
-                  <option value="Urgent">Urgent Priority</option>
-                </select>
-                <select
-                  value={taskForm.status}
-                  onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value })}
-                  className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-sm text-slate-600"
-                >
-                  {statuses.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <TaskPriorityStatusFields
+                priority={taskForm.priority}
+                status={taskForm.status}
+                statuses={statuses}
+                onPriorityChange={(priority) => setTaskForm({ ...taskForm, priority })}
+                onStatusChange={(status) => setTaskForm({ ...taskForm, status })}
+              />
               <textarea
+                aria-label="Description"
                 rows={3}
                 placeholder="Description"
                 value={taskForm.description}
@@ -1401,6 +1401,7 @@ export default function VisaWorkflowDashboard({
       {showEmbassyModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
           <button
+            aria-label="Close embassy dialog"
             type="button"
             className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
             onClick={() => setShowEmbassyModal(false)}
@@ -1414,6 +1415,7 @@ export default function VisaWorkflowDashboard({
               className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar"
             >
               <input
+                aria-label="Embassy/Consulate Name"
                 required
                 placeholder="Embassy/Consulate Name"
                 value={embassyForm.name}
@@ -1421,6 +1423,7 @@ export default function VisaWorkflowDashboard({
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-sm focus:border-indigo-500"
               />
               <input
+                aria-label="Address"
                 placeholder="Address"
                 value={embassyForm.address}
                 onChange={(e) => setEmbassyForm({ ...embassyForm, address: e.target.value })}
@@ -1428,12 +1431,14 @@ export default function VisaWorkflowDashboard({
               />
               <div className="grid grid-cols-2 gap-4">
                 <input
+                  aria-label="Phone"
                   placeholder="Phone"
                   value={embassyForm.phone}
                   onChange={(e) => setEmbassyForm({ ...embassyForm, phone: e.target.value })}
                   className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-sm focus:border-indigo-500"
                 />
                 <input
+                  aria-label="Email"
                   type="email"
                   placeholder="Email"
                   value={embassyForm.email}
@@ -1442,12 +1447,14 @@ export default function VisaWorkflowDashboard({
                 />
               </div>
               <input
+                aria-label="Website URL"
                 placeholder="Website URL"
                 value={embassyForm.website}
                 onChange={(e) => setEmbassyForm({ ...embassyForm, website: e.target.value })}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-sm focus:border-indigo-500"
               />
               <input
+                aria-label="Working Hours (e.g. Mon-Fri 9AM-4PM)"
                 placeholder="Working Hours (e.g. Mon-Fri 9AM-4PM)"
                 value={embassyForm.workingHours}
                 onChange={(e) => setEmbassyForm({ ...embassyForm, workingHours: e.target.value })}
@@ -1478,6 +1485,7 @@ export default function VisaWorkflowDashboard({
       {showChecklistModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
           <button
+            aria-label="Close checklist dialog"
             type="button"
             className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
             onClick={() => {
@@ -1495,30 +1503,40 @@ export default function VisaWorkflowDashboard({
             </div>
             <form onSubmit={handleChecklistSubmit} className="p-6 space-y-4">
               <input
+                aria-label="Document Name (e.g. Passport)"
                 required
                 placeholder="Document Name (e.g. Passport)"
                 value={checklistForm.title}
                 onChange={(e) => setChecklistForm({ ...checklistForm, title: e.target.value })}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-sm focus:border-indigo-500"
               />
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+              <div
+                role="group"
+                aria-labelledby="checklist-requirements-label"
+                className="space-y-2"
+              >
+                <span
+                  id="checklist-requirements-label"
+                  className="text-xs font-bold text-slate-500 uppercase tracking-widest"
+                >
                   Requirements
-                </label>
-                {checklistForm.descriptions.map((d, i) => (
+                </span>
+                {checklistForm.descriptions.map((d) => (
                   <div
-                    key={i}
+                    key={d}
                     className="flex items-center gap-2 bg-slate-50 rounded-xl px-4 py-2.5"
                   >
                     <span className="flex-1 text-sm text-slate-700">{d}</span>
                     <button
+                      aria-label="Remove checklist item"
                       type="button"
                       onClick={() => {
-                        const next = [...checklistForm.descriptions];
-                        next.splice(i, 1);
-                        setChecklistForm({ ...checklistForm, descriptions: next });
+                        setChecklistForm({
+                          ...checklistForm,
+                          descriptions: checklistForm.descriptions.filter((item) => item !== d),
+                        });
                       }}
-                      className="p-1 text-slate-300 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all shrink-0"
+                      className="p-1 text-slate-300 hover:text-red-500 rounded-lg hover:bg-red-50 transition-[color,background-color,border-color,box-shadow,transform,opacity] shrink-0"
                     >
                       <X size={14} />
                     </button>
@@ -1526,6 +1544,7 @@ export default function VisaWorkflowDashboard({
                 ))}
                 <div className="flex gap-2">
                   <input
+                    aria-label="Add a requirement..."
                     placeholder="Add a requirement..."
                     value={descriptionInput}
                     onChange={(e) => setDescriptionInput(e.target.value)}
@@ -1551,7 +1570,7 @@ export default function VisaWorkflowDashboard({
                       });
                       setDescriptionInput("");
                     }}
-                    className="px-4 py-2.5 bg-indigo-100 text-indigo-600 font-bold rounded-xl hover:bg-indigo-200 disabled:opacity-50 transition-all shrink-0"
+                    className="px-4 py-2.5 bg-indigo-100 text-indigo-600 font-bold rounded-xl hover:bg-indigo-200 disabled:opacity-50 transition-[color,background-color,border-color,box-shadow,transform,opacity] shrink-0"
                   >
                     Add
                   </button>
@@ -1601,6 +1620,7 @@ export default function VisaWorkflowDashboard({
       {pdfPreviewUrl && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
           <button
+            aria-label="Close PDF preview"
             type="button"
             className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
             onClick={() => {
@@ -1620,17 +1640,18 @@ export default function VisaWorkflowDashboard({
                 <a
                   href={pdfPreviewUrl}
                   download={`${country.replace(/\s+/g, "_")}_${visaType.replace(/\s+/g, "_")}_Checklist.pdf`}
-                  className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 text-sm"
+                  className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-[color,background-color,border-color,box-shadow,transform,opacity] flex items-center gap-2 text-sm"
                 >
                   <Download size={15} /> Download
                 </a>
                 <button
+                  aria-label="Close PDF preview"
                   type="button"
                   onClick={() => {
                     setPdfPreviewUrl(null);
                     URL.revokeObjectURL(pdfPreviewUrl);
                   }}
-                  className="p-2.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-all"
+                  className="p-2.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-[color,background-color,border-color,box-shadow,transform,opacity]"
                 >
                   <X size={18} />
                 </button>
@@ -1641,6 +1662,7 @@ export default function VisaWorkflowDashboard({
                 src={pdfPreviewUrl}
                 className="w-full h-full min-h-[70vh]"
                 title="Checklist PDF Preview"
+                sandbox="allow-scripts allow-popups allow-forms"
               />
             </div>
           </div>
@@ -1651,6 +1673,7 @@ export default function VisaWorkflowDashboard({
       {showStageModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
           <button
+            aria-label="Close stage dialog"
             type="button"
             className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
             onClick={() => setShowStageModal(false)}
@@ -1661,6 +1684,7 @@ export default function VisaWorkflowDashboard({
             </div>
             <form onSubmit={handleStageSubmit} className="p-6 space-y-4">
               <input
+                aria-label="Stage Name (e.g. Initial Assessment)"
                 required
                 placeholder="Stage Name (e.g. Initial Assessment)"
                 value={stageForm.name}
@@ -1668,6 +1692,7 @@ export default function VisaWorkflowDashboard({
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-sm focus:border-indigo-500"
               />
               <textarea
+                aria-label="Description"
                 rows={2}
                 placeholder="Description"
                 value={stageForm.description}

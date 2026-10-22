@@ -125,329 +125,263 @@ export async function POST(req: NextRequest) {
     const errors: string[] = [];
     const generatedPasswords: string[] = [];
 
+    type RowError = { code?: string; message?: string };
+    const describeDuplicateEmail = (err: RowError, row: CsvRow) =>
+      err.code === "P2002" ? `duplicate email "${row.email}"` : (err.message ?? "Unknown error");
+
+    const settleRows = async (
+      work: (row: CsvRow, i: number) => Promise<string | null>,
+      describeError: (err: RowError, row: CsvRow) => string = (err) =>
+        err.message ?? "Unknown error"
+    ) => {
+      const results = await Promise.allSettled(rows.map((row, i) => work(row, i)));
+      results.forEach((result, i) => {
+        if (result.status === "fulfilled") {
+          if (result.value === null) imported++;
+          else errors.push(`Row ${i + 2}: ${result.value}`);
+          return;
+        }
+        errors.push(`Row ${i + 2}: ${describeError(result.reason as RowError, rows[i])}`);
+      });
+    };
+
     switch (type) {
       case "students": {
         const bcrypt = await import("bcryptjs");
         const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-        for (let i = 0; i < rows.length; i++) {
-          try {
-            const row = rows[i];
-            if (!row.name || !row.email) {
-              errors.push(`Row ${i + 2}: name and email are required`);
-              continue;
-            }
-            let pw = "";
-            for (let j = 0; j < 10; j++) {
-              pw += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            const hashed = await bcrypt.hash(pw, 12);
-            await db.student.create({
+        await settleRows(async (row) => {
+          if (!row.name || !row.email) return "name and email are required";
+          let pw = "";
+          for (let j = 0; j < 10; j++) {
+            pw += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          const hashed = await bcrypt.hash(pw, 12);
+          await db.student.create({
+            data: {
+              name: row.name,
+              firstName: row.firstName || row.name?.split(" ")[0] || "",
+              lastName: row.lastName || row.name?.split(" ").slice(1).join(" ") || "",
+              email: row.email,
+              studentPassword: hashed,
+              phone: row.phone?.toString(),
+              whatsappNumber: row.whatsappNumber?.toString(),
+              gender: row.gender,
+              nationality: row.nationality,
+              passportNumber: row.passportNumber?.toString(),
+              studyLevel: row.studyLevel,
+              interestedCountry: row.interestedCountry,
+              status: row.status || "New Leads",
+              counselor: row.counselor,
+            },
+          });
+          await db.user
+            .create({
               data: {
                 name: row.name,
-                firstName: row.firstName || row.name?.split(" ")[0] || "",
-                lastName: row.lastName || row.name?.split(" ").slice(1).join(" ") || "",
                 email: row.email,
-                studentPassword: hashed,
-                phone: row.phone?.toString(),
-                whatsappNumber: row.whatsappNumber?.toString(),
-                gender: row.gender,
-                nationality: row.nationality,
-                passportNumber: row.passportNumber?.toString(),
-                studyLevel: row.studyLevel,
-                interestedCountry: row.interestedCountry,
-                status: row.status || "New Leads",
-                counselor: row.counselor,
+                password: hashed,
+                role: "Student",
+                status: "Active",
+                lastLogin: "Never",
               },
+            })
+            .catch(() => {
+              return db.user.update({ where: { email: row.email }, data: { password: hashed } });
             });
-            await db.user
-              .create({
-                data: {
-                  name: row.name,
-                  email: row.email,
-                  password: hashed,
-                  role: "Student",
-                  status: "Active",
-                  lastLogin: "Never",
-                },
-              })
-              .catch(() => {
-                return db.user.update({ where: { email: row.email }, data: { password: hashed } });
-              });
-            imported++;
-          } catch (err: unknown) {
-            const error = err as { code?: string; message?: string };
-            if (error.code === "P2002") {
-              errors.push(`Row ${i + 2}: duplicate email "${rows[i].email}"`);
-            } else {
-              errors.push(`Row ${i + 2}: ${error.message}`);
-            }
-          }
-        }
+          return null;
+        }, describeDuplicateEmail);
         break;
       }
 
       case "universities": {
-        for (let i = 0; i < rows.length; i++) {
-          try {
-            const row = rows[i];
-            if (!row.name) {
-              errors.push(`Row ${i + 2}: name is required`);
-              continue;
-            }
-            await db.university.create({
-              data: {
-                name: row.name,
-                shortName: row.shortName,
-                country: row.country || "",
-                city: row.city || "",
-                type: row.type || "Public",
-                website: row.website,
-                ranking: row.ranking ? parseInt(row.ranking.toString()) : null,
-                description: row.description,
-                status: row.status || "Active",
-              },
-            });
-            imported++;
-          } catch (err: unknown) {
-            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
-          }
-        }
+        await settleRows(async (row) => {
+          if (!row.name) return "name is required";
+          await db.university.create({
+            data: {
+              name: row.name,
+              shortName: row.shortName,
+              country: row.country || "",
+              city: row.city || "",
+              type: row.type || "Public",
+              website: row.website,
+              ranking: row.ranking ? parseInt(row.ranking.toString()) : null,
+              description: row.description,
+              status: row.status || "Active",
+            },
+          });
+          return null;
+        });
         break;
       }
 
       case "courses": {
-        for (let i = 0; i < rows.length; i++) {
-          try {
-            const row = rows[i];
-            if (!row.name || !row.universityId) {
-              errors.push(`Row ${i + 2}: name and universityId are required`);
-              continue;
-            }
-            await db.course.create({
-              data: {
-                name: row.name,
-                universityId: row.universityId as number,
-                faculty: row.faculty || "General",
-                degreeType: row.degreeType || "None",
-                initials: row.initials || row.name?.substring(0, 2).toUpperCase() || "",
-                level: row.level || "Undergraduate",
-                university:
-                  row.university as unknown as Prisma.UniversityCreateNestedOneWithoutCoursesInput,
-                credits: parseInt(String(row.credits)) || 0,
-                duration: row.duration || "0",
-                instructor: row.instructor || "TBA",
-                instructorEmail: row.instructorEmail || null,
-                description: row.description || "",
-                prerequisites: "[]",
-                quickFilters: "[]",
-                requirements: "[]",
-                language: row.language || "English",
-                mode: row.mode || "Online",
-                tuitionFee: row.tuitionFee?.toString() || "",
-                currency: row.currency || "",
-              } as unknown as Prisma.CourseCreateInput,
-            });
-            imported++;
-          } catch (err: unknown) {
-            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
-          }
-        }
+        await settleRows(async (row) => {
+          if (!row.name || !row.universityId) return "name and universityId are required";
+          await db.course.create({
+            data: {
+              name: row.name,
+              universityId: row.universityId as number,
+              faculty: row.faculty || "General",
+              degreeType: row.degreeType || "None",
+              initials: row.initials || row.name?.substring(0, 2).toUpperCase() || "",
+              level: row.level || "Undergraduate",
+              university:
+                row.university as unknown as Prisma.UniversityCreateNestedOneWithoutCoursesInput,
+              credits: parseInt(String(row.credits)) || 0,
+              duration: row.duration || "0",
+              instructor: row.instructor || "TBA",
+              instructorEmail: row.instructorEmail || null,
+              description: row.description || "",
+              prerequisites: "[]",
+              quickFilters: "[]",
+              requirements: "[]",
+              language: row.language || "English",
+              mode: row.mode || "Online",
+              tuitionFee: row.tuitionFee?.toString() || "",
+              currency: row.currency || "",
+            } as unknown as Prisma.CourseCreateInput,
+          });
+          return null;
+        });
         break;
       }
 
       case "leads": {
-        for (let i = 0; i < rows.length; i++) {
-          try {
-            const row = rows[i];
-            if (!row.name || !row.email) {
-              errors.push(`Row ${i + 2}: name and email are required`);
-              continue;
-            }
-            await db.lead.create({
-              data: {
-                name: row.name,
-                email: row.email,
-                phone: row.phone?.toString(),
-                source: row.source || "Website",
-                status: row.status || "New",
-                interestedCountry: row.interestedCountry,
-                counselor: row.counselor,
-              },
-            });
-            imported++;
-          } catch (err: unknown) {
-            const error = err as { code?: string; message?: string };
-            if (error.code === "P2002") {
-              errors.push(`Row ${i + 2}: duplicate email "${rows[i].email}"`);
-            } else {
-              errors.push(`Row ${i + 2}: ${error.message}`);
-            }
-          }
-        }
+        await settleRows(async (row) => {
+          if (!row.name || !row.email) return "name and email are required";
+          await db.lead.create({
+            data: {
+              name: row.name,
+              email: row.email,
+              phone: row.phone?.toString(),
+              source: row.source || "Website",
+              status: row.status || "New",
+              interestedCountry: row.interestedCountry,
+              counselor: row.counselor,
+            },
+          });
+          return null;
+        }, describeDuplicateEmail);
         break;
       }
 
       case "applications": {
-        for (let i = 0; i < rows.length; i++) {
-          try {
-            const row = rows[i];
-            if (!row.studentEmail || !row.universityId || !row.courseId) {
-              errors.push(`Row ${i + 2}: studentEmail, universityId, and courseId are required`);
-              continue;
-            }
-            const student = await db.student.findUnique({ where: { email: row.studentEmail } });
-            if (!student) {
-              errors.push(`Row ${i + 2}: student not found for email "${row.studentEmail}"`);
-              continue;
-            }
-            await db.application.create({
-              data: {
-                studentId: student.id,
-                universityId: row.universityId as number,
-                courseId: row.courseId as number,
-                status: row.status || "Submitted",
-              },
-            });
-            imported++;
-          } catch (err: unknown) {
-            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
+        await settleRows(async (row) => {
+          if (!row.studentEmail || !row.universityId || !row.courseId) {
+            return "studentEmail, universityId, and courseId are required";
           }
-        }
+          const student = await db.student.findUnique({ where: { email: row.studentEmail } });
+          if (!student) return `student not found for email "${row.studentEmail}"`;
+          await db.application.create({
+            data: {
+              studentId: student.id,
+              universityId: row.universityId as number,
+              courseId: row.courseId as number,
+              status: row.status || "Submitted",
+            },
+          });
+          return null;
+        });
         break;
       }
 
       case "payments": {
-        for (let i = 0; i < rows.length; i++) {
-          try {
-            const row = rows[i];
-            if (!row.studentEmail || !row.amount) {
-              errors.push(`Row ${i + 2}: studentEmail and amount are required`);
-              continue;
-            }
-            const student = await db.student.findUnique({ where: { email: row.studentEmail } });
-            if (!student) {
-              errors.push(`Row ${i + 2}: student not found for email "${row.studentEmail}"`);
-              continue;
-            }
-            await db.payment.create({
-              data: {
-                studentId: student.id,
-                amount: parseFloat(String(row.amount)),
-                currency: row.currency || "USD",
-                status: row.status || "Pending",
-                method: row.method,
-                date: row.date ? new Date(row.date) : new Date(),
-                description: row.description,
-              },
-            });
-            imported++;
-          } catch (err: unknown) {
-            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
-          }
-        }
+        await settleRows(async (row) => {
+          if (!row.studentEmail || !row.amount) return "studentEmail and amount are required";
+          const student = await db.student.findUnique({ where: { email: row.studentEmail } });
+          if (!student) return `student not found for email "${row.studentEmail}"`;
+          await db.payment.create({
+            data: {
+              studentId: student.id,
+              amount: parseFloat(String(row.amount)),
+              currency: row.currency || "USD",
+              status: row.status || "Pending",
+              method: row.method,
+              date: row.date ? new Date(row.date) : new Date(),
+              description: row.description,
+            },
+          });
+          return null;
+        });
         break;
       }
 
       case "staff": {
         const { generateStrongPassword } = await import("@/lib/password");
         const { validateRoleAssignment } = await import("@/lib/role-assignment");
-        for (let i = 0; i < rows.length; i++) {
-          try {
-            const row = rows[i];
-            if (!row.name || !row.email) {
-              errors.push(`Row ${i + 2}: name and email are required`);
-              continue;
-            }
-            // Roles arriving from a spreadsheet are untrusted input: without
-            // this check an Admin could import `role=Super Admin` and escalate
-            // past every guard enforced in the invite/edit flows.
-            const requestedRole = row.role?.trim() || "Staff";
-            const roleError = await validateRoleAssignment(session?.role, requestedRole);
-            if (roleError) {
-              errors.push(`Row ${i + 2}: ${roleError}`);
-              continue;
-            }
-            const bcrypt = await import("bcryptjs");
-            // No shared default credential: each imported account without an
-            // explicit password gets a unique random one (returned to the
-            // importer below) instead of the public "password123".
-            const plainPassword = row.password || generateStrongPassword();
-            const hashed = await bcrypt.hash(plainPassword, 12);
-            await db.user.create({
-              data: {
-                name: row.name,
-                email: row.email,
-                password: hashed,
-                role: requestedRole,
-                phone: row.phone?.toString(),
-                status: row.status || "Active",
-              },
+        const pendingPasswords: { i: number; message: string }[] = [];
+        await settleRows(async (row, i) => {
+          if (!row.name || !row.email) return "name and email are required";
+          // Roles arriving from a spreadsheet are untrusted input: without
+          // this check an Admin could import `role=Super Admin` and escalate
+          // past every guard enforced in the invite/edit flows.
+          const requestedRole = row.role?.trim() || "Staff";
+          const roleError = await validateRoleAssignment(session?.role, requestedRole);
+          if (roleError) return roleError;
+          const bcrypt = await import("bcryptjs");
+          // No shared default credential: each imported account without an
+          // explicit password gets a unique random one (returned to the
+          // importer below) instead of the public "password123".
+          const plainPassword = row.password || generateStrongPassword();
+          const hashed = await bcrypt.hash(plainPassword, 12);
+          await db.user.create({
+            data: {
+              name: row.name,
+              email: row.email,
+              password: hashed,
+              role: requestedRole,
+              phone: row.phone?.toString(),
+              status: row.status || "Active",
+            },
+          });
+          if (!row.password) {
+            pendingPasswords.push({
+              i,
+              message: `Row ${i + 2} (${row.email}): ${plainPassword}`,
             });
-            if (!row.password) {
-              generatedPasswords.push(`Row ${i + 2} (${row.email}): ${plainPassword}`);
-            }
-            imported++;
-          } catch (err: unknown) {
-            const error = err as { code?: string; message?: string };
-            if (error.code === "P2002")
-              errors.push(`Row ${i + 2}: duplicate email "${rows[i].email}"`);
-            else errors.push(`Row ${i + 2}: ${error.message}`);
           }
-        }
+          return null;
+        }, describeDuplicateEmail);
+        pendingPasswords.sort((a, b) => a.i - b.i);
+        generatedPasswords.push(...pendingPasswords.map((entry) => entry.message));
         break;
       }
 
       case "partners": {
-        for (let i = 0; i < rows.length; i++) {
-          try {
-            const row = rows[i];
-            if (!row.name) {
-              errors.push(`Row ${i + 2}: name is required`);
-              continue;
-            }
-            await db.partner.create({
-              data: {
-                name: row.name,
-                contactPerson: row.contactPerson,
-                email: row.email,
-                phone: row.phone?.toString(),
-                address: row.address,
-                description: row.description,
-              },
-            });
-            imported++;
-          } catch (err: unknown) {
-            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
-          }
-        }
+        await settleRows(async (row) => {
+          if (!row.name) return "name is required";
+          await db.partner.create({
+            data: {
+              name: row.name,
+              contactPerson: row.contactPerson,
+              email: row.email,
+              phone: row.phone?.toString(),
+              address: row.address,
+              description: row.description,
+            },
+          });
+          return null;
+        });
         break;
       }
 
       case "expenses": {
-        for (let i = 0; i < rows.length; i++) {
-          try {
-            const row = rows[i];
-            if (!row.category || !row.amount) {
-              errors.push(`Row ${i + 2}: category and amount are required`);
-              continue;
-            }
-            await db.expense.create({
-              data: {
-                category: row.category,
-                amount: parseFloat(String(row.amount)),
-                currency: row.currency || "USD",
-                date: row.date ? new Date(row.date) : new Date(),
-                description: row.description,
-                paidTo: row.paidTo,
-                method: row.method,
-                billNo: row.billNo?.toString(),
-              },
-            });
-            imported++;
-          } catch (err: unknown) {
-            errors.push(`Row ${i + 2}: ${(err as { message?: string }).message}`);
-          }
-        }
+        await settleRows(async (row) => {
+          if (!row.category || !row.amount) return "category and amount are required";
+          await db.expense.create({
+            data: {
+              category: row.category,
+              amount: parseFloat(String(row.amount)),
+              currency: row.currency || "USD",
+              date: row.date ? new Date(row.date) : new Date(),
+              description: row.description,
+              paidTo: row.paidTo,
+              method: row.method,
+              billNo: row.billNo?.toString(),
+            },
+          });
+          return null;
+        });
         break;
       }
 

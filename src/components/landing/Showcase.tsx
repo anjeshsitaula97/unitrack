@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { motion, useReducedMotion } from "framer-motion";
-import { DUR, EASE, Reveal, Eyebrow } from "./motion";
+import { m, useReducedMotion } from "framer-motion";
+import { Reveal, Eyebrow } from "./motion";
+import { DUR, EASE } from "./motion-tokens";
 import BrowserFrame from "./BrowserFrame";
 
 const CoreScene = dynamic(() => import("./CoreScene"), { ssr: false });
@@ -24,16 +25,16 @@ export default function Showcase() {
 
       <div className="relative max-w-[1440px] mx-auto px-6 lg:px-12 space-y-10">
         <Reveal className="max-w-3xl space-y-4">
-          <Eyebrow dot>Student CRM · Mission Control</Eyebrow>
+          <Eyebrow dot>Student CRM · Dashboard</Eyebrow>
           <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-white">
-            The Mission Control Console for <span className="text-grad">Study Abroad Ops</span>
+            One Dashboard for <span className="text-grad">All Your Student Work</span>
           </h2>
         </Reveal>
 
         {/* Scroll-linked tilt: frame starts pitched back and settles flat as it
             enters. reducedMotion="user" drops the transform and fades only. */}
         <div style={{ perspective: 1600 }}>
-          <motion.div
+          <m.div
             className="fw"
             initial={{
               opacity: 0,
@@ -54,7 +55,7 @@ export default function Showcase() {
                 className="object-cover object-top"
               />
             </BrowserFrame>
-          </motion.div>
+          </m.div>
         </div>
       </div>
     </section>

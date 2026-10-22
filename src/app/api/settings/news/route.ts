@@ -13,6 +13,7 @@ async function currentSettings() {
 export async function GET() {
   try {
     const session = await getSession();
+    if (!session) return apiError("Unauthorized", 401);
     const denied = checkPermission(session, "settings:read");
     if (denied) return denied;
 

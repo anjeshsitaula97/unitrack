@@ -50,13 +50,23 @@ export default function StudentApplications() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/student-portal/applications")
-      .then(safeJson)
-      .then((data) => {
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const res = await fetch("/api/student-portal/applications", {
+          signal: controller.signal,
+        });
+        const data = await safeJson(res);
+        if (controller.signal.aborted) return;
         setApplications(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      } catch {
+        if (controller.signal.aborted) return;
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void load();
+    return () => controller.abort();
   }, []);
 
   return (

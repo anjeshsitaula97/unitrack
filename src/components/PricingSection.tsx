@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import CheckoutModal from "@/components/CheckoutModal";
-import { Eyebrow, Reveal, Stagger, revealVariants } from "@/components/landing/motion";
+import { Eyebrow, Reveal, Stagger } from "@/components/landing/motion";
+import { revealVariants } from "@/components/landing/motion-tokens";
 import {
   ANNUAL_DISCOUNT,
   formatPrice,
@@ -18,22 +19,21 @@ const FAQS = [
   {
     question: "Can I cancel my subscription any time?",
     answer:
-      "Yes, you can cancel or downgrade your plan directly from your dashboard settings with no questions asked.",
+      "Yes. You can cancel or change your plan any time from your dashboard settings — no questions asked.",
   },
   {
     question: "Is there a limit on file storage?",
     answer:
-      "Limits vary based on your plan. Starter includes 75GB, Growth 200GB, and Enterprise 375GB of encrypted document vault storage.",
+      "It depends on your plan. Starter gives you 75GB, Growth 200GB, and Enterprise 375GB of secure document storage.",
   },
   {
-    question: "Do you offer migration from our current software?",
-    answer:
-      "Absolutely! Our team provides free data migration support for Growth and Enterprise customers.",
+    question: "Can you move our data from our current software?",
+    answer: "Yes. Our team moves your data for free on the Growth and Enterprise plans.",
   },
   {
     question: "Which destinations do you support?",
     answer:
-      "We support consultancies recruiting for 120+ study destinations, with specialized workflows for European countries like Italy, Austria, Germany, and Malta.",
+      "You can recruit for 120+ study destinations, with special workflows for European countries like Italy, Austria, Germany, and Malta.",
   },
 ];
 
@@ -49,13 +49,12 @@ export default function PricingSection() {
     >
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12 space-y-10">
         <Reveal className="text-center max-w-2xl mx-auto space-y-4">
-          <Eyebrow>Simple, Transparent Pricing</Eyebrow>
+          <Eyebrow>Simple Pricing</Eyebrow>
           <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-white">
-            Scale with <span className="text-grad">Agency Confidence</span>
+            Plans that <span className="text-grad">Grow With You</span>
           </h2>
           <p className="font-body-lg text-body-lg text-slate-400">
-            No hidden fees, no per-student commissions. Change your plan at any time and scale as
-            you grow.
+            No hidden fees and no commission per student. Change your plan any time as you grow.
           </p>
         </Reveal>
 
@@ -101,7 +100,7 @@ export default function PricingSection() {
             const price = getMonthlyEquivalent(plan, cycle);
 
             return (
-              <motion.div
+              <m.div
                 className={`fw group relative flex flex-col justify-between space-y-6 p-6 rounded-2xl overflow-hidden glow-hover ${
                   featured
                     ? "bg-gradient-to-b from-indigo-600/25 via-indigo-900/25 to-white/[0.04] text-white ring-2 ring-indigo-500/70 shadow-[0_0_80px_-24px_rgba(99,102,241,0.75)]"
@@ -174,7 +173,7 @@ export default function PricingSection() {
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   )}
                 </button>
-              </motion.div>
+              </m.div>
             );
           })}
         </Stagger>

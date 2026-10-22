@@ -16,6 +16,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
+import StatsStrip from "@/components/StatsStrip";
 import { COUNTRIES } from "@/lib/data/countries";
 import { getCountryFlag } from "@/lib/country-flags";
 
@@ -92,24 +93,6 @@ function hasCommission(item: {
   return toNumber(item.commissionValue) > 0 && !!item.commissionType;
 }
 
-async function fetchAll<T>(baseUrl: string): Promise<T[]> {
-  const all: T[] = [];
-  let page = 1;
-  let total = Infinity;
-  while (all.length < total) {
-    const separator = baseUrl.includes("?") ? "&" : "?";
-    const res = await fetch(`${baseUrl}${separator}page=${page}&perPage=100`);
-    if (!res.ok) throw new Error("Failed to fetch data");
-    const json = await res.json();
-    const list = (Array.isArray(json) ? json : json.data || []) as T[];
-    total = typeof json.total === "number" ? json.total : list.length;
-    all.push(...list);
-    if (list.length === 0 || all.length >= total) break;
-    page++;
-  }
-  return all;
-}
-
 export default function CommissionContent() {
   const [universities, setUniversities] = useState<Univ[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -120,27 +103,44 @@ export default function CommissionContent() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
+    const loadAll = async <T,>(baseUrl: string): Promise<T[]> => {
+      const all: T[] = [];
+      let page = 1;
+      let total = Infinity;
+      while (all.length < total) {
+        const separator = baseUrl.includes("?") ? "&" : "?";
+        const res = await fetch(`${baseUrl}${separator}page=${page}&perPage=100`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error("Failed to fetch data");
+        const json = await res.json();
+        const list = (Array.isArray(json) ? json : json.data || []) as T[];
+        total = typeof json.total === "number" ? json.total : list.length;
+        all.push(...list);
+        if (list.length === 0 || all.length >= total) break;
+        page++;
+      }
+      return all;
+    };
     (async () => {
       setLoading(true);
       try {
         const [univList, courseList] = await Promise.all([
-          fetchAll<Univ>("/api/universities?status=Active"),
-          fetchAll<Course>("/api/courses?status=Active"),
+          loadAll<Univ>("/api/universities?status=Active"),
+          loadAll<Course>("/api/courses?status=Active"),
         ]);
-        if (!cancelled) {
-          setUniversities(univList);
-          setCourses(courseList);
-        }
+        if (controller.signal.aborted) return;
+        setUniversities(univList);
+        setCourses(courseList);
       } catch {
-        if (!cancelled) toast.error("Failed to load commission data");
+        if (controller.signal.aborted) return;
+        toast.error("Failed to load commission data");
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, []);
 
   const commissioned = useMemo(() => universities.filter(hasCommission), [universities]);
@@ -413,26 +413,13 @@ export default function CommissionContent() {
       </div>
 
       {/* Stats strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        {stats.map((s) => (
-          <div key={s.id} className="card px-4 py-3 flex items-center gap-3">
-            <div
-              className={`size-8 rounded-lg ${s.bg} ${s.color} flex items-center justify-center flex-shrink-0`}
-            >
-              {s.icon}
-            </div>
-            <div>
-              <div className="text-xs text-slate-400 font-medium">{s.label}</div>
-              <div className={`text-lg font-bold ${s.color} font-tabular`}>{s.value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <StatsStrip stats={stats} />
 
       {/* Search */}
       <div className="relative flex-1 min-w-[260px] max-w-sm mb-4">
         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
+          aria-label="Search universities, courses, partners, currencies..."
           type="text"
           placeholder="Search universities, courses, partners, currencies..."
           value={search}
@@ -671,10 +658,15 @@ function CommissionModal({
         </div>
 
         <div className="mb-4">
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+          <label
+            htmlFor="commission-university"
+            className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5"
+          >
             University <span className="text-red-500">*</span>
           </label>
           <select
+            id="commission-university"
+            aria-label="University"
             value={univId}
             onChange={(e) => handleUnivChange(e.target.value)}
             className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition font-medium"
@@ -690,10 +682,15 @@ function CommissionModal({
 
         {univId && (
           <div className="mb-4">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+            <label
+              htmlFor="commission-course"
+              className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5"
+            >
               Course <span className="text-slate-300 font-medium normal-case">(optional)</span>
             </label>
             <select
+              id="commission-course"
+              aria-label="Course"
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
               className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition font-medium"
@@ -715,10 +712,14 @@ function CommissionModal({
 
         {univId && !isCourseLevel && (
           <div className="mb-4">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+            <label
+              htmlFor="fld-number"
+              className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5"
+            >
               Partnership Amount
             </label>
             <input
+              id="fld-number"
               type="number"
               step="any"
               placeholder="e.g. 5000 (optional)"
@@ -732,10 +733,17 @@ function CommissionModal({
         {univId && (
           <>
             <div className="mb-4">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+              <span
+                id="commission-type-label"
+                className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5"
+              >
                 Commission Type
-              </label>
-              <div className="grid grid-cols-3 gap-2">
+              </span>
+              <div
+                role="group"
+                aria-labelledby="commission-type-label"
+                className="grid grid-cols-3 gap-2"
+              >
                 {(["Percentage", "Flat", "None"] as const).map((opt) => (
                   <button
                     key={opt}
@@ -766,11 +774,15 @@ function CommissionModal({
             {commissionType !== "None" && (
               <>
                 <div className="mb-4">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                  <label
+                    htmlFor="fld-number-2"
+                    className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5"
+                  >
                     Commission Value
                   </label>
                   <div className="relative">
                     <input
+                      id="fld-number-2"
                       type="number"
                       step="any"
                       placeholder={
@@ -787,10 +799,14 @@ function CommissionModal({
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                  <label
+                    htmlFor="fld-text"
+                    className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5"
+                  >
                     Currency
                   </label>
                   <input
+                    id="fld-text"
                     type="text"
                     placeholder="e.g. USD"
                     value={commissionCurrency}

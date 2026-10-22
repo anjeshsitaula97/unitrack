@@ -50,6 +50,7 @@ export default function TrashContent() {
       if (typeFilter) params.set("type", typeFilter);
       if (search) params.set("search", search);
       const res = await fetch(`/api/trash?${params.toString()}`);
+      if (!res.ok) throw new Error(`Failed to load trash: ${res.status}`);
       const data = await res.json();
       setItems(data.items || []);
       setTotal(data.total || 0);
@@ -108,8 +109,12 @@ export default function TrashContent() {
                   return;
                 try {
                   const res = await fetch("/api/trash/empty", { method: "POST" });
+                  if (!res.ok) {
+                    toast.error("Failed to empty recycle bin");
+                    return;
+                  }
                   const data = await res.json().catch(() => null);
-                  if (res.ok && (!data || data.failed === 0)) {
+                  if (!data || data.failed === 0) {
                     toast.success(
                       data?.purged
                         ? `Recycle bin emptied (${data.purged} deleted)`
@@ -141,6 +146,7 @@ export default function TrashContent() {
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
+aria-label="Search trash..."
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}

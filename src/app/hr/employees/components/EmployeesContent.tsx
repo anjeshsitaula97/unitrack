@@ -6,8 +6,6 @@ import {
   Plus,
   Edit2,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
   Users,
   Briefcase,
   Building2,
@@ -19,6 +17,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import Pagination from "@/components/Pagination";
 import Link from "next/link";
 
 interface EmployeeUser {
@@ -155,9 +154,29 @@ export default function EmployeesContent() {
   };
 
   useEffect(() => {
-    queueMicrotask(() => {
-      fetchData();
-    });
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const [empRes, deptRes, desigRes, branchRes] = await Promise.all([
+          fetch("/api/hr/employees", { signal: controller.signal }),
+          fetch("/api/hr/departments", { signal: controller.signal }),
+          fetch("/api/hr/designations", { signal: controller.signal }),
+          fetch("/api/branches", { signal: controller.signal }),
+        ]);
+        if (controller.signal.aborted) return;
+        if (empRes.ok) setEmployees(await empRes.json());
+        if (deptRes.ok) setDepartments(await deptRes.json());
+        if (desigRes.ok) setDesignations(await desigRes.json());
+        if (branchRes.ok) setBranches(await branchRes.json());
+      } catch {
+        if (controller.signal.aborted) return;
+        toast.error("Failed to load data");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void load();
+    return () => controller.abort();
   }, []);
 
   const openAdd = () => {
@@ -404,6 +423,7 @@ function EmployeeTableCard({
         <div className="relative flex-1 min-w-[200px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
+            aria-label="Search by name, ID, or email..."
             type="text"
             placeholder="Search by name, ID, or email..."
             value={search}
@@ -534,39 +554,292 @@ function EmployeeTableCard({
         </table>
       </div>
 
-      <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
-        <p className="text-xs text-slate-500">
-          Showing {(page - 1) * perPage + 1} to {Math.min(page * perPage, filtered.length)} of{" "}
-          {filtered.length}
-        </p>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="p-1.5 rounded border border-slate-200 disabled:opacity-50"
-            aria-label="Previous page"
+      <Pagination
+        page={page}
+        perPage={perPage}
+        total={filtered.length}
+        totalPages={totalPages}
+        onPrev={() => setPage((p) => Math.max(1, p - 1))}
+        onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+      />
+    </div>
+  );
+}
+
+function EmployeeDetailsFields({
+  form,
+  setForm,
+  departments,
+  designations,
+  branches,
+}: {
+  form: EmployeeForm;
+  setForm: React.Dispatch<React.SetStateAction<EmployeeForm>>;
+  departments: DepartmentOption[] | undefined;
+  designations: DesignationOption[] | undefined;
+  branches: BranchOption[] | undefined;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label
+            htmlFor="emp-employeeId"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
           >
-            <ChevronLeft size={14} />
-          </button>
-          <span className="text-xs font-bold px-3">
-            Page {page} of {totalPages || 1}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages || totalPages === 0}
-            className="p-1.5 rounded border border-slate-200 disabled:opacity-50"
-            aria-label="Next page"
+            Employee ID
+          </label>
+          <input
+            id="emp-employeeId"
+            type="text"
+            value={form.employeeId}
+            onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
+            placeholder="EMP-001"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="emp-phone"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
           >
-            <ChevronRight size={14} />
-          </button>
+            Phone
+          </label>
+          <input
+            id="emp-phone"
+            type="text"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            placeholder="+1 555-0000"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="emp-gender"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
+          >
+            Gender
+          </label>
+          <select
+            id="emp-gender"
+            value={form.gender}
+            onChange={(e) => setForm({ ...form, gender: e.target.value })}
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
+          >
+            <option value="">Select…</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="emp-hireDate"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
+          >
+            Hire Date
+          </label>
+          <input
+            id="emp-hireDate"
+            type="date"
+            value={form.hireDate}
+            onChange={(e) => setForm({ ...form, hireDate: e.target.value })}
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="emp-employmentType"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
+          >
+            Employment Type
+          </label>
+          <select
+            id="emp-employmentType"
+            value={form.employmentType}
+            onChange={(e) => setForm({ ...form, employmentType: e.target.value })}
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
+          >
+            <option value="Full-Time">Full-Time</option>
+            <option value="Part-Time">Part-Time</option>
+            <option value="Contract">Contract</option>
+            <option value="Intern">Intern</option>
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="emp-basicSalary"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
+          >
+            Basic Salary ($)
+          </label>
+          <input
+            id="emp-basicSalary"
+            type="number"
+            value={form.basicSalary}
+            onChange={(e) => setForm({ ...form, basicSalary: e.target.value })}
+            placeholder="50000"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label
+            htmlFor="emp-departmentId"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
+          >
+            Department
+          </label>
+          <select
+            id="emp-departmentId"
+            value={form.departmentId}
+            onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
+          >
+            <option value="">None</option>
+            {(departments ?? []).map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="emp-designationId"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
+          >
+            Designation
+          </label>
+          <select
+            id="emp-designationId"
+            value={form.designationId}
+            onChange={(e) => setForm({ ...form, designationId: e.target.value })}
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
+          >
+            <option value="">None</option>
+            {(designations ?? []).map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.title}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="emp-branchId"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
+          >
+            Branch
+          </label>
+          <select
+            id="emp-branchId"
+            value={form.branchId}
+            onChange={(e) => setForm({ ...form, branchId: e.target.value })}
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
+          >
+            <option value="">None (Main Office)</option>
+            {(() => {
+              const result = [];
+              for (const b of branches ?? []) {
+                if (b.status === "Active")
+                  result.push(
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  );
+              }
+              return result;
+            })()}
+          </select>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function EmployeeBankFields({
+  form,
+  setForm,
+}: {
+  form: EmployeeForm;
+  setForm: React.Dispatch<React.SetStateAction<EmployeeForm>>;
+}) {
+  return (
+    <div className="border-t border-slate-100 pt-4">
+      <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Bank & Financial Info</h4>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label
+            htmlFor="emp-bankName"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
+          >
+            Bank Name
+          </label>
+          <input
+            id="emp-bankName"
+            type="text"
+            value={form.bankName}
+            onChange={(e) => setForm({ ...form, bankName: e.target.value })}
+            placeholder="Bank of America"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="emp-bankAccount"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
+          >
+            Account No.
+          </label>
+          <input
+            id="emp-bankAccount"
+            type="text"
+            value={form.bankAccount}
+            onChange={(e) => setForm({ ...form, bankAccount: e.target.value })}
+            placeholder="XXXX-XXXX-XXXX"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="emp-panNumber"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
+          >
+            PAN / Tax ID
+          </label>
+          <input
+            id="emp-panNumber"
+            type="text"
+            value={form.panNumber}
+            onChange={(e) => setForm({ ...form, panNumber: e.target.value })}
+            placeholder="ABCDE1234F"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="emp-emergencyContact"
+            className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
+          >
+            Emergency Contact
+          </label>
+          <input
+            id="emp-emergencyContact"
+            type="text"
+            value={form.emergencyContact}
+            onChange={(e) => setForm({ ...form, emergencyContact: e.target.value })}
+            placeholder="Jane Doe"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
+          />
         </div>
       </div>
     </div>
   );
 }
-
 function EmployeeFormModal({
   editing,
   submitting,
@@ -632,254 +905,15 @@ function EmployeeFormModal({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="emp-employeeId"
-                className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-              >
-                Employee ID
-              </label>
-              <input
-                id="emp-employeeId"
-                type="text"
-                value={form.employeeId}
-                onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
-                placeholder="EMP-001"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="emp-phone"
-                className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-              >
-                Phone
-              </label>
-              <input
-                id="emp-phone"
-                type="text"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="+1 555-0000"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="emp-gender"
-                className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-              >
-                Gender
-              </label>
-              <select
-                id="emp-gender"
-                value={form.gender}
-                onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
-              >
-                <option value="">Select…</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="emp-hireDate"
-                className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-              >
-                Hire Date
-              </label>
-              <input
-                id="emp-hireDate"
-                type="date"
-                value={form.hireDate}
-                onChange={(e) => setForm({ ...form, hireDate: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="emp-employmentType"
-                className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-              >
-                Employment Type
-              </label>
-              <select
-                id="emp-employmentType"
-                value={form.employmentType}
-                onChange={(e) => setForm({ ...form, employmentType: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
-              >
-                <option value="Full-Time">Full-Time</option>
-                <option value="Part-Time">Part-Time</option>
-                <option value="Contract">Contract</option>
-                <option value="Intern">Intern</option>
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="emp-basicSalary"
-                className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-              >
-                Basic Salary ($)
-              </label>
-              <input
-                id="emp-basicSalary"
-                type="number"
-                value={form.basicSalary}
-                onChange={(e) => setForm({ ...form, basicSalary: e.target.value })}
-                placeholder="50000"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
-              />
-            </div>
-          </div>
+          <EmployeeDetailsFields
+            form={form}
+            setForm={setForm}
+            departments={departments}
+            designations={designations}
+            branches={branches}
+          />
 
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label
-                htmlFor="emp-departmentId"
-                className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-              >
-                Department
-              </label>
-              <select
-                id="emp-departmentId"
-                value={form.departmentId}
-                onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
-              >
-                <option value="">None</option>
-                {(departments ?? []).map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="emp-designationId"
-                className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-              >
-                Designation
-              </label>
-              <select
-                id="emp-designationId"
-                value={form.designationId}
-                onChange={(e) => setForm({ ...form, designationId: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
-              >
-                <option value="">None</option>
-                {(designations ?? []).map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="emp-branchId"
-                className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-              >
-                Branch
-              </label>
-              <select
-                id="emp-branchId"
-                value={form.branchId}
-                onChange={(e) => setForm({ ...form, branchId: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm appearance-none"
-              >
-                <option value="">None (Main Office)</option>
-                {(() => {
-                  const result = [];
-                  for (const b of branches ?? []) {
-                    if (b.status === "Active")
-                      result.push(
-                        <option key={b.id} value={b.id}>
-                          {b.name}
-                        </option>
-                      );
-                  }
-                  return result;
-                })()}
-              </select>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100 pt-4">
-            <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">
-              Bank & Financial Info
-            </h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="emp-bankName"
-                  className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-                >
-                  Bank Name
-                </label>
-                <input
-                  id="emp-bankName"
-                  type="text"
-                  value={form.bankName}
-                  onChange={(e) => setForm({ ...form, bankName: e.target.value })}
-                  placeholder="Bank of America"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="emp-bankAccount"
-                  className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-                >
-                  Account No.
-                </label>
-                <input
-                  id="emp-bankAccount"
-                  type="text"
-                  value={form.bankAccount}
-                  onChange={(e) => setForm({ ...form, bankAccount: e.target.value })}
-                  placeholder="XXXX-XXXX-XXXX"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="emp-panNumber"
-                  className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-                >
-                  PAN / Tax ID
-                </label>
-                <input
-                  id="emp-panNumber"
-                  type="text"
-                  value={form.panNumber}
-                  onChange={(e) => setForm({ ...form, panNumber: e.target.value })}
-                  placeholder="ABCDE1234F"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="emp-emergencyContact"
-                  className="block text-xs font-bold text-slate-500 uppercase mb-1.5"
-                >
-                  Emergency Contact
-                </label>
-                <input
-                  id="emp-emergencyContact"
-                  type="text"
-                  value={form.emergencyContact}
-                  onChange={(e) => setForm({ ...form, emergencyContact: e.target.value })}
-                  placeholder="Jane Doe"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
-                />
-              </div>
-            </div>
-          </div>
+          <EmployeeBankFields form={form} setForm={setForm} />
 
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">

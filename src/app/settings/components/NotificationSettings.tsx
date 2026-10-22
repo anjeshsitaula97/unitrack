@@ -45,7 +45,10 @@ export default function NotificationSettings() {
   useEffect(() => {
     const ac = new AbortController();
     fetch("/api/settings/news", { signal: ac.signal })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Failed to load news setting: ${res.status}`);
+        return res.json();
+      })
       .then((data) => setShowNewsOnLogin(data?.showNewsOnLogin !== false))
       .catch(() => {})
       .finally(() => setNewsSettingLoaded(true));

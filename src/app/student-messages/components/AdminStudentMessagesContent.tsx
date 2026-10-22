@@ -1,38 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { MessageSquare, Send, Loader2, Search, GraduationCap } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { safeJson } from "@/lib/fetch-client";
-
-interface Conversation {
-  id: string;
-  studentId: string;
-  staffId: string;
-  subject: string | null;
-  lastMessage: string | null;
-  lastMessageAt: string | null;
-  updatedAt: string;
-  student: { id: string; name: string; email: string; photoUrl: string | null };
-  staff: { id: string; name: string; email: string; role: string };
-  messages: { content: string; createdAt: string }[];
-}
-
-interface StudentUser {
-  id: string;
-  name: string;
-  email: string;
-  photoUrl: string | null;
-  status: string;
-}
-
-interface Message {
-  id: string;
-  conversationId: string;
-  senderId: string;
-  content: string;
-  read: boolean;
-  createdAt: string;
-}
+import ChatPanel from "./ChatPanel";
+import ConversationSidebar from "./ConversationSidebar";
+import type { Conversation, Message, StudentUser } from "./chat-types";
 
 export default function AdminStudentMessagesContent() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -66,21 +39,31 @@ export default function AdminStudentMessagesContent() {
     } catch {}
   };
 
-  const fetchConversationsRef = useRef(fetchConversations);
   const fetchMessagesRef = useRef(fetchMessages);
 
   useEffect(() => {
-    fetch("/api/auth/me", { credentials: "include" })
-      .then(safeJson)
-      .then((d) => {
-        if (d.id) setSessionId(d.id);
-      })
-      .catch(() => {});
-    fetchConversationsRef.current();
-    fetch("/api/student-messages/students")
-      .then(safeJson)
-      .then((d) => setStudentList(Array.isArray(d) ? d : []))
-      .catch(() => {});
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const [meRes, convRes, studentsRes] = await Promise.all([
+          fetch("/api/auth/me", { credentials: "include", signal: controller.signal }),
+          fetch("/api/student-messages/conversations", { signal: controller.signal }),
+          fetch("/api/student-messages/students", { signal: controller.signal }),
+        ]);
+        if (controller.signal.aborted) return;
+        const me = await safeJson(meRes);
+        if (me?.id) setSessionId(me.id);
+        if (convRes.ok) setConversations(await convRes.json());
+        const students = await safeJson(studentsRes);
+        setStudentList(Array.isArray(students) ? students : []);
+      } catch {
+        if (controller.signal.aborted) return;
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void load();
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -113,8 +96,12 @@ export default function AdminStudentMessagesContent() {
     } catch {}
   };
 
+  const sendInFlightRef = useRef(false);
+
   const sendMessage = async () => {
-    if (!input.trim() || !selectedConv || sending) return;
+    if (!input.trim() || !selectedConv) return;
+    if (sendInFlightRef.current) return;
+    sendInFlightRef.current = true;
     setSending(true);
     try {
       const res = await fetch("/api/student-messages/messages", {
@@ -129,6 +116,7 @@ export default function AdminStudentMessagesContent() {
       }
     } catch {
     } finally {
+      sendInFlightRef.current = false;
       setSending(false);
     }
   };
@@ -167,200 +155,31 @@ export default function AdminStudentMessagesContent() {
 
   return (
     <div className="flex h-[calc(100vh-7rem)] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-72 border-r border-slate-200 flex flex-col flex-shrink-0">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-bold text-sm text-slate-800">Messages</h2>
-          <button
-            type="button"
-            onClick={() => setShowNewChat(!showNewChat)}
-            className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
-            title="New Conversation"
-          >
-            <MessageSquare size={16} />
-          </button>
-        </div>
+      <ConversationSidebar
+        conversations={conversations}
+        selectedConv={selectedConv}
+        onSelect={setSelectedConv}
+        showNewChat={showNewChat}
+        setShowNewChat={setShowNewChat}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filteredStudents={filteredStudents}
+        onStartConversation={startConversation}
+        formatTime={formatTime}
+      />
 
-        {showNewChat && (
-          <div className="p-3 border-b border-slate-100 bg-slate-50">
-            <div className="relative mb-2">
-              <Search
-                size={14}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                type="text"
-                placeholder="Search students..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-            <div className="max-h-32 overflow-y-auto space-y-1">
-              {filteredStudents.map((s) => (
-                <button
-                  type="button"
-                  key={s.id}
-                  onClick={() => startConversation(s.id)}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-indigo-50 transition-colors text-left"
-                >
-                  <div className="size-6 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-[10px] flex-shrink-0">
-                    {s.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-slate-700 truncate">{s.name}</p>
-                    <p className="text-[10px] text-slate-400 truncate">{s.email}</p>
-                  </div>
-                </button>
-              ))}
-              {filteredStudents.length === 0 && (
-                <p className="text-xs text-slate-400 text-center py-2">No students found</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
-          {conversations.length === 0 ? (
-            <div className="p-6 text-center">
-              <GraduationCap size={24} className="text-slate-300 mx-auto mb-2" />
-              <p className="text-xs text-slate-400">No conversations yet</p>
-              <p className="text-[10px] text-slate-400 mt-1">Click + to message a student</p>
-            </div>
-          ) : (
-            conversations.map((conv) => (
-              <button
-                type="button"
-                key={conv.id}
-                onClick={() => setSelectedConv(conv.id)}
-                className={`w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors ${selectedConv === conv.id ? "bg-indigo-50/50" : ""}`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="size-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs flex-shrink-0">
-                    {conv.student.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-slate-700 truncate">
-                      {conv.student.name}
-                    </p>
-                    <p className="text-[10px] text-slate-400 truncate">
-                      {conv.staff ? `→ ${conv.staff.name}` : "Unassigned"} ·{" "}
-                      {conv.lastMessage || "No messages yet"}
-                    </p>
-                  </div>
-                  {conv.lastMessageAt && (
-                    <span className="text-[10px] text-slate-400 flex-shrink-0">
-                      {formatTime(conv.lastMessageAt)}
-                    </span>
-                  )}
-                </div>
-              </button>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {!selectedConv ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <MessageSquare size={48} className="text-slate-200 mx-auto mb-3" />
-              <p className="text-sm font-medium text-slate-400">Select a conversation</p>
-              <p className="text-xs text-slate-300 mt-1">
-                Choose a student conversation from the sidebar
-              </p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Header */}
-            <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-3 bg-white">
-              <div className="size-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-sm flex-shrink-0">
-                {selectedConvData?.student.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-800">
-                  {selectedConvData?.student.name}
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  {selectedConvData?.staff
-                    ? `Assigned to ${selectedConvData.staff.name}`
-                    : "Unassigned"}
-                </p>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-slate-50/50">
-              {messages.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-xs text-slate-400">No messages yet. Start the conversation!</p>
-                </div>
-              )}
-              {messages.map((msg) => {
-                const isMine = msg.senderId === sessionId;
-                return (
-                  <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                    <div
-                      className={`max-w-[70%] px-4 py-2.5 rounded-2xl ${
-                        isMine
-                          ? "bg-indigo-600 text-white rounded-br-md"
-                          : "bg-white text-slate-700 border border-slate-200 rounded-bl-md shadow-sm"
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
-                      <p
-                        className={`text-[10px] mt-1 ${isMine ? "text-indigo-200" : "text-slate-400"}`}
-                      >
-                        {formatTime(msg.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input */}
-            <div className="px-4 py-3 border-t border-slate-200 bg-white">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type a message..."
-                  className="flex-1 px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50"
-                />
-                <button
-                  type="button"
-                  onClick={sendMessage}
-                  disabled={!input.trim() || sending}
-                  className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+      <ChatPanel
+        selectedConvData={selectedConvData}
+        messages={messages}
+        sessionId={sessionId}
+        formatTime={formatTime}
+        input={input}
+        setInput={setInput}
+        handleKeyDown={handleKeyDown}
+        sendMessage={sendMessage}
+        sending={sending}
+        messagesEndRef={messagesEndRef}
+      />
     </div>
   );
 }

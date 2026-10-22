@@ -1,41 +1,35 @@
 "use client";
 
 import {
+  LazyMotion,
   MotionConfig,
-  motion,
+  m,
   useInView,
   useReducedMotion,
   useScroll,
   useTransform,
-  type Variants,
 } from "framer-motion";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-/* ── Motion language tokens (locked — see tailwind.css header) ─────────────── */
-export const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
-export const DUR = { micro: 0.2, ui: 0.4, card: 0.4, hero: 0.7, big: 0.8 } as const;
-export const STAGGER = 0.06;
-
-/** Single element: 16px rise + fade, decelerating into rest. */
-export const revealVariants: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: DUR.card, ease: EASE } },
-};
-
-/** Container: 60ms cascade top-to-bottom, capped by child count. */
-export const groupVariants: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: STAGGER, delayChildren: 0.05 } },
-};
+import { DUR, EASE, groupVariants, revealVariants } from "./motion-tokens";
 
 /**
  * Wraps the landing page in framer-motion's tiered reduced-motion config:
  * transform/layout animations are dropped for users who ask for reduce,
  * opacity and colour transitions survive (Tier 2/3 from accessible-animation).
+ *
+ * `LazyMotion` defers the animation feature bundle until after hydration and
+ * `strict` guarantees every animated node uses the lightweight `m` component.
  */
 export function MotionShell({ children }: { children: ReactNode }) {
-  return <MotionConfig reducedMotion="user">{children}</MotionConfig>;
+  return (
+    <LazyMotion features={loadFeatures} strict>
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+    </LazyMotion>
+  );
 }
+
+const loadFeatures = () => import("./motion-features").then((mod) => mod.default);
 
 /** One-shot reveal when scrolled into view. Adds `.fw` so the noscript
  *  fallback in page.tsx can force content visible without JS. */
@@ -51,7 +45,7 @@ export function Reveal({
   y?: number;
 }) {
   return (
-    <motion.div
+    <m.div
       className={`fw ${className ?? ""}`}
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -59,7 +53,7 @@ export function Reveal({
       transition={{ duration: DUR.card, ease: EASE, delay }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -67,7 +61,7 @@ export function Reveal({
  *  `variants={revealVariants}` (see Item) for the 60ms cascade. */
 export function Stagger({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <motion.div
+    <m.div
       className={`fw ${className ?? ""}`}
       variants={groupVariants}
       initial="hidden"
@@ -75,16 +69,16 @@ export function Stagger({ children, className }: { children: ReactNode; classNam
       viewport={{ once: true, amount: 0.2 }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
 /** Stagger item — plain container that inherits the parent cascade. */
 export function Item({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <motion.div className={`fw ${className ?? ""}`} variants={revealVariants}>
+    <m.div className={`fw ${className ?? ""}`} variants={revealVariants}>
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -103,18 +97,18 @@ export function KineticHeadline({
   step?: number;
   as?: "h1" | "h2";
 }) {
-  const words: { word: string; cls?: string }[] = [];
+  const words: { word: string; cls?: string; key: string }[] = [];
   for (const part of parts) {
     for (const word of part.text.split(/\s+/)) {
-      if (word) words.push({ word, cls: part.className });
+      if (word) words.push({ word, cls: part.className, key: `${word}-${words.length}` });
     }
   }
 
   return (
     <Tag className={`fw ${className ?? ""}`}>
       {words.map((w, i) => (
-        <span key={`${w.word}-${i}`} className="inline-block overflow-hidden align-bottom">
-          <motion.span
+        <span key={w.key} className="inline-block overflow-hidden align-bottom">
+          <m.span
             className={`inline-block ${w.cls ?? ""}`}
             initial={{ y: "110%", opacity: 0 }}
             animate={{ y: "0%", opacity: 1 }}
@@ -122,7 +116,7 @@ export function KineticHeadline({
           >
             {w.word}
             {i < words.length - 1 ? "\u00A0" : ""}
-          </motion.span>
+          </m.span>
         </span>
       ))}
     </Tag>
@@ -190,9 +184,9 @@ export function Parallax({
 
   return (
     <div ref={ref} className={className}>
-      <motion.div className="fw" style={reduced ? undefined : { y }}>
+      <m.div className="fw" style={reduced ? undefined : { y }}>
         {children}
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -213,7 +207,7 @@ export function Marquee({
   const row = (rowKey: string, hidden: boolean) => (
     <div key={rowKey} aria-hidden={hidden || undefined} className="flex items-center shrink-0">
       {items.map((text, i) => (
-        <span key={`${rowKey}-${i}`} className="flex items-center">
+        <span key={`${rowKey}-${text}-${i}`} className="flex items-center">
           <span className="px-7 text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400">
             {text}
           </span>

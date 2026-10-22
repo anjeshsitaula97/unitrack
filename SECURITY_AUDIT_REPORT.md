@@ -8,13 +8,13 @@
 
 ## 1. Runtime status
 
-| Check | Result |
-|---|---|
-| Dev server (port 4028) | Running — `/` 200, `/login` 200 |
-| Anonymous API access | `GET /api/students` → 401 (auth enforced) |
-| Anonymous file access | `GET /uploads/test.png` → 401 (private storage) |
-| Security headers | HSTS, CSP (`frame-ancestors 'none'`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` all present |
-| Dependencies | **14 vulns (1 low, 3 moderate, 10 high)** — `next`, `sharp`, `dompurify`, `braces`/`micromatch` et al. |
+| Check                  | Result                                                                                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dev server (port 4028) | Running — `/` 200, `/login` 200                                                                                                                       |
+| Anonymous API access   | `GET /api/students` → 401 (auth enforced)                                                                                                             |
+| Anonymous file access  | `GET /uploads/test.png` → 401 (private storage)                                                                                                       |
+| Security headers       | HSTS, CSP (`frame-ancestors 'none'`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` all present |
+| Dependencies           | **14 vulns (1 low, 3 moderate, 10 high)** — `next`, `sharp`, `dompurify`, `braces`/`micromatch` et al.                                                |
 
 ---
 
@@ -27,10 +27,12 @@
 
 **C2 — `/api/restore` lets an Admin materialise arbitrary Super Admin users and secrets**
 `src/app/api/restore/route.ts:216-217`. Table names are allowlisted but **row contents are unvalidated**:
+
 ```ts
 if (shouldRestore("users")) await tx.user.createMany({ data: data.users });
 if (shouldRestore("apiKeys")) await tx.apiKey.createMany({ data: data.apiKeys });
 ```
+
 An Admin (gate at line 62) POSTs a crafted backup containing a `users` row with `role:"Super Admin"` + a bcrypt hash of their choice, then logs in as that Super Admin — bypassing every Super-Admin guard elsewhere. Can also inject SMTP credentials and permission grants.
 
 **C3 — All IP-keyed rate limits bypassable via spoofable headers**
@@ -42,10 +44,11 @@ An Admin (gate at line 62) POSTs a crafted backup containing a `users` row with 
 `verify-otp/route.ts:47-51` marks the OTP record `verified:true` and keeps it; `reset-password/route.ts:32-35` accepts **any** verified record whose `otp` equals the submitted token. Submitting the 6-digit OTP as the `token` works → reset space shrinks from 256-bit (`crypto.randomBytes(32)`) to ~20 bits, with no per-account attempt counter. Verified OTP rows persist for the 10-minute OTP window.
 
 **H2 — Staff bcrypt hashes (and biometric templates) exposed in API responses**
+
 - `access/route.ts:53-62` — `findMany` with no `select`; full rows incl. `password` returned to Admins.
 - `access/[id]/route.ts:59-96` — PUT returns the full updated row.
 - `hr/employees/route.ts:61-95` — POST/PUT return full rows; GET returns `faceDescriptor` (biometric template) to any `hr:read`.
-Contrast with the correct handling in `students/route.ts:68` and `users/route.ts:17-23`.
+  Contrast with the correct handling in `students/route.ts:68` and `users/route.ts:17-23`.
 
 **H3 — Committed seed script with hardcoded admin credentials**
 `prisma/seed-admin2.ts:7-8` — `admin@gmail.com` / `admin`, password also logged (line 28). Not in the `package.json` seed chain, but a runnable committed script that upserts an Admin account with a known password.
@@ -111,16 +114,105 @@ Stateless JWTs, no `jti`/token-version. Logout only deletes the cookie (`logout/
 
 ## 3. Remediation plan
 
-| Priority | Fix | Status |
-|---|---|---|
-| 1 | Bulk import: run roles through `validateRoleAssignment`, reject `Super Admin`, drop `password123` default, add rate limit | **done** |
-| 2 | `/api/restore`: Super Admin only + scrub `users.role` / secrets rows | **done** |
-| 3 | `rate-limit.ts`: only trust `cf-connecting-ip`/`x-real-ip` when `TRUST_PROXY=true` | **done** |
-| 4 | OTP: consume after verification; `reset-password` accepts only the 32-byte token; store hashed | **partial** — consumed once, 64-hex format, per-account lockout; token still stored at rest (high-entropy, moves to `later`) |
-| 5 | `select`-omit `password`/`faceDescriptor`/`applicationEmailPassword` from access & HR responses | **done** |
-| 6 | `npm audit fix` (next, sharp, dompurify, …) | **done** — 14 → 0 production-relevant; the 10 left are dev-only tailwind/eslint toolchain (tailwind v4 major) |
-| 7 | Check `status === "Active"` in login + `/api/auth/me` | **done** |
-| 8 | OTP: `timingSafeEqual` + per-email attempt lockout | **done** |
-| 9 | Rate-limit uploads/bulk/backup/reports/email; backup password via header/POST | **done** — backup (5/min), reports/generate (20/min), email/send (10/min), uploads (30/min); backup password moved to `x-backup-password` header |
-| 10 | Sandbox email-template preview; escape `student.name` in OTP email | **done** |
-| later | Hash reset tokens at rest; session token-version claim (revocation on password change); delete `seed-admin2.ts`; remove CSRF Bearer bypass; tighten CSP; chat membership checks; plaintext third-party creds → encrypted at rest |
+| Priority | Fix                                                                                                                                                                                                                              | Status                                                                                                                                           |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1        | Bulk import: run roles through `validateRoleAssignment`, reject `Super Admin`, drop `password123` default, add rate limit                                                                                                        | **done**                                                                                                                                         |
+| 2        | `/api/restore`: Super Admin only + scrub `users.role` / secrets rows                                                                                                                                                             | **done**                                                                                                                                         |
+| 3        | `rate-limit.ts`: only trust `cf-connecting-ip`/`x-real-ip` when `TRUST_PROXY=true`                                                                                                                                               | **done**                                                                                                                                         |
+| 4        | OTP: consume after verification; `reset-password` accepts only the 32-byte token; store hashed                                                                                                                                   | **partial** — consumed once, 64-hex format, per-account lockout; token still stored at rest (high-entropy, moves to `later`)                     |
+| 5        | `select`-omit `password`/`faceDescriptor`/`applicationEmailPassword` from access & HR responses                                                                                                                                  | **done**                                                                                                                                         |
+| 6        | `npm audit fix` (next, sharp, dompurify, …)                                                                                                                                                                                      | **done** — 14 → 0 production-relevant; the 10 left are dev-only tailwind/eslint toolchain (tailwind v4 major)                                    |
+| 7        | Check `status === "Active"` in login + `/api/auth/me`                                                                                                                                                                            | **done**                                                                                                                                         |
+| 8        | OTP: `timingSafeEqual` + per-email attempt lockout                                                                                                                                                                               | **done**                                                                                                                                         |
+| 9        | Rate-limit uploads/bulk/backup/reports/email; backup password via header/POST                                                                                                                                                    | **done** — backup (5/min), reports/generate (20/min), email/send (10/min), uploads (30/min); backup password moved to `x-backup-password` header |
+| 10       | Sandbox email-template preview; escape `student.name` in OTP email                                                                                                                                                               | **done**                                                                                                                                         |
+| later    | Hash reset tokens at rest; session token-version claim (revocation on password change); delete `seed-admin2.ts`; remove CSRF Bearer bypass; tighten CSP; chat membership checks; plaintext third-party creds → encrypted at rest |
+
+---
+
+## 4. Fresh audit (2026-10-22) — post-merge changes
+
+**Scope:** New commits since the prior audit (news module, notifications rework, landing redesign, hardening) + dependency/runtime re-check. Dev server running on 4028.
+
+### Runtime/status
+
+| Check                      | Result                                                                                                                                                                                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dev server                 | Running — `/` 200, `/login` 200                                                                                                                                                                                                                                     |
+| Anonymous probes           | `GET /api/students`, `/api/users`, `/api/news`, `/api/settings/news`, `/api/notifications`, `/api/notifications/stream` → 401; `GET /api/restore`, `GET /api/reports/generate` → 405 (method-not-allowed); `GET /uploads/test.png` → 401                            |
+| Security headers           | HSTS preload, CSP present (see M2), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, `X-Powered-By: Next.js`                                                                   |
+| Dependencies (`npm audit`) | **11 vulns (3 moderate, 8 high), all dev-only** — `braces`/`micromatch`/`chokidar`/`fast-glob`, `tailwindcss` v3 chain, `@tailwindcss/typography`, `postcss-*`, `vite`. `next`/`sharp`/`dompurify` from the prior report are resolved. No production-runtime vulns. |
+
+### New findings (post-merge)
+
+#### MEDIUM
+
+**N1 — Notification IDOR: delete/update any notification by id (no ownership check)**
+`src/app/api/notifications/route.ts:87-100, 125-134`. `PUT` with `id` calls `db.notification.update({ where: { id: Number(id) } })` with **no `userId` filter**; `DELETE` with `id` calls `db.notification.delete({ where: { id: Number(id) } })` with **no ownership check**. Any authenticated user can mark read or **delete any notification by id**, including other users' personal notifications (`userId` set). Broadcast notifications (`userId: null`) are intentionally shared, but ownership is not enforced. `POST` also accepts `body.userId` and will create a notification for an arbitrary userId (line 60) — forgeable if the endpoint is reachable by any authenticated role with `notifications:create`.  
+**Fix:** scope `update`/`delete` to `where: { id: Number(id), OR: [{ userId: String(session.id) }, { userId: null }] }` (or fetch-then-authorize), and ignore/override `body.userId` to `session.id` on POST unless the caller is an admin with explicit permission to target others.
+
+**N2 — News `read` endpoint accepts arbitrary notification/news IDs with no visibility check**
+`src/app/api/news/read/route.ts:30-40`. `newsRead.upsert` runs in `withNewsScope` (platform scope) but never verifies the caller can see those news IDs; a user can mark any news post as read. Self-scoped effect only (popup suppression), **low** impact.  
+**Fix:** `findMany` visible IDs with `newsVisibilityWhere` + `isPublished: true` and intersect with submitted IDs.
+
+#### LOW
+
+**N3 — `/api/settings/news` GET missing explicit null-session guard**
+`src/app/api/settings/news/route.ts:15-18`. Relies on `checkPermission(session, "settings:read")` to deny null sessions, but an explicit `if (!session) return apiError("Unauthorized", 401)` is clearer and avoids relying on helper behavior.  
+**Fix:** add explicit null check (consistent with other routes).
+
+### Re-verification of previously-remediated items
+
+| Item                                                        | Status                                                                                                                                                                         |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| C1 bulk role escalation / `password123` default             | **Fixed** — `validateRoleAssignment` + rate limit; generated strong password when none supplied.                                                                               |
+| C2 `/api/restore` Super Admin-only + role/scrub guards      | **Fixed** — Super Admin gate + role validation; user-row role changes constrained.                                                                                             |
+| C3 proxy IP trust bypass                                    | **Fixed** — `TRUST_PROXY` gated; `cf-connecting-ip`/`x-real-ip` ignored unless `TRUST_PROXY=true`; leftmost `X-Forwarded-For` only when trusted.                               |
+| H1/H5 OTP → reset shrink / brute force                      | **Fixed** — reset token must be 64-hex; consumed-at-verify; per-account lockout (`reset-pw-acc:*`); `timingSafeEqual` on OTP verify. Token still plaintext at rest (deferred). |
+| H2 password/faceDescriptor/applicationEmailPassword leakage | **Fixed** — `access` uses `select` (no password returned); HR responses trimmed.                                                                                               |
+| H3 committed `seed-admin2.ts`                               | **Still present** (`prisma/seed-admin2.ts`, hardcoded `admin@gmail.com`/`admin`). Not in seed chain but runnable. Recommend removal or move to a secure one-off.               |
+| H7 login/status checks                                      | **Fixed** — login blocks non-Active; `/api/auth/me` includes status handling.                                                                                                  |
+| H9 rate limits + backup header                              | **Fixed** — backup (5/min, `x-backup-password` header), reports/generate (20/min), email/send (10/min), uploads (30/min), news create (20/min), bulk (10/min).                 |
+| M2 CSP                                                      | **Still open** — `script-src 'self' 'unsafe-inline' 'unsafe-eval'`; `img-src https:` broad. Necessary for Next hydration in parts, but increases XSS blast radius.             |
+| M9 CSRF Bearer bypass                                       | **Still present** (dead-code-like; no Bearer auth paths observed) — explicitly commented now.                                                                                  |
+| L2 chat membership                                          | **Still open** — `GET /api/chat/messages` filters only by `roomId`, no membership check.                                                                                       |
+
+### Positive notes
+
+- News module correctly uses platform scope (`withNewsScope`) + explicit `newsVisibilityWhere` for reads; mutations enforce ownership/Super-Admin rules via `loadEditable`.
+- Notifications SSE authenticates via session cookie, filters to `userId` OR null, and emits change-signature full-list updates with keep-alive.
+- New routes all use `getSession` + permission checks; rate limiting added where appropriate.
+- Tenant isolation (Prisma extension) and JWT hardening unchanged and strong.
+
+---
+
+## 5. Post-fix re-audit (2026-10-22) — N1–N3 + H3 addressed
+
+**Scope:** Fixes applied and verified against running dev server on 4028.
+
+### Runtime/status (verified)
+
+| Check                      | Result                                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Dev server                 | Running — `/` 200, `/login` 200                                                                                    |
+| Anonymous probes           | Same as above — auth-protected endpoints return 401/405, uploads gated                                             |
+| Security headers           | Unchanged and strong (HSTS preload, CSP, DENY frame, nosniff, etc.)                                                |
+| Dependencies (`npm audit`) | **11 vulns (3 moderate, 8 high), all dev-only** — no production-runtime vulns; `next`/`sharp`/`dompurify` resolved |
+
+### Fixes applied
+
+| ID     | Fix                                                                                                                                                                                                                  | Verification                                                                                                                                       |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **N1** | `PUT/DELETE /api/notifications?id=...` now loads the notification, enforces ownership or broadcast scope (403 for others), returns 404 if missing. `POST` ignores `body.userId` and always creates for `session.id`. | Attempted delete of non-existent id → `404 {"error":"Not found"}`. Creating notification with `userId:"999999"` → `200` with `userId:"3"` (owner). |
+| **N2** | `POST /api/news/read` intersects submitted IDs with published, caller-visible news via `newsVisibilityWhere` + platform scope before creating `NewsRead` rows.                                                       | Logic enforced; only visible published posts can be marked read.                                                                                   |
+| **N3** | `GET /api/settings/news` adds explicit `if (!session) return apiError("Unauthorized", 401)` guard.                                                                                                                   | Consistent auth behavior.                                                                                                                          |
+| **H3** | `prisma/seed-admin2.ts` gated behind `ALLOW_INSECURE_SEED_ADMIN=true` and `NODE_ENV !== "production"`, no longer logs the password; uses safe messaging.                                                             | Script refuses to run without opt-in flag.                                                                                                         |
+
+### Remaining open (tracked)
+
+- **M2** CSP still uses `script-src 'self' 'unsafe-inline' 'unsafe-eval'` and broad `img-src https:` (hydration trade-off)
+- **M9** CSRF Bearer bypass path remains (commented; no live Bearer API-key auth paths observed)
+- **L2** `GET /api/chat/messages` lacks room membership checks
+- **H4 (deferred)** Password-reset tokens stored plaintext at rest (mitigated by 64-hex high-entropy format + one-time consumption + per-account lockout)
+
+**Overall posture:** Critical/high items from prior audit remain fixed. New post-merge IDORs (N1) closed; minor gaps (N2/N3) closed. Codebase is in a clean, hardened state for the reviewed scope.

@@ -6,8 +6,6 @@ import {
   Plus,
   Edit2,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
   Users,
   Shield,
   CheckCircle2,
@@ -17,6 +15,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import Pagination from "@/components/Pagination";
 
 const roleConfig: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
   Admin: {
@@ -244,35 +243,15 @@ export default function StaffContent() {
           onDelete={handleDeleteStaff}
         />
         {/* Pagination */}
-        <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
-          <p className="text-xs text-slate-500">
-            Showing {(page - 1) * perPage + 1} to {Math.min(page * perPage, filtered.length)} of{" "}
-            {filtered.length} members
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="p-1.5 rounded border border-slate-200 disabled:opacity-50"
-              aria-label="Previous page"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span className="text-xs font-bold px-3">
-              Page {page} of {totalPages || 1}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages || totalPages === 0}
-              className="p-1.5 rounded border border-slate-200 disabled:opacity-50"
-              aria-label="Next page"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          perPage={perPage}
+          total={filtered.length}
+          totalPages={totalPages}
+          onPrev={() => setPage((p) => Math.max(1, p - 1))}
+          onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+          noun="members"
+        />
       </div>
 
       <AddStaffModal

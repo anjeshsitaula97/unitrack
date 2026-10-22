@@ -607,23 +607,34 @@ async function findTemplateRow(key: string) {
  * no-op.
  */
 export async function ensureEmailTemplates(): Promise<void> {
-  for (const def of EMAIL_TEMPLATE_CATALOG) {
-    try {
-      const existing = await db.emailTemplate.findFirst({ where: { key: def.key } });
-      if (existing) continue;
-      await db.emailTemplate.create({
-        data: {
-          key: def.key,
-          name: def.name,
-          subject: def.subject,
-          body: def.body,
-          isEnabled: true,
-          isDefault: true,
-        },
-      });
-    } catch (error) {
-      logError("Seed email template", error);
-    }
+  try {
+    const existingRows = await db.emailTemplate.findMany({
+      where: { key: { in: EMAIL_TEMPLATE_CATALOG.map((def) => def.key) } },
+      select: { key: true },
+    });
+    const existingKeys = new Set(existingRows.map((row) => row.key));
+    const missing = EMAIL_TEMPLATE_CATALOG.filter((def) => !existingKeys.has(def.key));
+
+    await Promise.all(
+      missing.map(async (def) => {
+        try {
+          await db.emailTemplate.create({
+            data: {
+              key: def.key,
+              name: def.name,
+              subject: def.subject,
+              body: def.body,
+              isEnabled: true,
+              isDefault: true,
+            },
+          });
+        } catch (error) {
+          logError("Seed email template", error);
+        }
+      })
+    );
+  } catch (error) {
+    logError("Load email templates", error);
   }
 }
 

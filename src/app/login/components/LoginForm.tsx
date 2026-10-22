@@ -46,7 +46,9 @@ export default function LoginForm() {
         clearAuthCache();
         let home = "/dashboard";
         try {
-          const me = await fetch("/api/auth/me", { credentials: "include" }).then((r) => r.json());
+          const res = await fetch("/api/auth/me", { credentials: "include" });
+          if (!res.ok) throw new Error(`Failed to load profile: ${res.status}`);
+          const me = await res.json();
           home = getRoleHome(me?.role);
         } catch {
           // fall back to the default dashboard

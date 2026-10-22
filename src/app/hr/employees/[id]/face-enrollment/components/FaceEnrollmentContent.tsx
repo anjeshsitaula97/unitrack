@@ -93,11 +93,10 @@ export default function FaceEnrollmentContent() {
   }, [employeeId, router]);
 
   useEffect(() => {
-    queueMicrotask(() => {
-      fetchEmployee();
-    });
-    return () => stopCamera();
-  }, [fetchEmployee, stopCamera]);
+    void fetchEmployee();
+  }, [fetchEmployee]);
+
+  useEffect(() => stopCamera, [stopCamera]);
 
   const startCamera = async () => {
     try {

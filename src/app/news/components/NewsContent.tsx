@@ -1,54 +1,11 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Globe2, Loader2, Newspaper, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Loader2, Newspaper, Plus, Search } from "lucide-react";
+import NewsArticleCard from "./NewsArticleCard";
+import NewsFormModal from "./NewsFormModal";
+import { EMPTY_FORM, type ConsultancyOption, type NewsForm, type NewsItem } from "./news-types";
 import { toast } from "sonner";
-
-interface NewsItem {
-  id: number;
-  title: string;
-  body: string;
-  audience: "all" | "consultancy";
-  isPublished: boolean;
-  publishedAt: string | null;
-  consultancyId: number | null;
-  author: { name: string; email: string } | null;
-  isRead?: boolean;
-  createdAt: string;
-}
-
-interface ConsultancyOption {
-  id: number;
-  name: string;
-  code: string;
-}
-
-interface NewsForm {
-  title: string;
-  body: string;
-  audience: "all" | "consultancy";
-  consultancyId: string;
-  isPublished: boolean;
-}
-
-const EMPTY_FORM: NewsForm = {
-  title: "",
-  body: "",
-  audience: "consultancy",
-  consultancyId: "",
-  isPublished: true,
-};
-
-function formatDate(value: string | null): string {
-  if (!value) return "Not published";
-  return new Date(value).toLocaleString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export default function NewsContent() {
   const [items, setItems] = useState<NewsItem[]>([]);
@@ -96,7 +53,10 @@ export default function NewsContent() {
   useEffect(() => {
     const ac = new AbortController();
     fetch("/api/auth/me", { signal: ac.signal })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Failed to load role: ${res.status}`);
+        return res.json();
+      })
       .then((data) => setRole(data?.role || ""))
       .catch(() => {});
     return () => ac.abort();
@@ -106,7 +66,10 @@ export default function NewsContent() {
     if (!isSuperAdmin) return;
     const ac = new AbortController();
     fetch("/api/consultancies", { signal: ac.signal })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Failed to load consultancies: ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         if (Array.isArray(data)) setConsultancies(data);
       })
@@ -239,6 +202,7 @@ export default function NewsContent() {
       <div className="relative max-w-md">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
+          aria-label="Search news…"
           type="text"
           value={search}
           onChange={(e) => {
@@ -264,60 +228,14 @@ export default function NewsContent() {
       ) : (
         <div className="space-y-4">
           {items.map((item) => (
-            <article key={item.id} className="card p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h2 className="font-bold text-slate-800">{item.title}</h2>
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                        item.audience === "all" || item.consultancyId == null
-                          ? "bg-indigo-50 text-indigo-600"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      <Globe2 size={10} /> {audienceLabel(item)}
-                    </span>
-                    {!item.isPublished && (
-                      <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-widest">
-                        Draft
-                      </span>
-                    )}
-                    {item.isRead === false && (
-                      <span className="size-2 rounded-full bg-indigo-500" title="Unread" />
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400 mb-3">
-                    {item.author?.name || "System"}
-                    {item.author?.email ? ` · ${item.author.email}` : ""} ·{" "}
-                    {formatDate(item.publishedAt || item.createdAt)}
-                  </p>
-                  <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
-                    {item.body}
-                  </p>
-                </div>
-                {canPost && (
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(item)}
-                      aria-label={`Edit ${item.title}`}
-                      className="size-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
-                    >
-                      <Pencil size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(item)}
-                      aria-label={`Delete ${item.title}`}
-                      className="size-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </article>
+            <NewsArticleCard
+              key={item.id}
+              item={item}
+              canPost={canPost}
+              audienceLabel={audienceLabel}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}
@@ -347,129 +265,16 @@ export default function NewsContent() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <h2 className="font-bold text-slate-800">{editing ? "Edit news" : "Post news"}</h2>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                aria-label="Close"
-                className="size-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  maxLength={255}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                  placeholder="News headline"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  Body
-                </label>
-                <textarea
-                  value={form.body}
-                  onChange={(e) => setForm({ ...form, body: e.target.value })}
-                  rows={7}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-y"
-                  placeholder="Write the announcement…"
-                  required
-                />
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                    Audience
-                  </label>
-                  {isSuperAdmin ? (
-                    <select
-                      value={form.audience}
-                      onChange={(e) =>
-                        setForm({ ...form, audience: e.target.value as NewsForm["audience"] })
-                      }
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                    >
-                      <option value="all">All consultancies</option>
-                      <option value="consultancy">Specific consultancy</option>
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value="My consultancy"
-                      disabled
-                      className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500"
-                    />
-                  )}
-                </div>
-
-                {isSuperAdmin && form.audience === "consultancy" && (
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                      Consultancy
-                    </label>
-                    <select
-                      value={form.consultancyId}
-                      onChange={(e) => setForm({ ...form, consultancyId: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                      required
-                    >
-                      <option value="">Select consultancy…</option>
-                      {consultancies.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} ({c.code})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.isPublished}
-                  onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
-                  className="size-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
-                />
-                <span className="text-sm font-medium text-slate-600">
-                  Publish now (visible to users and shown in the login popup)
-                </span>
-              </label>
-
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="btn-primary flex items-center gap-2 disabled:opacity-60"
-                >
-                  {submitting && <Loader2 className="animate-spin" size={15} />}
-                  {editing ? "Save changes" : "Post news"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <NewsFormModal
+          editing={Boolean(editing)}
+          form={form}
+          setForm={setForm}
+          isSuperAdmin={isSuperAdmin}
+          consultancies={consultancies}
+          submitting={submitting}
+          onSubmit={handleSubmit}
+          onClose={() => setShowModal(false)}
+        />
       )}
     </div>
   );

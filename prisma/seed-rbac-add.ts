@@ -25,14 +25,31 @@ async function main() {
     },
   ];
 
-  for (const role of add) {
-    const existing = await prisma.role.findFirst({ where: { name: role.name } });
-    if (existing) {
-      console.log(`EXISTS (skipped): ${role.name} (id ${existing.id}, ${role.permissions.length} chars)`);
-      continue;
-    }
-    const created = await prisma.role.create({ data: role });
-    console.log(`CREATED: ${created.name} (id ${created.id}) with ${JSON.parse(created.permissions || "[]").length} permissions`);
+  const existingRoles = await prisma.role.findMany({
+    where: { name: { in: add.map((role) => role.name) } },
+  });
+  const existingByName = new Map(existingRoles.map((role) => [role.name, role]));
+
+  const results = await Promise.all(
+    add.map(async (role) => {
+      const existing = existingByName.get(role.name);
+      if (existing) {
+        return `EXISTS (skipped): ${role.name} (id ${existing.id}, ${role.permissions.length} chars)`;
+      }
+      const created = await prisma.role.create({ data: role });
+      let permissionCount = 0;
+      try {
+        const parsed: unknown = JSON.parse(created.permissions || "[]");
+        if (Array.isArray(parsed)) permissionCount = parsed.length;
+      } catch {
+        permissionCount = 0;
+      }
+      return `CREATED: ${created.name} (id ${created.id}) with ${permissionCount} permissions`;
+    })
+  );
+
+  for (const line of results) {
+    console.log(line);
   }
 }
 

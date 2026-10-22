@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/logger";
 import { getSession, apiError } from "@/lib/api-utils";
-import { withNewsScope } from "@/lib/news";
+import { newsVisibilityWhere, withNewsScope } from "@/lib/news";
 
 /**
  * Marks news posts as read for the current user so the login popup stops
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const raw = Array.isArray(body?.ids) ? body.ids : [];
-    const ids = Array.from(
+    const requested = Array.from(
       new Set(
         raw
           .map((value: unknown) => Number(value))
@@ -25,7 +25,22 @@ export async function POST(req: NextRequest) {
       )
     ).slice(0, 50) as number[];
 
-    if (ids.length === 0) return apiError("No news ids provided", 400);
+    if (requested.length === 0) return apiError("No news ids provided", 400);
+
+    // Only mark posts the caller is allowed to see as read.
+    const visible = await withNewsScope(() =>
+      db.news.findMany({
+        where: {
+          id: { in: requested },
+          isPublished: true,
+          AND: [newsVisibilityWhere(session.consultancyId ?? null)],
+        },
+        select: { id: true },
+      })
+    );
+    const ids = visible.map((v) => v.id);
+
+    if (ids.length === 0) return NextResponse.json({ success: true, marked: 0 });
 
     await withNewsScope(async () => {
       await Promise.all(

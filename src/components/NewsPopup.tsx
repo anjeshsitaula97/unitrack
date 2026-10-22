@@ -50,7 +50,10 @@ export default function NewsPopup() {
     const ac = new AbortController();
     const timer = setTimeout(() => {
       fetch("/api/news/popup", { signal: ac.signal })
-        .then((res) => res.json())
+        .then(async (res) => {
+          if (!res.ok) throw new Error(`Failed to load news: ${res.status}`);
+          return res.json();
+        })
         .then((data) => {
           const list = Array.isArray(data?.items) ? data.items : [];
           if (list.length > 0) {

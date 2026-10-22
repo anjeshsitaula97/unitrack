@@ -17,9 +17,6 @@ import {
   ShieldCheck,
   Loader2,
   Users,
-  LayoutGrid,
-  Table,
-  Columns3,
   KeyRound,
   Copy,
   CheckCircle,
@@ -45,7 +42,9 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { SkeletonCard, SkeletonTable } from "@/components/Skeleton";
 import { toast } from "sonner";
 import Image from "next/image";
+import Link from "next/link";
 import { getCountryFlag } from "@/lib/country-flags";
+import ViewModeToggle from "@/components/ViewModeToggle";
 
 // Types
 interface Student {
@@ -371,34 +370,6 @@ export default function StudentContent() {
 
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
-  const fetchUsers = async () => {
-    try {
-      const res = await fetch("/api/users");
-      if (res.ok) {
-        const data = await res.json();
-        setAllUsers(data);
-      }
-    } catch (_err) {}
-  };
-
-  const fetchProvinces = async () => {
-    try {
-      const res = await fetch("/api/nepal/provinces");
-      const data = await res.json();
-      setProvinces(data);
-    } catch (_err) {}
-  };
-
-  const fetchBranches = async () => {
-    try {
-      const res = await fetch("/api/branches");
-      if (res.ok) {
-        const data = await res.json();
-        setBranches(data);
-      }
-    } catch (_err) {}
-  };
-
   const _fetchStudentApps = async (studentId: string) => {
     try {
       setLoadingApps(true);
@@ -445,6 +416,7 @@ export default function StudentContent() {
   const fetchStudents = async () => {
     try {
       const res = await fetch("/api/students", { cache: "no-store" });
+      if (!res.ok) throw new Error(`Failed to load students: ${res.status}`);
       const data = await res.json();
       if (data && data.data && Array.isArray(data.data)) {
         setStudents(data.data);
@@ -459,12 +431,36 @@ export default function StudentContent() {
   };
 
   useEffect(() => {
-    queueMicrotask(() => {
-      fetchStudents();
-      fetchProvinces();
-      fetchBranches();
-      fetchUsers();
-    });
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const [studentsRes, provincesRes, branchesRes, usersRes] = await Promise.all([
+          fetch("/api/students", { cache: "no-store", signal: controller.signal }),
+          fetch("/api/nepal/provinces", { signal: controller.signal }),
+          fetch("/api/branches", { signal: controller.signal }),
+          fetch("/api/users", { signal: controller.signal }),
+        ]);
+        if (controller.signal.aborted) return;
+        if (studentsRes.ok) {
+          const data = await studentsRes.json();
+          if (data && data.data && Array.isArray(data.data)) {
+            setStudents(data.data);
+          } else if (Array.isArray(data)) {
+            setStudents(data);
+          }
+        }
+        if (provincesRes.ok) setProvinces(await provincesRes.json());
+        if (branchesRes.ok) setBranches(await branchesRes.json());
+        if (usersRes.ok) setAllUsers(await usersRes.json());
+      } catch (_err) {
+        if (controller.signal.aborted) return;
+        toast.error("Failed to fetch students");
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
+    void load();
+    return () => controller.abort();
   }, []);
 
   const handleDeleteStudent = async (student: Student) => {
@@ -586,6 +582,7 @@ export default function StudentContent() {
                 size={18}
               />
               <input
+                aria-label="Search by name or email..."
                 type="text"
                 placeholder="Search by name or email..."
                 value={searchQuery}
@@ -595,6 +592,7 @@ export default function StudentContent() {
             </div>
             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
               <select
+                aria-label="Filter students by status"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer h-9"
@@ -611,6 +609,7 @@ export default function StudentContent() {
               </select>
 
               <select
+                aria-label="Filter students by branch"
                 value={branchFilter}
                 onChange={(e) => setBranchFilter(e.target.value)}
                 className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer h-9"
@@ -666,32 +665,7 @@ export default function StudentContent() {
                 </button>
               )}
             </div>
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-lg transition ${viewMode === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
-                title="Grid view"
-              >
-                <LayoutGrid size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                className={`p-2 rounded-lg transition ${viewMode === "table" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
-                title="Table view"
-              >
-                <Table size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("kanban")}
-                className={`p-2 rounded-lg transition ${viewMode === "kanban" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
-                title="Kanban view"
-              >
-                <Columns3 size={16} />
-              </button>
-            </div>
+            <ViewModeToggle value={viewMode} onChange={setViewMode} />
           </div>
 
           <AnimatePresence>
@@ -818,9 +792,15 @@ export default function StudentContent() {
               return (
                 <div
                   key={student.id}
-                  onClick={() => router.push(`/students/${student.id}`)}
-                  className="card group relative cursor-pointer overflow-hidden rounded-2xl p-0 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                  className="card group relative overflow-hidden rounded-2xl p-0 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
                 >
+                  {/* Stretched link keeps the whole card clickable without
+                      nesting the action buttons inside another control. */}
+                  <Link
+                    href={`/students/${student.id}`}
+                    aria-label={`View ${capitalize(student.name)}`}
+                    className="absolute inset-0 z-0"
+                  />
                   <div className={`h-1.5 w-full bg-gradient-to-r ${style.accent}`} />
                   <div
                     className={`pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-gradient-to-br opacity-40 blur-2xl ${rainbowGradients[idx % rainbowGradients.length]}`}
@@ -853,7 +833,7 @@ export default function StudentContent() {
                           </span>
                         </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="relative z-10 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -922,7 +902,7 @@ export default function StudentContent() {
                     </div>
                   </div>
 
-                  <div className="relative flex items-center justify-between border-t border-slate-100 bg-slate-50/70 px-5 py-3">
+                  <div className="relative z-10 flex items-center justify-between border-t border-slate-100 bg-slate-50/70 px-5 py-3">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -963,17 +943,15 @@ export default function StudentContent() {
                     {studentsInCol.map((student) => (
                       <div
                         key={student.id}
-                        className="card p-4 hover:shadow-md transition group relative cursor-pointer overflow-hidden"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => router.push(`/students/${student.id}`)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            router.push(`/students/${student.id}`);
-                          }
-                        }}
+                        className="card p-4 hover:shadow-md transition group relative overflow-hidden"
                       >
+                        {/* Stretched link keeps the whole card clickable without
+                            nesting the action buttons inside another control. */}
+                        <Link
+                          href={`/students/${student.id}`}
+                          aria-label={`View ${capitalize(student.name)}`}
+                          className="absolute inset-0 z-0"
+                        />
                         <div
                           className={`absolute inset-0 bg-gradient-to-br ${col.gradient} pointer-events-none`}
                         />
@@ -989,8 +967,9 @@ export default function StudentContent() {
                               <p className="text-[9px] text-slate-400 mt-0.5">{student.email}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="relative z-10 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
+                              aria-label="Edit student"
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1001,6 +980,7 @@ export default function StudentContent() {
                               <Edit2 size={12} />
                             </button>
                             <button
+                              aria-label="Delete student"
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1207,6 +1187,7 @@ export default function StudentContent() {
         {selectedStudent && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <button
+              aria-label="Close student details"
               type="button"
               className="absolute inset-0 bg-slate-900/10"
               onClick={() => setSelectedStudent(null)}
@@ -1217,6 +1198,7 @@ export default function StudentContent() {
                   Documents: {capitalize(selectedStudent.name)}
                 </h3>
                 <button
+                  aria-label="Close student details"
                   type="button"
                   onClick={() => setSelectedStudent(null)}
                   className="text-slate-400 hover:text-slate-600 p-1"
@@ -1303,6 +1285,7 @@ export default function StudentContent() {
         {showAppsModal && selectedStudent && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <button
+              aria-label="Close applications dialog"
               type="button"
               className="absolute inset-0 bg-slate-900/10 backdrop-blur-sm"
               onClick={() => setShowAppsModal(false)}
@@ -1316,6 +1299,7 @@ export default function StudentContent() {
                   </p>
                 </div>
                 <button
+                  aria-label="Close applications dialog"
                   type="button"
                   onClick={() => setShowAppsModal(false)}
                   className="p-2 hover:bg-slate-50 rounded-xl text-slate-400"
@@ -1370,11 +1354,11 @@ export default function StudentContent() {
                             </span>
                           </button>
                           <div className="divide-y divide-[#c1c6d6]">
-                            {items.map(({ app, req }, i) => {
+                            {items.map(({ app, req }) => {
                               const ReqIcon = requirementIcon(req);
                               return (
                                 <div
-                                  key={`${app.id}-${i}`}
+                                  key={`${app.id}-${req}`}
                                   className="flex items-center justify-between p-4 hover:bg-[#f1f4fa] transition-colors group"
                                 >
                                   <div className="flex items-center gap-4 min-w-0">
@@ -1400,6 +1384,7 @@ export default function StudentContent() {
                                       Details
                                     </button>
                                     <button
+                                      aria-label="More options"
                                       type="button"
                                       className="p-1.5 text-[#727785] hover:text-[#005bbf]"
                                     >
@@ -1439,9 +1424,19 @@ export default function StudentContent() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                role="button"
+                tabIndex={0}
+                aria-label="Close credentials dialog"
                 onClick={() => {
                   setShowCredsModal(false);
                   setCopied(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setShowCredsModal(false);
+                    setCopied(false);
+                  }
                 }}
               />
               <motion.div
@@ -1462,6 +1457,7 @@ export default function StudentContent() {
                       </div>
                     </div>
                     <button
+                      aria-label="Close credentials"
                       type="button"
                       onClick={() => {
                         setShowCredsModal(false);

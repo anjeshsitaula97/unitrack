@@ -39,7 +39,8 @@ async function main() {
       continue;
     }
 
-    const missing = granted.filter((id) => !current.includes(id));
+    const currentSet = new Set(current);
+    const missing = granted.filter((id) => !currentSet.has(id));
     if (missing.length === 0) {
       console.log(`OK (already granted): ${role.name}`);
       continue;

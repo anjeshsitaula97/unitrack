@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const notification = await db.notification.create({
       data: {
-        userId: String(body.userId || session.id),
+        userId: String(session.id),
         title: body.title,
         message: body.message,
         type: body.type || "Info",
@@ -84,6 +84,16 @@ export async function PUT(req: Request) {
     const { id, read } = body;
 
     if (id) {
+      const existing = await db.notification.findUnique({
+        where: { id: Number(id) },
+        select: { id: true, userId: true },
+      });
+      if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      const isOwner = existing.userId === String(session.id);
+      const isBroadcast = existing.userId === null;
+      if (!isOwner && !isBroadcast) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       await db.notification.update({
         where: { id: Number(id) },
         data: { read: read ?? true },
@@ -122,6 +132,16 @@ export async function DELETE(req: Request) {
     const id = searchParams.get("id");
 
     if (id) {
+      const existing = await db.notification.findUnique({
+        where: { id: Number(id) },
+        select: { id: true, userId: true },
+      });
+      if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      const isOwner = existing.userId === String(session.id);
+      const isBroadcast = existing.userId === null;
+      if (!isOwner && !isBroadcast) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       await db.notification.delete({
         where: { id: Number(id) },
       });

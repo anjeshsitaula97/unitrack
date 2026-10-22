@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import {
   Clock,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
   ArrowLeft,
   CheckCircle,
@@ -20,7 +18,17 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import Pagination from "@/components/Pagination";
 const FaceVerificationModal = lazy(() => import("@/components/hr/FaceVerificationModal"));
+const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+const clockTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: browserTimeZone,
+});
+
+const formatClockTime = (value: string) => clockTimeFormatter.format(new Date(value));
 
 interface AttendanceUser {
   id: number;
@@ -68,17 +76,18 @@ const SortHeader = ({
   sortField: string;
   onSort: (field: string) => void;
 }) => (
-  <th
-    className="py-3 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer select-none hover:text-slate-600"
-    onClick={() => onSort(field)}
-  >
-    <div className="flex items-center gap-1">
+  <th className="py-3 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest select-none">
+    <button
+      type="button"
+      className="flex items-center gap-1 cursor-pointer hover:text-slate-600"
+      onClick={() => onSort(field)}
+    >
       {children}
       <ArrowUpDown
         size={11}
         className={`transition-opacity ${sortField === field ? "opacity-100 text-indigo-500" : "opacity-30"}`}
       />
-    </div>
+    </button>
   </th>
 );
 
@@ -125,12 +134,7 @@ const QuickActionsPanel = ({
       <div className="space-y-4">
         <div className="bg-slate-50 rounded-xl p-4">
           <p className="text-xs text-slate-500 mb-1">Checked in at</p>
-          <p className="text-lg font-bold text-slate-800">
-            {new Date(myStatus.checkIn).toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
+          <p className="text-lg font-bold text-slate-800">{formatClockTime(myStatus.checkIn)}</p>
           {myStatus.checkInLat && myStatus.checkInLng && (
             <a
               href={`https://www.google.com/maps?q=${myStatus.checkInLat},${myStatus.checkInLng}`}
@@ -156,10 +160,7 @@ const QuickActionsPanel = ({
             <>
               <p className="text-xs text-slate-500 mt-2 mb-1">Checked out at</p>
               <p className="text-lg font-bold text-slate-800">
-                {new Date(myStatus.checkOut).toLocaleTimeString("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatClockTime(myStatus.checkOut)}
               </p>
               {myStatus.checkOutLat && myStatus.checkOutLng && (
                 <a
@@ -224,8 +225,8 @@ const QuickActionsPanel = ({
 export default function AttendanceContent() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fromDate, setFromDate] = useState(new Date().toISOString().split("T")[0]);
-  const [toDate, setToDate] = useState(new Date().toISOString().split("T")[0]);
+  const [fromDate, setFromDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [toDate, setToDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState("date");
@@ -409,6 +410,7 @@ export default function AttendanceContent() {
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2">
                 <input
+                  aria-label="Attendance from date"
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
@@ -416,6 +418,7 @@ export default function AttendanceContent() {
                 />
                 <span className="text-[10px] text-slate-400">to</span>
                 <input
+                  aria-label="Attendance to date"
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
@@ -440,6 +443,7 @@ export default function AttendanceContent() {
                   className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
                 />
                 <input
+                  aria-label="Search employee..."
                   type="text"
                   placeholder="Search employee..."
                   value={searchQuery}
@@ -448,6 +452,7 @@ export default function AttendanceContent() {
                 />
               </div>
               <select
+                aria-label="Filter attendance by status"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 bg-white"
@@ -629,35 +634,15 @@ export default function AttendanceContent() {
             </table>
           </div>
 
-          <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
-            <p className="text-xs text-slate-500">
-              Showing {(page - 1) * perPage + 1} to {Math.min(page * perPage, records.length)} of{" "}
-              {records.length}
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="p-1.5 rounded border border-slate-200 disabled:opacity-50"
-                aria-label="Previous page"
-              >
-                <ChevronLeft size={14} />
-              </button>
-              <span className="text-xs font-bold px-3">
-                Page {page} of {totalPages || 1}
-              </span>
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages || totalPages === 0}
-                className="p-1.5 rounded border border-slate-200 disabled:opacity-50"
-                aria-label="Next page"
-              >
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            perPage={perPage}
+            total={records.length}
+            totalPages={totalPages}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+            padding="px-4"
+          />
         </div>
 
         <QuickActionsPanel

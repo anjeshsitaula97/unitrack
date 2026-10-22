@@ -94,6 +94,7 @@ export default function RequestDetailContent() {
     setIsLoading(true);
     try {
       const res = await fetch(`/api/marketing/requests/${id}`, { credentials: "include" });
+      if (!res.ok) throw new Error(`Failed to fetch request: ${res.status}`);
       const data = await res.json();
       if (data.id) setRequest(data);
     } catch (error) {
@@ -104,7 +105,29 @@ export default function RequestDetailContent() {
   };
 
   useEffect(() => {
-    fetchRequest();
+    const controller = new AbortController();
+    let ignore = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/marketing/requests/${id}`, {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (!ignore) setRequest(data);
+        }
+      } catch (error) {
+        if (ignore) return;
+        console.error("Failed to fetch request:", error);
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
+      controller.abort();
+    };
   }, [id]);
 
   const handleUpload = async () => {
@@ -191,9 +214,7 @@ export default function RequestDetailContent() {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center">
         <XCircle size={48} className="text-red-500 mb-4" />
-        <h2 className="text-xl font-bold text-slate-900 mb-2">
-          Request not found
-        </h2>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">Request not found</h2>
         <button
           onClick={() => router.push("/marketing/materials")}
           className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
@@ -224,10 +245,14 @@ export default function RequestDetailContent() {
             <div>
               <h1 className="text-2xl font-bold text-slate-900">{request.title}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[request.status]}`}>
+                <span
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[request.status]}`}
+                >
                   {request.status}
                 </span>
-                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${PRIORITY_COLORS[request.priority]}`}>
+                <span
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${PRIORITY_COLORS[request.priority]}`}
+                >
                   {request.priority} priority
                 </span>
                 <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
@@ -277,18 +302,14 @@ export default function RequestDetailContent() {
             <Calendar size={20} className="text-orange-500" />
             <div>
               <p className="text-xs text-slate-500">Due date</p>
-              <p className="text-sm font-medium text-slate-900">
-                {formatDate(request.dueDate)}
-              </p>
+              <p className="text-sm font-medium text-slate-900">{formatDate(request.dueDate)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
             <Clock size={20} className="text-purple-500" />
             <div>
               <p className="text-xs text-slate-500">Created</p>
-              <p className="text-sm font-medium text-slate-900">
-                {formatDate(request.createdAt)}
-              </p>
+              <p className="text-sm font-medium text-slate-900">{formatDate(request.createdAt)}</p>
             </div>
           </div>
         </div>
@@ -331,6 +352,7 @@ export default function RequestDetailContent() {
           <input
             type="file"
             id="material-upload"
+            aria-label="Upload material file"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -350,11 +372,10 @@ export default function RequestDetailContent() {
               </div>
               <div className="text-left">
                 <p className="font-medium text-slate-900">{selectedFile.name}</p>
-                <p className="text-sm text-slate-500">
-                  {formatFileSize(selectedFile.size)}
-                </p>
+                <p className="text-sm text-slate-500">{formatFileSize(selectedFile.size)}</p>
               </div>
               <button
+                aria-label="Remove selected file"
                 onClick={() => setSelectedFile(null)}
                 className="p-2 text-slate-400 hover:text-red-600"
               >
@@ -364,9 +385,7 @@ export default function RequestDetailContent() {
           ) : (
             <>
               <Upload size={32} className="text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-600 font-medium mb-1">
-                Drag and drop your file here, or
-              </p>
+              <p className="text-slate-600 font-medium mb-1">Drag and drop your file here, or</p>
               <button
                 onClick={() => document.getElementById("material-upload")?.click()}
                 className="text-indigo-600 font-medium hover:underline"
@@ -383,6 +402,7 @@ export default function RequestDetailContent() {
         {/* Upload options */}
         <div className="mt-4 space-y-3">
           <input
+            aria-label="Add a description (optional)"
             type="text"
             value={materialDescription}
             onChange={(e) => setMaterialDescription(e.target.value)}
@@ -480,12 +500,15 @@ export default function RequestDetailContent() {
 
                   <div className="mt-3 flex items-center justify-between">
                     <button
+                      aria-label="Download material"
                       onClick={() => handleDownload(material.fileUrl, material.fileName)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition-colors"
                     >
                       <Download size={14} /> Download
                     </button>
                     <button
+                      type="button"
+                      aria-label="Delete material"
                       onClick={() => handleDeleteMaterial(material.id)}
                       className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >

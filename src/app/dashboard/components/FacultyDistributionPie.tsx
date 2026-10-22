@@ -1,6 +1,9 @@
 "use client";
 
 import React from "react";
+// This component is itself lazy-loaded via next/dynamic({ ssr: false }) by
+// FacultyDistributionChart, so recharts is already fetched on demand.
+// eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 
 const CustomTooltip = ({

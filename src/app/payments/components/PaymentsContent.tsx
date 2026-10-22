@@ -99,9 +99,31 @@ export default function PaymentsContent() {
   };
 
   useEffect(() => {
-    queueMicrotask(() => {
-      fetchData();
-    });
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const [pRes, sRes] = await Promise.all([
+          fetch("/api/payments", { signal: controller.signal }),
+          fetch("/api/students", { signal: controller.signal }),
+        ]);
+        if (controller.signal.aborted) return;
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          setPayments(pData.data || pData);
+        }
+        if (sRes.ok) {
+          const sData = await sRes.json();
+          setStudents(sData.data || sData);
+        }
+      } catch (_err) {
+        if (controller.signal.aborted) return;
+        toast.error("Failed to load payments data");
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
+    void load();
+    return () => controller.abort();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,6 +203,7 @@ export default function PaymentsContent() {
           <div className="relative flex-1 w-full max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
+              aria-label="Search by student or description..."
               type="text"
               placeholder="Search by student or description..."
               value={searchQuery}
@@ -189,6 +212,7 @@ export default function PaymentsContent() {
             />
           </div>
           <select
+            aria-label="Filter payments by status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -407,6 +431,7 @@ function PaymentFormModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <button
+        aria-label="Close payment dialog"
         type="button"
         className="absolute inset-0 bg-slate-900/10 backdrop-blur-sm"
         onClick={() => setShowModal(false)}
@@ -418,6 +443,7 @@ function PaymentFormModal({
             <p className="text-sm text-slate-400">Add a new financial transaction for a student.</p>
           </div>
           <button
+            aria-label="Close payment dialog"
             type="button"
             onClick={() => setShowModal(false)}
             className="p-2 hover:bg-slate-50 rounded-xl text-slate-400"

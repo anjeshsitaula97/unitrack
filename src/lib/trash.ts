@@ -124,41 +124,41 @@ async function permanentlyDeleteEntity(entityType: string, entityId: number): Pr
 async function purgeItems(
   items: Array<{ id: number; entityType: string; entityId: string }>
 ): Promise<PurgeResult> {
-  let purged = 0;
-  let failed = 0;
+  const outcomes = await Promise.all(
+    items.map(async (item) => {
+      const entityIdNum = Number(item.entityId);
 
-  for (const item of items) {
-    const entityIdNum = Number(item.entityId);
-
-    try {
-      await permanentlyDeleteEntity(item.entityType, entityIdNum);
-    } catch (error) {
-      if (!isRecordMissing(error)) {
-        console.error(
-          `Failed to purge ${item.entityType} ${item.entityId}:`,
-          error instanceof Error ? error.message : error
-        );
-        failed++;
-        continue;
+      try {
+        await permanentlyDeleteEntity(item.entityType, entityIdNum);
+      } catch (error) {
+        if (!isRecordMissing(error)) {
+          console.error(
+            `Failed to purge ${item.entityType} ${item.entityId}:`,
+            error instanceof Error ? error.message : error
+          );
+          return "failed" as const;
+        }
+        // The underlying record was already removed elsewhere; the trash row is
+        // simply an orphan, so fall through and remove it.
       }
-      // The underlying record was already removed elsewhere; the trash row is
-      // simply an orphan, so fall through and remove it.
-    }
 
-    try {
-      await db.trashItem.delete({ where: { id: item.id } });
-    } catch (error) {
-      if (!isRecordMissing(error)) {
-        console.error(
-          `Failed to remove trash row ${item.id}:`,
-          error instanceof Error ? error.message : error
-        );
-        failed++;
-        continue;
+      try {
+        await db.trashItem.delete({ where: { id: item.id } });
+      } catch (error) {
+        if (!isRecordMissing(error)) {
+          console.error(
+            `Failed to remove trash row ${item.id}:`,
+            error instanceof Error ? error.message : error
+          );
+          return "failed" as const;
+        }
       }
-    }
-    purged++;
-  }
+      return "purged" as const;
+    })
+  );
+
+  const purged = outcomes.filter((outcome) => outcome === "purged").length;
+  const failed = outcomes.length - purged;
 
   return { purged, failed };
 }

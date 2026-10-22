@@ -2,6 +2,23 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+
+const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+const clockFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  timeZone: browserTimeZone,
+});
+
+const longDateFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+  timeZone: browserTimeZone,
+});
 import {
   Handshake,
   Building2,
@@ -78,24 +95,15 @@ export default function PartnerDashboardContent() {
   const [students, setStudents] = useState<DashboardStudent[]>([]);
   const [totalApplications, setTotalApplications] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const timeStr = now.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-  const adDateStr = now.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const timeStr = now ? clockFormatter.format(now) : "--:--:--";
+  const adDateStr = now ? longDateFormatter.format(now) : "";
 
   useEffect(() => {
     let cancelled = false;
@@ -227,9 +235,7 @@ export default function PartnerDashboardContent() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-0.5">
-            Good morning, {userName}!
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-800 mb-0.5">Good morning, {userName}!</h1>
           <p className="text-sm text-slate-400">
             B2B Partner overview — partnerships, referrals, and commissions
           </p>
@@ -261,9 +267,7 @@ export default function PartnerDashboardContent() {
                   {k.icon}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xl font-bold text-slate-800 font-tabular">
-                    {k.value}
-                  </div>
+                  <div className="text-xl font-bold text-slate-800 font-tabular">{k.value}</div>
                   <div className="text-[11px] text-slate-400 font-medium truncate">{k.label}</div>
                 </div>
               </div>
@@ -275,9 +279,7 @@ export default function PartnerDashboardContent() {
               <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Building2 size={16} className="text-indigo-600" />
-                  <h2 className="font-bold text-slate-800 text-sm">
-                    Recent Partner Universities
-                  </h2>
+                  <h2 className="font-bold text-slate-800 text-sm">Recent Partner Universities</h2>
                 </div>
                 <Link
                   href="/universities"
@@ -298,9 +300,7 @@ export default function PartnerDashboardContent() {
                       {(u.name[0] || "?").toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 truncate">
-                        {u.name}
-                      </p>
+                      <p className="text-sm font-semibold text-slate-800 truncate">{u.name}</p>
                       <p className="text-[10px] text-slate-400">
                         {u.country || "Global"} • {u.partner?.name || "Partner"}
                       </p>
@@ -338,9 +338,7 @@ export default function PartnerDashboardContent() {
                       {i + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 truncate">
-                        {p.name}
-                      </p>
+                      <p className="text-sm font-semibold text-slate-800 truncate">{p.name}</p>
                       <p className="text-[10px] text-slate-400 truncate">
                         {p.contactPerson || p.email || "—"}
                       </p>
@@ -358,9 +356,7 @@ export default function PartnerDashboardContent() {
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <GraduationCap size={16} className="text-emerald-600" />
-                <h2 className="font-bold text-slate-800 text-sm">
-                  Recently Referred Students
-                </h2>
+                <h2 className="font-bold text-slate-800 text-sm">Recently Referred Students</h2>
               </div>
               <Link
                 href="/students"
@@ -398,9 +394,7 @@ export default function PartnerDashboardContent() {
                   {referredStudents.slice(0, 8).map((s) => (
                     <tr key={s.id} className="hover:bg-slate-50/40 transition-colors">
                       <td className="p-4">
-                        <p className="text-sm font-semibold text-slate-800">
-                          {s.name}
-                        </p>
+                        <p className="text-sm font-semibold text-slate-800">{s.name}</p>
                         <p className="text-[10px] text-slate-400">{s.email || "—"}</p>
                       </td>
                       <td className="p-4 text-xs font-medium text-slate-600">

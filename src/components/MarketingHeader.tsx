@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
+import { AnimatePresence, m, useMotionValueEvent, useScroll } from "framer-motion";
 
 const NAV_LINKS = [
   { label: "Overview", href: "#overview" },
   { label: "Features", href: "#features" },
-  { label: "University Network", href: "#university-network" },
+  { label: "Universities", href: "#university-network" },
   { label: "Student CRM", href: "#crm-showcase" },
-  { label: "Visa Automation", href: "#university-network" },
+  { label: "Visa Tools", href: "#university-network" },
   { label: "Pricing", href: "#pricing" },
   { label: "Live Demo", href: "#live-demo" },
 ];
@@ -30,7 +30,7 @@ export default function MarketingHeader() {
           }`}
         >
           {/* Scroll progress hairline */}
-          <motion.div
+          <m.div
             aria-hidden
             className="absolute bottom-0 left-0 h-[2px] w-full origin-left bg-gradient-to-r from-indigo-500 via-violet-400 to-cyan-400"
             style={{ scaleX: scrollYProgress }}
@@ -103,7 +103,7 @@ export default function MarketingHeader() {
         {/* Mobile dropdown */}
         <AnimatePresence>
           {mobileOpen && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
@@ -134,7 +134,7 @@ export default function MarketingHeader() {
               >
                 Book a Demo
               </a>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

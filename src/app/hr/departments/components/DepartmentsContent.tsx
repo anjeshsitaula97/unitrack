@@ -53,9 +53,25 @@ export default function DepartmentsContent() {
   };
 
   useEffect(() => {
-    queueMicrotask(() => {
-      fetchData();
-    });
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const [deptRes, userRes] = await Promise.all([
+          fetch("/api/hr/departments", { signal: controller.signal }),
+          fetch("/api/users", { signal: controller.signal }),
+        ]);
+        if (controller.signal.aborted) return;
+        if (deptRes.ok) setDepartments(await deptRes.json());
+        if (userRes.ok) setUsers(await userRes.json());
+      } catch (_err) {
+        if (controller.signal.aborted) return;
+        toast.error("Failed to load data");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void load();
+    return () => controller.abort();
   }, []);
 
   const openAdd = () => {

@@ -28,6 +28,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={jakarta.variable}>
       <head>
+        {/* Material Symbols is an icon font that next/font does not support. */}
+        {/* eslint-disable-next-line react-doctor/nextjs-no-font-link */}
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&display=swap"
           rel="stylesheet"

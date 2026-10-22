@@ -8,16 +8,16 @@ import Destinations from "@/components/landing/Destinations";
 import { BottomCta, Spotlight } from "@/components/landing/Story";
 
 const CAPABILITIES = [
-  "CRICOS Ready",
-  "UCAS / Direct",
-  "DLI Sync",
-  "SEVP · SEVIS",
+  "Australia · CRICOS",
+  "UK · UCAS",
+  "Canada · DLI",
+  "USA · SEVIS",
   "IELTS · PTE · TOEFL",
-  "GTE Engine",
+  "GTE Checks",
   "NepalPay · SWIFT",
-  "WhatsApp Cloud API",
+  "WhatsApp Alerts",
   "Biometric Attendance",
-  "FERPA Verified",
+  "FERPA Compliant",
   "GDPR Audited",
   "ISO 27001 Ready",
 ];
@@ -79,50 +79,50 @@ function SiteFooter() {
               </span>
             </div>
             <p className="font-body-md text-body-md text-slate-400 max-w-sm">
-              Enterprise operating intelligence platform built for leading education consultancies,
-              global study abroad advisors, and cross-border university admission agencies.
+              One platform for education consultancies and study abroad agencies &mdash; from the
+              first student enquiry all the way to the visa.
             </p>
             <div className="pt-2 flex items-center gap-2 font-label-pill text-label-pill text-indigo-300">
               <span className="motion-pulse w-2.5 h-2.5 rounded-full bg-indigo-400" />
-              <span>Live Global Uptime: 99.98% Available</span>
+              <span>99.98% Uptime</span>
             </div>
           </div>
           <div>
-            <div className="font-headline-sm text-headline-sm text-white mb-4">Product Matrix</div>
+            <div className="font-headline-sm text-headline-sm text-white mb-4">Product</div>
             <ul className="space-y-2.5 font-body-sm text-body-sm text-slate-400">
               <li>
                 <a className="hover:text-indigo-300 transition-colors" href="#overview">
-                  Unified Overview
+                  Overview
                 </a>
               </li>
               <li>
                 <a className="hover:text-indigo-300 transition-colors" href="#features">
-                  Platform Features
+                  Features
                 </a>
               </li>
               <li>
                 <a className="hover:text-indigo-300 transition-colors" href="#crm-showcase">
-                  Applicant CRM
+                  Student CRM
                 </a>
               </li>
               <li>
                 <a className="hover:text-indigo-300 transition-colors" href="#university-network">
-                  Visa Workflow Engine
+                  Visa Workflows
                 </a>
               </li>
               <li>
                 <a className="hover:text-indigo-300 transition-colors" href="#university-network">
-                  Institution Registry
+                  Universities
                 </a>
               </li>
               <li>
                 <a className="hover:text-indigo-300 transition-colors" href="#pricing">
-                  Consultancy Tiers
+                  Pricing
                 </a>
               </li>
               <li>
                 <a className="hover:text-indigo-300 transition-colors" href="#operations">
-                  Leads Management
+                  Leads
                 </a>
               </li>
               <li>
@@ -150,14 +150,14 @@ function SiteFooter() {
                   location_on
                 </span>
                 <span>
-                  <span className="block text-slate-300">Headquarters</span>
+                  <span className="block text-slate-300">Office</span>
                   Buddhnagar-10, Kathmandu 44600, Nepal
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="material-symbols-outlined text-indigo-400 text-[18px]">mail</span>
                 <span>
-                  <span className="block text-slate-300">Inquiries &amp; RFPs</span>
+                  <span className="block text-slate-300">Email</span>
                   <a
                     className="hover:text-indigo-300 transition-colors"
                     href="mailto:support@unitrackcrm.com"
@@ -180,8 +180,8 @@ function SiteFooter() {
                   schedule
                 </span>
                 <span>
-                  <span className="block text-slate-300">Operation Hours</span>
-                  Sunday – Friday: 9:00 AM – 6:30 PM (NPT / UTC+5:45)
+                  <span className="block text-slate-300">Hours</span>
+                  Sunday – Friday: 9:00 AM – 6:30 PM (NPT)
                 </span>
               </li>
             </ul>
@@ -193,10 +193,10 @@ function SiteFooter() {
             <div className="space-y-3">
               <div className="p-3 rounded-lg bg-white/[0.05] ring-1 ring-white/[0.08]">
                 <div className="font-label-pill text-label-pill uppercase text-indigo-200 mb-1">
-                  FERPA Verified
+                  FERPA Compliant
                 </div>
                 <div className="font-body-sm text-body-sm text-slate-400">
-                  Student education record data safeguard compliance.
+                  Protects student education records.
                 </div>
               </div>
               <div className="p-3 rounded-lg bg-white/[0.05] ring-1 ring-white/[0.08]">
@@ -204,7 +204,7 @@ function SiteFooter() {
                   GDPR Audited
                 </div>
                 <div className="font-body-sm text-body-sm text-slate-400">
-                  End-to-end encrypted European data standards.
+                  End-to-end encrypted data standards.
                 </div>
               </div>
               <div className="p-3 rounded-lg bg-white/[0.05] ring-1 ring-white/[0.08]">
@@ -212,17 +212,14 @@ function SiteFooter() {
                   ISO 27001 Ready
                 </div>
                 <div className="font-body-sm text-body-sm text-slate-400">
-                  Enterprise Grade Cloud Sec-Ops architecture.
+                  Enterprise-grade cloud security.
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div className="pt-8 mt-2 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 font-body-sm text-body-sm text-slate-500">
-          <p>
-            &copy; 2025 UniTrack by Avenlixx Technologies. All rights reserved. Registered across
-            international jurisdictions.
-          </p>
+          <p>&copy; 2025 UniTrack by Avenlixx Technologies. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <a className="hover:text-indigo-300 transition-colors" href="#">
               Privacy Policy

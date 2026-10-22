@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import DemoForm from "@/components/DemoForm";
 import { Counter, Eyebrow, Item, Reveal, Stagger } from "./motion";
 
@@ -13,7 +13,7 @@ const IMPACT = [
     suffix: "%",
     bar: 0.85,
   },
-  { label: "Intake Deadlines Missed", kind: "text" as const, text: "ZERO", bar: 1 },
+  { label: "Deadlines Missed", kind: "text" as const, text: "ZERO", bar: 1 },
   {
     label: "Sub-Agent Transparency",
     kind: "counter" as const,
@@ -42,11 +42,11 @@ export function Spotlight() {
 
           <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             <Reveal className="lg:col-span-7 space-y-6">
-              <Eyebrow dot>Spotlight Case Study &bull; Kathmandu Central Hub</Eyebrow>
+              <Eyebrow dot>Customer Story &bull; Kathmandu</Eyebrow>
               <blockquote className="font-headline-md text-headline-md text-white leading-snug">
-                &ldquo;UniTrack reduced our visa filing turnaround from 14 days down to 48 hours.
-                Our counselors no longer juggle Excel sheets or lose track of student affidavits,
-                and our university commission payouts are settled accurately to the rupee.&rdquo;
+                &ldquo;UniTrack cut our visa filing time from 14 days down to 48 hours. Our
+                counselors stopped juggling Excel sheets, nothing gets lost, and our university
+                commission payouts are accurate to the rupee.&rdquo;
               </blockquote>
               <div className="flex items-center gap-4 pt-2">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white font-headline-sm flex items-center justify-center font-bold ring-1 ring-white/20">
@@ -66,7 +66,7 @@ export function Spotlight() {
 
             <div className="lg:col-span-5 rounded-2xl bg-white/[0.05] ring-1 ring-white/10 backdrop-blur-md p-6 lg:p-8 space-y-6">
               <div className="font-label-pill text-label-pill uppercase text-indigo-300 tracking-wider">
-                Measurable 6-Month Agency Impact
+                Results After 6 Months
               </div>
               <Stagger className="space-y-5">
                 {IMPACT.map((s) => (
@@ -82,7 +82,7 @@ export function Spotlight() {
                       </span>
                     </div>
                     <div className="h-1 rounded-full bg-white/[0.07] overflow-hidden">
-                      <motion.div
+                      <m.div
                         className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 origin-left"
                         initial={{ scaleX: 0 }}
                         whileInView={{ scaleX: s.bar }}
@@ -98,7 +98,7 @@ export function Spotlight() {
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/[0.07] hover:bg-white/[0.13] ring-1 ring-white/10 text-white font-label-btn text-label-btn transition-colors motion-cta"
                   href="#live-demo"
                 >
-                  <span>Read Full Consultancy Blueprint</span>
+                  <span>Read the Full Story</span>
                   <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                 </a>
               </div>
@@ -133,23 +133,22 @@ export function BottomCta() {
 
           <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             <Reveal className="lg:col-span-7 space-y-5">
-              <Eyebrow dot>On-Site &amp; Cloud Demonstrations</Eyebrow>
+              <Eyebrow dot>Live Demo</Eyebrow>
               <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-white">
-                Ready to Modernize Your{" "}
-                <span className="text-grad">Educational Consultancy Operations?</span>
+                Ready to <span className="text-grad">Simplify Your Consultancy?</span>
               </h2>
               <p className="font-body-md text-body-md text-slate-400 max-w-xl">
-                Schedule an in-person walkthrough at our Kathmandu Technology Lab or receive an
-                instant sandbox trial with mock student profiles in under 60 minutes.
+                Book a walkthrough at our Kathmandu office, or get a free trial account with sample
+                student profiles in under 60 minutes.
               </p>
               <div className="flex flex-wrap items-center gap-6 pt-2 font-body-sm text-body-sm">
                 <span className="flex items-center gap-1.5 text-indigo-300">
-                  <span className="material-symbols-outlined text-[16px]">check</span> Free 1-on-1
+                  <span className="material-symbols-outlined text-[16px]">check</span> Free
                   counselor training
                 </span>
                 <span className="flex items-center gap-1.5 text-indigo-300">
-                  <span className="material-symbols-outlined text-[16px]">check</span> Zero downtime
-                  data migration
+                  <span className="material-symbols-outlined text-[16px]">check</span> We move your
+                  existing data for free
                 </span>
               </div>
             </Reveal>

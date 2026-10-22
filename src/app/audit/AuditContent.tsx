@@ -31,22 +31,26 @@ export default function AuditContent() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/activity")
-      .then((r) => {
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const r = await fetch("/api/activity", { signal: controller.signal });
         if (!r.ok)
           throw new Error(
             r.status === 401 ? "Unauthorized — you need Admin access" : "Failed to load"
           );
-        return r.json();
-      })
-      .then((data) => {
+        const data = await r.json();
+        if (controller.signal.aborted) return;
         setLogs(Array.isArray(data) ? data : []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        setError(err instanceof Error ? err.message : "Failed to load");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void load();
+    return () => controller.abort();
   }, []);
 
   const parseChanges = (raw?: string | null): ChangeDetail[] => {
@@ -91,7 +95,10 @@ export default function AuditContent() {
       <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-6">
         <div className="flex gap-3 flex-wrap items-end">
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+            <label
+              htmlFor="fld-text"
+              className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1"
+            >
               Search
             </label>
             <div className="relative">
@@ -100,6 +107,7 @@ export default function AuditContent() {
                 size={14}
               />
               <input
+                id="fld-text"
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -109,10 +117,14 @@ export default function AuditContent() {
             </div>
           </div>
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+            <label
+              htmlFor="fld-text-2"
+              className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1"
+            >
               Action
             </label>
             <input
+              id="fld-text-2"
               type="text"
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
@@ -121,10 +133,14 @@ export default function AuditContent() {
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+            <label
+              htmlFor="fld-date"
+              className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1"
+            >
               From
             </label>
             <input
+              id="fld-date"
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
@@ -132,10 +148,14 @@ export default function AuditContent() {
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+            <label
+              htmlFor="fld-date-2"
+              className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1"
+            >
               To
             </label>
             <input
+              id="fld-date-2"
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
@@ -180,7 +200,16 @@ export default function AuditContent() {
               >
                 <div
                   className={`p-3 flex items-center gap-3 text-sm ${changes.length > 0 ? "cursor-pointer hover:bg-slate-50" : ""}`}
+                  role={changes.length > 0 ? "button" : undefined}
+                  tabIndex={changes.length > 0 ? 0 : undefined}
                   onClick={() => changes.length > 0 && setExpandedId(expanded ? null : log.id)}
+                  onKeyDown={(e) => {
+                    if (changes.length === 0) return;
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setExpandedId(expanded ? null : log.id);
+                    }
+                  }}
                 >
                   <div className="size-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
                     {log.actorInitials ||
@@ -223,8 +252,11 @@ export default function AuditContent() {
                 </div>
                 {expanded && changes.length > 0 && (
                   <div className="px-4 pb-3 border-t border-slate-100 pt-3 space-y-1.5">
-                    {changes.map((c, i) => (
-                      <div key={`${c.field}-${i}`} className="flex items-start gap-2 text-xs">
+                    {changes.map((c) => (
+                      <div
+                        key={`${c.field}-${c.from ?? ""}-${c.to ?? ""}`}
+                        className="flex items-start gap-2 text-xs"
+                      >
                         <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold capitalize flex-shrink-0 min-w-[90px] text-center">
                           {c.field.replace(/([A-Z])/g, " $1").trim()}
                         </span>

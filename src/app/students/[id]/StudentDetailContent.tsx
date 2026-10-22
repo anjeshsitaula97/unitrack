@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import RequirementIcon from "./RequirementIcon";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -22,10 +23,6 @@ import {
   ChevronDown,
   MoreVertical,
   ExternalLink,
-  Award,
-  BookOpen,
-  Mail,
-  Briefcase,
   MessageSquare,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -78,22 +75,6 @@ const STATUS_META: Record<string, { icon: LucideIcon; color: string; headerBg: s
     color: "text-[#ba1a1a]",
     headerBg: "bg-[#ba1a1a]/5 hover:bg-[#ba1a1a]/10",
   },
-};
-
-const RequirementIcon = ({ req, size = 18 }: { req: string; size?: number }) => {
-  const r = req.toLowerCase();
-  if (r.includes("passport")) return <ShieldCheck size={size} />;
-  if (r.includes("transcript")) return <FileText size={size} />;
-  if (r.includes("certificate") || r.includes("degree")) return <Award size={size} />;
-  if (r.includes("cv") || r.includes("resume")) return <User size={size} />;
-  if (r.includes("english") || r.includes("ielts") || r.includes("language"))
-    return <BookOpen size={size} />;
-  if (r.includes("grade") || r.includes("marksheet") || r.includes("academic"))
-    return <GraduationCap size={size} />;
-  if (r.includes("sop") || r.includes("statement")) return <FileText size={size} />;
-  if (r.includes("lor") || r.includes("recommendation")) return <Mail size={size} />;
-  if (r.includes("work") || r.includes("experience")) return <Briefcase size={size} />;
-  return <FileText size={size} />;
 };
 
 interface EducationEntry {

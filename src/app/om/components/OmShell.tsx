@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -47,8 +47,11 @@ export default function OmShell({ user, children }: { user: OmUser; children: Re
   const isActive = (href: string, exact: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
+  const logoutInFlightRef = useRef(false);
+
   const handleLogout = async () => {
-    if (loggingOut) return;
+    if (logoutInFlightRef.current) return;
+    logoutInFlightRef.current = true;
     try {
       setLoggingOut(true);
       const res = await fetch("/api/auth/logout", { method: "POST" });
@@ -60,6 +63,7 @@ export default function OmShell({ user, children }: { user: OmUser; children: Re
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
+      logoutInFlightRef.current = false;
       setLoggingOut(false);
     }
   };

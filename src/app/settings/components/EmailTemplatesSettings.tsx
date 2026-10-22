@@ -65,7 +65,10 @@ export default function EmailTemplatesSettings() {
   useEffect(() => {
     const ac = new AbortController();
     fetch("/api/settings/email-templates/auto-status", { signal: ac.signal })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Failed to load auto-status: ${res.status}`);
+        return res.json();
+      })
       .then((data) => setAutoStatusEmails(data?.enabled !== false))
       .catch((err) => {
         if (err?.name !== "AbortError") setAutoStatusEmails(true);
@@ -539,6 +542,7 @@ function TemplateEditor({
             </div>
           ) : (
             <textarea
+              aria-label="Email template body"
               id="template-body"
               ref={bodyRef}
               value={form.body}
