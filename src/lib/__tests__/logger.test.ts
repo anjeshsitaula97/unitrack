@@ -9,6 +9,13 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
+// Next.js types `process.env.NODE_ENV` as a readonly property (it is inlined at
+// build time), so tests that need to flip the environment write through a
+// mutable view of process.env instead of assigning the readonly member.
+const setNodeEnv = (value: string) => {
+  (process.env as Record<string, string | undefined>).NODE_ENV = value;
+};
+
 // We need to test with a non-test NODE_ENV so the guard is bypassed.
 // Spy on the console methods to capture JSON output.
 describe("logger — sanitisation and output format", () => {
@@ -21,7 +28,7 @@ describe("logger — sanitisation and output format", () => {
     consoleInfoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
     consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     // Override NODE_ENV so the test guard is lifted
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     process.env.LOG_LEVEL = "debug";
   });
 
@@ -29,7 +36,7 @@ describe("logger — sanitisation and output format", () => {
     consoleErrorSpy.mockRestore();
     consoleInfoSpy.mockRestore();
     consoleWarnSpy.mockRestore();
-    process.env.NODE_ENV = "test";
+    setNodeEnv("test");
     delete process.env.LOG_LEVEL;
   });
 
@@ -105,7 +112,7 @@ describe("logger — sanitisation and output format", () => {
     // Re-import to pick up the new env
     vi.resetModules();
     const { logDebug } = await import("../logger");
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     logDebug("Should be suppressed");
     expect(consoleInfoSpy).not.toHaveBeenCalled();
     expect(consoleErrorSpy).not.toHaveBeenCalled();
@@ -115,7 +122,7 @@ describe("logger — sanitisation and output format", () => {
     process.env.LOG_LEVEL = "warn";
     vi.resetModules();
     const { logError } = await import("../logger");
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     logError("Always surfaced", "error detail");
     expect(consoleErrorSpy).toHaveBeenCalledOnce();
   });

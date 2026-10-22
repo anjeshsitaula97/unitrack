@@ -21,14 +21,13 @@ import {
   zodResponse,
   emailField,
   optionalTrimmedString,
-  isoDateOrNull,
 } from "@/lib/validate";
 
 // JSON string or array — the student model stores education/work/training as
 // JSON strings. Accept either a pre-stringified value or a raw array/object and
 // serialize it here so Prisma always receives a string.
 const jsonStringOrArray = z
-  .union([z.string(), z.array(z.unknown()), z.record(z.unknown())])
+  .union([z.string(), z.array(z.unknown()), z.record(z.string(), z.unknown())])
   .optional()
   .transform((v) => {
     if (v === undefined) return JSON.stringify([]);
@@ -57,20 +56,31 @@ const partnerIdField = z
     return Number.isInteger(n) && n > 0 ? n : null;
   });
 
+// Student date-ish columns (dob / passport / test dates) are stored as plain
+// strings in the schema, not DateTime: the form allows partial dates and
+// Bikram Sambat text that a Date cannot round-trip. Keep the submitted string
+// (empty -> null) so the value matches Prisma's String? column, instead of the
+// shared isoDateOrNull which returns a Date and would fail the type check.
+const stringDateOrNull = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v && v.length > 0 ? v : null));
+
 const createStudentSchema = z
   .object({
     // Either a full name or first+last — at least one combination must be present
     name: z.string().trim().max(200).optional(),
     firstName: z.string().trim().max(100).optional(),
     lastName: z.string().trim().max(100).optional(),
-    email: emailField.optional(),
+    email: emailField,
     admissionEmail: emailField.optional(),
     studentPassword: z.string().max(200).optional(),
     applicationEmailPassword: optionalTrimmedString(200),
     phone: optionalTrimmedString(40),
     whatsappNumber: optionalTrimmedString(40),
     gender: optionalTrimmedString(20),
-    dob: isoDateOrNull,
+    dob: stringDateOrNull,
     dobAd: optionalTrimmedString(20),
     dobBs: optionalTrimmedString(20),
     nationality: optionalTrimmedString(60),
@@ -89,8 +99,8 @@ const createStudentSchema = z
     temporaryAddress: optionalTrimmedString(500),
     passportNumber: optionalTrimmedString(40),
     passportNationality: optionalTrimmedString(60),
-    passportIssueDate: isoDateOrNull,
-    passportExpiryDate: isoDateOrNull,
+    passportIssueDate: stringDateOrNull,
+    passportExpiryDate: stringDateOrNull,
     passportIssuePlace: optionalTrimmedString(100),
     education: jsonStringOrArray,
     workExperience: jsonStringOrArray,
@@ -102,7 +112,7 @@ const createStudentSchema = z
     listeningScore: optionalTrimmedString(20),
     speakingScore: optionalTrimmedString(20),
     moi: optionalTrimmedString(200),
-    testDate: isoDateOrNull,
+    testDate: stringDateOrNull,
     testRegNumber: optionalTrimmedString(60),
     studyLevel: optionalTrimmedString(60),
     intakeTerm: optionalTrimmedString(60),
