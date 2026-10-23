@@ -1,1 +1,0 @@
-Node scripts that automate headless browser screenshots of the running UniTrack app and batch-inject Next.js page metadata into source files.

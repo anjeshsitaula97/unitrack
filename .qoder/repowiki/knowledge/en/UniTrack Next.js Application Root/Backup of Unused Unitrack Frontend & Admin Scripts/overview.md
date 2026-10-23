@@ -1,1 +1,0 @@
-Archived copy of the unused Unitrack Next.js frontend application and one-off Prisma admin/seed scripts used for development, seeding, and database maintenance.

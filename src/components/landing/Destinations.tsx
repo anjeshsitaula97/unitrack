@@ -2,77 +2,25 @@
 
 import Image from "next/image";
 import { m } from "framer-motion";
-import { Eyebrow, Parallax, Reveal, Stagger } from "./motion";
-import { revealVariants } from "./motion-tokens";
+import { Eyebrow, Parallax, Reveal } from "./motion";
 import BrowserFrame from "./BrowserFrame";
-
-const COUNTRIES = [
-  {
-    code: "AU",
-    name: "Australia",
-    visa: "Subclass 500 Visa",
-    tag: "CRICOS",
-    rows: [
-      { k: "Avg COE Time:", v: "3-5 Days", accent: false },
-      { k: "GTE Check:", v: "Built-in", accent: true },
-      { k: "Visa Success:", v: "99.4%", accent: false },
-    ],
-    footer: "180+ Active Universities",
-  },
-  {
-    code: "CA",
-    name: "Canada",
-    visa: "Study Permit (SDS / Non-SDS)",
-    tag: "DLI Sync",
-    rows: [
-      { k: "PAL Check:", v: "Automatic", accent: true },
-      { k: "GIC Bank Tracking:", v: "Built-in", accent: false },
-      { k: "Visa Success:", v: "97.8%", accent: false },
-    ],
-    footer: "210+ Colleges & Universities",
-  },
-  {
-    code: "UK",
-    name: "United Kingdom",
-    visa: "Student Route (CAS)",
-    tag: "UCAS Ready",
-    rows: [
-      { k: "CAS Speed:", v: "48 Hours", accent: false },
-      { k: "28-Day Bank Rule:", v: "Auto Calculator", accent: true },
-      { k: "Visa Success:", v: "99.1%", accent: false },
-    ],
-    footer: "140+ Russell & Modern Unis",
-  },
-  {
-    code: "US",
-    name: "United States",
-    visa: "F-1 Student Visa",
-    tag: "SEVIS / I-20",
-    rows: [
-      { k: "DS-160 Prep:", v: "Standardized", accent: true },
-      { k: "Mock Visa Interview:", v: "Included", accent: false },
-      { k: "Offer Rate:", v: "96.5%", accent: false },
-    ],
-    footer: "300+ Accredited Campuses",
-  },
-];
 
 export default function Destinations() {
   return (
     <section
       id="university-network"
-      className="relative w-full bg-[#05060b] py-16 lg:py-24 scroll-mt-28"
+      className="relative w-full bg-white py-16 lg:py-24 scroll-mt-28"
     >
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12 space-y-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <Reveal className="lg:col-span-7 space-y-5">
             <div className="space-y-4">
               <Eyebrow>Study Destinations</Eyebrow>
-              <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-white">
+              <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-slate-900">
                 Set Up for <span className="text-grad">Every Major Destination</span>
               </h2>
             </div>
-            <p className="font-body-md text-body-md text-slate-400 max-w-xl">
+            <p className="font-body-md text-body-md text-slate-600 max-w-xl">
               Each country comes ready with embassy checklists, money and funds calculators, and
               visa rules already set up.
             </p>
@@ -81,7 +29,7 @@ export default function Destinations() {
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 340, damping: 24 }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-sm font-semibold shadow-[0_16px_36px_-14px_rgba(99,102,241,0.8)] ring-1 ring-white/15 hover:from-indigo-400 hover:to-violet-400 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold shadow-[0_16px_36px_-14px_rgba(99,102,241,0.6)] ring-1 ring-white/20 hover:from-indigo-500 hover:to-violet-500 transition-colors"
             >
               Explore Universities
               <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -100,50 +48,6 @@ export default function Destinations() {
             </BrowserFrame>
           </Parallax>
         </div>
-
-        <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {COUNTRIES.map((c) => (
-            <m.article
-              key={c.code}
-              variants={revealVariants}
-              whileHover={{ y: -4 }}
-              transition={{ type: "spring", stiffness: 340, damping: 24 }}
-              className="fw group rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.08] p-5 space-y-4 glow-hover hover:ring-indigo-400/30 transition-[ring-color] duration-300"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-indigo-500/15 ring-1 ring-indigo-400/30 flex items-center justify-center text-indigo-300 font-bold text-[15px]">
-                    {c.code}
-                  </div>
-                  <div>
-                    <div className="text-[18px] text-white font-bold font-headline-sm">
-                      {c.name}
-                    </div>
-                    <div className="text-[12px] text-slate-500">{c.visa}</div>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-indigo-500/15 ring-1 ring-indigo-400/25 text-indigo-300 font-label-pill text-[11px]">
-                  {c.tag}
-                </span>
-              </div>
-              <div className="space-y-3 text-body-sm text-body-sm">
-                {c.rows.map((row) => (
-                  <div key={row.k} className="flex justify-between gap-3">
-                    <span className="text-slate-500">{row.k}</span>
-                    <span
-                      className={`font-semibold ${row.accent ? "text-indigo-300" : "text-slate-200"}`}
-                    >
-                      {row.v}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="pt-2 border-t border-white/[0.07] text-label-pill text-label-pill uppercase text-grad font-bold">
-                {c.footer}
-              </div>
-            </m.article>
-          ))}
-        </Stagger>
       </div>
 
       <div aria-hidden className="hairline mt-16 max-w-[1440px] mx-auto" />

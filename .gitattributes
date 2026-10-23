@@ -1,0 +1,4 @@
+# Forces LF for shell scripts in the repo regardless of the committing
+# machine: deploy.sh is executed by bash on the Linux production box, where
+# CRLF breaks every line ("bash\r: command not found").
+scripts/*.sh text eol=lf

@@ -1,1 +1,0 @@
-Next.js App Router pages and client components for managing student applications, application details, and visa workflow tasks within the UniTrack admin interface.

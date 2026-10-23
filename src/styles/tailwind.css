@@ -223,22 +223,38 @@ select:has(option[value=""]:checked) {
   --motion-dur-card: 400ms;
 }
 
-/* Gradient display text — indigo → violet → cyan, clipped to glyphs. */
+/* Gradient display text — indigo → violet → cyan, clipped to glyphs.
+   Tuned for light surfaces; use .text-grad-dark on deep-indigo bands. */
 .text-grad {
+  background-image: linear-gradient(105deg, #4338ca 0%, #7c3aed 48%, #0891b2 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-grad-dark {
   background-image: linear-gradient(105deg, #e0e7ff 0%, #818cf8 42%, #22d3ee 96%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-/* Fine engineering grid, masked to a soft ellipse behind the hero. */
+/* Fine engineering grid, masked to a soft ellipse behind the hero.
+   Light variant for white sections, dark variant for deep-indigo bands. */
 .grid-lines {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
   background-size: 72px 72px;
   -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 26%, #000 20%, transparent 76%);
   mask-image: radial-gradient(ellipse 70% 55% at 50% 26%, #000 20%, transparent 76%);
+}
+.grid-lines-dark {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 72px 72px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 50%, #000 20%, transparent 76%);
+  mask-image: radial-gradient(ellipse 70% 55% at 50% 50%, #000 20%, transparent 76%);
 }
 
 /* Film grain — static, painted once (no animation cost). */
@@ -258,8 +274,8 @@ select:has(option[value=""]:checked) {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(129, 140, 248, 0.35),
-    rgba(34, 211, 238, 0.22),
+    rgba(79, 70, 229, 0.28),
+    rgba(8, 145, 178, 0.2),
     transparent
   );
 }
@@ -274,7 +290,7 @@ select:has(option[value=""]:checked) {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: radial-gradient(150px 110px at 50% -8%, rgba(99, 102, 241, 0.24), transparent 72%);
+  background: radial-gradient(150px 110px at 50% -8%, rgba(79, 70, 229, 0.12), transparent 72%);
   opacity: 0;
   transition: opacity 300ms ease;
 }
@@ -364,5 +380,176 @@ select:has(option[value=""]:checked) {
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
     animation: none !important;
+  }
+}
+
+/* ── Motion 2.0 · pointer-reactive & narrative layer ────────────────────
+   Extends the locked motion language (same ease/durations, transform +
+   opacity only). New surfaces:
+   • .spotlight-card        cursor-tracked radial highlight (--mx/--my, set in JS)
+   • .tilt-host/.tilt-glare pointer 3D tilt + sheen (--gx/--gy, set in JS)
+   • .shine                 hover light sweep, transform-only
+   • .conic-ring/.conic-aura  rotating conic accents
+   • .orbit-ring            dashed orbit circles
+   • .scroll-line           hero scroll cue with traveling dot
+   Pointer features are progressive enhancements; every loop below sits
+   inside prefers-reduced-motion: no-preference and the JS primitives
+   early-return on top of that. */
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scroll-dot {
+  0% {
+    transform: translateY(-16px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(48px);
+    opacity: 0;
+  }
+}
+
+/* Card highlight that follows the cursor — vars written by SpotlightItem. */
+.spotlight-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    280px circle at var(--mx, 50%) var(--my, -30%),
+    rgba(79, 70, 229, 0.1),
+    transparent 68%
+  );
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.spotlight-card:hover::after {
+  opacity: 1;
+}
+
+/* 3D tilt host + tracked sheen — vars written by Tilt. */
+.tilt-host {
+  transform-style: preserve-3d;
+}
+.tilt-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    460px circle at var(--gx, 50%) var(--gy, 30%),
+    rgba(99, 102, 241, 0.1),
+    transparent 55%
+  );
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
+.tilt-host:hover .tilt-glare {
+  opacity: 1;
+}
+
+/* Hover light sweep — single transform transition, no keyframes. */
+.shine {
+  position: relative;
+  overflow: hidden;
+}
+.shine::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 46%;
+  background: linear-gradient(105deg, transparent, rgba(79, 70, 229, 0.07), transparent);
+  transform: translateX(-180%) skewX(-16deg);
+  transition: transform 800ms var(--motion-ease-enter);
+  pointer-events: none;
+}
+.shine:hover::before {
+  transform: translateX(340%) skewX(-16deg);
+}
+
+/* Rotating conic accents. .spin* classes below provide the loop. */
+.conic-ring {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(99, 102, 241, 0.55) 55deg,
+    rgba(34, 211, 238, 0.4) 105deg,
+    transparent 170deg,
+    rgba(139, 92, 246, 0.4) 260deg,
+    transparent 330deg
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 1.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 1.5px));
+}
+.conic-aura {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(99, 102, 241, 0.5) 70deg,
+    transparent 150deg,
+    rgba(34, 211, 238, 0.35) 230deg,
+    transparent 300deg
+  );
+  filter: blur(70px);
+}
+
+/* Dashed orbit circles (hero backdrop). */
+.orbit-ring {
+  border: 1px dashed rgba(15, 23, 42, 0.1);
+  border-radius: 9999px;
+}
+
+/* Hero scroll cue — thin line with a traveling gradient dot. */
+.scroll-line {
+  position: relative;
+  width: 1px;
+  height: 44px;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.15);
+}
+.scroll-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 14px;
+  background: linear-gradient(180deg, transparent, #818cf8 45%, #22d3ee);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .spin {
+    animation: spin-slow 28s linear infinite;
+  }
+  .spin-slower {
+    animation: spin-slow 60s linear infinite;
+  }
+  .spin-reverse {
+    animation: spin-slow 90s linear infinite reverse;
+  }
+  .orbit-ring {
+    animation: spin-slow 70s linear infinite;
+  }
+  .orbit-ring.reverse {
+    animation: spin-slow 110s linear infinite reverse;
+  }
+  .scroll-dot {
+    animation: scroll-dot 1.9s var(--motion-ease-enter) infinite;
   }
 }

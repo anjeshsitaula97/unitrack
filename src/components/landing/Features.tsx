@@ -1,11 +1,6 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { m } from "framer-motion";
-import { Stagger, Reveal, Eyebrow } from "./motion";
-import { revealVariants } from "./motion-tokens";
-
-const ParticleFlow = dynamic(() => import("./ParticleFlow"), { ssr: false });
+import { SpotlightItem, Stagger, Reveal, Eyebrow } from "./motion";
 
 const PILLARS = [
   {
@@ -93,34 +88,29 @@ function FeatureCard({
   index?: number;
 }) {
   return (
-    <m.article
-      variants={revealVariants}
-      whileHover={{ y: -4 }}
-      transition={{ type: "spring", stiffness: 340, damping: 24 }}
-      className="fw group relative flex flex-col justify-between space-y-5 rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.08] p-6 backdrop-blur-sm glow-hover hover:ring-indigo-400/30 transition-[ring-color] duration-300 overflow-hidden"
-    >
+    <>
       {index !== undefined && (
         <span
           aria-hidden
-          className="absolute top-3 right-5 text-[46px] font-extrabold leading-none text-white/[0.04] select-none"
+          className="absolute top-3 right-5 text-[46px] font-extrabold leading-none text-slate-900/[0.05] select-none"
         >
           {String(index + 1).padStart(2, "0")}
         </span>
       )}
-      <div className="space-y-4 relative">
-        <div className="w-12 h-12 rounded-xl bg-indigo-500/15 ring-1 ring-indigo-400/25 flex items-center justify-center text-indigo-300 group-hover:ring-indigo-400/60 transition-[ring-color] duration-300">
+      <div className="relative space-y-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200 transition duration-300 group-hover:-rotate-3 group-hover:scale-110 group-hover:ring-indigo-400">
           <span className="material-symbols-outlined text-[26px]">{icon}</span>
         </div>
-        <h3 className="font-headline-sm text-headline-sm text-white">{title}</h3>
-        <p className="font-body-md text-body-md text-slate-400">{body}</p>
+        <h3 className="font-headline-sm text-headline-sm text-slate-900">{title}</h3>
+        <p className="font-body-md text-body-md text-slate-600">{body}</p>
       </div>
-      <div className="pt-4 flex items-center justify-between font-label-btn text-label-btn relative">
-        <span className="text-indigo-300 font-semibold">{highlight}</span>
-        <div className="w-8 h-8 rounded-full bg-white/[0.06] ring-1 ring-white/10 flex items-center justify-center text-indigo-300 group-hover:bg-indigo-500/25 group-hover:ring-indigo-400/40 group-hover:translate-x-0.5 transition">
+      <div className="relative flex items-center justify-between pt-4 font-label-btn text-label-btn">
+        <span className="font-semibold text-indigo-600">{highlight}</span>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-indigo-600 ring-1 ring-slate-200 transition group-hover:translate-x-0.5 group-hover:bg-indigo-600 group-hover:text-white group-hover:ring-indigo-600">
           <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
         </div>
       </div>
-    </m.article>
+    </>
   );
 }
 
@@ -128,19 +118,19 @@ export function Pillars() {
   return (
     <section
       id="features"
-      className="relative w-full bg-[#05060b] py-16 lg:py-24 scroll-mt-28 overflow-hidden"
+      className="relative w-full bg-white py-16 lg:py-24 scroll-mt-28 overflow-hidden"
     >
       <div
         aria-hidden
-        className="absolute -top-40 left-1/4 w-[600px] h-[320px] bg-indigo-700/12 blur-[130px] rounded-full"
+        className="absolute -top-40 left-1/4 h-[320px] w-[600px] rounded-full bg-indigo-200/50 blur-[130px]"
       />
       <div className="relative max-w-[1440px] mx-auto px-6 lg:px-12 space-y-12">
         <Reveal className="max-w-2xl space-y-4">
           <Eyebrow>Features</Eyebrow>
-          <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-white">
+          <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-slate-900">
             Made for <span className="text-grad">Study Abroad Agencies</span>
           </h2>
-          <p className="font-body-lg text-body-lg text-slate-400">
+          <p className="font-body-lg text-body-lg text-slate-600">
             Most CRMs don&rsquo;t understand GTE checks, IELTS scores, sub-agent commissions, or
             embassy deadlines. UniTrack is built for the way education consultancies actually work.
           </p>
@@ -148,7 +138,12 @@ export function Pillars() {
 
         <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {PILLARS.map((p) => (
-            <FeatureCard key={p.title} {...p} />
+            <SpotlightItem
+              key={p.title}
+              className="group relative flex h-full flex-col justify-between space-y-5 overflow-hidden rounded-2xl bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80 transition-[ring-color,box-shadow] duration-300 hover:shadow-[0_24px_50px_-24px_rgba(49,46,129,0.25)] hover:ring-indigo-300"
+            >
+              <FeatureCard icon={p.icon} title={p.title} body={p.body} highlight={p.highlight} />
+            </SpotlightItem>
           ))}
         </Stagger>
       </div>
@@ -160,21 +155,15 @@ export function Operations() {
   return (
     <section
       id="operations"
-      className="relative w-full bg-[#070912] py-16 lg:py-24 scroll-mt-28 border-t border-white/[0.06] overflow-hidden"
+      className="relative w-full bg-slate-50 py-16 lg:py-24 scroll-mt-28 border-t border-slate-200/70 overflow-hidden"
     >
-      {/* WebGL flow field — data moving through the back-office suite. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 hidden lg:block opacity-55">
-        <ParticleFlow className="absolute inset-0 h-full w-full" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_50%,transparent_25%,#070912_80%)]" />
-      </div>
-
       <div className="relative max-w-[1440px] mx-auto px-6 lg:px-12 space-y-12">
         <Reveal className="max-w-2xl space-y-4">
           <Eyebrow>Back-Office Tools</Eyebrow>
-          <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-white">
+          <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-slate-900">
             Leads, People and Money &mdash; <span className="text-grad">All in One Place</span>
           </h2>
-          <p className="font-body-lg text-body-lg text-slate-400">
+          <p className="font-body-lg text-body-lg text-slate-600">
             Alongside student work, UniTrack also runs your business: your sales leads, your
             team&rsquo;s attendance and payroll, and every payment and expense in your books.
           </p>
@@ -182,14 +171,18 @@ export function Operations() {
 
         <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {OPERATIONS.map((f, i) => (
-            <FeatureCard
+            <SpotlightItem
               key={f.title}
-              index={i}
-              icon={f.icon}
-              title={f.title}
-              body={f.desc}
-              highlight={f.highlight}
-            />
+              className="group relative flex h-full flex-col justify-between space-y-5 overflow-hidden rounded-2xl bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80 transition-[ring-color,box-shadow] duration-300 hover:shadow-[0_24px_50px_-24px_rgba(49,46,129,0.25)] hover:ring-indigo-300"
+            >
+              <FeatureCard
+                index={i}
+                icon={f.icon}
+                title={f.title}
+                body={f.desc}
+                highlight={f.highlight}
+              />
+            </SpotlightItem>
           ))}
         </Stagger>
       </div>

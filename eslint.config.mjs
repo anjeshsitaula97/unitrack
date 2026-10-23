@@ -42,11 +42,6 @@ export default [
   {
     files: [
       'prisma/**/*.ts',
-      'src/lib/seed-*.ts',
-      'src/lib/seed-admin.ts',
-      'src/lib/seed-data.ts',
-      'src/lib/seed-featured.ts',
-      'src/lib/check-counts.ts',
       'scripts/**/*.mjs',
     ],
     rules: {
@@ -63,6 +58,7 @@ export default [
     ignores: [
       'node_modules/',
       '.next/',
+      '.next-build/',
       'out/',
       'public/',
       'coverage/',

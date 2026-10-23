@@ -86,6 +86,13 @@ export async function POST(req: NextRequest) {
     if (permError) return permError;
 
     const data = await req.json();
+    // Payloads without a mode (e.g. raw API consumers) fall back to the
+    // default delivery mode configured in Settings > Academics.
+    let modeFallback = "Online";
+    if (!data.mode) {
+      const settings = await db.systemSettings.findFirst();
+      modeFallback = settings?.defaultCourseMode || "Online";
+    }
     const newCourse = await db.course.create({
       data: {
         name: data.name || data.title,
@@ -107,7 +114,7 @@ export async function POST(req: NextRequest) {
         prerequisites: JSON.stringify(data.prerequisites || []),
         intake: data.intake || "",
         language: data.language || "English",
-        mode: data.mode || "Online",
+        mode: data.mode || modeFallback,
         academicRequirement: data.academicRequirement || "",
         percentageRequired: data.percentageRequired || "",
         gpaRequired: data.gpaRequired || "",
@@ -166,7 +173,10 @@ export async function POST(req: NextRequest) {
     });
 
     // A Prisma.Decimal serialises to a string; send a plain number instead.
-    return NextResponse.json({ ...newCourse, credits: toCourseCredits(newCourse.credits) }, { status: 201 });
+    return NextResponse.json(
+      { ...newCourse, credits: toCourseCredits(newCourse.credits) },
+      { status: 201 }
+    );
   } catch (error) {
     logError("Create Course", error);
     return NextResponse.json(

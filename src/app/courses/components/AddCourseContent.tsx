@@ -75,6 +75,8 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
     { id: string; name: string }[] | undefined
   >(undefined);
   const [isLoading, setIsLoading] = React.useState(true);
+  // Delivery mode default configured in Settings > Academics; applied to new courses.
+  const [defaultCourseMode, setDefaultCourseMode] = useState("Online");
 
   const [showAddFaculty, setShowAddFaculty] = useState(false);
   const [showAddDegreeType, setShowAddDegreeType] = useState(false);
@@ -192,6 +194,26 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
   const loadInitialData = React.useCallback(async () => {
     try {
       await loadCatalogOptions();
+
+      // Preselect the configured default delivery mode on new courses. The
+      // form stays hidden behind isLoading until this resolves, so the value
+      // lands before the user can change the field. Non-fatal on failure —
+      // fall back to the built-in "Online".
+      if (!courseId) {
+        try {
+          const res = await fetch("/api/settings/academics");
+          if (res.ok) {
+            const data = await res.json();
+            const nextMode = data?.defaultCourseMode;
+            if (typeof nextMode === "string" && nextMode) {
+              setDefaultCourseMode(nextMode);
+              setForm((prev) => ({ ...prev, mode: nextMode }));
+            }
+          }
+        } catch {
+          // Keep the built-in default.
+        }
+      }
 
       if (courseId) {
         const res = await fetch(`/api/courses/${courseId}`);
@@ -459,7 +481,7 @@ export default function AddCourseContent({ courseId }: { courseId?: string }) {
                 prerequisites: [],
                 status: "Active",
                 language: "English",
-                mode: "Online",
+                mode: defaultCourseMode,
                 academicRequirement: "",
                 percentageRequired: "",
                 gpaRequired: "",

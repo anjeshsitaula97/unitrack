@@ -24,6 +24,7 @@ const getJwtSecretKey = () => {
  */
 const PUBLIC_PATHS = [
   "/",
+  "/customer-story",
   "/login",
   "/om/login",
   "/forgot-password",

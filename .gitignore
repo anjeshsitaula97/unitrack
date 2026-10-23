@@ -64,9 +64,12 @@ turbo/
 .env.*.local
 .env.production
 .env.development
+# Per-box deploy config for scripts/deploy.sh (branch, restart command)
+/.deploy.env
 
-# Dev artifacts
+# Dev artifacts (persistent upload storage survives deploys, served via /api/uploads)
 *.log
+/storage/
 *.txt
 out.txt
 tmp_users.json
@@ -75,14 +78,11 @@ scratch/
 .stitch/
 
 # One-off analysis output and tooling directories (not part of the app)
+# NOTE: /data/nepal and /scanner-agent are intentionally TRACKED:
+#   - /api/nepal/* routes read data/nepal/*.json from process.cwd() at runtime
+#   - the Files page instructs users to run `node scanner-agent/index.js`
+#   Untracking either breaks fresh clones / production. Do not ignore them.
 /graphify-out/
-/scanner-agent/
 /Technologies/
-/data/
-
-# macOS AppleDouble resource-fork files (noisy on external volumes)
-._*
-.DS_Store
-
-# persistent upload storage (survives deploys, served via /api/uploads)
-/storage/
+/.opencode/
+/.qoder/

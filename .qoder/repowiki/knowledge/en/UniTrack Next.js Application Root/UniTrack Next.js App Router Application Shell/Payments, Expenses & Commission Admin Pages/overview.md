@@ -1,1 +1,0 @@
-Next.js App Router pages that let administrators record payments and business expenses and configure per-university/per-course commission structures via client-side forms backed by REST APIs.

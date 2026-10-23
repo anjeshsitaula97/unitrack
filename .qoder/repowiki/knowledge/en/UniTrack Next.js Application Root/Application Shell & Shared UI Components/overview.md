@@ -1,1 +1,0 @@
-Provides the Next.js application chrome (layout, sidebar, topbar, guided tour) and reusable UI primitives plus HR camera capture for the UniTrack admin platform.

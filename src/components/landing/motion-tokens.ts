@@ -1,4 +1,4 @@
-import type { Variants } from "framer-motion";
+import type { Transition, Variants } from "framer-motion";
 
 /* ── Motion language tokens (locked — see tailwind.css header) ─────────────── */
 export const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -16,3 +16,7 @@ export const groupVariants: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: STAGGER, delayChildren: 0.05 } },
 };
+
+/** Shared springs for pointer interactions (magnetic, tilt, card lift). */
+export const SPRING_SOFT: Transition = { type: "spring", stiffness: 180, damping: 22, mass: 0.9 };
+export const SPRING_SNAP: Transition = { type: "spring", stiffness: 340, damping: 24 };

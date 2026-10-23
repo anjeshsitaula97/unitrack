@@ -34,12 +34,17 @@ export default function AppLayout({ children, role, onRoleChange, user }: AppLay
     <div className="min-h-screen bg-slate-50">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} user={user} />
       <Topbar role={role} onRoleChange={onRoleChange} sidebarCollapsed={collapsed} user={user} />
-      <main className={`transition duration-300 min-h-screen ${collapsed ? "ml-16" : "ml-60"}`}>
-        <div className="pt-14">
+      <main
+        className={`transition duration-300 min-h-screen flex flex-col ${collapsed ? "ml-16" : "ml-60"}`}
+      >
+        <div className="pt-14 flex-1">
           <div className="p-6 max-w-screen-2xl mx-auto">
             <ErrorBoundary>{children}</ErrorBoundary>
           </div>
         </div>
+        <footer className="px-6 pb-5 pt-2 text-center text-xs text-slate-400">
+          &copy; 2026 UniTrack by Avenlixx Technologies. All rights reserved.
+        </footer>
       </main>
       <GuidedTour user={user} />
       <NewsPopup />

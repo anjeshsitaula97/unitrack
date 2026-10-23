@@ -293,6 +293,8 @@ model SystemSettings {
   currencyCode        String   @default("NPR")
   phoneCode           String   @default("+977")
   language            String   @default("English")
+  /// Delivery mode preselected on the Add Course form: "Online" | "In-person" | "Hybrid".
+  defaultCourseMode   String   @default("Online")
   enableBranches      Boolean  @default(false)
   showBSDate          Boolean  @default(false)
   officeLatitude      Float?

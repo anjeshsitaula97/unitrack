@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Type-check, lint, test, build
+    name: Type-check, lint, test, migrations, build
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -21,26 +21,80 @@ jobs:
       # Real values live in the deployment environment's secret store.
       JWT_SECRET: ci-placeholder-secret-0123456789abcdefghijklmnop
       ENCRYPTION_KEY: ci-placeholder-key-0123456789abcdefghijklmnopqr
-      DATABASE_URL: mysql://user:pass@localhost:3306/unitrack
+      # Points at the MySQL service container below; used by prisma migrate
+      # deploy / migrate diff. `next build` itself never opens a connection.
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/unitrack
       NODE_ENV: production
+      # Puppeteer is a dev-only tool (local screenshots). Without this, every
+      # `npm ci` downloads a ~150 MB Chromium bundle the pipeline never uses.
+      # If you add Puppeteer-based E2E tests here, remove this line and install
+      # the browser explicitly instead: `npx puppeteer browsers install chrome`.
+      PUPPETEER_SKIP_DOWNLOAD: "true"
+
+    # Ephemeral MySQL used to prove migrations replay cleanly on an empty
+    # database. Destroyed together with the job.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: unitrack
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so the gitleaks scan can cover it
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Single source of truth for the Node version: .nvmrc matches the
+          # local dev machine and the `engines` range in package.json. Bump
+          # Node everywhere by editing .nvmrc only.
+          node-version-file: .nvmrc
           cache: npm
+
+      # Speeds up `next build` across runs (webpack cache); keyed on lockfile + sources.
+      - name: Restore Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**.[jt]s?', '**/**.[jt]sx') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
+            nextjs-${{ runner.os }}-
 
       # `npm ci` installs exactly from the committed package-lock.json — this is
       # the whole point of tracking the lockfile (reproducible builds).
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate Prisma schema
+        run: npx prisma validate
+
       - name: Generate Prisma client
         run: npx prisma generate
+
+      # Catches broken/out-of-order migration SQL before it reaches production.
+      - name: Apply migrations to a fresh database
+        run: npx prisma migrate deploy
+
+      # Fails when schema.prisma and prisma/migrations disagree ("drift"), i.e.
+      # someone edited the schema without generating a migration (or vice versa).
+      # The shadow database is separate from the one migrate deploy used above.
+      - name: Create shadow database for drift check
+        run: mysql -h 127.0.0.1 -P 3306 -uroot -proot -e "CREATE DATABASE IF NOT EXISTS unitrack_shadow"
+
+      - name: Check schema/migration drift
+        run: npx prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --shadow-database-url mysql://root:root@127.0.0.1:3306/unitrack_shadow --exit-code
 
       - name: Type-check
         run: npm run type-check
@@ -53,3 +107,19 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      # Advisory-only: surfaces new vulnerabilities without blocking the build.
+      # Review the log; promote to a blocking check once the backlog is clean.
+      - name: Dependency audit (report only)
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+
+      # Advisory-only secret scan of the full git history. Private repos need a
+      # GITLEAKS_LICENSE secret for gitleaks-action; without one this step logs
+      # a license error and is skipped via continue-on-error. If it reports real
+      # findings, rotate the exposed secrets — do not just dismiss the step.
+      - name: Secret scan (report only)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true

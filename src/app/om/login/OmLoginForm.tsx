@@ -142,7 +142,7 @@ export function OmLoginForm() {
         </div>
         <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-center">
           <p className="text-xs text-slate-500">
-            Copyright@2026 , Licenced by Avenlixx Technology.
+            &copy; 2026 UniTrack by Avenlixx Technologies. All rights reserved.
           </p>
         </div>
       </div>

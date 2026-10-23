@@ -133,9 +133,20 @@ prisma/
 
 ## Deployment
 
+On the production box (Hostinger container):
+
 ```bash
-npm ci && npx prisma migrate deploy && npm run build && npm start
+bash scripts/deploy.sh
 ```
 
-Apply migrations before serving traffic. Secrets must be injected via the
+The script backs up `storage/`, pulls `origin/master` (fast-forward only), runs
+`npm ci`, applies migrations (`npx prisma migrate deploy`), builds, restarts
+the app and only reports success once `/api/health` returns 200. A failed
+pull, install or build never touches the running process. Per-box settings
+(branch, restart command, health URL) go in `.deploy.env` next to the
+checkout — see the header of `scripts/deploy.sh`.
+
+Alternatively, GitHub Actions can run the same script over SSH: add the
+`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` and `DEPLOY_PATH` secrets, then
+trigger the **Deploy** workflow manually. Secrets must be injected via the
 environment — never commit `.env.local` / `.env.production`.

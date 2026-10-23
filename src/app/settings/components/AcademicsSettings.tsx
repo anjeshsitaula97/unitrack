@@ -5,6 +5,7 @@ import SettingsHeader from "./SettingsHeader";
 import FacultyManager from "./FacultyManager";
 import DegreeTypeManager from "./DegreeTypeManager";
 import AcademicDocManager from "./AcademicDocManager";
+import CourseDefaultModeCard from "./CourseDefaultModeCard";
 
 export default function AcademicsSettings() {
   return (
@@ -19,6 +20,8 @@ export default function AcademicsSettings() {
         <FacultyManager />
         <DegreeTypeManager />
       </div>
+
+      <CourseDefaultModeCard />
 
       <AcademicDocManager />
     </div>

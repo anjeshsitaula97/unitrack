@@ -1,0 +1,38 @@
+name: Deploy
+
+# Production deploy over SSH: runs scripts/deploy.sh on the Hostinger box.
+# Add these repo secrets first (Settings -> Secrets and variables -> Actions):
+#   DEPLOY_HOST    - hostname or IP of the container
+#   DEPLOY_USER    - SSH user
+#   DEPLOY_SSH_KEY - private SSH key (public half in the box's authorized_keys)
+#   DEPLOY_PATH    - absolute path of the checkout on the box
+#
+# Manual on purpose until trusted. For auto-deploy after every push to
+# master, add:
+#   push:
+#     branches: [master]
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: git pull + build + health gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Run deploy script on the server
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            bash scripts/deploy.sh

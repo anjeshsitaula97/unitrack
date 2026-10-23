@@ -1,1 +1,0 @@
-None beyond standard Next.js dev/build; all features rely on backend APIs at `/api/applications`, `/api/students`, `/api/courses`, `/api/tasks`, `/api/visa-types`, `/api/learning-hub/countries`, `/api/upload`, and `/api/settings/application-statuses` being available at runtime.

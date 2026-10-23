@@ -1,1 +1,0 @@
-Next.js App Router pages for real-time chat, notification management, and SMTP-based email composition that communicate with backend REST APIs.

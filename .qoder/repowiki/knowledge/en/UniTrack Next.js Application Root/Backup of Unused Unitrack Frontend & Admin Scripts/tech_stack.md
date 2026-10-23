@@ -1,1 +1,0 @@
-Next.js frontend with React 'use client' components, Prisma ORM for database access (SQLite), bcryptjs for password hashing, and Tailwind CSS classes for styling.
