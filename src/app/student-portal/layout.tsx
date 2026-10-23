@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import StudentSidebar from "@/components/StudentSidebar";
 import StudentTopbar from "@/components/StudentTopbar";
+import SessionIdleGuard from "@/components/SessionIdleGuard";
 import { Loader2 } from "lucide-react";
 
 interface PortalStudent {
@@ -68,6 +69,8 @@ export default function StudentPortalLayout({ children }: { children: React.Reac
     <div className="min-h-screen bg-slate-50">
       <StudentSidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
       <StudentTopbar sidebarCollapsed={collapsed} student={student} />
+      {/* The inactivity rule applies to students exactly as it does to staff. */}
+      <SessionIdleGuard />
       <main
         className={`transition duration-300 pt-14 min-h-screen ${collapsed ? "ml-16" : "ml-60"}`}
       >

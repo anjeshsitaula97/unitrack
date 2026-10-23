@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
-import { getRoleHome } from "@/lib/role-home";
+import { getRoleHome, getLoginPathFor, SUPER_ADMIN_DASHBOARD_PATH } from "@/lib/role-home";
 import { validateCsrfHeaders } from "@/lib/csrf";
 
 const getJwtSecretKey = () => {
@@ -26,7 +26,7 @@ const PUBLIC_PATHS = [
   "/",
   "/customer-story",
   "/login",
-  "/om/login",
+  "/appconsole/login",
   "/forgot-password",
   "/reset-password",
   "/join-our-network",
@@ -83,7 +83,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/om/login");
+  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/appconsole/login");
 
   const token = request.cookies.get("auth_token")?.value;
   let verified = false;
@@ -106,10 +106,11 @@ export async function proxy(request: NextRequest) {
   if (isAuthRoute) {
     if (verified) {
       // A signed-in visitor never needs the form. A Super Admin landing on the
-      // console login goes to the console; everyone else to their role home.
-      const isConsoleLogin = pathname.startsWith("/om/login");
+      // console login goes to their dashboard; everyone else to their role home.
+      const isConsoleLogin = pathname.startsWith("/appconsole/login");
       const isSuperAdmin = (role || "").trim().toLowerCase() === "super admin";
-      const target = isConsoleLogin && isSuperAdmin ? "/om" : getRoleHome(role);
+      const target =
+        isConsoleLogin && isSuperAdmin ? SUPER_ADMIN_DASHBOARD_PATH : getRoleHome(role);
       return NextResponse.redirect(new URL(target, request.url));
     }
     return NextResponse.next();
@@ -117,7 +118,7 @@ export async function proxy(request: NextRequest) {
 
   if (!verified && !isPublicPath(pathname)) {
     // The Super Admin console has its own branded login.
-    const loginPath = pathname === "/om" || pathname.startsWith("/om/") ? "/om/login" : "/login";
+    const loginPath = getLoginPathFor(pathname);
     const url = new URL(loginPath, request.url);
     if (loginPath === "/login" && pathname !== "/") {
       url.searchParams.set("from", pathname);

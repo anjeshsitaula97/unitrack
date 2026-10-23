@@ -6,6 +6,6 @@ export const metadata: Metadata = {
   description: "Create and manage consultancy workspaces across the platform.",
 };
 
-export default function OmConsultanciesPage() {
+export default function AppConsoleConsultanciesPage() {
   return <ConsultanciesContent />;
 }

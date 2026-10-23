@@ -86,7 +86,7 @@ model Course {
   faculty                String
   degreeType             String
   level                  String
-  credits                Decimal           @db.Decimal(6, 2)
+  credits                Decimal       @db.Decimal(6, 2)
   duration               String
   enrolled               Int           @default(0)
   status                 String        @default("Active")
@@ -124,7 +124,7 @@ model Course {
   depositFeeCurrency     String?
   /// Whether the deposit is returned to the student. A non-refundable deposit
   /// is forfeited if the student withdraws.
-  depositFeeRefundable   Boolean           @default(false)
+  depositFeeRefundable   Boolean       @default(false)
   quickFilters           String?       @db.LongText
   requirements           String?       @db.LongText
   applicationDeadline    DateTime?
@@ -188,6 +188,9 @@ model User {
   activeSessionAt           DateTime?
   activeSessionIp           String?
   activeSessionUserAgent    String?
+  /// Last moment the signed-in staff session was seen doing something. Drives
+  /// the inactivity auto-logout and the "already logged in elsewhere" refusal.
+  activeSessionLastSeenAt   DateTime?
   isFirstLogin              Boolean               @default(true)
   createdAt                 DateTime              @default(now())
   updatedAt                 DateTime              @updatedAt
@@ -286,24 +289,57 @@ model PasswordResetToken {
   @@index([tokenHash])
 }
 
+/// One-shot email verification codes used to reclaim a session that is stuck at
+/// another location. Deliberately its own table: a code issued here proves
+/// mailbox ownership for a sign-in, and must never be spendable as a password
+/// reset OTP in PasswordResetToken, or the two flows would cross-verify.
+model SessionOtpToken {
+  consultancyId Int?
+  id            Int      @id @default(autoincrement())
+  /// "user" | "student": which account the code belongs to, so a staff code can
+  /// never authorise a student sign-in when both share an address.
+  subject       String
+  email         String
+  /// SHA-256 digest of the 6-digit code. The plaintext only ever exists in
+  /// memory and in the delivered email, never at rest.
+  tokenHash     String
+  /// Wrong codes spent on this row, capped so a 6-digit code cannot be guessed.
+  attempts      Int      @default(0)
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([consultancyId])
+  @@index([subject, email])
+  @@index([tokenHash])
+}
+
 model SystemSettings {
-  consultancyId       Int?
-  id                  Int      @id @default(autoincrement())
-  country             String   @default("Nepal")
-  currencyCode        String   @default("NPR")
-  phoneCode           String   @default("+977")
-  language            String   @default("English")
+  consultancyId             Int?
+  id                        Int      @id @default(autoincrement())
+  country                   String   @default("Nepal")
+  currencyCode              String   @default("NPR")
+  phoneCode                 String   @default("+977")
+  language                  String   @default("English")
   /// Delivery mode preselected on the Add Course form: "Online" | "In-person" | "Hybrid".
-  defaultCourseMode   String   @default("Online")
-  enableBranches      Boolean  @default(false)
-  showBSDate          Boolean  @default(false)
-  officeLatitude      Float?
-  officeLongitude     Float?
-  officeRadius        Float?   @default(100)
-  enabledModules      String   @default("[]")
-  applicationStatuses String   @default("[]")
-  showNewsOnLogin     Boolean  @default(true)
-  updatedAt           DateTime @updatedAt
+  defaultCourseMode         String   @default("Online")
+  enableBranches            Boolean  @default(false)
+  showBSDate                Boolean  @default(false)
+  officeLatitude            Float?
+  officeLongitude           Float?
+  officeRadius              Float?   @default(100)
+  enabledModules            String   @default("[]")
+  applicationStatuses       String   @default("[]")
+  showNewsOnLogin           Boolean  @default(true)
+  /// Minutes of inactivity after which a signed-in account is logged out and its
+  /// session is released. Stored on the platform row (consultancyId null) and
+  /// enforced for every consultancy; only a Super Admin may change it.
+  sessionIdleTimeoutMinutes Int      @default(15)
+  /// Lets an account owner reclaim a session that is stuck at another location by
+  /// proving control of the registered mailbox with a short-lived email code.
+  /// Platform-wide, Super Admin only; when it is off, only an Admin can release
+  /// the session for them.
+  sessionOtpTakeoverEnabled Boolean  @default(true)
+  updatedAt                 DateTime @updatedAt
 
   @@index([consultancyId])
 }
@@ -558,6 +594,9 @@ model Student {
   activeSessionAt          DateTime?
   activeSessionIp          String?
   activeSessionUserAgent   String?
+  /// Last moment the signed-in student session was seen doing something. Drives
+  /// the inactivity auto-logout and the "already logged in elsewhere" refusal.
+  activeSessionLastSeenAt  DateTime?
   createdAt                DateTime              @default(now())
   updatedAt                DateTime              @updatedAt
   applications             Application[]

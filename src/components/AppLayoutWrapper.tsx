@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import AppLayout from "./AppLayout";
-import { getRoleHome, isDashboardRoute } from "@/lib/role-home";
+import { getRoleHome, getLoginPathFor, isDashboardRoute } from "@/lib/role-home";
 import { Loader2 } from "lucide-react";
 import {
   getCachedAuthState,
@@ -28,7 +28,7 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
       setLoading(false);
       setCachedAuthState(state);
       if (!state) {
-        window.location.replace("/login");
+        window.location.replace(getLoginPathFor(pathname));
         return;
       }
       setUser(state.user);
@@ -50,7 +50,7 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
         .catch(() => {
           if (!cancelled) {
             setLoading(false);
-            window.location.replace("/login");
+            window.location.replace(getLoginPathFor(pathname));
           }
         });
     }
@@ -70,7 +70,7 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
         .then((state) => {
           setCachedAuthState(state);
           if (!state) {
-            window.location.replace("/login");
+            window.location.replace(getLoginPathFor(pathname));
             return;
           }
           setUser(state.user);
@@ -80,7 +80,7 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, []);
+  }, [pathname]);
 
   if (loading) {
     return (

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { createNotification } from "@/lib/notifications";
 import { getSession, apiError, checkPermission } from "@/lib/api-utils";
 import { validateRoleAssignment } from "@/lib/role-assignment";
+import { isSuperAdminRole } from "@/lib/permission-catalog";
 import { logActivity, getActorName } from "@/lib/activity";
 import { logError } from "@/lib/logger";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -171,12 +172,25 @@ export async function POST(req: NextRequest) {
     // always confined to their own consultancy, and any client-supplied value is
     // ignored so it cannot be used to write across tenants.
     const isSuperAdmin = (session.role as string) === "Super Admin";
-    const targetConsultancyId = isSuperAdmin
-      ? (data.consultancyId ?? session.consultancyId)
-      : session.consultancyId;
-    if (!targetConsultancyId) {
+    // A Super Admin owns the whole platform, so that account is created at
+    // platform scope with no consultancy — which is exactly what makes it work
+    // "for all consultancies". Such an invite therefore needs no consultancy to
+    // be selected first, and must not be pinned to whichever one is active.
+    const createsSuperAdmin = isSuperAdminRole(resolvedRole);
+    // `null` is the documented platform scope: the account then spans every
+    // consultancy rather than being pinned to the currently selected one.
+    const selectedConsultancyId: number | null = isSuperAdmin
+      ? (data.consultancyId ?? session.consultancyId ?? null)
+      : (session.consultancyId ?? null);
+    const targetConsultancyId: number | null = createsSuperAdmin ? null : selectedConsultancyId;
+    if (!createsSuperAdmin && !targetConsultancyId) {
       return NextResponse.json(
-        { error: "Select a consultancy before inviting a user." },
+        isSuperAdmin
+          ? {
+              error:
+                "Pick a consultancy in the top bar to invite a tenant user, or invite them as Super Admin for platform-wide access.",
+            }
+          : { error: "Select a consultancy before inviting a user." },
         { status: 400 }
       );
     }

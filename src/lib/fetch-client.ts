@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { getLoginPathFor } from "@/lib/role-home";
 
 interface FetchOptions extends RequestInit {
   showError?: boolean;
@@ -28,8 +29,10 @@ function handleUnauthorized() {
   if (redirectingToLogin) return;
   redirectingToLogin = true;
   if (typeof window !== "undefined") {
-    // `replace` so the expired page does not stay in the history stack.
-    window.location.replace("/login");
+    // `replace` so the expired page does not stay in the history stack. A Super
+    // Admin working in the console goes back to the console login, not the
+    // tenant form.
+    window.location.replace(getLoginPathFor(window.location.pathname));
   }
 }
 

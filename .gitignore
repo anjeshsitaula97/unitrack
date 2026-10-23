@@ -49,6 +49,10 @@ jest-test-results.json
 # Uploaded files
 public/uploads/
 
+# One-off browser verification captures (the product screenshots in this folder
+# are tracked; the ad-hoc verify-* ones are dev artifacts and must stay out)
+/public/screenshots/verify-*.png
+
 # Optional: if using TurboRepo or monorepo
 turbo/
 /src/generated/prisma

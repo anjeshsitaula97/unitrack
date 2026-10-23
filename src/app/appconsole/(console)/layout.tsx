@@ -3,21 +3,21 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/api-utils";
 import { isSuperAdminRole } from "@/lib/permission-catalog";
-import OmShell from "../components/OmShell";
+import AppConsoleShell from "../components/AppConsoleShell";
 
 export const metadata: Metadata = {
   title: "Super Admin Console | UniTrack",
   description: "UniTrack platform console for Super Administrators",
 };
 
-export default async function OmConsoleLayout({ children }: { children: ReactNode }) {
+export default async function AppConsoleLayout({ children }: { children: ReactNode }) {
   const session = await getSession();
   if (!session || !isSuperAdminRole(session.role)) {
-    redirect("/om/login");
+    redirect("/appconsole/login");
   }
 
   return (
-    <OmShell
+    <AppConsoleShell
       user={{
         id: session.id,
         name: session.name,
@@ -26,6 +26,6 @@ export default async function OmConsoleLayout({ children }: { children: ReactNod
       }}
     >
       {children}
-    </OmShell>
+    </AppConsoleShell>
   );
 }

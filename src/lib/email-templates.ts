@@ -401,6 +401,57 @@ export const EMAIL_TEMPLATE_CATALOG: EmailTemplateDefinition[] = [
         Please send them to your counselor as soon as possible so your application is not delayed.
       </p>`),
   },
+  {
+    key: "session-otp",
+    name: "Session Verification Code",
+    description:
+      "Delivers the short one-time code that lets an account owner sign in when their session is already open at another location.",
+    trigger: "Automatically when a refused sign-in asks to verify ownership by email",
+    autoSend: true,
+    placeholders: ["recipientName", "otp", "otpMinutes", "appName", "date"],
+    subject: "Your {{appName}} verification code",
+    body: shell(`      <p style="margin:0 0 16px;color:#0f172a;font-size:15px;">Dear {{recipientName}},</p>
+      <p style="margin:0 0 16px;color:#334155;font-size:14px;line-height:1.6;">
+        Someone tried to sign in to your {{appName}} account while it was already signed in
+        somewhere else. Use this code to confirm you own the account and sign in here instead.
+      </p>
+      <div style="text-align:center;margin:28px 0;">
+        <div style="display:inline-block;background:#eef2ff;border:2px dashed #4f46e5;border-radius:12px;padding:16px 32px;">
+          <span style="font-size:32px;font-weight:bold;color:#4f46e5;letter-spacing:8px;">{{otp}}</span>
+        </div>
+      </div>
+      <p style="margin:0 0 12px;color:#334155;font-size:14px;line-height:1.6;">
+        The code expires in {{otpMinutes}} minutes and can be used once.
+      </p>
+      <p style="margin:0;color:#94a3b8;font-size:13px;line-height:1.6;">
+        If you were not trying to sign in, ignore this email — nobody can use your account without
+        this code, and you should change your password.
+      </p>`),
+  },
+  {
+    key: "session-takeover",
+    name: "Session Replaced By New Sign-in",
+    description:
+      "Tells an account holder that another device signed in after email verification, which ended the session that was open before it.",
+    trigger: "Automatically when an email-verified sign-in replaces another location's session",
+    autoSend: true,
+    placeholders: ["recipientName", "signInTime", "signInIp", "signInDevice", "appName", "date"],
+    subject: "Your {{appName}} account signed in from another location",
+    body: shell(`      <p style="margin:0 0 16px;color:#0f172a;font-size:15px;">Dear {{recipientName}},</p>
+      <p style="margin:0 0 16px;color:#334155;font-size:14px;line-height:1.6;">
+        Your {{appName}} session was ended because the account signed in from a new location after
+        verifying the emailed code:
+      </p>
+      ${detailRows([
+        ["Time", "{{signInTime}}"],
+        ["IP address", "{{signInIp}}"],
+        ["Device", "{{signInDevice}}"],
+      ])}
+      <p style="margin:0 0 16px;color:#334155;font-size:14px;line-height:1.6;">
+        If this was you, no action is needed. If it was not, change your password immediately and
+        tell your administrator.
+      </p>`),
+  },
 ];
 
 /** Maps an application status name to the lifecycle template that should be sent. */

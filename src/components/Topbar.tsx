@@ -21,6 +21,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { clearAuthCache } from "@/lib/auth-state";
 import { deactivateSession } from "@/lib/client-session";
+import { getLoginPathFor } from "@/lib/role-home";
 import { api } from "@/lib/fetch-client";
 import { toast } from "sonner";
 import ConsultancySwitcher from "./ConsultancySwitcher";
@@ -595,7 +596,7 @@ export default function Topbar({
       await api.post("/api/auth/logout", undefined, { showError: false });
       clearAuthCache();
       deactivateSession();
-      router.push("/login");
+      router.push(getLoginPathFor(pathname));
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {

@@ -174,6 +174,11 @@ export async function getStudentSession(): Promise<SessionPayload | null> {
     const session = await verifyAuth(token);
     if (session.subject !== "student") return null;
 
+    // Same single-session and inactivity rules as a staff token: a student who
+    // signed in elsewhere, or whose session outlived the idle window, must not
+    // keep reaching the portal API on a stale cookie.
+    if (!(await isSessionCurrent("student", session.id, session.sid))) return null;
+
     // Same staleness problem as staff: drop the session if the student record
     // has since been removed.
     const { baseDb } = await import("./base-db");

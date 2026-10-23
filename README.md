@@ -101,7 +101,7 @@ src/
 ├── app/                 # App Router pages (route groups per feature)
 │   ├── api/             # API route handlers (auth + permission checks per route)
 │   ├── students/        # Students, leads, applications, payments, HR, ... etc
-│   └── om/              # Super Admin platform console
+│   └── appconsole/      # Super Admin console (login, overview, consultancies, dashboard)
 ├── components/          # Shared UI (Sidebar, ui/)
 ├── lib/                 # Auth, RBAC, tenancy, validation, email, uploads, db
 │   ├── db.ts            # Prisma client + consultancy-scoping extension

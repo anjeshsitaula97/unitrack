@@ -3,6 +3,7 @@
 import { Lock, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import SettingsHeader from "./SettingsHeader";
+import SessionPolicySettings from "./SessionPolicySettings";
 
 export default function SecuritySettings() {
   return (
@@ -12,6 +13,8 @@ export default function SecuritySettings() {
         title="Account Security"
         description="Manage your password and session settings."
       />
+
+      <SessionPolicySettings />
 
       <div className="card p-6">
         <div className="flex items-center gap-4 mb-6">

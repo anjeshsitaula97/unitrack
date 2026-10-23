@@ -6,6 +6,7 @@ import Topbar from "./Topbar";
 import ErrorBoundary from "./ErrorBoundary";
 import GuidedTour from "./GuidedTour";
 import NewsPopup from "./NewsPopup";
+import SessionIdleGuard from "./SessionIdleGuard";
 import { Toaster } from "sonner";
 
 interface AppUser {
@@ -48,6 +49,7 @@ export default function AppLayout({ children, role, onRoleChange, user }: AppLay
       </main>
       <GuidedTour user={user} />
       <NewsPopup />
+      <SessionIdleGuard />
       <Toaster position="bottom-right" richColors />
     </div>
   );

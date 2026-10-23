@@ -1,24 +1,16 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { signToken } from "@/lib/session";
-import { cookies } from "next/headers";
-import { db } from "@/lib/db";
-import { baseDb } from "@/lib/base-db";
-import { runWithConsultancy } from "@/lib/consultancy";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { logError } from "@/lib/logger";
-import { normalizeEnabledModulesJson } from "@/lib/modules";
-import { logActivity } from "@/lib/activity";
-import { isSuperAdminRole } from "@/lib/permission-catalog";
-import { startSession } from "@/lib/session-registry";
-
-const prisma = db;
+import { verifyLoginCredentials } from "@/lib/login-credentials";
+import { issueStaffSession } from "@/lib/session-issue";
+import { isSessionLiveElsewhere } from "@/lib/session-registry";
+import { sessionBlockedPayload } from "@/lib/session-otp";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(1, "Password is required."),
-  // Used by the dedicated Super Admin console entry point (/om/login) to
+  // Used by the dedicated Super Admin console entry point (/appconsole/login) to
   // refuse non-Super-Admin accounts. Omitted for the standard staff login.
   portal: z.enum(["super-admin"]).optional(),
 });
@@ -43,121 +35,42 @@ export async function POST(req: Request) {
 
     const { email, password } = parsed.data;
 
-    const user = await baseDb.user.findUnique({
-      where: { email },
+    // Everything the credential half of a sign-in has to answer — does the
+    // account exist, is the password right, is the account allowed in at all, is
+    // this the portal it belongs to — lives in one shared function so the
+    // email-code relogin cannot drift from the form people use every day.
+    const credentials = await verifyLoginCredentials({
+      email,
+      password,
+      portal: parsed.data.portal,
     });
-
-    if (!user || !user.password) {
+    if (!credentials.ok) {
+      return NextResponse.json({ error: credentials.error }, { status: credentials.status });
+    }
+    // This route never serves the student form, which posts to its own endpoint.
+    if (credentials.principal.subject !== "user") {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
+    const user = credentials.principal;
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
-
-    if (!passwordMatch) {
-      return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+    // One location at a time. A second sign-in no longer steals the session of
+    // the first: while that session is still being used it owns the account, so
+    // this attempt is refused and the caller is told to sign out there first.
+    // Once the other session passes the inactivity window it stops counting as
+    // live, which releases the account automatically.
+    const occupied = await isSessionLiveElsewhere("user", user.id);
+    if (occupied.live) {
+      return NextResponse.json(await sessionBlockedPayload(user.email, occupied.state), {
+        status: 409,
+      });
     }
 
-    // A correct password is not enough — disabled, suspended or still-pending
-    // accounts must not receive a session. getSession() enforces this on data
-    // APIs; enforcing it here stops the account from ever getting a token.
-    if (user.status && user.status.toLowerCase() !== "active") {
-      return NextResponse.json(
-        { error: "Your account is not active. Please contact an administrator." },
-        { status: 403 }
-      );
-    }
-
-    // The dedicated Super Admin portal only admits Super Administrators.
-    if (parsed.data.portal === "super-admin" && !isSuperAdminRole(user.role)) {
-      return NextResponse.json(
-        { error: "This portal is for Super Administrators only." },
-        { status: 403 }
-      );
-    }
-
-    // Bind the rest of this request to the account's consultancy so the login
-    // log, activity trail and settings cookie are attributed to the right
-    // tenant. A null id is the Super Admin platform scope. The scope is entered
-    // explicitly because the session cookie is not readable from cookies() until
-    // the response is sent.
-    return await runWithConsultancy({ consultancyId: user.consultancyId ?? null }, async () => {
-      // Only one session per account is allowed. Rotating the stored session id
-      // here revokes whatever session was previously active for this account,
-      // so signing in on a new device immediately locks the old one out.
-      const sid = await startSession({
-        subject: "user",
-        accountId: user.id,
-        ip: getClientIp(req),
-        userAgent: req.headers.get("user-agent") || "Unknown",
-      });
-
-      // Set token
-      const token = await signToken({
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        sid,
-      });
-
-      const cookieStore = await cookies();
-      const isDev = process.env.NODE_ENV !== "production";
-      cookieStore.set({
-        name: "auth_token",
-        value: token,
-        httpOnly: true,
-        path: "/",
-        secure: !isDev,
-        sameSite: isDev ? "lax" : "strict",
-      });
-
-      // Update last login & seen
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          lastLogin: new Date().toLocaleString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }),
-          lastSeenAt: new Date(),
-        },
-      });
-
-      // Record login log
-      await prisma.loginLog.create({
-        data: {
-          userId: user.id,
-          ipAddress: getClientIp(req),
-          userAgent: req.headers.get("user-agent") || "Unknown",
-        },
-      });
-
-      await logActivity({
-        actorName: user.name,
-        userId: user.id,
-        action: "logged in",
-        target: user.email,
-      });
-
-      // Fetch enabled modules and set cookie
-      const settings = await prisma.systemSettings.findFirst();
-      const enabledModules = normalizeEnabledModulesJson(settings?.enabledModules);
-
-      const response = NextResponse.json(
-        { success: true, isFirstLogin: user.isFirstLogin },
-        { status: 200 }
-      );
-      response.cookies.set("enabled_modules", enabledModules, {
-        httpOnly: true,
-        path: "/",
-        secure: !isDev,
-        sameSite: isDev ? "lax" : "strict",
-        maxAge: 86400,
-      });
-      return response;
+    // Only one session per account is allowed, and a live one was refused
+    // above. Rotating the stored id here therefore drops at most a session the
+    // inactivity window has already expired, never an active one.
+    return await issueStaffSession(user, {
+      ip: getClientIp(req),
+      userAgent: req.headers.get("user-agent") || "Unknown",
     });
   } catch (error) {
     logError("Login Route", error);

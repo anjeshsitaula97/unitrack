@@ -17,8 +17,17 @@ import {
   Calendar,
   Globe,
   Key,
+  LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
+
+/**
+ * The platform-owner role. Unlike Admin/Staff/Viewer it is never seeded into the
+ * Role table, so the role lists fetched from /api/roles do not contain it. A
+ * Super Admin must be offered it explicitly, otherwise the platform owner has no
+ * way to create or promote one from this screen.
+ */
+const SUPER_ADMIN = "Super Admin";
 
 interface AccessUser {
   id: string;
@@ -106,6 +115,7 @@ export default function AccessContent() {
   const [users, setUsers] = useState<AccessUser[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [roles, setRoles] = useState<string[]>([]);
+  const [actorRole, setActorRole] = useState("");
 
   useEffect(() => {
     const ac = new AbortController();
@@ -114,6 +124,14 @@ export default function AccessContent() {
       .then((data) =>
         setRoles(Array.isArray(data) ? data.map((r: { name: string }) => r.name) : [])
       )
+      .catch(() => {});
+    // Only a Super Admin may mint another Super Admin, and the invite form needs
+    // to know that to decide whether to show the option at all.
+    fetch("/api/auth/me", { signal: ac.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((me) => {
+        if (me?.role) setActorRole(String(me.role));
+      })
       .catch(() => {});
     fetch("/api/access", { signal: ac.signal })
       .then((res) => {
@@ -246,6 +264,30 @@ export default function AccessContent() {
     }
   };
 
+  /**
+   * Frees an account that is blocked by its own live session. Sign-ins are
+   * refused while a session is active elsewhere, so an unreachable device (a
+   * laptop closed at home) has to be released from here.
+   */
+  const handleSignOutSession = async (user: AccessUser) => {
+    if (
+      !confirm(`Sign out ${user.name} from their current session? They will need to log in again.`)
+    )
+      return;
+
+    try {
+      const res = await fetch(`/api/access/${user.id}/session`, { method: "POST" });
+      if (res.ok) {
+        toast.success(`${user.name} was signed out and can log in again`);
+      } else {
+        const body = await res.json().catch(() => null);
+        toast.error(body?.error || "Failed to sign out the session");
+      }
+    } catch (_err) {
+      toast.error("Error connecting to backend");
+    }
+  };
+
   const filtered = users.filter((u) => {
     if (roleFilter && u.role !== roleFilter) return false;
     return (
@@ -253,6 +295,18 @@ export default function AccessContent() {
       u.email.toLowerCase().includes(search.toLowerCase())
     );
   });
+
+  // Role choices offered when creating or editing an account. The filter bar keeps
+  // the raw tenant role list; only the platform owner may assign Super Admin.
+  const isSuperAdminActor = actorRole.trim().toLowerCase() === "super admin";
+  const assignableRoles =
+    isSuperAdminActor && !roles.includes(SUPER_ADMIN) ? [SUPER_ADMIN, ...roles] : roles;
+  // The form's initial role is a hard-coded default that this tenant's role list
+  // may not contain; a select with no matching option renders blank yet still
+  // submits that stale value. Resolve it to a real choice instead.
+  const effectiveInviteRole = assignableRoles.includes(inviteRole)
+    ? inviteRole
+    : assignableRoles[0] || "Viewer";
 
   const handleInviteUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,7 +327,8 @@ export default function AccessContent() {
         body: JSON.stringify({
           name: inviteName,
           email: inviteEmail,
-          role: inviteRole,
+          // Send what the dropdown actually shows.
+          role: effectiveInviteRole,
           autoGeneratePassword,
           // Never send a stale manual value while auto-generating; the server
           // ignores it but sending it used to surface a "min 6 characters" error.
@@ -342,6 +397,7 @@ export default function AccessContent() {
           setResetPwUser(user);
           setResetPwValue("");
         }}
+        onSignOutSession={handleSignOutSession}
         onDelete={handleDeleteUser}
       />
 
@@ -352,7 +408,7 @@ export default function AccessContent() {
         setInviteName={setInviteName}
         inviteEmail={inviteEmail}
         setInviteEmail={setInviteEmail}
-        inviteRole={inviteRole}
+        inviteRole={effectiveInviteRole}
         setInviteRole={setInviteRole}
         autoGeneratePassword={autoGeneratePassword}
         setAutoGeneratePassword={setAutoGeneratePassword}
@@ -363,7 +419,7 @@ export default function AccessContent() {
         sendCredentialsEmail={sendCredentialsEmail}
         setSendCredentialsEmail={setSendCredentialsEmail}
         handleInviteUser={handleInviteUser}
-        roles={roles}
+        roles={assignableRoles}
       />
       {editingUser && (
         <EditUserModal
@@ -374,7 +430,7 @@ export default function AccessContent() {
           setResetPassword={setResetPassword}
           manualResetPassword={manualResetPassword}
           setManualResetPassword={setManualResetPassword}
-          roles={roles}
+          roles={assignableRoles}
         />
       )}
       {viewingUser && (
@@ -467,6 +523,7 @@ function AccessUsersTable({
   onView,
   onEdit,
   onResetPassword,
+  onSignOutSession,
   onDelete,
 }: {
   users: AccessUser[];
@@ -474,6 +531,7 @@ function AccessUsersTable({
   onView: (user: AccessUser) => void;
   onEdit: (user: AccessUser) => void;
   onResetPassword: (user: AccessUser) => void;
+  onSignOutSession: (user: AccessUser) => void;
   onDelete: (id: string) => void;
 }) {
   return (
@@ -601,6 +659,15 @@ function AccessUsersTable({
                     className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100"
                     onClick={(e) => e.stopPropagation()}
                   >
+                    <button
+                      type="button"
+                      aria-label="Sign Out Session"
+                      onClick={() => onSignOutSession(user)}
+                      className="p-1.5 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-colors"
+                      title="Sign out of the current session (releases a 'logged in elsewhere' block)"
+                    >
+                      <LogOut size={14} />
+                    </button>
                     <button
                       type="button"
                       aria-label="Reset Password"
@@ -757,6 +824,12 @@ function InviteUserModal({
                   </option>
                 ))}
               </select>
+              {inviteRole === SUPER_ADMIN && (
+                <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+                  Platform-wide account: it is not attached to any consultancy and signs in through
+                  the Super Admin console at /appconsole/login.
+                </p>
+              )}
             </div>
 
             <div className="space-y-3 pt-2">

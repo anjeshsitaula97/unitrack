@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
-import bcrypt from "bcryptjs";
-import { db } from "@/lib/db";
-import { signStudentToken } from "@/lib/session";
 import { apiError } from "@/lib/api-utils";
-import { normalizeEnabledModulesJson } from "@/lib/modules";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { startSession } from "@/lib/session-registry";
+import { verifyLoginCredentials } from "@/lib/login-credentials";
+import { issueStudentSession } from "@/lib/session-issue";
+import { isSessionLiveElsewhere } from "@/lib/session-registry";
+import { sessionBlockedPayload } from "@/lib/session-otp";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,62 +24,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
-    const student = await db.student.findUnique({
-      where: { email: email },
-    });
+    const credentials = await verifyLoginCredentials({ email, password, portal: "student" });
+    if (!credentials.ok) {
+      return NextResponse.json({ error: credentials.error }, { status: credentials.status });
+    }
+    // The staff form posts to its own endpoint; this one only serves students.
+    if (credentials.principal.subject !== "student") {
+      return apiError("Invalid credentials", 401);
+    }
+    const student = credentials.principal;
 
-    if (!student || !student.studentPassword) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    // One location at a time, exactly as for staff accounts: while another
+    // session for this student is still being used it owns the account, and this
+    // sign-in is refused. The inactivity window releases it automatically.
+    const occupied = await isSessionLiveElsewhere("student", student.id);
+    if (occupied.live) {
+      return NextResponse.json(await sessionBlockedPayload(student.email, occupied.state), {
+        status: 409,
+      });
     }
 
-    const isValid = await bcrypt.compare(password, student.studentPassword);
-
-    if (!isValid) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-    }
-
-    // Only one session per student account is allowed; starting a new one
-    // revokes whatever session was previously active.
-    const sid = await startSession({
-      subject: "student",
-      accountId: student.id,
+    // Only one session per student account is allowed. A previous session can
+    // only still be stored here if the inactivity window already expired it.
+    return await issueStudentSession(student, {
       ip: getClientIp(req),
       userAgent: req.headers.get("user-agent") || "Unknown",
     });
-
-    const token = await signStudentToken({
-      id: student.id,
-      email: student.email,
-      sid,
-    });
-
-    const response = NextResponse.json({
-      success: true,
-      student: {
-        id: student.id,
-        name: student.name,
-        email: student.email,
-      },
-    });
-
-    response.cookies.set("student_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-    });
-
-    const settings = await db.systemSettings.findFirst();
-    const enabledModules = normalizeEnabledModulesJson(settings?.enabledModules);
-    response.cookies.set("enabled_modules", enabledModules, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 86400,
-      path: "/",
-    });
-
-    return response;
   } catch (error) {
     logError("Student login error:", error);
     return apiError("Login failed");

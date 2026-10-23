@@ -57,7 +57,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MODULES, getEnabledModuleIds } from "@/lib/modules";
-import { getRoleHome } from "@/lib/role-home";
+import { getRoleHome, getLoginPathFor, SUPER_ADMIN_DASHBOARD_PATH } from "@/lib/role-home";
 
 interface AppUser {
   id: number;
@@ -411,7 +411,7 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
       if (res.ok) {
         clearAuthCache();
         deactivateSession();
-        router.push("/login");
+        router.push(getLoginPathFor(pathname));
       }
     } catch (error) {
       console.error("Logout failed:", error);
@@ -494,32 +494,13 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
     }
     enabledRoutes.add("/dashboard");
 
-    const dashboardHref = getRoleHome(user?.role);
     const isSuperAdmin = (user?.role || "").trim().toLowerCase() === "super admin";
-    const isSADashboard = pathname === "/sadashboard";
-    const saDashboardHiddenItems = new Set([
-      "nav-leads",
-      "nav-students",
-      "nav-applications",
-      "nav-onboarding",
-      "nav-search",
-      "nav-compare",
-      "nav-calendar",
-      "nav-files",
-      "nav-commission",
-      "nav-partnership",
-      "nav-chat",
-      "nav-email",
-      "nav-marketing-materials",
-      "nav-hr-dashboard",
-      "nav-hr-employees",
-      "nav-hr-departments",
-      "nav-hr-designations",
-      "nav-hr-attendance",
-      "nav-hr-leave",
-      "nav-hr-payroll",
-      "nav-student-messages",
-    ]);
+    // The Super Admin dashboard is a full dashboard, so its own "Dashboard" entry
+    // must point at itself instead of at /dashboard.
+    const dashboardHref =
+      isSuperAdmin && pathname === SUPER_ADMIN_DASHBOARD_PATH
+        ? SUPER_ADMIN_DASHBOARD_PATH
+        : getRoleHome(user?.role);
 
     const enabledModuleIdSet = new Set(enabledModuleIds);
     const sectionsWithModules = navSections
@@ -528,7 +509,6 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
         items: section.items
           .filter((item) => {
             if (item.id === "nav-consultancies" && !isSuperAdmin) return false;
-            if (isSADashboard && saDashboardHiddenItems.has(item.id)) return false;
             const matchingModule = MODULES.find((m) => m.routes.includes(item.href));
             if (matchingModule && !enabledModuleIdSet.has(matchingModule.id)) return false;
             if (!matchingModule) return true;

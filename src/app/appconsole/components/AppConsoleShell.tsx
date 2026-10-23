@@ -4,7 +4,6 @@ import React, { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Building2,
   Database,
   LayoutDashboard,
@@ -16,8 +15,10 @@ import {
 } from "lucide-react";
 import { clearAuthCache } from "@/lib/auth-state";
 import { deactivateSession } from "@/lib/client-session";
+import { SUPER_ADMIN_DASHBOARD_PATH } from "@/lib/role-home";
+import SessionIdleGuard from "@/components/SessionIdleGuard";
 
-interface OmUser {
+interface AppConsoleUser {
   id: number;
   name?: string | null;
   email?: string | null;
@@ -25,12 +26,18 @@ interface OmUser {
 }
 
 const NAV_ITEMS = [
-  { href: "/om", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/om/consultancies", label: "Consultancies", icon: Building2, exact: false },
+  { href: "/appconsole", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/appconsole/consultancies", label: "Consultancies", icon: Building2, exact: false },
   { href: "/settings/backups", label: "Backups", icon: Database, exact: false },
 ];
 
-export default function OmShell({ user, children }: { user: OmUser; children: React.ReactNode }) {
+export default function AppConsoleShell({
+  user,
+  children,
+}: {
+  user: AppConsoleUser;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -58,7 +65,7 @@ export default function OmShell({ user, children }: { user: OmUser; children: Re
       if (res.ok) {
         clearAuthCache();
         deactivateSession();
-        router.push("/om/login");
+        router.push("/appconsole/login");
       }
     } catch (error) {
       console.error("Logout failed:", error);
@@ -70,6 +77,8 @@ export default function OmShell({ user, children }: { user: OmUser; children: Re
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* The console obeys the same inactivity rule as the rest of the app. */}
+      <SessionIdleGuard />
       {mobileOpen && (
         <div
           className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm lg:hidden"
@@ -123,11 +132,11 @@ export default function OmShell({ user, children }: { user: OmUser; children: Re
 
           <div className="pt-3 mt-3 border-t border-white/10">
             <Link
-              href="/dashboard"
+              href={SUPER_ADMIN_DASHBOARD_PATH}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
             >
-              <ArrowLeft size={18} />
-              Back to App
+              <LayoutDashboard size={18} />
+              Dashboard
             </Link>
           </div>
         </nav>

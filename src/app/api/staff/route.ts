@@ -5,6 +5,9 @@ import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { logActivity } from "@/lib/activity";
 import { getSession, checkPermission } from "@/lib/api-utils";
+import { validateRoleAssignment } from "@/lib/role-assignment";
+import { isSuperAdminRole } from "@/lib/permission-catalog";
+import { runWithConsultancy } from "@/lib/consultancy";
 import { parseJson, zodResponse, emailField } from "@/lib/validate";
 
 const createStaffSchema = z.object({
@@ -54,24 +57,33 @@ export async function POST(req: Request) {
     if (!parsed.ok) return zodResponse(parsed.error);
 
     const { name, email, password, role } = parsed.data;
+    // A blank role used to fall back to "Viewer" silently, so keep that default
+    // rather than have the validation below reject an otherwise valid request.
+    const resolvedRole = role.trim() || "Viewer";
+
+    // Writing a role is writing privileges. The invite route already validates
+    // this; without it here an Admin could mint a platform-wide Super Admin,
+    // which is the one role that bypasses every permission check.
+    const roleError = await validateRoleAssignment(session.role, resolvedRole);
+    if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await db.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: role || "Viewer",
-      },
-    });
+    const data = { name, email, password: hashedPassword, role: resolvedRole };
+    // A Super Admin owns the whole platform, so such an account is created at
+    // platform scope instead of being pinned to whichever consultancy happens to
+    // be selected by the inviter.
+    const createUser = () => db.user.create({ data });
+    const user = isSuperAdminRole(resolvedRole)
+      ? await runWithConsultancy({ consultancyId: null }, createUser)
+      : await createUser();
 
     await logActivity({
       actorName: session.name || "System",
       userId: session.id,
       action: "invited new staff",
       target: user.name,
-      targetBy: role || "Viewer",
+      targetBy: resolvedRole,
     });
 
     const { password: _, ...userWithoutPassword } = user;

@@ -26,7 +26,7 @@ interface RecentConsultancy {
   userCount: number;
 }
 
-interface OmStats {
+interface AppConsoleStats {
   consultancies: { total: number; active: number; inactive: number; expiringSoon: number };
   totals: { users: number; students: number; universities: number; courses: number };
   recentConsultancies: RecentConsultancy[];
@@ -70,14 +70,14 @@ function formatDateShort(value: string | null): string {
   return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-export default function OmDashboard() {
-  const [stats, setStats] = useState<OmStats | null>(null);
+export default function AppConsoleDashboard() {
+  const [stats, setStats] = useState<AppConsoleStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/om/stats", { cache: "no-store" })
+    fetch("/api/appconsole/stats", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("failed"))))
       .then((data) => {
         if (!cancelled) setStats(data);
@@ -135,7 +135,10 @@ export default function OmDashboard() {
             A platform-wide view across every consultancy workspace.
           </p>
         </div>
-        <Link href="/om/consultancies" className="btn-primary inline-flex items-center gap-1.5">
+        <Link
+          href="/appconsole/consultancies"
+          className="btn-primary inline-flex items-center gap-1.5"
+        >
           <Plus size={15} /> Manage Consultancies
         </Link>
       </div>
@@ -193,7 +196,7 @@ export default function OmDashboard() {
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <h2 className="text-sm font-bold text-slate-800">Recent Consultancies</h2>
               <Link
-                href="/om/consultancies"
+                href="/appconsole/consultancies"
                 className="text-xs font-semibold text-indigo-600 hover:underline"
               >
                 View all
@@ -301,7 +304,7 @@ export default function OmDashboard() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
             <Link
-              href="/om/consultancies"
+              href="/appconsole/consultancies"
               className="card p-5 flex items-center gap-3 hover:border-indigo-200 transition-colors"
             >
               <div className="size-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
