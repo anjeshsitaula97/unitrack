@@ -68,7 +68,7 @@
     "canvg": "^4.0.3",
     "dompurify": "^3.4.12",
     "exceljs": "^4.4.0",
-    "framer-motion": "^12.38.0",
+    "framer-motion": "^14.4.0",
     "html2canvas": "^1.4.1",
     "jose": "^6.2.2",
     "jspdf": "^4.2.1",
