@@ -49,9 +49,12 @@ async function apiFetch<T = unknown>(url: string, options: FetchOptions = {}): P
       // newer login on another device. Send the user back to the login form
       // instead of leaving them on a dead page.
       if (res.status === 401 && !url.startsWith("/api/auth/")) {
+        // The session is gone and we redirect to /login below. A toast here
+        // would flash "Unauthorized" on every in-flight call during a logout,
+        // so it is intentionally suppressed; callers can react to the thrown
+        // FetchError (status 401) instead.
         handleUnauthorized();
-      }
-      if (showError) {
+      } else if (showError) {
         toast.error(errorMsg);
       }
       throw new FetchError(res.status, errorMsg, errorData);

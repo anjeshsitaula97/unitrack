@@ -358,7 +358,12 @@ export default function Sidebar({ collapsed, onToggle, user }: SidebarProps) {
     const fetchStats = async () => {
       try {
         const res = await fetch("/api/dashboard/stats", { signal: controller.signal });
-        if (!res.ok) throw new Error(`Failed to load stats: ${res.status}`);
+        if (!res.ok) {
+          // A 401 right after a logout/expiry is expected; the redirect to
+          // /login handles it, so don't raise it as a console error here.
+          if (res.status === 401) return;
+          throw new Error(`Failed to load stats: ${res.status}`);
+        }
         const data = await res.json();
         if (!controller.signal.aborted && !data.error) {
           setStats(data);

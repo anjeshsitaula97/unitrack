@@ -34,6 +34,10 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: imageHosts,
     minimumCacheTTL: 60,
+    // Components pass quality={85} on some <Image> usages; Next validates the
+    // prop against this allow-list regardless of `unoptimized`, so list it to
+    // keep the "unconfigured qualities" dev warning from firing.
+    qualities: [75, 85],
   },
   serverExternalPackages: ["@prisma/client", "prisma"],
 

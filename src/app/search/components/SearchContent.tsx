@@ -1238,6 +1238,9 @@ export default function SearchContent() {
         else setStudents([]);
       })
       .catch((err) => {
+        // Aborts are expected when the component unmounts or Fast Refresh runs;
+        // they are not real failures, so ignore them instead of logging.
+        if (ac.signal.aborted || (err as { name?: string })?.name === "AbortError") return;
         console.error("Failed to fetch students", err);
         if (!ignore) setStudents([]);
       });

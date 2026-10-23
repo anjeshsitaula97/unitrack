@@ -445,6 +445,9 @@ export default function Topbar({
         setNotifications(data);
       }
     } catch (err) {
+      // A 401 means the session ended (logout / revoked); the redirect in
+      // fetch-client already handles it, so don't surface it as an error.
+      if ((err as { status?: number })?.status === 401) return;
       console.error("Failed to fetch notifications:", err);
     }
   };
