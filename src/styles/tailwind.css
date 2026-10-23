@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../../tailwind.config.js";
 @layer base {
   :root {
     --background: 248 250 252;
@@ -27,6 +26,16 @@
     padding: 0;
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Tailwind v4 changed the default border color to currentColor; the codebase
+     was authored against v3's gray-200 default, so restore it for any border
+     without an explicit color utility. Explicit `border-<color>` utilities live
+     in the utilities layer and still override this base rule. */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-gray-200, #e5e7eb);
   }
 
   *::-webkit-scrollbar {
@@ -95,31 +104,31 @@
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
   }
   .badge-active {
-    @apply badge bg-emerald-50 text-emerald-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700;
   }
   .badge-pending {
-    @apply badge bg-amber-50 text-amber-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700;
   }
   .badge-suspended {
-    @apply badge bg-red-50 text-red-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700;
   }
   .badge-draft {
-    @apply badge bg-slate-100 text-slate-600;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600;
   }
   .badge-archived {
-    @apply badge bg-slate-100 text-slate-500;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500;
   }
   .badge-planning {
-    @apply badge bg-blue-50 text-blue-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700;
   }
   .badge-inprogress {
-    @apply badge bg-violet-50 text-violet-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-50 text-violet-700;
   }
   .badge-inreview {
-    @apply badge bg-blue-50 text-blue-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700;
   }
   .badge-verified {
-    @apply badge bg-emerald-50 text-emerald-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700;
   }
 }
 
