@@ -1,12 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type {
-  EducationEntry,
-  Student,
-  StudentFilterCriteria,
-  StudentFilterState,
-} from "./types";
+import type { EducationEntry, Student, StudentFilterCriteria, StudentFilterState } from "./types";
 
 function matchesAcademicFilter(student: Student) {
   // Stored education is a JSON string; a malformed value must not break

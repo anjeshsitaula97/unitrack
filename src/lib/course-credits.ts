@@ -12,7 +12,9 @@ import { Prisma } from "@prisma/client";
  */
 
 /** Convert a stored credits value into a plain number for the wire. */
-export function toCourseCredits(value: Prisma.Decimal | number | string | null | undefined): number {
+export function toCourseCredits(
+  value: Prisma.Decimal | number | string | null | undefined
+): number {
   if (value === null || value === undefined) return 0;
   const parsed = typeof value === "number" ? value : Number(value.toString());
   return Number.isFinite(parsed) ? parsed : 0;

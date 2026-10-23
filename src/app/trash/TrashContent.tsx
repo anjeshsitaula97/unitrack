@@ -146,7 +146,7 @@ export default function TrashContent() {
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
-aria-label="Search trash..."
+            aria-label="Search trash..."
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}

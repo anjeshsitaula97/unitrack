@@ -7,13 +7,13 @@ import { getSession, checkPermission } from "@/lib/api-utils";
 
 export async function GET(req: Request) {
   try {
-const session = await getSession();
-      if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      // Payroll figures are admin-only. The previous `hr:read` check let any
-      // Staff member reach this endpoint and relied entirely on the row filter
-      // below to contain the exposure.
-      const deniedGET = checkPermission(session, "hr:payroll");
-      if (deniedGET) return deniedGET;
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Payroll figures are admin-only. The previous `hr:read` check let any
+    // Staff member reach this endpoint and relied entirely on the row filter
+    // below to contain the exposure.
+    const deniedGET = checkPermission(session, "hr:payroll");
+    if (deniedGET) return deniedGET;
 
     const { searchParams } = new URL(req.url);
     const month = parseInt(searchParams.get("month") || String(new Date().getMonth() + 1));

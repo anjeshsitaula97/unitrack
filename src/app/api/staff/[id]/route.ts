@@ -9,15 +9,15 @@ import { isSuperAdminRole } from "@/lib/permission-catalog";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-const session = await getSession();
-      const deniedPUT = checkPermission(session, "admin:access");
-      if (deniedPUT) return deniedPUT;
-      if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-      if (!isSuperAdminRole(session.role) && session.role !== "Admin") {
-        return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
-      }
+    const session = await getSession();
+    const deniedPUT = checkPermission(session, "admin:access");
+    if (deniedPUT) return deniedPUT;
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!isSuperAdminRole(session.role) && session.role !== "Admin") {
+      return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
+    }
 
     const { id } = await params;
 
@@ -60,14 +60,14 @@ const session = await getSession();
         updateData.password = await bcrypt.hash(password, 12);
       }
 
-const user = await db.user.update({
-          where: { id: Number(id) },
-          data: updateData as Prisma.UserUpdateInput,
-        });
+      const user = await db.user.update({
+        where: { id: Number(id) },
+        data: updateData as Prisma.UserUpdateInput,
+      });
 
-        // Drop the cached grant set so the new role takes effect on the next
-        // request instead of after the 30s TTL.
-        invalidateRoleCache(user.id);
+      // Drop the cached grant set so the new role takes effect on the next
+      // request instead of after the 30s TTL.
+      invalidateRoleCache(user.id);
 
       const changes = diffChanges(existingUser, user);
 

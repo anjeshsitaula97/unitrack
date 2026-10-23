@@ -61,7 +61,7 @@ export const fetchWards = async (
  * Expected '}'"), which also blocked the very save that would have repaired the
  * row. Degrade to an empty list and let the user re-enter the data.
  */
-export const parseStoredList = <T,>(value: unknown): T[] => {
+export const parseStoredList = <T>(value: unknown): T[] => {
   if (!value) return [];
   if (Array.isArray(value)) return value as T[];
   try {

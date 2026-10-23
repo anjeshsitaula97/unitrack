@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Image, Loader2, Upload, Video, XCircle } from "lucide-react";
+import { FileText, Image as ImageIcon, Loader2, Upload, Video, XCircle } from "lucide-react";
 import { formatFileSize } from "./formatters";
 import type { UploadSectionProps } from "./types";
 
@@ -54,7 +54,7 @@ export default function UploadSection({
           <div className="flex items-center justify-center gap-4">
             <div className="p-3 bg-indigo-100 rounded-lg text-indigo-600">
               {selectedFile.type.startsWith("image/") ? (
-                <Image size={24} />
+                <ImageIcon size={24} />
               ) : selectedFile.type.startsWith("video/") ? (
                 <Video size={24} />
               ) : (

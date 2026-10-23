@@ -14,14 +14,6 @@ export function useStudentFormOptions() {
     [allUsers]
   );
 
-  useEffect(() => {
-    queueMicrotask(() => {
-      fetchQualifications();
-      fetchUsers();
-      fetchPartners();
-    });
-  }, []);
-
   const fetchUsers = async () => {
     try {
       const data = await api.get<UserSummary[]>("/api/users", { showError: false });
@@ -48,6 +40,14 @@ export function useStudentFormOptions() {
       }
     } catch (_err) {}
   };
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      fetchQualifications();
+      fetchUsers();
+      fetchPartners();
+    });
+  }, []);
 
   return { qualifications, allPartners, staffUsers };
 }

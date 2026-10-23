@@ -5,7 +5,10 @@ import { api } from "@/lib/fetch-client";
 import { fetchDistricts, fetchMunicipalities, fetchWards } from "./utils";
 import type { Province, Student, StudentFormData } from "./types";
 
-export function useNepalAddress(initialStudent: Student | null | undefined, formData: StudentFormData) {
+export function useNepalAddress(
+  initialStudent: Student | null | undefined,
+  formData: StudentFormData
+) {
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [permanentDistricts, setPermanentDistricts] = useState<string[]>([]);
   const [permanentMunicipalities, setPermanentMunicipalities] = useState<string[]>([]);

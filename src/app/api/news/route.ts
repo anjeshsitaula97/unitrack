@@ -40,9 +40,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const params = getPaginationParams(searchParams);
 
-    const filters: Record<string, unknown>[] = [
-      newsVisibilityWhere(session.consultancyId ?? null),
-    ];
+    const filters: Record<string, unknown>[] = [newsVisibilityWhere(session.consultancyId ?? null)];
     if (params.search) {
       filters.push({
         OR: [{ title: { contains: params.search } }, { body: { contains: params.search } }],
@@ -100,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     // Resolve the target consultancy: platform-wide ("all") is Super Admin only.
     let targetConsultancy: number | null;
-    let resolvedAudience = audience ?? NEWS_AUDIENCE_CONSULTANCY;
+    const resolvedAudience = audience ?? NEWS_AUDIENCE_CONSULTANCY;
 
     if (resolvedAudience === NEWS_AUDIENCE_ALL) {
       if (!superAdmin) return apiError("Only a Super Admin can post platform-wide news", 403);

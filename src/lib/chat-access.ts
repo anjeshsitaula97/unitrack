@@ -13,10 +13,7 @@ import type { SessionPayload } from "./session";
  * `Super Admin` owns the platform and keeps an unconditional bypass, matching
  * `checkPermission`, so platform-wide moderation still works.
  */
-export async function isChatRoomMember(
-  roomId: number,
-  session: SessionPayload
-): Promise<boolean> {
+export async function isChatRoomMember(roomId: number, session: SessionPayload): Promise<boolean> {
   if (!Number.isInteger(roomId)) return false;
   if (isSuperAdminRole(session.role)) return true;
 

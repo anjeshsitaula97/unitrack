@@ -12,7 +12,14 @@
 
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
-import { parseJson, zodResponse, coercedInt, isoDateOrNull, optionalTrimmedString, emailField } from "../validate";
+import {
+  parseJson,
+  zodResponse,
+  coercedInt,
+  isoDateOrNull,
+  optionalTrimmedString,
+  emailField,
+} from "../validate";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -82,10 +89,7 @@ describe("payments — createPaymentSchema", () => {
   });
 
   it("rejects negative amount", async () => {
-    const result = await parseJson(
-      makeReq({ studentId: 1, amount: -500 }),
-      createPaymentSchema
-    );
+    const result = await parseJson(makeReq({ studentId: 1, amount: -500 }), createPaymentSchema);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.issues[0].message).toMatch(/positive/i);
   });
@@ -234,10 +238,7 @@ describe("leads — createLeadSchema", () => {
   });
 
   it("rejects an invalid email", async () => {
-    const result = await parseJson(
-      makeReq({ name: "Jane", email: "bad-email" }),
-      createLeadSchema
-    );
+    const result = await parseJson(makeReq({ name: "Jane", email: "bad-email" }), createLeadSchema);
     expect(result.ok).toBe(false);
   });
 

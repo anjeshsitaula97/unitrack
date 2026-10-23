@@ -19,7 +19,10 @@ export async function GET() {
 
     // Only one session per account is allowed. A staff token whose session has
     // been superseded by a newer login must not keep returning the profile.
-    if (payload.subject !== "student" && !(await isSessionCurrent("user", payload.id, payload.sid))) {
+    if (
+      payload.subject !== "student" &&
+      !(await isSessionCurrent("user", payload.id, payload.sid))
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

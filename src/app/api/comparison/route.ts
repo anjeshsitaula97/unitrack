@@ -26,10 +26,12 @@ export async function POST(req: NextRequest) {
         include: { _count: { select: { courses: true } }, partner: true },
       });
     } else if (type === "courses") {
-      data = (await db.course.findMany({
-        where: { id: { in: numericIds } },
-        include: { university: true },
-      })).map((course) => ({ ...course, credits: toCourseCredits(course.credits) }));
+      data = (
+        await db.course.findMany({
+          where: { id: { in: numericIds } },
+          include: { university: true },
+        })
+      ).map((course) => ({ ...course, credits: toCourseCredits(course.credits) }));
     } else if (type === "students") {
       data = await db.student.findMany({
         where: { id: { in: numericIds } },

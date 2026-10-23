@@ -53,7 +53,7 @@ describe("logger — sanitisation and output format", () => {
 
   it("logInfo emits a parseable JSON line to stdout", async () => {
     const { logInfo } = await import("../logger");
-    logInfo("Request served", { path: "/api/students", status: 200 });
+    logInfo("Request served", undefined, { path: "/api/students", status: 200 });
     expect(consoleInfoSpy).toHaveBeenCalledOnce();
     const line = consoleInfoSpy.mock.calls[0][0] as string;
     const obj = JSON.parse(line);

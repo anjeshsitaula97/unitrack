@@ -12,7 +12,13 @@ import {
   checkRoutePermission,
 } from "@/lib/api-utils";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { parseJson, zodResponse, coercedInt, isoDateOrNull, optionalTrimmedString } from "@/lib/validate";
+import {
+  parseJson,
+  zodResponse,
+  coercedInt,
+  isoDateOrNull,
+  optionalTrimmedString,
+} from "@/lib/validate";
 
 const createPaymentSchema = z.object({
   studentId: coercedInt({ min: 1 }),

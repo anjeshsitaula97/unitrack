@@ -93,6 +93,9 @@ export default function FaceEnrollmentContent() {
   }, [employeeId, router]);
 
   useEffect(() => {
+    // Every setState inside fetchEmployee runs after an `await`, so this effect
+    // updates nothing synchronously - the rule cannot follow the async boundary.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchEmployee();
   }, [fetchEmployee]);
 

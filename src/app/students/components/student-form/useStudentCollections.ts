@@ -2,7 +2,6 @@
 
 import type { SetStateAction, Dispatch } from "react";
 import NEB_INSTITUTES from "@/lib/data/neb_grade12_institutes.json";
-import { capitalize } from "./utils";
 import type { StudentFormData } from "./types";
 
 export function useStudentCollections(setFormData: Dispatch<SetStateAction<StudentFormData>>) {
