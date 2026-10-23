@@ -54,7 +54,7 @@ jobs:
           fetch-depth: 0 # full history so the gitleaks scan can cover it
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           # Single source of truth for the Node version: .nvmrc matches the
           # local dev machine and the `engines` range in package.json. Bump
