@@ -37,7 +37,7 @@
     "warning": "🚨 CRITICAL: DO NOT REMOVE OR MODIFY ABOVE DEPENDENCIES - Required for Next.js 15 TypeScript app functionality"
   },
   "scripts": {
-    "dev": "next dev -H 0.0.0.0 -p 4028",
+    "dev": "next dev --webpack -H 0.0.0.0 -p 4028",
     "build": "next build --webpack",
     "start": "next start -H 0.0.0.0 -p 4028",
     "lint": "eslint .",
